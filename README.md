@@ -1,0 +1,112 @@
+# Toolkit
+
+All-in-one VS Code utility extension.
+
+## Features
+
+### Change Case
+
+Convert selected text between 13 case formats. Supports multiple cursors and multi-line selections.
+
+Open the picker with **Toolkit: Change Case...** from the Command Palette — it shows a live preview of each transformation for the current selection.
+
+| Command | Example |
+|---|---|
+| camelCase | `my variable` → `myVariable` |
+| snake_case | `my variable` → `my_variable` |
+| PascalCase | `my variable` → `MyVariable` |
+| CONSTANT_CASE | `my variable` → `MY_VARIABLE` |
+| kebab-case | `my variable` → `my-variable` |
+| Title Case | `my variable` → `My Variable` |
+| lowercase | `My Variable` → `my variable` |
+| UPPERCASE | `my variable` → `MY VARIABLE` |
+| dot.case | `my variable` → `my.variable` |
+| path/case | `my variable` → `my/variable` |
+| Sentence case | `my variable` → `My variable` |
+| sWAP cASE | `Hello` → `hELLO` |
+| no case | `myVariable` → `my variable` |
+
+Also available from the editor right-click menu when text is selected.
+
+### Slugify
+
+Generate clean URL slugs from selected text. Handles unicode normalization, diacritics removal, and special character mapping.
+
+- `Café & Résumé` → `cafe-and-resume`
+- `myVariableName` → `my-variable-name`
+- `Ñoño más allá` → `nono-mas-alla`
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.slug.separator` | `-` | Separator character |
+| `toolkit.slug.decamelize` | `true` | Split camelCase words |
+| `toolkit.slug.lowercase` | `true` | Convert to lowercase |
+
+### Auto Rename Tag
+
+Automatically renames the matching HTML/XML tag when you edit its pair. Works out of the box for all languages.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.autoRenameTag.enabled` | `true` | Enable/disable the feature |
+| `toolkit.autoRenameTag.activationOnLanguage` | `["*"]` | Restrict to specific language IDs |
+
+### Open in GitHub
+
+Open the current file, repository, blame view, or commit history directly in GitHub. Supports both SSH and HTTPS remotes.
+
+| Command | Description |
+|---|---|
+| Open in GitHub - File | Opens the file at the current line/selection |
+| Open in GitHub - Repository | Opens the repository root |
+| Open in GitHub - Blame | Opens the blame view for the current file |
+| Open in GitHub - File History | Opens the commit history for the current file |
+| Open in GitHub - Copy File Link | Copies the GitHub URL to clipboard |
+| Open in GitHub - Copy Permalink | Copies a permanent link using the commit hash |
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.openInGitHub.remoteName` | `origin` | Git remote name |
+| `toolkit.openInGitHub.defaultBranch` | `main` | Fallback branch |
+| `toolkit.openInGitHub.useCurrentBranch` | `true` | Use the current local branch |
+| `toolkit.openInGitHub.useLocalLine` | `true` | Include line numbers in the URL |
+
+### Format Files
+
+Bulk format all files in the workspace or a specific folder using VS Code's built-in formatter.
+
+| Command | Description |
+|---|---|
+| Format Files - Workspace | Format all matching files in the workspace |
+| Format Files - From Glob | Prompt for a custom glob pattern |
+| Format Files - This Folder | Format files in a folder (right-click in explorer) |
+
+Shows progress with cancellation support. Each file is opened, formatted, saved, and closed sequentially.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.formatFiles.includeGlob` | `**/*.{ts,js,json,html,...}` | Glob pattern for files to include |
+| `toolkit.formatFiles.excludedFolders` | `[node_modules, .git, ...]` | Folders to skip |
+| `toolkit.formatFiles.runOrganizeImports` | `false` | Run Organize Imports before formatting |
+| `toolkit.formatFiles.useGitIgnore` | `true` | Skip git-ignored files |
+
+### Expand / Collapse Recursively
+
+Expand or collapse all subfolders of a directory in the file explorer. Available from the right-click context menu on any folder.
+
+Supports multi-select — select several folders, right-click, and expand/collapse all of them at once.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.expandRecursively.excludePatterns` | `[node_modules, .git, dist, ...]` | Folder names to skip |
+
