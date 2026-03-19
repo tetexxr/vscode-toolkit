@@ -48,6 +48,14 @@ Generate clean URL slugs from selected text. Handles unicode normalization, diac
 
 Automatically renames the matching HTML/XML tag when you edit its pair. Works out of the box for all languages.
 
+> **Note:** VS Code includes a built-in linked editing feature that does the same for HTML and Handlebars files. To use it instead, add this to your `settings.json`:
+>
+> ```json
+> "editor.linkedEditing": true
+> ```
+>
+> When linked editing is active, this feature automatically steps aside for those languages to avoid double renaming. For other languages (JSX, TSX, Vue, PHP, etc.) this feature remains active.
+
 **Settings:**
 
 | Setting | Default | Description |
