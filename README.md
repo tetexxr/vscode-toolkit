@@ -110,3 +110,83 @@ Supports multi-select — select several folders, right-click, and expand/collap
 |---|---|---|
 | `toolkit.expandRecursively.excludePatterns` | `[node_modules, .git, dist, ...]` | Folder names to skip |
 
+## Development
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v20+)
+- npm (comes with Node.js)
+
+### Setup
+
+```bash
+git clone <repo-url>
+cd vscode-toolkit
+npm install
+```
+
+### Build
+
+Compile TypeScript to JavaScript:
+
+```bash
+npm run compile
+```
+
+To recompile automatically on file changes:
+
+```bash
+npm run watch
+```
+
+### Test
+
+Run the unit test suite:
+
+```bash
+npm test
+```
+
+Tests cover all pure logic in `src/utils/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns).
+
+### Package
+
+Generate a `.vsix` file for distribution:
+
+```bash
+npm run package
+```
+
+This produces `vscode-toolkit-<version>.vsix` in the project root.
+
+### Install
+
+Install the packaged extension into VS Code:
+
+```bash
+code --install-extension vscode-toolkit-<version>.vsix
+```
+
+Then reload VS Code (`Cmd+Shift+P` → "Developer: Reload Window").
+
+### Update
+
+After making changes:
+
+1. Bump the `version` in `package.json`
+2. Build and package:
+   ```bash
+   npm run package
+   ```
+3. Install the new version:
+   ```bash
+   code --install-extension vscode-toolkit-<version>.vsix
+   ```
+
+VS Code will replace the previous version automatically.
+
+### Uninstall
+
+```bash
+code --uninstall-extension tete.vscode-toolkit
+```
