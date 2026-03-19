@@ -10,11 +10,10 @@ import {
  * Auto Rename Tag — when an opening/closing HTML/XML tag is edited,
  * automatically update the matching pair.
  *
- * Simplified single-file implementation (no LSP server) based on
- * the approach from formulahendry/auto-rename-tag with:
- * - Guard flag to prevent infinite recursion
- * - Stack-based tag matching (forward & backward scanning)
- * - Self-closing tag awareness
+ * Key insight: when the user types in `<div>` changing it to `<divx>`,
+ * the document already contains `<divx>` but the closing tag is still `</div>`.
+ * We must reconstruct the OLD tag name from the contentChange to find the pair,
+ * then replace it with the NEW tag name.
  */
 
 let isUpdating = false;
@@ -26,8 +25,37 @@ function isLanguageActive(languageId: string): boolean {
   return langs.includes('*') || langs.includes(languageId);
 }
 
+/**
+ * Reconstruct the old tag name by reversing the contentChange within the tag name.
+ * The document text already has the NEW content. We undo the change to get the old name.
+ */
+function getOldTagName(
+  tag: { tagNameStart: number; tagNameEnd: number; tagName: string },
+  change: { rangeOffset: number; rangeLength: number; text: string },
+): string | undefined {
+  const changeStart = change.rangeOffset;
+  const changeNewEnd = change.rangeOffset + change.text.length;
+
+  // Check if the change overlaps the tag name
+  if (changeStart > tag.tagNameEnd || changeNewEnd < tag.tagNameStart) {
+    return undefined;
+  }
+
+  // Position of the change relative to the tag name start
+  const relStart = Math.max(0, changeStart - tag.tagNameStart);
+  const relNewEnd = Math.min(tag.tagName.length, changeNewEnd - tag.tagNameStart);
+
+  // old tag name = before the change + (we don't know the old chars, but old length = rangeLength) + after the change
+  // Since we don't have the old text, we rebuild it:
+  // The old tag name had the same prefix and suffix, but the middle part was `rangeLength` chars
+  // that got replaced by `change.text`.
+  // We can't know the exact old chars, but we know the old tag name length.
+  // For matching purposes, we need to find the paired tag which still has the old name.
+  // Strategy: scan the document for the paired tag and return whatever name it has.
+  return undefined;
+}
+
 export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
-  // Track the last change made by us to skip it in the listener
   let lastAutoRenameVersion: { fsPath: string; version: number } | undefined;
 
   const disposable = vscode.workspace.onDidChangeTextDocument(async (event) => {
@@ -51,78 +79,53 @@ export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
     for (const change of event.contentChanges) {
       const offset = change.rangeOffset + change.text.length;
 
+      // Find the tag at the cursor position (after the edit)
       const tag = getTagAtOffset(text, offset);
       if (!tag) { continue; }
 
+      const newTagName = tag.tagName;
+
       // Don't rename self-closing HTML tags
-      if (!tag.isClosing && SELF_CLOSING_TAGS.has(tag.tagName.toLowerCase())) {
+      if (!tag.isClosing && SELF_CLOSING_TAGS.has(newTagName.toLowerCase())) {
         continue;
       }
+
+      // Reconstruct the old tag name by undoing the change within the tag name
+      const changeRelStart = change.rangeOffset - tag.tagNameStart;
+      const beforeChange = newTagName.substring(0, changeRelStart);
+      const afterChange = newTagName.substring(changeRelStart + change.text.length);
+      // We don't have the old chars, but we know there were `change.rangeLength` of them.
+      // The paired tag still has the old name, so we scan for it.
+
+      // Old tag name length
+      const oldTagNameLength = newTagName.length - change.text.length + change.rangeLength;
+      if (oldTagNameLength <= 0) { continue; }
 
       let matchRange: { start: number; end: number } | undefined;
 
       if (tag.isClosing) {
-        // We edited a closing tag — find the opening tag
-        matchRange = findMatchingOpeningTag(text, tag.tagNameStart, tag.tagName);
+        // We edited a closing tag — the opening tag still has the OLD name.
+        // We need to find ANY opening tag that could be our pair.
+        // Scan backward looking for an opening tag at depth 0 that is NOT self-closing.
+        // The paired opening tag has the old name (which we don't fully know),
+        // but it's the nearest unmatched opening tag before us.
+        matchRange = findNearestUnmatchedOpeningTag(text, tag.tagNameStart);
       } else {
-        // We edited an opening tag — find the closing tag after the '>'
-        // First, find the end of the current opening tag
+        // We edited an opening tag — the closing tag still has the OLD name.
+        // Find the end of the current opening tag first.
         let tagEnd = tag.tagNameEnd;
         while (tagEnd < text.length && text[tagEnd] !== '>') { tagEnd++; }
         if (tagEnd >= text.length) { continue; }
-        // Check if this opening tag is self-closing
-        if (text[tagEnd - 1] === '/') { continue; }
-        matchRange = findMatchingClosingTag(text, tagEnd + 1, tag.tagName);
+        if (text[tagEnd - 1] === '/') { continue; } // self-closing
+
+        matchRange = findNearestUnmatchedClosingTag(text, tagEnd + 1);
       }
 
-      // If we couldn't find the old match, try to find a match with
-      // what the tag name was before this edit. Calculate old tag name
-      // by applying the change in reverse.
-      if (!matchRange) {
-        const changeStart = change.rangeOffset;
-        const changeNewEnd = change.rangeOffset + change.text.length;
-        const changeOldLength = change.rangeLength;
-
-        // Only proceed if the change is within the tag name
-        if (changeStart >= tag.tagNameStart && changeNewEnd <= tag.tagNameEnd) {
-          const relStart = changeStart - tag.tagNameStart;
-          const oldTagName = tag.tagName.substring(0, relStart)
-            + text.substring(changeStart, changeStart).substring(0, 0) // placeholder
-            + tag.tagName.substring(relStart + change.text.length);
-
-          // Reconstruct old tag name
-          const beforeChange = tag.tagName.substring(0, relStart);
-          const afterChange = tag.tagName.substring(relStart + change.text.length);
-
-          // The old text at the change position was `changeOldLength` chars
-          // We can infer: old = before + <old chars> + after
-          // Since we don't have the old chars easily, we use the text from range
-          // Actually, the old text was replaced. We need to compute it differently.
-          // old tag name length = tag.tagName.length - change.text.length + changeOldLength
-          // Let's search for the paired tag with both old and new names by trying
-          // to find any tag that could be the match
-
-          // Simpler approach: search for closing/opening tags that are NOT the current tag name
-          // and would be the pair
-          const oldTagNameLen = tag.tagName.length - change.text.length + changeOldLength;
-          if (oldTagNameLen > 0) {
-            // Re-derive old tag name from the old document
-            // This is complex — fall back to just using the new name
-            // The original auto-rename-tag sends both old and new names to the server
-            // For simplicity, we search for the old name by looking at what the pair currently is
-            const oldName = beforeChange + 'x'.repeat(changeOldLength) + afterChange;
-            // We cannot reliably reconstruct oldName without the original text.
-            // Instead, try both scanning directions and look for any orphaned tag.
-          }
-        }
-
-        // If no match found, skip
-        if (!matchRange) { continue; }
-      }
+      if (!matchRange) { continue; }
 
       // If the matching tag already has the same name, skip
       const matchName = text.substring(matchRange.start, matchRange.end);
-      if (matchName === tag.tagName) { continue; }
+      if (matchName === newTagName) { continue; }
 
       // Apply the rename
       const matchStartPos = document.positionAt(matchRange.start);
@@ -133,7 +136,7 @@ export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
       try {
         const success = await editor.edit(
           editBuilder => {
-            editBuilder.replace(matchVscRange, tag.tagName);
+            editBuilder.replace(matchVscRange, newTagName);
           },
           { undoStopBefore: false, undoStopAfter: false }
         );
@@ -147,10 +150,128 @@ export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
         isUpdating = false;
       }
 
-      // Only process the first relevant change
       break;
     }
   });
 
   context.subscriptions.push(disposable);
+}
+
+/**
+ * Finds the nearest unmatched closing tag scanning forward from startOffset.
+ * "Unmatched" means it's not paired with an opening tag between startOffset and itself.
+ * Uses a stack: opening tags push, closing tags pop. First closing tag at depth 0 wins.
+ */
+function findNearestUnmatchedClosingTag(
+  text: string,
+  startOffset: number,
+): { start: number; end: number } | undefined {
+  const TAG_RE = /^[!:\w$]((?![>/])[\S])*/;
+  let pos = startOffset;
+  let depth = 0;
+
+  while (pos < text.length) {
+    const idx = text.indexOf('<', pos);
+    if (idx === -1) { break; }
+
+    if (text[idx + 1] === '/') {
+      // Closing tag
+      const nameStart = idx + 2;
+      const remaining = text.substring(nameStart);
+      const match = remaining.match(TAG_RE);
+      if (match) {
+        const name = match[0];
+        const nameEnd = nameStart + name.length;
+        if (depth === 0) {
+          return { start: nameStart, end: nameEnd };
+        }
+        depth--;
+        pos = nameEnd;
+        continue;
+      }
+    } else if (text[idx + 1] !== '!' && text[idx + 1] !== '?') {
+      // Opening tag
+      const nameStart = idx + 1;
+      const remaining = text.substring(nameStart);
+      const match = remaining.match(TAG_RE);
+      if (match) {
+        const name = match[0];
+        const nameEnd = nameStart + name.length;
+        // Check self-closing
+        let j = nameEnd;
+        while (j < text.length && text[j] !== '>') {
+          if (text[j] === '<') { break; }
+          j++;
+        }
+        const isSelfClosing = j < text.length && text[j] === '>' && text[j - 1] === '/';
+        if (!isSelfClosing && !SELF_CLOSING_TAGS.has(name.toLowerCase())) {
+          depth++;
+        }
+        pos = nameEnd;
+        continue;
+      }
+    }
+
+    pos = idx + 1;
+  }
+
+  return undefined;
+}
+
+/**
+ * Finds the nearest unmatched opening tag scanning backward from startOffset.
+ * Uses a stack: closing tags push, opening tags pop. First opening tag at depth 0 wins.
+ */
+function findNearestUnmatchedOpeningTag(
+  text: string,
+  startOffset: number,
+): { start: number; end: number } | undefined {
+  const TAG_RE = /^[!:\w$]((?![>/])[\S])*/;
+  let pos = startOffset;
+  let depth = 0;
+
+  while (pos > 0) {
+    const idx = text.lastIndexOf('<', pos - 1);
+    if (idx === -1) { break; }
+
+    if (text[idx + 1] === '/') {
+      // Closing tag — increases depth
+      const nameStart = idx + 2;
+      const remaining = text.substring(nameStart);
+      const match = remaining.match(TAG_RE);
+      if (match) {
+        depth++;
+      }
+      pos = idx;
+      continue;
+    }
+
+    if (text[idx + 1] !== '!' && text[idx + 1] !== '?') {
+      // Opening tag
+      const nameStart = idx + 1;
+      const remaining = text.substring(nameStart);
+      const match = remaining.match(TAG_RE);
+      if (match) {
+        const name = match[0];
+        const nameEnd = nameStart + name.length;
+        // Check self-closing
+        let j = nameEnd;
+        while (j < text.length && text[j] !== '>') {
+          if (text[j] === '<') { break; }
+          j++;
+        }
+        const isSelfClosing = j < text.length && text[j] === '>' && text[j - 1] === '/';
+        if (!isSelfClosing && !SELF_CLOSING_TAGS.has(name.toLowerCase())) {
+          if (depth === 0) {
+            return { start: nameStart, end: nameEnd };
+          }
+          depth--;
+        }
+      }
+    }
+
+    pos = idx;
+  }
+
+  return undefined;
 }
