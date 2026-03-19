@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { isExcluded } from '../utils/files';
 
 /**
  * Expand/Collapse Recursively — expand or collapse all folders in the file explorer.
@@ -8,19 +9,6 @@ import * as vscode from 'vscode';
 
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function isExcluded(name: string, excludePatterns: string[]): boolean {
-  for (const pattern of excludePatterns) {
-    if (pattern.includes('*')) {
-      // Simple wildcard matching
-      const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$', 'i');
-      if (regex.test(name)) { return true; }
-    } else {
-      if (name.toLowerCase() === pattern.toLowerCase()) { return true; }
-    }
-  }
-  return false;
 }
 
 async function getSubfolders(uri: vscode.Uri, excludePatterns: string[]): Promise<vscode.Uri[]> {
