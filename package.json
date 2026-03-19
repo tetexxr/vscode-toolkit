@@ -1,0 +1,282 @@
+{
+  "name": "vscode-toolkit",
+  "displayName": "Toolkit",
+  "description": "All-in-one utility extension: change case, slugify, auto rename tag, open in GitHub, format files, expand recursively.",
+  "version": "0.1.0",
+  "publisher": "tete",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Formatters"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "toolkit.changeCase",
+        "title": "Toolkit: Change Case..."
+      },
+      {
+        "command": "toolkit.changeCaseCamel",
+        "title": "Toolkit: Change Case to camelCase"
+      },
+      {
+        "command": "toolkit.changeCaseSnake",
+        "title": "Toolkit: Change Case to snake_case"
+      },
+      {
+        "command": "toolkit.changeCasePascal",
+        "title": "Toolkit: Change Case to PascalCase"
+      },
+      {
+        "command": "toolkit.changeCaseConstant",
+        "title": "Toolkit: Change Case to CONSTANT_CASE"
+      },
+      {
+        "command": "toolkit.changeCaseKebab",
+        "title": "Toolkit: Change Case to kebab-case"
+      },
+      {
+        "command": "toolkit.changeCaseTitle",
+        "title": "Toolkit: Change Case to Title Case"
+      },
+      {
+        "command": "toolkit.changeCaseLower",
+        "title": "Toolkit: Change Case to lowercase"
+      },
+      {
+        "command": "toolkit.changeCaseUpper",
+        "title": "Toolkit: Change Case to UPPERCASE"
+      },
+      {
+        "command": "toolkit.changeCaseDot",
+        "title": "Toolkit: Change Case to dot.case"
+      },
+      {
+        "command": "toolkit.changeCasePath",
+        "title": "Toolkit: Change Case to path/case"
+      },
+      {
+        "command": "toolkit.changeCaseSentence",
+        "title": "Toolkit: Change Case to Sentence case"
+      },
+      {
+        "command": "toolkit.changeCaseSwap",
+        "title": "Toolkit: Change Case to sWAP cASE"
+      },
+      {
+        "command": "toolkit.changeCaseNo",
+        "title": "Toolkit: Change Case to no case"
+      },
+      {
+        "command": "toolkit.slugify",
+        "title": "Toolkit: Slugify"
+      },
+      {
+        "command": "toolkit.openInGitHub.file",
+        "title": "Toolkit: Open in GitHub - File"
+      },
+      {
+        "command": "toolkit.openInGitHub.repo",
+        "title": "Toolkit: Open in GitHub - Repository"
+      },
+      {
+        "command": "toolkit.openInGitHub.blame",
+        "title": "Toolkit: Open in GitHub - Blame"
+      },
+      {
+        "command": "toolkit.openInGitHub.history",
+        "title": "Toolkit: Open in GitHub - File History"
+      },
+      {
+        "command": "toolkit.openInGitHub.copyFileLink",
+        "title": "Toolkit: Open in GitHub - Copy File Link"
+      },
+      {
+        "command": "toolkit.openInGitHub.copyPermalink",
+        "title": "Toolkit: Open in GitHub - Copy Permalink"
+      },
+      {
+        "command": "toolkit.formatFiles.workspace",
+        "title": "Toolkit: Format Files - Workspace"
+      },
+      {
+        "command": "toolkit.formatFiles.fromGlob",
+        "title": "Toolkit: Format Files - From Glob"
+      },
+      {
+        "command": "toolkit.formatFiles.thisFolder",
+        "title": "Toolkit: Format Files - This Folder"
+      },
+      {
+        "command": "toolkit.expandRecursively",
+        "title": "Toolkit: Expand Recursively",
+        "icon": "$(expand-all)"
+      },
+      {
+        "command": "toolkit.collapseRecursively",
+        "title": "Toolkit: Collapse Recursively",
+        "icon": "$(collapse-all)"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "toolkit.expandRecursively",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@10"
+        },
+        {
+          "command": "toolkit.collapseRecursively",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@11"
+        },
+        {
+          "command": "toolkit.formatFiles.thisFolder",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@12"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "toolkit.changeCase",
+          "group": "1_modification@1",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.slugify",
+          "group": "1_modification@2",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Toolkit",
+      "properties": {
+        "toolkit.changeCase.includeDotInCurrentWord": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include dots in word boundary detection when no text is selected."
+        },
+        "toolkit.autoRenameTag.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable auto rename tag feature."
+        },
+        "toolkit.autoRenameTag.activationOnLanguage": {
+          "type": "array",
+          "default": [
+            "*"
+          ],
+          "description": "Languages for which auto rename tag is active. Use [\"*\"] for all.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.openInGitHub.remoteName": {
+          "type": "string",
+          "default": "origin",
+          "description": "Name of the git remote to use."
+        },
+        "toolkit.openInGitHub.defaultBranch": {
+          "type": "string",
+          "default": "main",
+          "description": "Fallback branch name when current branch cannot be determined."
+        },
+        "toolkit.openInGitHub.useCurrentBranch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use current local branch instead of the default branch."
+        },
+        "toolkit.openInGitHub.useLocalLine": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include line number/range in GitHub URL."
+        },
+        "toolkit.formatFiles.includeGlob": {
+          "type": "string",
+          "default": "**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml}",
+          "description": "Glob pattern for files to format."
+        },
+        "toolkit.formatFiles.excludedFolders": {
+          "type": "array",
+          "default": [
+            "node_modules",
+            ".vscode",
+            ".git",
+            "dist",
+            "build",
+            ".chrome"
+          ],
+          "description": "Folders to exclude from formatting.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.formatFiles.runOrganizeImports": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run Organize Imports before formatting each file."
+        },
+        "toolkit.formatFiles.useGitIgnore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Skip files that are ignored by git."
+        },
+        "toolkit.expandRecursively.excludePatterns": {
+          "type": "array",
+          "default": [
+            ".git",
+            ".svn",
+            ".vs",
+            ".vscode",
+            ".cache",
+            "__pycache__",
+            "node_modules",
+            "dist",
+            "build",
+            "target",
+            "bin",
+            "obj"
+          ],
+          "description": "Folder names to exclude when expanding recursively.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.slug.separator": {
+          "type": "string",
+          "default": "-",
+          "description": "Separator character for slugs."
+        },
+        "toolkit.slug.decamelize": {
+          "type": "boolean",
+          "default": true,
+          "description": "Split camelCase words when generating slugs."
+        },
+        "toolkit.slug.lowercase": {
+          "type": "boolean",
+          "default": true,
+          "description": "Convert slug to lowercase."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0",
+    "@vscode/vsce": "^2.24.0"
+  }
+}
