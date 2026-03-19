@@ -186,4 +186,22 @@ export function registerOpenInGitHubCommands(context: vscode.ExtensionContext): 
       }
     })
   );
+
+  // Open file from explorer context menu (receives a Uri, not from active editor)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.openInGitHub.explorerFile', async (uri: vscode.Uri) => {
+      if (!uri) {
+        vscode.window.showErrorMessage('No file selected.');
+        return;
+      }
+
+      const info = await getGitInfo(uri.fsPath);
+      if (!info) { return; }
+
+      const relativePath = path.relative(info.repoRoot, uri.fsPath).replace(/\\/g, '/');
+      const encodedPath = relativePath.split('/').map(encodeURIComponent).join('/');
+      const url = `${info.baseUrl}/blob/${encodeURIComponent(info.branch)}/${encodedPath}`;
+      await openUrl(url);
+    })
+  );
 }

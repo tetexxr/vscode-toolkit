@@ -122,6 +122,10 @@
         "command": "toolkit.collapseRecursively",
         "title": "Toolkit: Collapse Recursively",
         "icon": "$(collapse-all)"
+      },
+      {
+        "command": "toolkit.openInGitHub.explorerFile",
+        "title": "Toolkit: Open in GitHub"
       }
     ],
     "menus": {
@@ -140,6 +144,11 @@
           "command": "toolkit.formatFiles.thisFolder",
           "when": "explorerResourceIsFolder",
           "group": "navigation@12"
+        },
+        {
+          "command": "toolkit.openInGitHub.explorerFile",
+          "when": "explorerResourceIsRoot == false",
+          "group": "navigation@13"
         }
       ],
       "editor/context": [
@@ -152,6 +161,10 @@
           "command": "toolkit.slugify",
           "group": "1_modification@2",
           "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.openInGitHub.file",
+          "group": "1_modification@3"
         }
       ]
     },
