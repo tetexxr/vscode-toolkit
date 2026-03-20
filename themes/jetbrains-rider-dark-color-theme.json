@@ -32,7 +32,7 @@
     "scrollbar.shadow": "#1E1F22",
     "editor.background": "#191A1C",
     "editor.foreground": "#BDBDBD",
-    "editor.selectionBackground": "#09335E",
+    "editor.selectionBackground": "#212424",
     "editorGroup.emptyBackground": "#1E1F22",
     "editorGroupHeader.tabsBackground": "#191A1C",
     "editorGroupHeader.tabsBorder": "#1E1F22",
@@ -50,9 +50,19 @@
     "statusBar.noFolderBackground": "#1E1F22",
     "statusBar.noFolderForeground": "#BDBDBD",
     "button.background": "#3474F0",
-    "list.activeSelectionBackground": "#2E436E",
-    "list.inactiveSelectionBackground": "#43454A",
-    "list.hoverBackground": "#2E436B"
+    "list.activeSelectionBackground": "#32426B",
+    "list.inactiveSelectionBackground": "#393B40",
+    "list.hoverBackground": "#26272b",
+    "gitDecoration.modifiedResourceForeground": "#6897BB",
+    "gitDecoration.untrackedResourceForeground": "#629755",
+    "gitDecoration.addedResourceForeground": "#629755",
+    "gitDecoration.deletedResourceForeground": "#D95B5B",
+    "gitDecoration.ignoredResourceForeground": "#6F737A",
+    "gitDecoration.conflictingResourceForeground": "#E8A33D",
+    "gitDecoration.renamedResourceForeground": "#6897BB",
+    "gitDecoration.stageModifiedResourceForeground": "#6897BB",
+    "gitDecoration.stageDeletedResourceForeground": "#D95B5B",
+    "gitDecoration.submoduleResourceForeground": "#6897BB"
   },
   "tokenColors": [
     {
