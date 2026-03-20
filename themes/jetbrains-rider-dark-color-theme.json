@@ -226,6 +226,379 @@
       "settings": {
         "foreground": "#ADEB96"
       }
+    },
+
+    {
+      "name": "[JS/TS] Keywords",
+      "scope": [
+        "source.js keyword",
+        "source.js storage.type",
+        "source.js storage.modifier",
+        "source.js constant.language.boolean",
+        "source.js constant.language",
+        "source.js variable.language.this",
+        "source.js constant.character.escape",
+        "source.js keyword.operator.expression",
+        "source.js keyword.operator.expression.await",
+        "source.js keyword.operator.expression.new",
+        "source.js keyword.operator.expression.instanceof",
+        "source.js keyword.operator.expression.typeof",
+        "source.js keyword.operator.expression.keyof",
+        "source.js keyword.operator.expression.in",
+        "source.js keyword.operator.expression.delete",
+        "source.js keyword.operator.new",
+        "source.ts keyword",
+        "source.ts storage.type",
+        "source.ts storage.modifier",
+        "source.ts constant.language.boolean",
+        "source.ts constant.language",
+        "source.ts variable.language.this",
+        "source.ts constant.character.escape",
+        "source.ts keyword.operator.expression",
+        "source.ts keyword.operator.expression.await",
+        "source.ts keyword.operator.expression.new",
+        "source.ts keyword.operator.expression.instanceof",
+        "source.ts keyword.operator.expression.typeof",
+        "source.ts keyword.operator.expression.keyof",
+        "source.ts keyword.operator.expression.in",
+        "source.ts keyword.operator.expression.delete",
+        "source.ts keyword.operator.new",
+        "source.tsx keyword",
+        "source.tsx storage.type",
+        "source.tsx storage.modifier",
+        "source.tsx constant.language.boolean",
+        "source.tsx constant.language",
+        "source.tsx variable.language.this",
+        "source.tsx constant.character.escape",
+        "source.tsx keyword.operator.expression",
+        "source.tsx keyword.operator.expression.await",
+        "source.tsx keyword.operator.expression.new",
+        "source.tsx keyword.operator.expression.instanceof",
+        "source.tsx keyword.operator.expression.typeof",
+        "source.tsx keyword.operator.expression.keyof",
+        "source.tsx keyword.operator.expression.in",
+        "source.tsx keyword.operator.expression.delete",
+        "source.tsx keyword.operator.new",
+        "source.js.jsx keyword",
+        "source.js.jsx storage.type",
+        "source.js.jsx storage.modifier",
+        "source.js.jsx constant.language.boolean",
+        "source.js.jsx constant.language",
+        "source.js.jsx variable.language.this",
+        "source.js.jsx constant.character.escape",
+        "source.js.jsx keyword.operator.expression",
+        "source.js.jsx keyword.operator.expression.await",
+        "source.js.jsx keyword.operator.expression.new",
+        "source.js.jsx keyword.operator.expression.instanceof",
+        "source.js.jsx keyword.operator.expression.typeof",
+        "source.js.jsx keyword.operator.expression.keyof",
+        "source.js.jsx keyword.operator.expression.in",
+        "source.js.jsx keyword.operator.expression.delete",
+        "source.js.jsx keyword.operator.new"
+      ],
+      "settings": {
+        "foreground": "#ce8e6d"
+      }
+    },
+    {
+      "name": "[JS/TS] Arrow function stays foreground",
+      "scope": [
+        "source.js storage.type.function.arrow",
+        "source.ts storage.type.function.arrow",
+        "source.tsx storage.type.function.arrow",
+        "source.js.jsx storage.type.function.arrow"
+      ],
+      "settings": {
+        "foreground": "#bcbec3"
+      }
+    },
+    {
+      "name": "[JS/TS] Comments",
+      "scope": [
+        "source.js comment",
+        "source.ts comment",
+        "source.tsx comment",
+        "source.js.jsx comment"
+      ],
+      "settings": {
+        "foreground": "#7A7E85"
+      }
+    },
+    {
+      "name": "[JS/TS] Doc comments",
+      "scope": [
+        "source.js comment.block.documentation",
+        "source.ts comment.block.documentation",
+        "source.tsx comment.block.documentation",
+        "source.js.jsx comment.block.documentation"
+      ],
+      "settings": {
+        "foreground": "#5F826B",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "[JS/TS] Doc comments - type references",
+      "scope": [
+        "source.js comment.block.documentation storage.type",
+        "source.ts comment.block.documentation storage.type",
+        "source.tsx comment.block.documentation storage.type",
+        "source.js.jsx comment.block.documentation storage.type"
+      ],
+      "settings": {
+        "foreground": "#68A67E",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "[JS/TS] Functions",
+      "scope": [
+        "source.js entity.name.function",
+        "source.ts entity.name.function",
+        "source.tsx entity.name.function",
+        "source.js.jsx entity.name.function"
+      ],
+      "settings": {
+        "foreground": "#57a8f5"
+      }
+    },
+    {
+      "name": "[JS/TS] Strings",
+      "scope": [
+        "source.js string",
+        "source.js string.quoted.double",
+        "source.js string.quoted.single",
+        "source.js string.interpolated.double",
+        "source.js string.interpolated.single",
+        "source.js string.template",
+        "source.js punctuation.definition.string",
+        "source.ts string",
+        "source.ts string.quoted.double",
+        "source.ts string.quoted.single",
+        "source.ts string.interpolated.double",
+        "source.ts string.interpolated.single",
+        "source.ts string.template",
+        "source.ts punctuation.definition.string",
+        "source.tsx string",
+        "source.tsx string.quoted.double",
+        "source.tsx string.quoted.single",
+        "source.tsx string.interpolated.double",
+        "source.tsx string.interpolated.single",
+        "source.tsx string.template",
+        "source.tsx punctuation.definition.string",
+        "source.js.jsx string",
+        "source.js.jsx string.quoted.double",
+        "source.js.jsx string.quoted.single",
+        "source.js.jsx string.interpolated.double",
+        "source.js.jsx string.interpolated.single",
+        "source.js.jsx string.template",
+        "source.js.jsx punctuation.definition.string"
+      ],
+      "settings": {
+        "foreground": "#6aab73"
+      }
+    },
+    {
+      "name": "[JS/TS] Numbers",
+      "scope": [
+        "source.js constant.numeric",
+        "source.ts constant.numeric",
+        "source.tsx constant.numeric",
+        "source.js.jsx constant.numeric"
+      ],
+      "settings": {
+        "foreground": "#2cabb8"
+      }
+    },
+    {
+      "name": "[JS/TS] Properties and object keys",
+      "scope": [
+        "source.js variable.other.property",
+        "source.js variable.other.object.property",
+        "source.js variable.other.constant.property",
+        "source.js variable.other.enummember",
+        "source.js meta.object-literal.key",
+        "source.js meta.definition.property",
+        "source.ts variable.other.property",
+        "source.ts variable.other.object.property",
+        "source.ts variable.other.constant.property",
+        "source.ts variable.other.enummember",
+        "source.ts meta.object-literal.key",
+        "source.ts meta.definition.property",
+        "source.tsx variable.other.property",
+        "source.tsx variable.other.object.property",
+        "source.tsx variable.other.constant.property",
+        "source.tsx variable.other.enummember",
+        "source.tsx meta.object-literal.key",
+        "source.tsx meta.definition.property",
+        "source.js.jsx variable.other.property",
+        "source.js.jsx variable.other.object.property",
+        "source.js.jsx variable.other.constant.property",
+        "source.js.jsx variable.other.enummember",
+        "source.js.jsx meta.object-literal.key",
+        "source.js.jsx meta.definition.property"
+      ],
+      "settings": {
+        "foreground": "#c77dbb"
+      }
+    },
+    {
+      "name": "[JS/TS] Variables",
+      "scope": [
+        "source.js variable.other.readwrite",
+        "source.js variable.other.constant",
+        "source.ts variable.other.readwrite",
+        "source.ts variable.other.constant",
+        "source.tsx variable.other.readwrite",
+        "source.tsx variable.other.constant",
+        "source.js.jsx variable.other.readwrite",
+        "source.js.jsx variable.other.constant"
+      ],
+      "settings": {
+        "foreground": "#a9b7c5"
+      }
+    },
+    {
+      "name": "[JS/TS] Types and entities (TextMate fallback)",
+      "scope": [
+        "source.js entity.name.type",
+        "source.js entity.name.type.class",
+        "source.js entity.name.type.interface",
+        "source.js entity.name.type.enum",
+        "source.js entity.name.type.module",
+        "source.js support.type.primitive",
+        "source.ts entity.name.type",
+        "source.ts entity.name.type.class",
+        "source.ts entity.name.type.interface",
+        "source.ts entity.name.type.enum",
+        "source.ts entity.name.type.module",
+        "source.ts support.type.primitive",
+        "source.tsx entity.name.type",
+        "source.tsx entity.name.type.class",
+        "source.tsx entity.name.type.interface",
+        "source.tsx entity.name.type.enum",
+        "source.tsx entity.name.type.module",
+        "source.tsx support.type.primitive",
+        "source.js.jsx entity.name.type",
+        "source.js.jsx entity.name.type.class",
+        "source.js.jsx entity.name.type.interface",
+        "source.js.jsx entity.name.type.enum",
+        "source.js.jsx entity.name.type.module",
+        "source.js.jsx support.type.primitive"
+      ],
+      "settings": {
+        "foreground": "#bcbec3"
+      }
+    },
+    {
+      "name": "[JS/TS] Type parameters",
+      "scope": [
+        "source.js entity.name.type.parameter",
+        "source.ts entity.name.type.parameter",
+        "source.tsx entity.name.type.parameter",
+        "source.js.jsx entity.name.type.parameter"
+      ],
+      "settings": {
+        "foreground": "#507874"
+      }
+    },
+    {
+      "name": "[JS/TS] JSDoc variables",
+      "scope": [
+        "source.js variable.other.jsdoc",
+        "source.js entity.name.type.instance.jsdoc",
+        "source.ts variable.other.jsdoc",
+        "source.ts entity.name.type.instance.jsdoc",
+        "source.tsx variable.other.jsdoc",
+        "source.tsx entity.name.type.instance.jsdoc",
+        "source.js.jsx variable.other.jsdoc",
+        "source.js.jsx entity.name.type.instance.jsdoc"
+      ],
+      "settings": {
+        "foreground": "#abadb3"
+      }
+    },
+    {
+      "name": "[JS/TS] Decorators",
+      "scope": [
+        "source.js punctuation.decorator",
+        "source.js meta.decorator entity.name.function",
+        "source.ts punctuation.decorator",
+        "source.ts meta.decorator entity.name.function",
+        "source.tsx punctuation.decorator",
+        "source.tsx meta.decorator entity.name.function",
+        "source.js.jsx punctuation.decorator",
+        "source.js.jsx meta.decorator entity.name.function"
+      ],
+      "settings": {
+        "foreground": "#b3ae60"
+      }
+    },
+    {
+      "name": "[JS/TS] Operators and punctuation",
+      "scope": [
+        "source.js keyword.operator",
+        "source.js punctuation.accessor",
+        "source.js storage.type.function.arrow",
+        "source.js punctuation.definition.template-expression",
+        "source.js punctuation.terminator",
+        "source.ts keyword.operator",
+        "source.ts punctuation.accessor",
+        "source.ts storage.type.function.arrow",
+        "source.ts punctuation.definition.template-expression",
+        "source.ts punctuation.terminator",
+        "source.tsx keyword.operator",
+        "source.tsx punctuation.accessor",
+        "source.tsx storage.type.function.arrow",
+        "source.tsx punctuation.definition.template-expression",
+        "source.tsx punctuation.terminator",
+        "source.js.jsx keyword.operator",
+        "source.js.jsx punctuation.accessor",
+        "source.js.jsx storage.type.function.arrow",
+        "source.js.jsx punctuation.definition.template-expression",
+        "source.js.jsx punctuation.terminator"
+      ],
+      "settings": {
+        "foreground": "#bcbec3"
+      }
+    },
+    {
+      "name": "[JS/TS] JSX/TSX attributes",
+      "scope": [
+        "source.tsx meta.tag.attributes.tsx",
+        "source.js.jsx meta.tag.attributes.js.jsx",
+        "source.tsx entity.other.attribute-name",
+        "source.js.jsx entity.other.attribute-name"
+      ],
+      "settings": {
+        "foreground": "#bababa"
+      }
+    },
+    {
+      "name": "[Vue] Components",
+      "scope": [
+        "support.class.component",
+        "entity.name.tag.template.html.vue",
+        "entity.name.tag.script.html.vue",
+        "entity.name.tag.style.html.vue",
+        "source.vue meta.tag.other.unrecognized.html.derivative entity.name.tag",
+        "source.vue meta.tag.custom.start.html entity.name.tag",
+        "source.vue meta.tag.custom.end.html entity.name.tag"
+      ],
+      "settings": {
+        "foreground": "#2ebaa3"
+      }
+    },
+    {
+      "name": "[Vue] Attribute names",
+      "scope": [
+        "text.html.vue entity.other.attribute-name",
+        "text.html.vue entity.other.attribute-name.html",
+        "source.vue punctuation.attribute-shorthand"
+      ],
+      "settings": {
+        "foreground": "#bababa"
+      }
     }
   ],
   "semanticHighlighting": true,
@@ -239,6 +612,126 @@
     "typeParameter": "#E2BFFF",
     "property": "#65C3CC",
     "razorTransition": "#E2BFFF",
-    "xmlDocCommentName": "#477D33"
+    "xmlDocCommentName": "#477D33",
+
+    "namespace:javascript": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "namespace:typescript": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "namespace:typescriptreact": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "namespace:javascriptreact": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "namespace:vue": { "foreground": "#c77dbb", "fontStyle": "italic" },
+
+    "variable:javascript": "#a9b7c5",
+    "variable:typescript": "#a9b7c5",
+    "variable:typescriptreact": "#a9b7c5",
+    "variable:javascriptreact": "#a9b7c5",
+    "variable:vue": "#a9b7c5",
+
+    "variable.defaultLibrary:javascript": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "variable.defaultLibrary:typescript": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "variable.defaultLibrary:typescriptreact": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "variable.defaultLibrary:javascriptreact": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "variable.defaultLibrary:vue": { "foreground": "#c77dbb", "fontStyle": "italic" },
+
+    "parameter:javascript": "#bcbec3",
+    "parameter:typescript": "#bcbec3",
+    "parameter:typescriptreact": "#bcbec3",
+    "parameter:javascriptreact": "#bcbec3",
+    "parameter:vue": "#bcbec3",
+
+    "typeParameter:javascript": "#507874",
+    "typeParameter:typescript": "#507874",
+    "typeParameter:typescriptreact": "#507874",
+    "typeParameter:javascriptreact": "#507874",
+    "typeParameter:vue": "#507874",
+
+    "type:javascript": "#bcbec3",
+    "type:typescript": "#bcbec3",
+    "type:typescriptreact": "#bcbec3",
+    "type:javascriptreact": "#bcbec3",
+    "type:vue": "#bcbec3",
+
+    "type.defaultLibrary:javascript": { "foreground": "#bcbec3", "fontStyle": "italic" },
+    "type.defaultLibrary:typescript": { "foreground": "#bcbec3", "fontStyle": "italic" },
+    "type.defaultLibrary:typescriptreact": { "foreground": "#bcbec3", "fontStyle": "italic" },
+    "type.defaultLibrary:javascriptreact": { "foreground": "#bcbec3", "fontStyle": "italic" },
+    "type.defaultLibrary:vue": { "foreground": "#bcbec3", "fontStyle": "italic" },
+
+    "interface:javascript": "#bcbec3",
+    "interface:typescript": "#bcbec3",
+    "interface:typescriptreact": "#bcbec3",
+    "interface:javascriptreact": "#bcbec3",
+    "interface:vue": "#bcbec3",
+
+    "interface.defaultLibrary:javascript": { "foreground": "#bcbec3", "fontStyle": "italic" },
+    "interface.defaultLibrary:typescript": { "foreground": "#bcbec3", "fontStyle": "italic" },
+    "interface.defaultLibrary:typescriptreact": { "foreground": "#bcbec3", "fontStyle": "italic" },
+    "interface.defaultLibrary:javascriptreact": { "foreground": "#bcbec3", "fontStyle": "italic" },
+    "interface.defaultLibrary:vue": { "foreground": "#bcbec3", "fontStyle": "italic" },
+
+    "class:javascript": "#2ebaa3",
+    "class:typescript": "#2ebaa3",
+    "class:typescriptreact": "#2ebaa3",
+    "class:javascriptreact": "#2ebaa3",
+    "class:vue": "#2ebaa3",
+
+    "class.declaration:javascript": "#bcbec3",
+    "class.declaration:typescript": "#bcbec3",
+    "class.declaration:typescriptreact": "#bcbec3",
+    "class.declaration:javascriptreact": "#bcbec3",
+    "class.declaration:vue": "#bcbec3",
+
+    "class.defaultLibrary:javascript": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "class.defaultLibrary:typescript": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "class.defaultLibrary:typescriptreact": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "class.defaultLibrary:javascriptreact": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "class.defaultLibrary:vue": { "foreground": "#c77dbb", "fontStyle": "italic" },
+
+    "enum:javascript": "#bcbec3",
+    "enum:typescript": "#bcbec3",
+    "enum:typescriptreact": "#bcbec3",
+    "enum:javascriptreact": "#bcbec3",
+    "enum:vue": "#bcbec3",
+
+    "enumMember:javascript": "#c77dbb",
+    "enumMember:typescript": "#c77dbb",
+    "enumMember:typescriptreact": "#c77dbb",
+    "enumMember:javascriptreact": "#c77dbb",
+    "enumMember:vue": "#c77dbb",
+
+    "property:javascript": "#c77dbb",
+    "property:typescript": "#c77dbb",
+    "property:typescriptreact": "#c77dbb",
+    "property:javascriptreact": "#c77dbb",
+    "property:vue": "#c77dbb",
+
+    "property.static:javascript": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "property.static:typescript": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "property.static:typescriptreact": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "property.static:javascriptreact": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "property.static:vue": { "foreground": "#c77dbb", "fontStyle": "italic" },
+
+    "function:javascript": "#57a8f5",
+    "function:typescript": "#57a8f5",
+    "function:typescriptreact": "#57a8f5",
+    "function:javascriptreact": "#57a8f5",
+    "function:vue": "#57a8f5",
+
+    "method:javascript": "#57a8f5",
+    "method:typescript": "#57a8f5",
+    "method:typescriptreact": "#57a8f5",
+    "method:javascriptreact": "#57a8f5",
+    "method:vue": "#57a8f5",
+
+    "method.static:javascript": { "foreground": "#57a8f5", "fontStyle": "italic" },
+    "method.static:typescript": { "foreground": "#57a8f5", "fontStyle": "italic" },
+    "method.static:typescriptreact": { "foreground": "#57a8f5", "fontStyle": "italic" },
+    "method.static:javascriptreact": { "foreground": "#57a8f5", "fontStyle": "italic" },
+    "method.static:vue": { "foreground": "#57a8f5", "fontStyle": "italic" },
+
+    "decorator:javascript": "#b3ae60",
+    "decorator:typescript": "#b3ae60",
+    "decorator:typescriptreact": "#b3ae60",
+    "decorator:javascriptreact": "#b3ae60",
+    "decorator:vue": "#b3ae60"
   }
 }
