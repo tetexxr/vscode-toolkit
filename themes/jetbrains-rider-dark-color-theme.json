@@ -32,6 +32,8 @@
     "scrollbar.shadow": "#1E1F22",
     "editor.background": "#191A1C",
     "editor.foreground": "#BDBDBD",
+    "editor.lineHighlightBackground": "#212424",
+    "editor.lineHighlightBorder": "#00000000",
     "editor.selectionBackground": "#16325B",
     "editorGroup.emptyBackground": "#1E1F22",
     "editorGroupHeader.tabsBackground": "#191A1C",
