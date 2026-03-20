@@ -118,13 +118,21 @@ Supports multi-select — select several folders, right-click, and expand/collap
 |---|---|---|
 | `toolkit.expandRecursively.excludePatterns` | `[node_modules, .git, dist, ...]` | Folder names to skip |
 
-### JetBrains Rider Dark Theme
+### Generic Dark Theme
 
-A dark color theme inspired by JetBrains Rider's New UI. Includes syntax highlighting, UI colors, git decorations, and terminal colors matched to the Rider aesthetic.
+A dark color theme that combines the best of three worlds. Built on top of VS Code's Dark+ as a base, it applies language-specific syntax highlighting inspired by JetBrains IDEs:
 
-To activate it: `Cmd+K Cmd+T` (or `Ctrl+K Ctrl+T`) and select **Toolkit: JetBrains Rider Dark Theme**.
+| Language | Based on | Highlights |
+|---|---|---|
+| **JS / TS / JSX / TSX / Vue** | JetBrains WebStorm | Orange keywords, green strings, blue functions, gray comments |
+| **C# / F# / Razor** | JetBrains Rider | Blue keywords, brown strings, teal functions, green comments, purple types |
+| **Everything else** | VS Code Dark+ | Purple control flow, salmon strings, yellow functions, teal types |
 
-**Recommended settings** for a full Rider-like experience:
+The UI chrome (sidebar, tabs, status bar, activity bar) uses a JetBrains-inspired dark palette across all languages.
+
+To activate it: `Cmd+K Cmd+T` (or `Ctrl+K Ctrl+T`) and select **Toolkit: Generic Dark Theme**.
+
+**Recommended settings:**
 
 ```json
 {
