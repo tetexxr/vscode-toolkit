@@ -86,7 +86,7 @@
     },
     {
       "scope": "comment",
-      "settings": { "foreground": "#6A9955" }
+      "settings": { "foreground": "#85C46C" }
     },
     {
       "scope": "constant.language",
@@ -102,7 +102,7 @@
     },
     {
       "scope": "entity.name.tag",
-      "settings": { "foreground": "#569cd6" }
+      "settings": { "foreground": "#C191FF" }
     },
     {
       "scope": ["entity.name.tag.css", "entity.name.tag.less"],
@@ -110,7 +110,7 @@
     },
     {
       "scope": "entity.other.attribute-name",
-      "settings": { "foreground": "#9cdcfe" }
+      "settings": { "foreground": "#85C46C" }
     },
     {
       "scope": [
@@ -177,7 +177,7 @@
     {
       "name": "brackets of XML/HTML tags",
       "scope": "punctuation.definition.tag",
-      "settings": { "foreground": "#808080" }
+      "settings": { "foreground": "#C191FF" }
     },
     {
       "scope": ["meta.preprocessor", "entity.name.function.preprocessor"],
@@ -213,15 +213,15 @@
     },
     {
       "scope": ["string", "meta.embedded.assembly"],
-      "settings": { "foreground": "#ce9178" }
+      "settings": { "foreground": "#C8A16D" }
     },
     {
       "scope": "string.tag",
-      "settings": { "foreground": "#ce9178" }
+      "settings": { "foreground": "#C8A16D" }
     },
     {
       "scope": "string.value",
-      "settings": { "foreground": "#ce9178" }
+      "settings": { "foreground": "#C8A16D" }
     },
     {
       "scope": "string.regexp",
@@ -873,35 +873,7 @@
         "source.fsharp constant.language.boolean",
         "source.fsharp constant.character.escape",
         "source.fsharp variable.language",
-        "source.fsharp variable.language.this",
-        "text.html.cshtml keyword",
-        "text.html.cshtml keyword.control",
-        "text.html.cshtml keyword.other",
-        "text.html.cshtml keyword.operator.new",
-        "text.html.cshtml keyword.operator.delete",
-        "text.html.cshtml keyword.operator.expression",
-        "text.html.cshtml storage",
-        "text.html.cshtml storage.type",
-        "text.html.cshtml storage.modifier",
-        "text.html.cshtml constant.language",
-        "text.html.cshtml constant.language.boolean",
-        "text.html.cshtml constant.character.escape",
-        "text.html.cshtml variable.language",
-        "text.html.cshtml variable.language.this",
-        "text.aspnetcorerazor keyword",
-        "text.aspnetcorerazor keyword.control",
-        "text.aspnetcorerazor keyword.other",
-        "text.aspnetcorerazor keyword.operator.new",
-        "text.aspnetcorerazor keyword.operator.delete",
-        "text.aspnetcorerazor keyword.operator.expression",
-        "text.aspnetcorerazor storage",
-        "text.aspnetcorerazor storage.type",
-        "text.aspnetcorerazor storage.modifier",
-        "text.aspnetcorerazor constant.language",
-        "text.aspnetcorerazor constant.language.boolean",
-        "text.aspnetcorerazor constant.character.escape",
-        "text.aspnetcorerazor variable.language",
-        "text.aspnetcorerazor variable.language.this"
+        "source.fsharp variable.language.this"
       ],
       "settings": {
         "foreground": "#6C95EB"
@@ -929,19 +901,7 @@
         "source.fsharp entity.name.namespace",
         "source.fsharp support.type",
         "source.fsharp support.type.primitive",
-        "source.fsharp support.class",
-        "text.html.cshtml entity.name.type",
-        "text.html.cshtml entity.name.type.class",
-        "text.html.cshtml entity.name.type.interface",
-        "text.html.cshtml entity.name.class",
-        "text.html.cshtml support.type",
-        "text.html.cshtml support.class",
-        "text.aspnetcorerazor entity.name.type",
-        "text.aspnetcorerazor entity.name.type.class",
-        "text.aspnetcorerazor entity.name.type.interface",
-        "text.aspnetcorerazor entity.name.class",
-        "text.aspnetcorerazor support.type",
-        "text.aspnetcorerazor support.class"
+        "source.fsharp support.class"
       ],
       "settings": {
         "foreground": "#C191FF"
@@ -953,11 +913,7 @@
         "source.cs entity.name.type.enum",
         "source.cs entity.name.type.struct",
         "source.fsharp entity.name.type.enum",
-        "source.fsharp entity.name.type.struct",
-        "text.html.cshtml entity.name.type.enum",
-        "text.html.cshtml entity.name.type.struct",
-        "text.aspnetcorerazor entity.name.type.enum",
-        "text.aspnetcorerazor entity.name.type.struct"
+        "source.fsharp entity.name.type.struct"
       ],
       "settings": {
         "foreground": "#E2BFFF"
@@ -973,13 +929,7 @@
         "source.cs variable.other.enummember",
         "source.fsharp entity.name.variable.field",
         "source.fsharp entity.name.variable.property",
-        "source.fsharp variable.other.object.property",
-        "text.html.cshtml entity.name.variable.field",
-        "text.html.cshtml entity.name.variable.property",
-        "text.html.cshtml variable.other.object.property",
-        "text.aspnetcorerazor entity.name.variable.field",
-        "text.aspnetcorerazor entity.name.variable.property",
-        "text.aspnetcorerazor variable.other.object.property"
+        "source.fsharp variable.other.object.property"
       ],
       "settings": {
         "foreground": "#65C3CC"
@@ -989,9 +939,7 @@
       "name": "[.NET] Comments",
       "scope": [
         "source.cs comment",
-        "source.fsharp comment",
-        "text.html.cshtml comment",
-        "text.aspnetcorerazor comment"
+        "source.fsharp comment"
       ],
       "settings": {
         "foreground": "#85C46C"
@@ -1003,11 +951,7 @@
         "source.cs entity.name.function",
         "source.cs support.function",
         "source.fsharp entity.name.function",
-        "source.fsharp support.function",
-        "text.html.cshtml entity.name.function",
-        "text.html.cshtml support.function",
-        "text.aspnetcorerazor entity.name.function",
-        "text.aspnetcorerazor support.function"
+        "source.fsharp support.function"
       ],
       "settings": {
         "foreground": "#3ACC9B"
@@ -1021,11 +965,7 @@
         "source.cs variable.parameter",
         "source.fsharp variable",
         "source.fsharp variable.other",
-        "source.fsharp variable.parameter",
-        "text.html.cshtml variable",
-        "text.html.cshtml variable.other",
-        "text.aspnetcorerazor variable",
-        "text.aspnetcorerazor variable.other"
+        "source.fsharp variable.parameter"
       ],
       "settings": {
         "foreground": "#BDBDBD"
@@ -1040,13 +980,7 @@
         "source.cs string.interpolated",
         "source.fsharp string",
         "source.fsharp string.quoted.double",
-        "source.fsharp string.quoted.single",
-        "text.html.cshtml string",
-        "text.html.cshtml string.quoted.double",
-        "text.html.cshtml string.quoted.single",
-        "text.aspnetcorerazor string",
-        "text.aspnetcorerazor string.quoted.double",
-        "text.aspnetcorerazor string.quoted.single"
+        "source.fsharp string.quoted.single"
       ],
       "settings": {
         "foreground": "#C8A16D"
@@ -1056,9 +990,7 @@
       "name": "[.NET] Numbers",
       "scope": [
         "source.cs constant.numeric",
-        "source.fsharp constant.numeric",
-        "text.html.cshtml constant.numeric",
-        "text.aspnetcorerazor constant.numeric"
+        "source.fsharp constant.numeric"
       ],
       "settings": {
         "foreground": "#EC94C0"
@@ -1071,6 +1003,18 @@
       ],
       "settings": {
         "foreground": "#65C3CC"
+      }
+    },
+
+    {
+      "name": "[HTML] Text between tags",
+      "scope": [
+        "text.html.basic",
+        "text.html.cshtml",
+        "text.aspnetcorerazor"
+      ],
+      "settings": {
+        "foreground": "#BABABA"
       }
     }
   ],
