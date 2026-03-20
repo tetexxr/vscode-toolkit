@@ -204,23 +204,7 @@
       "settings": { "foreground": "#569cd6" }
     },
     {
-      "scope": "storage.type",
-      "settings": { "foreground": "#569cd6" }
-    },
-    {
-      "scope": ["storage.modifier", "keyword.operator.noexcept"],
-      "settings": { "foreground": "#569cd6" }
-    },
-    {
       "scope": ["string", "meta.embedded.assembly"],
-      "settings": { "foreground": "#C8A16D" }
-    },
-    {
-      "scope": "string.tag",
-      "settings": { "foreground": "#C8A16D" }
-    },
-    {
-      "scope": "string.value",
       "settings": { "foreground": "#C8A16D" }
     },
     {
@@ -243,10 +227,6 @@
     },
     {
       "scope": "keyword",
-      "settings": { "foreground": "#569cd6" }
-    },
-    {
-      "scope": "keyword.control",
       "settings": { "foreground": "#569cd6" }
     },
     {
@@ -847,33 +827,15 @@
       "name": "[.NET] Keywords",
       "scope": [
         "source.cs keyword",
-        "source.cs keyword.control",
-        "source.cs keyword.other",
-        "source.cs keyword.operator.new",
-        "source.cs keyword.operator.delete",
-        "source.cs keyword.operator.expression",
         "source.cs storage",
-        "source.cs storage.type",
-        "source.cs storage.modifier",
         "source.cs constant.language",
-        "source.cs constant.language.boolean",
         "source.cs constant.character.escape",
         "source.cs variable.language",
-        "source.cs variable.language.this",
         "source.fsharp keyword",
-        "source.fsharp keyword.control",
-        "source.fsharp keyword.other",
-        "source.fsharp keyword.operator.new",
-        "source.fsharp keyword.operator.delete",
-        "source.fsharp keyword.operator.expression",
         "source.fsharp storage",
-        "source.fsharp storage.type",
-        "source.fsharp storage.modifier",
         "source.fsharp constant.language",
-        "source.fsharp constant.language.boolean",
         "source.fsharp constant.character.escape",
-        "source.fsharp variable.language",
-        "source.fsharp variable.language.this"
+        "source.fsharp variable.language"
       ],
       "settings": {
         "foreground": "#6C95EB"
@@ -936,16 +898,6 @@
       }
     },
     {
-      "name": "[.NET] Comments",
-      "scope": [
-        "source.cs comment",
-        "source.fsharp comment"
-      ],
-      "settings": {
-        "foreground": "#85C46C"
-      }
-    },
-    {
       "name": "[.NET] Functions",
       "scope": [
         "source.cs entity.name.function",
@@ -969,21 +921,6 @@
       ],
       "settings": {
         "foreground": "#BDBDBD"
-      }
-    },
-    {
-      "name": "[.NET] Strings",
-      "scope": [
-        "source.cs string",
-        "source.cs string.quoted.double",
-        "source.cs string.quoted.single",
-        "source.cs string.interpolated",
-        "source.fsharp string",
-        "source.fsharp string.quoted.double",
-        "source.fsharp string.quoted.single"
-      ],
-      "settings": {
-        "foreground": "#C8A16D"
       }
     },
     {
@@ -1021,7 +958,7 @@
   "semanticHighlighting": true,
   "semanticTokenColors": {
     "newOperator": "#C586C0",
-    "stringLiteral": "#ce9178",
+    "stringLiteral": "#C8A16D",
     "customLiteral": "#DCDCAA",
     "numberLiteral": "#b5cea8",
 
@@ -1145,6 +1082,12 @@
     "decorator:javascriptreact": "#b3ae60",
     "decorator:vue": "#b3ae60",
 
+    "stringLiteral:javascript": "#6aab73",
+    "stringLiteral:typescript": "#6aab73",
+    "stringLiteral:typescriptreact": "#6aab73",
+    "stringLiteral:javascriptreact": "#6aab73",
+    "stringLiteral:vue": "#6aab73",
+
     "keyword:csharp": "#6C95EB",
     "keyword:fsharp": "#6C95EB",
     "keyword:razor": "#6C95EB",
@@ -1177,6 +1120,9 @@
     "enumMember:csharp": "#65C3CC",
     "function:csharp": "#3ACC9B",
     "method:csharp": "#3ACC9B",
+    "numberLiteral:csharp": "#EC94C0",
+    "newOperator:csharp": "#6C95EB",
+    "stringLiteral:csharp": "#C8A16D",
 
     "type:fsharp": "#C191FF",
     "class:fsharp": "#C191FF",
@@ -1189,6 +1135,9 @@
     "enumMember:fsharp": "#65C3CC",
     "function:fsharp": "#3ACC9B",
     "method:fsharp": "#3ACC9B",
+    "numberLiteral:fsharp": "#EC94C0",
+    "newOperator:fsharp": "#6C95EB",
+    "stringLiteral:fsharp": "#C8A16D",
 
     "type:razor": "#C191FF",
     "class:razor": "#C191FF",
