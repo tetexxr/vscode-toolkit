@@ -605,6 +605,8 @@
         "graphql": "file_graphql",
         "gql": "file_graphql",
         "test.ts": "file_test_ts",
+        "spec.ts": "file_test_ts",
+        "ispec.ts": "file_test_ts",
         "test.tsx": "file_test_tsx",
         "test.jsx": "file_test_jsx",
         "test.js": "file_test_js",
