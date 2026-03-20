@@ -24,6 +24,13 @@
         "path": "./themes/generic-dark-color-theme.json"
       }
     ],
+    "iconThemes": [
+      {
+        "id": "toolkit-jetbrains-icon-theme-dark",
+        "label": "Toolkit: JetBrains Dark Icons",
+        "path": "./themes/dark-jetbrains-icon-theme.json"
+      }
+    ],
     "commands": [
       {
         "command": "toolkit.changeCase",
