@@ -118,6 +118,24 @@ Supports multi-select — select several folders, right-click, and expand/collap
 |---|---|---|
 | `toolkit.expandRecursively.excludePatterns` | `[node_modules, .git, dist, ...]` | Folder names to skip |
 
+### JetBrains Rider Dark Theme
+
+A dark color theme inspired by JetBrains Rider's New UI. Includes syntax highlighting, UI colors, git decorations, and terminal colors matched to the Rider aesthetic.
+
+To activate it: `Cmd+K Cmd+T` (or `Ctrl+K Ctrl+T`) and select **Toolkit: JetBrains Rider Dark Theme**.
+
+**Recommended settings** for a full Rider-like experience:
+
+```json
+{
+  "explorer.compactFolders": false,
+  "workbench.tree.indent": 16,
+  "workbench.tree.renderIndentGuides": "always",
+  "editor.roundedSelection": false,
+  "editor.bracketPairColorization.enabled": false
+}
+```
+
 ## Development
 
 ### Prerequisites
