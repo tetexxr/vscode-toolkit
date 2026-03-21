@@ -363,6 +363,12 @@
         "file_pdf": {
             "iconPath": "./icons/file/pdf.svg"
         },
+        "file_word": {
+            "iconPath": "./icons/file/word.svg"
+        },
+        "file_excel": {
+            "iconPath": "./icons/file/excel.svg"
+        },
         "file_jinja": {
             "iconPath": "./icons/file/jinja_dark.svg"
         },
@@ -512,8 +518,8 @@
         "cts": "file_typescript",
         "mts": "file_typescript",
         "csv": "file_csv",
-        "xlsx": "file_csv",
-        "xls": "file_csv",
+        "xlsx": "file_excel",
+        "xls": "file_excel",
         "vue": "file_vue",
         "png": "file_image",
         "webp": "file_image",
@@ -629,6 +635,8 @@
         "html.j2": "file_jinja",
         "razor": "file_cshtml",
         "cmake": "file_cmake",
+        "doc": "file_word",
+        "docx": "file_word",
         "pdf": "file_pdf",
         "gohtml": "file_go_template",
         "gotmpl": "file_go_template",
