@@ -369,6 +369,15 @@
         "file_excel": {
             "iconPath": "./icons/file/excel.svg"
         },
+        "file_powerpoint": {
+            "iconPath": "./icons/file/powerpoint.svg"
+        },
+        "file_outlook": {
+            "iconPath": "./icons/file/outlook.svg"
+        },
+        "file_onenote": {
+            "iconPath": "./icons/file/onenote.svg"
+        },
         "file_jinja": {
             "iconPath": "./icons/file/jinja_dark.svg"
         },
@@ -637,6 +646,14 @@
         "cmake": "file_cmake",
         "doc": "file_word",
         "docx": "file_word",
+        "ppt": "file_powerpoint",
+        "pptx": "file_powerpoint",
+        "msg": "file_outlook",
+        "eml": "file_outlook",
+        "pst": "file_outlook",
+        "ost": "file_outlook",
+        "one": "file_onenote",
+        "onetoc2": "file_onenote",
         "pdf": "file_pdf",
         "gohtml": "file_go_template",
         "gotmpl": "file_go_template",
