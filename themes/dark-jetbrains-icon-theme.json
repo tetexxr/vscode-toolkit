@@ -364,19 +364,19 @@
             "iconPath": "./icons/file/pdf.svg"
         },
         "file_word": {
-            "iconPath": "./icons/file/word.svg"
+            "iconPath": "./icons/file/word_simple.svg"
         },
         "file_excel": {
-            "iconPath": "./icons/file/excel.svg"
+            "iconPath": "./icons/file/excel_simple.svg"
         },
         "file_powerpoint": {
-            "iconPath": "./icons/file/powerpoint.svg"
+            "iconPath": "./icons/file/powerpoint_simple.svg"
         },
         "file_outlook": {
-            "iconPath": "./icons/file/outlook.svg"
+            "iconPath": "./icons/file/outlook_simple.svg"
         },
         "file_onenote": {
-            "iconPath": "./icons/file/onenote.svg"
+            "iconPath": "./icons/file/onenote_simple.svg"
         },
         "file_jinja": {
             "iconPath": "./icons/file/jinja_dark.svg"
