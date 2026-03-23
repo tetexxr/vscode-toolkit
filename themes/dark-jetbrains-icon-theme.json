@@ -395,6 +395,12 @@
         },
         "file_groovy": {
             "iconPath": "./icons/file/groovy_dark.svg"
+        },
+        "file_prettier": {
+            "iconPath": "./icons/file/prettier.svg"
+        },
+        "file_resx": {
+            "iconPath": "./icons/file/resx_dark.svg"
         }
     },
     "file": "file_text",
@@ -454,6 +460,10 @@
         "Dockerfile.staging": "file_docker",
         "Dockerfile.prod": "file_docker",
         "Dockerfile.production": "file_docker",
+        "docker-compose.yml": "file_docker",
+        "docker-compose.yaml": "file_docker",
+        "docker-compose.override.yml": "file_docker",
+        "docker-compose.override.yaml": "file_docker",
         "Gemfile": "file_gemfile",
         "Gemfile.lock": "file_gemfile",
         "Makefile": "file_makefile",
@@ -492,6 +502,9 @@
         ".eslintrc.yml": "file_eslint",
         ".eslintrc.yaml": "file_eslint",
         ".eslintignore": "file_eslint",
+        "eslint.config.js": "file_eslint",
+        "eslint.config.ts": "file_eslint",
+        ".prettierrc.json": "file_prettier",
         "go.mod": "file_gomod",
         "go.sum": "file_gosum",
         "go.work": "file_gowork",
@@ -592,6 +605,8 @@
         "svelte": "file_svelte",
         "slim": "file_slim",
         "sln": "file_sln",
+        "slnx": "file_sln",
+        "resx": "file_resx",
         "rs": "file_rust",
         "cs": "file_cs",
         "cshtml": "file_cshtml",
