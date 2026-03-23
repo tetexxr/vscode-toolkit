@@ -230,3 +230,11 @@ VS Code will replace the previous version automatically.
 ```bash
 code --uninstall-extension tete.vscode-toolkit
 ```
+
+### One line command
+
+To uninstall the old version, build, package, and install the new version in one command:
+
+```bash
+code --uninstall-extension tete.vscode-toolkit && npx --yes vsce package --allow-missing-repository --skip-license && code --install-extension vscode-toolkit-0.1.0.vsix --force
+```
