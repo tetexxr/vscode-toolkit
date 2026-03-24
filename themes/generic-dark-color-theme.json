@@ -70,7 +70,11 @@
     "gitDecoration.renamedResourceForeground": "#6897BB",
     "gitDecoration.stageModifiedResourceForeground": "#6897BB",
     "gitDecoration.stageDeletedResourceForeground": "#D95B5B",
-    "gitDecoration.submoduleResourceForeground": "#6897BB"
+    "gitDecoration.submoduleResourceForeground": "#6897BB",
+    "diffEditor.insertedLineBackground": "#2D4A3A80",
+    "diffEditor.removedLineBackground": "#4D2E2E80",
+    "diffEditor.insertedTextBackground": "#2D4A3A80",
+    "diffEditor.removedTextBackground": "#4D2E2E80"
   },
   "tokenColors": [
 
