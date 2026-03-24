@@ -649,26 +649,18 @@
     {
       "name": "[JS/TS] Properties and object keys",
       "scope": [
-        "source.js variable.other.property",
-        "source.js variable.other.object.property",
         "source.js variable.other.constant.property",
         "source.js variable.other.enummember",
         "source.js meta.object-literal.key",
         "source.js meta.definition.property",
-        "source.ts variable.other.property",
-        "source.ts variable.other.object.property",
         "source.ts variable.other.constant.property",
         "source.ts variable.other.enummember",
         "source.ts meta.object-literal.key",
         "source.ts meta.definition.property",
-        "source.tsx variable.other.property",
-        "source.tsx variable.other.object.property",
         "source.tsx variable.other.constant.property",
         "source.tsx variable.other.enummember",
         "source.tsx meta.object-literal.key",
         "source.tsx meta.definition.property",
-        "source.js.jsx variable.other.property",
-        "source.js.jsx variable.other.object.property",
         "source.js.jsx variable.other.constant.property",
         "source.js.jsx variable.other.enummember",
         "source.js.jsx meta.object-literal.key",
@@ -692,6 +684,26 @@
       ],
       "settings": {
         "foreground": "#a9b7c5"
+      }
+    },
+    {
+      "name": "[JS/TS] Object references",
+      "scope": [
+        "source.js variable.other.object",
+        "source.js variable.other.object.property",
+        "source.js variable.other.property",
+        "source.ts variable.other.object",
+        "source.ts variable.other.object.property",
+        "source.ts variable.other.property",
+        "source.tsx variable.other.object",
+        "source.tsx variable.other.object.property",
+        "source.tsx variable.other.property",
+        "source.js.jsx variable.other.object",
+        "source.js.jsx variable.other.object.property",
+        "source.js.jsx variable.other.property"
+      ],
+      "settings": {
+        "foreground": "#BDBDBD"
       }
     },
     {
@@ -1004,11 +1016,11 @@
     "type:javascriptreact": "#bcbec3",
     "type:vue": "#bcbec3",
 
-    "type.defaultLibrary:javascript": { "foreground": "#bcbec3", "fontStyle": "italic" },
-    "type.defaultLibrary:typescript": { "foreground": "#bcbec3", "fontStyle": "italic" },
-    "type.defaultLibrary:typescriptreact": { "foreground": "#bcbec3", "fontStyle": "italic" },
-    "type.defaultLibrary:javascriptreact": { "foreground": "#bcbec3", "fontStyle": "italic" },
-    "type.defaultLibrary:vue": { "foreground": "#bcbec3", "fontStyle": "italic" },
+    "type.defaultLibrary:javascript": "#bcbec3",
+    "type.defaultLibrary:typescript": "#bcbec3",
+    "type.defaultLibrary:typescriptreact": "#bcbec3",
+    "type.defaultLibrary:javascriptreact": "#bcbec3",
+    "type.defaultLibrary:vue": "#bcbec3",
 
     "interface:javascript": "#bcbec3",
     "interface:typescript": "#bcbec3",
@@ -1016,11 +1028,11 @@
     "interface:javascriptreact": "#bcbec3",
     "interface:vue": "#bcbec3",
 
-    "interface.defaultLibrary:javascript": { "foreground": "#bcbec3", "fontStyle": "italic" },
-    "interface.defaultLibrary:typescript": { "foreground": "#bcbec3", "fontStyle": "italic" },
-    "interface.defaultLibrary:typescriptreact": { "foreground": "#bcbec3", "fontStyle": "italic" },
-    "interface.defaultLibrary:javascriptreact": { "foreground": "#bcbec3", "fontStyle": "italic" },
-    "interface.defaultLibrary:vue": { "foreground": "#bcbec3", "fontStyle": "italic" },
+    "interface.defaultLibrary:javascript": "#bcbec3",
+    "interface.defaultLibrary:typescript": "#bcbec3",
+    "interface.defaultLibrary:typescriptreact": "#bcbec3",
+    "interface.defaultLibrary:javascriptreact": "#bcbec3",
+    "interface.defaultLibrary:vue": "#bcbec3",
 
     "class:javascript": "#2ebaa3",
     "class:typescript": "#2ebaa3",
@@ -1034,11 +1046,11 @@
     "class.declaration:javascriptreact": "#bcbec3",
     "class.declaration:vue": "#bcbec3",
 
-    "class.defaultLibrary:javascript": { "foreground": "#c77dbb", "fontStyle": "italic" },
-    "class.defaultLibrary:typescript": { "foreground": "#c77dbb", "fontStyle": "italic" },
-    "class.defaultLibrary:typescriptreact": { "foreground": "#c77dbb", "fontStyle": "italic" },
-    "class.defaultLibrary:javascriptreact": { "foreground": "#c77dbb", "fontStyle": "italic" },
-    "class.defaultLibrary:vue": { "foreground": "#c77dbb", "fontStyle": "italic" },
+    "class.defaultLibrary:javascript": "#57a8f5",
+    "class.defaultLibrary:typescript": "#57a8f5",
+    "class.defaultLibrary:typescriptreact": "#57a8f5",
+    "class.defaultLibrary:javascriptreact": "#57a8f5",
+    "class.defaultLibrary:vue": "#57a8f5",
 
     "enum:javascript": "#bcbec3",
     "enum:typescript": "#bcbec3",
