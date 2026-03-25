@@ -162,7 +162,7 @@ To activate it: `Cmd+Shift+P` (or `Ctrl+Shift+P`) > `Preferences: File Icon Them
 ```bash
 git clone <repo-url>
 cd vscode-toolkit
-npm install
+npm install --ignore-scripts
 ```
 
 ### Build
