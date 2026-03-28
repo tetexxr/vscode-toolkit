@@ -37,6 +37,14 @@
     </div>
   </div>
 
+  <div id="search-bar">
+    <input id="search-input" type="text" placeholder="Find in document...">
+    <span id="search-info"></span>
+    <button id="search-prev" title="Previous">&#9650;</button>
+    <button id="search-next" title="Next">&#9660;</button>
+    <button id="search-close" title="Close">&times;</button>
+  </div>
+
   <div id="main">
     <div id="outline-panel"></div>
     <div id="viewer-container">
@@ -66,11 +74,16 @@
     var zoomLevelEl = $('zoom-level');
     var outlinePanel = $('outline-panel');
     var toggleOutlineBtn = $('toggle-outline');
+    var searchBar = $('search-bar');
+    var searchInput = $('search-input');
+    var searchInfo = $('search-info');
 
     var pdf = null;
     var scale = 1.0;
     var pages = [];
     var observer = null;
+    var searchResults = [];
+    var searchIndex = -1;
 
     function showError(msg) {
       loadingEl.style.display = 'none';
@@ -369,6 +382,150 @@
       outlinePanel.classList.toggle('open');
     };
 
+    // --- Search ---
+
+    function openSearch() {
+      searchBar.classList.add('open');
+      searchInput.focus();
+      searchInput.select();
+    }
+
+    function closeSearch() {
+      searchBar.classList.remove('open');
+      clearHighlights();
+      searchResults = [];
+      searchIndex = -1;
+      searchInfo.textContent = '';
+    }
+
+    function doSearch() {
+      var query = searchInput.value.trim().toLowerCase();
+      clearHighlights();
+      searchResults = [];
+      searchIndex = -1;
+
+      if (!query || !pdf) {
+        searchInfo.textContent = '';
+        return;
+      }
+
+      var chain = Promise.resolve();
+      for (var i = 1; i <= pdf.numPages; i++) {
+        (function(pageNum) {
+          chain = chain.then(function() {
+            return pdf.getPage(pageNum);
+          }).then(function(page) {
+            return page.getTextContent();
+          }).then(function(textContent) {
+            for (var j = 0; j < textContent.items.length; j++) {
+              var str = textContent.items[j].str;
+              if (!str) continue;
+              var lower = str.toLowerCase();
+              var pos = 0;
+              while ((pos = lower.indexOf(query, pos)) !== -1) {
+                searchResults.push({ pageNum: pageNum });
+                pos += query.length;
+              }
+            }
+          });
+        })(i);
+      }
+
+      chain.then(function() {
+        if (searchResults.length > 0) {
+          searchIndex = 0;
+          highlightResult();
+        } else {
+          searchInfo.textContent = 'No results';
+        }
+      });
+    }
+
+    function highlightResult() {
+      clearHighlights();
+      if (searchIndex < 0 || searchIndex >= searchResults.length) return;
+
+      var result = searchResults[searchIndex];
+      var info = pages[result.pageNum - 1];
+      if (!info.textLayer) {
+        goToPage(result.pageNum);
+        return;
+      }
+
+      // Count which occurrence on this page
+      var occurrenceOnPage = 0;
+      for (var i = 0; i < searchIndex; i++) {
+        if (searchResults[i].pageNum === result.pageNum) occurrenceOnPage++;
+      }
+
+      var query = searchInput.value.trim().toLowerCase();
+      var spans = info.textLayer.querySelectorAll('span');
+      var found = 0;
+
+      for (var s = 0; s < spans.length; s++) {
+        var text = spans[s].textContent;
+        var lower = text.toLowerCase();
+        var pos = 0;
+        while ((pos = lower.indexOf(query, pos)) !== -1) {
+          if (found === occurrenceOnPage) {
+            var textNode = spans[s].firstChild;
+            if (textNode && textNode.nodeType === 3) {
+              var range = document.createRange();
+              range.setStart(textNode, pos);
+              range.setEnd(textNode, pos + query.length);
+              var rects = range.getClientRects();
+              var pageRect = info.div.getBoundingClientRect();
+              for (var r = 0; r < rects.length; r++) {
+                var hl = document.createElement('div');
+                hl.className = 'search-highlight';
+                hl.style.cssText = 'position:absolute;left:' + (rects[r].left - pageRect.left) + 'px;top:' + (rects[r].top - pageRect.top) + 'px;width:' + rects[r].width + 'px;height:' + rects[r].height + 'px;';
+                info.div.appendChild(hl);
+              }
+              spans[s].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            searchInfo.textContent = (searchIndex + 1) + ' / ' + searchResults.length;
+            return;
+          }
+          found++;
+          pos += query.length;
+        }
+      }
+
+      searchInfo.textContent = (searchIndex + 1) + ' / ' + searchResults.length;
+    }
+
+    function clearHighlights() {
+      var els = document.querySelectorAll('.search-highlight');
+      for (var i = els.length - 1; i >= 0; i--) {
+        els[i].parentNode.removeChild(els[i]);
+      }
+    }
+
+    function searchNext() {
+      if (searchResults.length === 0) return;
+      searchIndex = (searchIndex + 1) % searchResults.length;
+      highlightResult();
+    }
+
+    function searchPrev() {
+      if (searchResults.length === 0) return;
+      searchIndex = (searchIndex - 1 + searchResults.length) % searchResults.length;
+      highlightResult();
+    }
+
+    $('search-close').onclick = closeSearch;
+    $('search-next').onclick = searchNext;
+    $('search-prev').onclick = searchPrev;
+
+    searchInput.addEventListener('input', doSearch);
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.shiftKey ? searchPrev() : searchNext();
+      } else if (e.key === 'Escape') {
+        closeSearch();
+      }
+    });
+
     // --- Controls ---
 
     $('prev-page').onclick = function() { goToPage(parseInt(pageInput.value) - 1); };
@@ -381,7 +538,8 @@
 
     document.addEventListener('keydown', function(e) {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === '=' || e.key === '+') { e.preventDefault(); zoom(0.1); }
+        if (e.key === 'f') { e.preventDefault(); openSearch(); }
+        else if (e.key === '=' || e.key === '+') { e.preventDefault(); zoom(0.1); }
         else if (e.key === '-') { e.preventDefault(); zoom(-0.1); }
         else if (e.key === '0') { e.preventDefault(); fitTo('auto'); }
       }
