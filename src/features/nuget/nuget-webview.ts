@@ -71,7 +71,7 @@ html, body {
 .nav-tabs { display: flex; gap: 0.25rem; }
 
 .nav-tab {
-  font-size: 0.85rem;
+  font-size: 1.2rem;
   background: transparent;
   color: var(--vscode-foreground);
   border: none;
@@ -87,7 +87,7 @@ html, body {
 }
 
 .project-name {
-  font-size: 0.8rem;
+  font-size: 1rem;
   opacity: 0.7;
   white-space: nowrap;
   overflow: hidden;
@@ -134,17 +134,17 @@ html, body {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.8rem;
+  font-size: 1rem;
   white-space: nowrap;
   cursor: pointer;
 }
 
-.source-label { font-size: 0.8rem; white-space: nowrap; }
+.source-label { font-size: 1rem; white-space: nowrap; }
 
 /* ── Buttons & Inputs ───────────────────────────── */
 
 .btn {
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   background: var(--vscode-button-background);
   color: var(--vscode-button-foreground);
   border: none;
@@ -225,7 +225,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.8rem;
+  font-size: 1rem;
   cursor: pointer;
 }
 
@@ -299,10 +299,10 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.pkg-name { font-weight: bold; }
-.pkg-author, .pkg-downloads { font-size: 0.75rem; margin-left: 0.4rem; opacity: 0.8; }
+.pkg-name { font-weight: bold; font-size: 1.2rem; }
+.pkg-author, .pkg-downloads { font-size: 0.95rem; margin-left: 0.4rem; opacity: 0.8; }
 .pkg-desc {
-  font-size: 0.8rem;
+  font-size: 1.05rem;
   opacity: 0.7;
   white-space: nowrap;
   overflow: hidden;
@@ -321,7 +321,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   align-items: center;
   gap: 0.35rem;
   white-space: nowrap;
-  font-size: 0.8rem;
+  font-size: 1.05rem;
 }
 .pkg-ver-installed { opacity: 0.6; text-decoration: line-through; }
 .pkg-action-btn {
@@ -337,7 +337,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   justify-content: center;
   height: 120px;
   opacity: 0.6;
-  font-size: 0.85rem;
+  font-size: 1.1rem;
 }
 
 /* ── Loading spinner ────────────────────────────── */
@@ -373,10 +373,10 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   justify-content: center;
   background: var(--vscode-badge-background, #333);
   color: var(--vscode-badge-foreground, #ccc);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: bold;
 }
-.detail-name { font-size: 1.15rem; font-weight: bold; }
+.detail-name { font-size: 1.45rem; font-weight: bold; }
 
 .detail-version-row {
   display: flex;
@@ -384,11 +384,11 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   gap: 0.35rem;
   margin-bottom: 0.6rem;
 }
-.detail-version-row .label { font-size: 0.75rem; font-weight: bold; width: 60px; flex-shrink: 0; }
+.detail-version-row .label { font-size: 0.95rem; font-weight: bold; width: 60px; flex-shrink: 0; }
 .detail-version-row select { flex: 1; }
 .detail-version-row .installed-badge {
   flex: 1;
-  font-size: 0.85rem;
+  font-size: 1.05rem;
   padding: 3px 6px;
   border: 1px solid var(--vscode-dropdown-border);
   background: var(--vscode-dropdown-background);
@@ -400,13 +400,13 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   border: 1px solid var(--vscode-inputValidation-warningBorder, #ff8c00);
   padding: 0.5rem;
   margin-bottom: 0.75rem;
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 .vuln-banner a { color: var(--vscode-textLink-foreground); }
 
-.detail-desc-label { font-size: 0.75rem; font-weight: bold; margin-top: 0.75rem; margin-bottom: 0.3rem; }
+.detail-desc-label { font-size: 0.95rem; font-weight: bold; margin-top: 0.75rem; margin-bottom: 0.3rem; }
 .detail-desc {
-  font-size: 0.85rem;
+  font-size: 1.1rem;
   white-space: pre-wrap;
   font-family: var(--vscode-font-family);
   line-height: 1.4;
@@ -414,14 +414,14 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 }
 
 .detail-meta { margin-top: 0.5rem; }
-.detail-row { margin-bottom: 0.4rem; font-size: 0.8rem; }
+.detail-row { margin-bottom: 0.4rem; font-size: 1rem; }
 .detail-row .label { font-weight: bold; margin-right: 0.25rem; }
 .detail-row a { color: var(--vscode-textLink-foreground); word-break: break-all; }
 
 .detail-deps { margin-top: 0.75rem; }
-.detail-deps summary { font-size: 0.75rem; font-weight: bold; cursor: pointer; margin-bottom: 0.3rem; }
-.dep-framework { font-size: 0.75rem; font-weight: bold; margin: 0.4rem 0 0.2rem; opacity: 0.8; }
-.dep-item { font-size: 0.8rem; margin-left: 0.75rem; opacity: 0.7; }
+.detail-deps summary { font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 0.3rem; }
+.dep-framework { font-size: 0.95rem; font-weight: bold; margin: 0.4rem 0 0.2rem; opacity: 0.8; }
+.dep-item { font-size: 1rem; margin-left: 0.75rem; opacity: 0.7; }
 
 .detail-empty {
   display: flex;
@@ -429,7 +429,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   justify-content: center;
   height: 100%;
   opacity: 0.5;
-  font-size: 0.85rem;
+  font-size: 1.05rem;
 }
 `;
 
