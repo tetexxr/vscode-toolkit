@@ -219,17 +219,20 @@ Supports properties with generics (`List<string>`), nullable types (`string?`), 
 
 View PDF files directly in VS Code. Uses Mozilla's PDF.js (pdfjs-dist) for high-fidelity rendering with a lightweight custom UI.
 
+Just open any `.pdf` file and it renders in an editor tab.
+
 **Features:**
 
 - Renders PDF pages to canvas with retina display support
 - Lazy page rendering via IntersectionObserver (only visible pages are rendered)
+- **Text selection and copy** — select text with the mouse and copy with `Ctrl+C`
+- **Find in document** — `Ctrl+F` to search, `Enter` / `Shift+Enter` to navigate results, `Escape` to close
+- **Clickable links** — HTTP, HTTPS, and mailto links in the PDF are clickable (highlighted on hover)
+- **Outline / bookmarks** — PDFs with a table of contents show a ☰ button in the toolbar to toggle a navigation sidebar
+- **Zoom** — buttons, `Ctrl+=` / `Ctrl+-` (10% steps), `Ctrl+mouse wheel`, fit to width/page, `Ctrl+0` to reset
 - Page navigation: previous/next buttons, go-to-page input
-- Zoom controls: zoom in/out, fit to width, fit to page
-- Keyboard shortcuts: `Ctrl+=` / `Ctrl+-` for zoom, `Ctrl+0` to reset
 - Auto-reload when the PDF file changes on disk
 - Respects VS Code theme colors
-
-Just open any `.pdf` file and it renders in an editor tab.
 
 **Settings:**
 
