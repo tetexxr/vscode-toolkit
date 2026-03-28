@@ -127,6 +127,37 @@ export interface PackageViewModel {
 
 export type Category = 'browse' | 'installed' | 'updates';
 
+// ── Overview view model ───────────────────────────────────────
+
+export interface OverviewPackage {
+  id: string;
+  installedVersion: string;
+  latestVersion: string;
+  isOutdated: boolean;
+}
+
+export interface OverviewProject {
+  name: string;
+  fsPath: string;
+  packages: OverviewPackage[];
+}
+
+// ── IPC: Overview Webview → Extension ─────────────────────────
+
+export type OverviewWebviewMessage =
+  | { command: 'ready' }
+  | { command: 'load-versions' }
+  | { command: 'update'; projectFsPath: string; packageId: string; version: string; sourceUrl: string }
+  | { command: 'open-settings' };
+
+// ── IPC: Extension → Overview Webview ─────────────────────────
+
+export type OverviewExtensionMessage =
+  | { type: 'overview-data'; projects: OverviewProject[]; loading: boolean }
+  | { type: 'overview-error'; message: string }
+  | { type: 'task-started'; packageId: string; action: string }
+  | { type: 'task-finished'; packageId: string; action: string; success: boolean };
+
 // ── IPC: Webview → Extension ───────────────────────────────
 
 export type WebviewMessage =

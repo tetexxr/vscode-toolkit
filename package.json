@@ -166,9 +166,21 @@
       {
         "command": "toolkit.nuget.managePackagesPalette",
         "title": "Toolkit: Manage NuGet Packages"
+      },
+      {
+        "command": "toolkit.nuget.solutionOverview",
+        "title": "Toolkit: NuGet Solution Overview",
+        "icon": "$(list-flat)"
       }
     ],
     "menus": {
+      "view/title": [
+        {
+          "command": "toolkit.nuget.solutionOverview",
+          "when": "view == nugetProjects",
+          "group": "navigation"
+        }
+      ],
       "explorer/context": [
         {
           "command": "toolkit.expandRecursively",

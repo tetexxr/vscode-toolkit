@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode';
 import { NugetPanel } from './nuget-panel';
+import { NugetOverviewPanel } from './nuget-overview-panel';
 import { pickProjectFile } from './nuget-project-loader';
 import { NugetTreeProvider } from './nuget-tree-provider';
 
@@ -21,6 +22,13 @@ export function registerNugetCommands(context: vscode.ExtensionContext): void {
     watcher,
     watcher.onDidCreate(() => treeProvider.refresh()),
     watcher.onDidDelete(() => treeProvider.refresh()),
+  );
+
+  // Solution overview
+  context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.nuget.solutionOverview', () => {
+      NugetOverviewPanel.createOrShow(context);
+    }),
   );
 
   // Right-click on .csproj/.fsproj/.vbproj in explorer
