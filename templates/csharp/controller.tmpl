@@ -1,0 +1,18 @@
+${namespaces}namespace ${namespace}
+{
+    [Route("[controller]")]
+    public class ${classname} : Controller
+    {
+        private readonly ILogger<${classname}> logger;
+
+        public ${classname}(ILogger<${classname}> logger)
+        {
+            this.logger = logger;
+        }
+
+        public IActionResult Index()
+        {
+            return View();
+        }${cursor}
+    }
+}
