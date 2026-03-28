@@ -615,12 +615,37 @@
 
     var thumbsBuilt = false;
 
+    thumbsPanel.tabIndex = 0;
+
     $('toggle-thumbs').onclick = function() {
       var isOpen = thumbsPanel.classList.toggle('open');
-      // Close outline if opening thumbs
       if (isOpen) outlinePanel.classList.remove('open');
       if (isOpen && !thumbsBuilt) buildThumbnails();
+      if (isOpen) thumbsPanel.focus();
     };
+
+    thumbsPanel.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        var next = Math.min(pdf.numPages, parseInt(pageInput.value) + 1);
+        goToPage(next);
+        updateThumbActive(next);
+        scrollThumbIntoView(next);
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        var prev = Math.max(1, parseInt(pageInput.value) - 1);
+        goToPage(prev);
+        updateThumbActive(prev);
+        scrollThumbIntoView(prev);
+      }
+    });
+
+    function scrollThumbIntoView(pageNum) {
+      var thumbs = thumbsPanel.querySelectorAll('.thumb');
+      if (thumbs[pageNum - 1]) {
+        thumbs[pageNum - 1].scrollIntoView({ behavior: 'instant', block: 'nearest' });
+      }
+    }
 
     function buildThumbnails() {
       if (!pdf || thumbsBuilt) return;
