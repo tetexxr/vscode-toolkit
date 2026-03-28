@@ -13,36 +13,39 @@
     font-src ${cspSource};
   ">
   <link rel="stylesheet" href="${viewerCssUri}">
+  <style nonce="${nonce}">
+    @font-face { font-family: 'codicon'; src: url('${codiconUri}') format('truetype'); }
+  </style>
   <title>PDF Viewer</title>
 </head>
 <body>
   <div id="toolbar">
     <div class="toolbar-group">
-      <button id="toggle-thumbs" title="Toggle Thumbnails" class="text-btn">&#9638;</button>
-      <button id="toggle-outline" title="Toggle Outline" class="text-btn" style="display:none">&#9776;</button>
+      <button id="toggle-thumbs" title="Toggle Thumbnails"><span class="icon">&#xebf3;</span></button>
+      <button id="toggle-outline" title="Toggle Outline" style="display:none"><span class="icon">&#xeb84;</span></button>
       <div class="tools-wrapper">
-        <button id="tools-btn" title="Tools">&#9881;</button>
+        <button id="tools-btn" title="Tools"><span class="icon">&#xeb51;</span></button>
         <div id="tools-menu">
-          <button id="go-first">Go to First Page</button>
-          <button id="go-last">Go to Last Page</button>
+          <button id="go-first"><span class="icon">&#xeab7;</span> Go to First Page</button>
+          <button id="go-last"><span class="icon">&#xeab4;</span> Go to Last Page</button>
           <div class="menu-separator"></div>
-          <button id="rotate-cw">&#8635; Rotate Clockwise</button>
-          <button id="rotate-ccw">&#8634; Rotate Counterclockwise</button>
+          <button id="rotate-cw"><span class="icon">&#xebb0;</span> Rotate Clockwise</button>
+          <button id="rotate-ccw"><span class="icon">&#xeae2;</span> Rotate Counterclockwise</button>
           <div class="menu-separator"></div>
-          <button id="doc-props">Document Properties</button>
+          <button id="doc-props"><span class="icon">&#xea74;</span> Document Properties</button>
         </div>
       </div>
     </div>
     <div class="toolbar-group">
-      <button id="prev-page" title="Previous Page">&#9664;</button>
+      <button id="prev-page" title="Previous Page"><span class="icon">&#xeab5;</span></button>
       <span class="page-info">
         <input id="page-input" type="number" min="1" value="1">
         <span>/ <span id="total-pages">-</span></span>
       </span>
-      <button id="next-page" title="Next Page">&#9654;</button>
+      <button id="next-page" title="Next Page"><span class="icon">&#xeab6;</span></button>
     </div>
     <div class="toolbar-group">
-      <button id="zoom-out" title="Zoom Out (Ctrl+-)">&#8722;</button>
+      <button id="zoom-out" title="Zoom Out (Ctrl+-)"><span class="icon">&#xeb3b;</span></button>
       <span id="zoom-level">100%</span>
       <select id="zoom-select">
         <option value="auto">Automatic</option>
@@ -55,7 +58,7 @@
         <option value="2">200%</option>
         <option value="custom" hidden>Custom</option>
       </select>
-      <button id="zoom-in" title="Zoom In (Ctrl+=)">+</button>
+      <button id="zoom-in" title="Zoom In (Ctrl+=)"><span class="icon">&#xea60;</span></button>
     </div>
   </div>
 
@@ -65,9 +68,9 @@
     <button id="search-word" class="toggle-btn" title="Whole Word">Whole Word</button>
     <button id="search-highlight-all" class="toggle-btn active" title="Highlight All">Highlight All</button>
     <span id="search-info"></span>
-    <button id="search-prev" title="Previous">&#9650;</button>
-    <button id="search-next" title="Next">&#9660;</button>
-    <button id="search-close" title="Close">&times;</button>
+    <button id="search-prev" title="Previous"><span class="icon">&#xeab7;</span></button>
+    <button id="search-next" title="Next"><span class="icon">&#xeab4;</span></button>
+    <button id="search-close" title="Close"><span class="icon">&#xea76;</span></button>
   </div>
 
   <div id="main">
@@ -85,7 +88,7 @@
     <div id="props-dialog">
       <div class="props-header">
         <span>Document Properties</span>
-        <button id="props-close">&times;</button>
+        <button id="props-close"><span class="icon">&#xea76;</span></button>
       </div>
       <table id="props-table"></table>
     </div>

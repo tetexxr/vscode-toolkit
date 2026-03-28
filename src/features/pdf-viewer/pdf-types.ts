@@ -14,6 +14,7 @@ export interface TemplateValues {
   viewerCssUri: string;
   cspSource: string;
   nonce: string;
+  codiconUri: string;
   scale: string;
   lastScale: string;
   lastScaleMode: string;

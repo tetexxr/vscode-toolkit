@@ -42,6 +42,7 @@ describe('buildTemplateHtml', () => {
     pdfJsUri: 'vscode-webview://id/pdf.min.mjs',
     workerUri: 'vscode-webview://id/pdf.worker.min.mjs',
     viewerCssUri: 'vscode-webview://id/viewer.css',
+    codiconUri: 'vscode-webview://id/codicon.ttf',
     cspSource: 'vscode-webview://*',
     nonce: 'abc123def456',
     scale: 'auto',

@@ -45,6 +45,7 @@ export class PdfPreview implements vscode.Disposable {
       pdfJsUri: webview.asWebviewUri(vscode.Uri.joinPath(this.libUri, 'pdf.min.mjs')).toString(),
       workerUri: webview.asWebviewUri(vscode.Uri.joinPath(this.libUri, 'pdf.worker.min.mjs')).toString(),
       viewerCssUri: webview.asWebviewUri(vscode.Uri.joinPath(this.libUri, 'viewer.css')).toString(),
+      codiconUri: webview.asWebviewUri(vscode.Uri.joinPath(this.libUri, 'codicon.ttf')).toString(),
       cspSource: webview.cspSource,
       nonce: crypto.randomBytes(16).toString('hex'),
       scale: parseScale(configScale),
