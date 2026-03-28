@@ -157,7 +157,23 @@
         var ctx = canvas.getContext('2d');
         ctx.scale(dpr, dpr);
 
-        return page.render({ canvasContext: ctx, viewport: vp }).promise;
+        var renderPromise = page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+        var textPromise = page.getTextContent().then(function(textContent) {
+          var textDiv = document.createElement('div');
+          textDiv.className = 'textLayer';
+          textDiv.style.setProperty('--total-scale-factor', scale);
+          info.div.appendChild(textDiv);
+          info.textLayer = textDiv;
+
+          return new pdfjsLib.TextLayer({
+            textContentSource: textContent,
+            container: textDiv,
+            viewport: vp,
+          }).render();
+        });
+
+        return Promise.all([renderPromise, textPromise]);
       }).then(function() {
         info.rendering = false;
       }).catch(function(e) {
@@ -202,6 +218,10 @@
           if (info.canvas) {
             info.div.removeChild(info.canvas);
             info.canvas = null;
+          }
+          if (info.textLayer) {
+            info.div.removeChild(info.textLayer);
+            info.textLayer = null;
           }
           info.rendering = false;
           chain = chain.then(function() {
