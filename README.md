@@ -226,10 +226,12 @@ Just open any `.pdf` file and it renders in an editor tab.
 - Renders PDF pages to canvas with retina display support
 - Lazy page rendering via IntersectionObserver (only visible pages are rendered)
 - **Text selection and copy** — select text with the mouse and copy with `Ctrl+C`
-- **Find in document** — `Ctrl+F` to search, `Enter` / `Shift+Enter` to navigate results, `Escape` to close
+- **Find in document** — `Ctrl+F` to search with Match Case, Whole Word, and Highlight All options. `Enter` / `Shift+Enter` to navigate results, `Escape` to close
 - **Clickable links** — HTTP, HTTPS, and mailto links in the PDF are clickable (highlighted on hover)
 - **Outline / bookmarks** — PDFs with a table of contents show a ☰ button in the toolbar to toggle a navigation sidebar
-- **Zoom** — buttons, `Ctrl+=` / `Ctrl+-` (10% steps), `Ctrl+mouse wheel`, fit to width/page, `Ctrl+0` to reset
+- **Page thumbnails** — toggle a sidebar with miniature previews of all pages. Click to navigate, use arrow keys to browse
+- **Zoom** — dropdown with presets (Automatic, Page Fit, Page Width, 50%–200%), buttons, `Ctrl+=` / `Ctrl+-` (10% steps), `Ctrl+mouse wheel`, `Ctrl+0` to reset
+- **Tools menu** — go to first/last page, rotate clockwise/counterclockwise, document properties (title, author, dates, etc.)
 - Page navigation: previous/next buttons, go-to-page input
 - Auto-reload when the PDF file changes on disk
 - Respects VS Code theme colors
