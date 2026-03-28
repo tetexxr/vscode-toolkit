@@ -498,6 +498,9 @@ const JS = /*js*/`
       case 'loading':
         state.loading = msg.loading;
         if (msg.loading && !state.packages) renderList();
+        if (msg.loading && state.selectedId && !state.selectedPkg) {
+          $details.innerHTML = '<div class="loading-message"><span class="spinner"></span> Loading package details...</div>';
+        }
         break;
       case 'task-started':
         break;
@@ -674,7 +677,9 @@ const JS = /*js*/`
       row.addEventListener('click', (e) => {
         if (e.target.closest('[data-action]') || e.target.closest('.pkg-checkbox')) return;
         state.selectedId = row.dataset.id;
+        state.selectedPkg = null;
         renderList();
+        $details.innerHTML = '<div class="loading-message"><span class="spinner"></span> Loading package details...</div>';
         post({ command: 'select-package', packageId: row.dataset.id });
       });
     });
@@ -759,7 +764,8 @@ const JS = /*js*/`
     html += '<select id="version-select">';
     if (pkg.versions && pkg.versions.length) {
       for (const v of pkg.versions) {
-        html += '<option value="' + esc(v.version) + '">' + esc(v.version) + '</option>';
+        const sel = v.version === pkg.version ? ' selected' : '';
+        html += '<option value="' + esc(v.version) + '"' + sel + '>' + esc(v.version) + '</option>';
       }
     } else {
       html += '<option value="' + esc(pkg.version) + '">' + esc(pkg.version) + '</option>';
@@ -768,8 +774,10 @@ const JS = /*js*/`
     html += '<button class="btn" data-detail-action="install">' + (pkg.isInstalled ? 'Update' : 'Install') + '</button>';
     html += '</div>';
 
-    // Get the selected version's details (default: first/latest)
-    const selectedVersion = (pkg.versions && pkg.versions.length) ? pkg.versions[0] : null;
+    // Get the selected version's details (matching pkg.version, or first)
+    const selectedVersion = (pkg.versions && pkg.versions.length)
+      ? (pkg.versions.find(v => v.version === pkg.version) || pkg.versions[0])
+      : null;
 
     if (selectedVersion) {
       // Vulnerabilities

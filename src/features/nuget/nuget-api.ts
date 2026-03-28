@@ -180,26 +180,29 @@ async function fetchSinglePackageMetadata(
 /**
  * Fetch all registration leafs from a RegistrationIndex.
  * Pages may have inline items, or may require additional HTTP calls.
+ * Uses Promise.allSettled to fetch pages in parallel while tolerating
+ * individual page failures.
  */
 async function fetchAllLeafs(
   index: RegistrationIndex,
   headers: Record<string, string>,
   timeout: number,
 ): Promise<RegistrationLeaf[]> {
-  const pageResults = await Promise.all(
+  const results = await Promise.allSettled(
     index.items.map(page => {
       if (page.items) {
         return Promise.resolve(page.items);
       }
-      // Fetch the page to get its leaf items
       return httpGetJson<RegistrationPage>({ url: page['@id'], headers, timeout })
         .then(p => p.items || []);
     })
   );
 
   const leafs: RegistrationLeaf[] = [];
-  for (const items of pageResults) {
-    leafs.push(...items);
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      leafs.push(...result.value);
+    }
   }
   return leafs;
 }

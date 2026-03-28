@@ -107,14 +107,18 @@ export class NugetMessageHandler implements vscode.Disposable {
     this.post({ type: 'loading', loading: true });
 
     const sources = this.getSources();
-    const source = sources[0]; // Use first source for details
+    const source = sources[0];
     const timeout = this.getConfig().requestTimeout;
 
-    const versions = await nugetApi.fetchPackageVersions(packageId, true, source, timeout);
+    // Fetch all versions (including prerelease) for the dropdown
+    const allVersions = await nugetApi.fetchPackageVersions(packageId, true, source, timeout);
     const project = await reloadProject(this.projectFsPath);
     const installed = project.packages.find(p => p.id === packageId);
 
-    const latest = versions[0];
+    // Use latest stable version as the "main" version for display
+    const latestStable = allVersions.find(v => !/-/.test(v.version.replace(/^\d+\.\d+\.\d+(?:\.\d+)?/, '')));
+    const latest = latestStable || allVersions[0];
+
     if (latest) {
       const pkg: PackageViewModel = {
         id: packageId,
@@ -127,7 +131,7 @@ export class NugetMessageHandler implements vscode.Disposable {
         installedVersion: installed?.version || '',
         isOutdated: !!installed && installed.version !== latest.version,
         sourceUrl: source.url,
-        versions,
+        versions: allVersions,
       };
       this.post({ type: 'package-details', pkg });
     }
