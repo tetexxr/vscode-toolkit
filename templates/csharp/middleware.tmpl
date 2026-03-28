@@ -2,17 +2,17 @@ ${namespaces}namespace ${namespace}
 {
     public class ${classname}
     {
-        private readonly RequestDelegate _next;
+        private readonly RequestDelegate next;
 
         public ${classname}(RequestDelegate next)
         {
-            _next = next;
+            this.next = next;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
             ${cursor}
-            await _next(context);
+            await next(context);
         }
     }
 }

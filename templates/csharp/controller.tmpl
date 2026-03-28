@@ -3,11 +3,11 @@ ${namespaces}namespace ${namespace}
     [Route("[controller]")]
     public class ${classname} : Controller
     {
-        private readonly ILogger<${classname}> _logger;
+        private readonly ILogger<${classname}> logger;
 
         public ${classname}(ILogger<${classname}> logger)
         {
-            _logger = logger;
+            this.logger = logger;
         }
 
         public IActionResult Index()
