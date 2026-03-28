@@ -12,6 +12,7 @@ import { generateWebviewHtml } from './nuget-webview';
 export class NugetPanel implements vscode.Disposable {
   private static instances = new Map<string, NugetPanel>();
 
+  private readonly key: string;
   private panel: vscode.WebviewPanel;
   private messageHandler: NugetMessageHandler;
   private disposables: vscode.Disposable[] = [];
@@ -31,6 +32,7 @@ export class NugetPanel implements vscode.Disposable {
   }
 
   private constructor(context: vscode.ExtensionContext, projectFileUri: vscode.Uri) {
+    this.key = projectFileUri.fsPath;
     const projectName = path.basename(projectFileUri.fsPath);
 
     this.panel = vscode.window.createWebviewPanel(
@@ -53,13 +55,7 @@ export class NugetPanel implements vscode.Disposable {
   }
 
   public dispose(): void {
-    // Remove from instances map
-    for (const [key, instance] of NugetPanel.instances) {
-      if (instance === this) {
-        NugetPanel.instances.delete(key);
-        break;
-      }
-    }
+    NugetPanel.instances.delete(this.key);
 
     this.messageHandler.dispose();
     this.panel.dispose();
