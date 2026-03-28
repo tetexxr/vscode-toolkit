@@ -60,6 +60,9 @@ export class NugetOverviewHandler implements vscode.Disposable {
       projects.push({ name: project.name, fsPath: project.fsPath, packages: overviewPkgs });
     }
 
+    // Sort projects alphabetically
+    projects.sort((a, b) => a.name.localeCompare(b.name));
+
     // Send initial data immediately (without versions)
     this.post({ type: 'overview-data', projects, loading: loadVersions });
 
