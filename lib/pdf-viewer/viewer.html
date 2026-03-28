@@ -48,6 +48,9 @@
 
   <div id="search-bar">
     <input id="search-input" type="text" placeholder="Find in document...">
+    <button id="search-case" class="toggle-btn" title="Match Case">Aa</button>
+    <button id="search-word" class="toggle-btn" title="Whole Word">W</button>
+    <button id="search-highlight-all" class="toggle-btn active" title="Highlight All">All</button>
     <span id="search-info"></span>
     <button id="search-prev" title="Previous">&#9650;</button>
     <button id="search-next" title="Next">&#9660;</button>
@@ -87,6 +90,9 @@
     var searchBar = $('search-bar');
     var searchInput = $('search-input');
     var searchInfo = $('search-info');
+    var searchCaseBtn = $('search-case');
+    var searchWordBtn = $('search-word');
+    var searchHighlightBtn = $('search-highlight-all');
 
     var pdf = null;
     var scale = 1.0;
@@ -411,8 +417,29 @@
       searchInfo.textContent = '';
     }
 
+    function matchCase() { return searchCaseBtn.classList.contains('active'); }
+    function wholeWord() { return searchWordBtn.classList.contains('active'); }
+    function highlightAll() { return searchHighlightBtn.classList.contains('active'); }
+
+    function findMatches(text, query) {
+      var results = [];
+      var src = matchCase() ? text : text.toLowerCase();
+      var q = matchCase() ? query : query.toLowerCase();
+      var pos = 0;
+      while ((pos = src.indexOf(q, pos)) !== -1) {
+        if (wholeWord()) {
+          var before = pos > 0 ? src[pos - 1] : ' ';
+          var after = pos + q.length < src.length ? src[pos + q.length] : ' ';
+          if (/\w/.test(before) || /\w/.test(after)) { pos += q.length; continue; }
+        }
+        results.push(pos);
+        pos += q.length;
+      }
+      return results;
+    }
+
     function doSearch() {
-      var query = searchInput.value.trim().toLowerCase();
+      var query = searchInput.value.trim();
       clearHighlights();
       searchResults = [];
       searchIndex = -1;
@@ -433,11 +460,9 @@
             for (var j = 0; j < textContent.items.length; j++) {
               var str = textContent.items[j].str;
               if (!str) continue;
-              var lower = str.toLowerCase();
-              var pos = 0;
-              while ((pos = lower.indexOf(query, pos)) !== -1) {
+              var matches = findMatches(str, query);
+              for (var m = 0; m < matches.length; m++) {
                 searchResults.push({ pageNum: pageNum });
-                pos += query.length;
               }
             }
           });
@@ -447,40 +472,55 @@
       chain.then(function() {
         if (searchResults.length > 0) {
           searchIndex = 0;
-          highlightResult();
+          showSearchResult();
         } else {
           searchInfo.textContent = 'No results';
         }
       });
     }
 
-    function highlightResult() {
+    function showSearchResult() {
       clearHighlights();
-      if (searchIndex < 0 || searchIndex >= searchResults.length) return;
+      if (searchResults.length === 0) return;
 
-      var result = searchResults[searchIndex];
-      var info = pages[result.pageNum - 1];
-      if (!info.textLayer) {
-        goToPage(result.pageNum);
-        return;
+      var query = searchInput.value.trim();
+      var doHighlightAll = highlightAll();
+
+      // Collect pages to highlight
+      var pagesToHighlight = {};
+      if (doHighlightAll) {
+        for (var i = 0; i < searchResults.length; i++) {
+          pagesToHighlight[searchResults[i].pageNum] = true;
+        }
+      } else {
+        pagesToHighlight[searchResults[searchIndex].pageNum] = true;
       }
 
-      // Count which occurrence on this page
+      // Current result's page occurrence
+      var currentPage = searchResults[searchIndex].pageNum;
       var occurrenceOnPage = 0;
       for (var i = 0; i < searchIndex; i++) {
-        if (searchResults[i].pageNum === result.pageNum) occurrenceOnPage++;
+        if (searchResults[i].pageNum === currentPage) occurrenceOnPage++;
       }
 
-      var query = searchInput.value.trim().toLowerCase();
-      var spans = info.textLayer.querySelectorAll('span');
-      var found = 0;
+      for (var pn in pagesToHighlight) {
+        var pageNum = parseInt(pn);
+        var info = pages[pageNum - 1];
+        if (!info.textLayer) continue;
 
-      for (var s = 0; s < spans.length; s++) {
-        var text = spans[s].textContent;
-        var lower = text.toLowerCase();
-        var pos = 0;
-        while ((pos = lower.indexOf(query, pos)) !== -1) {
-          if (found === occurrenceOnPage) {
+        var spans = info.textLayer.querySelectorAll('span');
+        var pageOccurrence = 0;
+
+        for (var s = 0; s < spans.length; s++) {
+          var text = spans[s].textContent;
+          var matches = findMatches(text, query);
+
+          for (var m = 0; m < matches.length; m++) {
+            var pos = matches[m];
+            var isCurrent = (pageNum === currentPage && pageOccurrence === occurrenceOnPage);
+
+            if (!isCurrent && !doHighlightAll) { pageOccurrence++; continue; }
+
             var textNode = spans[s].firstChild;
             if (textNode && textNode.nodeType === 3) {
               var range = document.createRange();
@@ -490,17 +530,18 @@
               var pageRect = info.div.getBoundingClientRect();
               for (var r = 0; r < rects.length; r++) {
                 var hl = document.createElement('div');
-                hl.className = 'search-highlight';
+                hl.className = isCurrent ? 'search-highlight current' : 'search-highlight';
                 hl.style.cssText = 'position:absolute;left:' + (rects[r].left - pageRect.left) + 'px;top:' + (rects[r].top - pageRect.top) + 'px;width:' + rects[r].width + 'px;height:' + rects[r].height + 'px;';
                 info.div.appendChild(hl);
               }
-              spans[s].scrollIntoView({ behavior: 'instant', block: 'center' });
+
+              if (isCurrent) {
+                spans[s].scrollIntoView({ behavior: 'instant', block: 'center' });
+              }
             }
-            searchInfo.textContent = (searchIndex + 1) + ' / ' + searchResults.length;
-            return;
+
+            pageOccurrence++;
           }
-          found++;
-          pos += query.length;
         }
       }
 
@@ -517,18 +558,22 @@
     function searchNext() {
       if (searchResults.length === 0) return;
       searchIndex = (searchIndex + 1) % searchResults.length;
-      highlightResult();
+      showSearchResult();
     }
 
     function searchPrev() {
       if (searchResults.length === 0) return;
       searchIndex = (searchIndex - 1 + searchResults.length) % searchResults.length;
-      highlightResult();
+      showSearchResult();
     }
 
     $('search-close').onclick = closeSearch;
     $('search-next').onclick = searchNext;
     $('search-prev').onclick = searchPrev;
+
+    searchCaseBtn.onclick = function() { searchCaseBtn.classList.toggle('active'); doSearch(); };
+    searchWordBtn.onclick = function() { searchWordBtn.classList.toggle('active'); doSearch(); };
+    searchHighlightBtn.onclick = function() { searchHighlightBtn.classList.toggle('active'); showSearchResult(); };
 
     searchInput.addEventListener('input', doSearch);
     searchInput.addEventListener('keydown', function(e) {

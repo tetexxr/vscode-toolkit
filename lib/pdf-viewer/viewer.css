@@ -151,11 +151,28 @@ body {
   background: var(--vscode-toolbar-hoverBackground, #5a5d5e50);
 }
 
+.toggle-btn {
+  font-size: 11px !important;
+  padding: 2px 5px !important;
+  opacity: 0.5;
+}
+
+.toggle-btn.active {
+  opacity: 1;
+  background: var(--vscode-toolbar-hoverBackground, #5a5d5e50) !important;
+  border-color: var(--vscode-focusBorder, #007fd4) !important;
+}
+
 .search-highlight {
-  background: rgba(255, 200, 0, 0.45);
+  background: rgba(255, 200, 0, 0.3);
   border-radius: 2px;
   pointer-events: none;
   z-index: 2;
+}
+
+.search-highlight.current {
+  background: rgba(255, 150, 0, 0.6);
+  outline: 1px solid rgba(255, 150, 0, 0.8);
 }
 
 /* Main layout */
