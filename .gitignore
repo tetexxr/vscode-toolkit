@@ -2,3 +2,5 @@ out/
 node_modules/
 *.vsix
 .vscode-test/
+lib/pdf-viewer/pdf.min.mjs
+lib/pdf-viewer/pdf.worker.min.mjs

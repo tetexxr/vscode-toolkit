@@ -215,6 +215,33 @@ Two refactoring code actions available via `Ctrl+.` (or `Cmd+.`) in C# files:
 
 Supports properties with generics (`List<string>`), nullable types (`string?`), arrays (`int[]`), `init` accessors, and the `required` modifier.
 
+### PDF Viewer
+
+View PDF files directly in VS Code. Uses Mozilla's PDF.js (pdfjs-dist) for high-fidelity rendering with a lightweight custom UI.
+
+Just open any `.pdf` file and it renders in an editor tab.
+
+**Features:**
+
+- Renders PDF pages to canvas with retina display support
+- Lazy page rendering via IntersectionObserver (only visible pages are rendered)
+- **Text selection and copy** — select text with the mouse and copy with `Ctrl+C`
+- **Find in document** — `Ctrl+F` to search with Match Case, Whole Word, and Highlight All options. `Enter` / `Shift+Enter` to navigate results, `Escape` to close
+- **Clickable links** — HTTP, HTTPS, and mailto links in the PDF are clickable (highlighted on hover)
+- **Outline / bookmarks** — PDFs with a table of contents show a ☰ button in the toolbar to toggle a navigation sidebar
+- **Page thumbnails** — toggle a sidebar with miniature previews of all pages. Click to navigate, use arrow keys to browse
+- **Zoom** — dropdown with presets (Automatic, Page Fit, Page Width, 50%–200%), buttons, `Ctrl+=` / `Ctrl+-` (10% steps), `Ctrl+mouse wheel`, `Ctrl+0` to reset
+- **Tools menu** — go to first/last page, rotate clockwise/counterclockwise, document properties (title, author, dates, etc.)
+- Page navigation: previous/next buttons, go-to-page input
+- Auto-reload when the PDF file changes on disk
+- Respects VS Code theme colors
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.pdfViewer.scale` | `auto` | Default zoom level (`auto`, `page-actual`, `page-fit`, `page-width`, or a numeric value like `1.5`) |
+
 ### Generic Dark Theme
 
 A dark color theme that combines the best of three worlds. Built on top of VS Code's Dark+ as a base, it applies language-specific syntax highlighting inspired by JetBrains IDEs:
@@ -284,7 +311,7 @@ Run the unit test suite:
 npm test
 ```
 
-Tests cover all pure logic in `src/utils/` and `src/features/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns, C# namespace detection, template building, file-scoped namespace conversion, npm intellisense context detection).
+Tests cover all pure logic in `src/utils/` and `src/features/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns, C# namespace detection, template building, file-scoped namespace conversion, npm intellisense context detection, PDF viewer scale parsing and template rendering).
 
 ### Package
 
@@ -333,7 +360,7 @@ code --uninstall-extension tete.vscode-toolkit
 ```bash
 npm outdated
 npx npm-check-updates -u
-npm install
+npm install --ignore-scripts
 npm run compile
 npm test
 ```
