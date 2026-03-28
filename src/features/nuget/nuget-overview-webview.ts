@@ -61,6 +61,9 @@ html, body {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-size: 0.9rem;
   background: var(--vscode-button-background);
   color: var(--vscode-button-foreground);
