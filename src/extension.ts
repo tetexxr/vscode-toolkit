@@ -8,6 +8,7 @@ import { registerExpandRecursivelyCommands } from './features/expand-recursively
 import { registerNugetCommands } from './features/nuget/nuget';
 import { registerCSharpCommands } from './features/csharp/csharp';
 import { registerNpmIntellisenseCommands } from './features/npm-intellisense';
+import { registerPdfViewer } from './features/pdf-viewer/pdf-provider';
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context);
@@ -19,6 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerNugetCommands(context);
   registerCSharpCommands(context);
   registerNpmIntellisenseCommands(context);
+  registerPdfViewer(context);
 }
 
 export function deactivate() {}
