@@ -358,7 +358,10 @@
                 "description": "Authorization header value (e.g., 'Basic ...', 'Bearer ...')."
               }
             },
-            "required": ["name", "url"]
+            "required": [
+              "name",
+              "url"
+            ]
           },
           "default": [
             {
@@ -386,7 +389,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "vsce package",
-    "test": "mocha --require ts-node/register 'test/**/*.test.ts'"
+    "test": "mocha --require tsx 'test/**/*.test.ts'"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -394,7 +397,7 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^2.24.0",
     "mocha": "^11.7.5",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.0"
   }
 }
