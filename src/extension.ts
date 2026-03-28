@@ -5,6 +5,7 @@ import { registerSlugCommands } from './features/slug';
 import { registerOpenInGitHubCommands } from './features/open-in-github';
 import { registerFormatFilesCommands } from './features/format-files';
 import { registerExpandRecursivelyCommands } from './features/expand-recursively';
+import { registerNugetCommands } from './features/nuget/nuget';
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context);
@@ -13,6 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerOpenInGitHubCommands(context);
   registerFormatFilesCommands(context);
   registerExpandRecursivelyCommands(context);
+  registerNugetCommands(context);
 }
 
 export function deactivate() {}

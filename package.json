@@ -141,6 +141,14 @@
       {
         "command": "toolkit.openInGitHub.explorerFile",
         "title": "Toolkit: Open in GitHub"
+      },
+      {
+        "command": "toolkit.nuget.managePackages",
+        "title": "Toolkit: Manage NuGet Packages"
+      },
+      {
+        "command": "toolkit.nuget.managePackagesPalette",
+        "title": "Toolkit: Manage NuGet Packages"
       }
     ],
     "menus": {
@@ -164,6 +172,17 @@
           "command": "toolkit.openInGitHub.explorerFile",
           "when": "explorerResourceIsRoot == false",
           "group": "navigation@13"
+        },
+        {
+          "command": "toolkit.nuget.managePackages",
+          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
+          "group": "navigation@14"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "toolkit.nuget.managePackages",
+          "when": "false"
         }
       ],
       "editor/context": [
@@ -291,6 +310,44 @@
           "type": "boolean",
           "default": true,
           "description": "Convert slug to lowercase."
+        },
+        "toolkit.nuget.sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name for this package source."
+              },
+              "url": {
+                "type": "string",
+                "description": "NuGet V3 service index URL (index.json)."
+              },
+              "authorizationHeader": {
+                "type": "string",
+                "description": "Authorization header value (e.g., 'Basic ...', 'Bearer ...')."
+              }
+            },
+            "required": ["name", "url"]
+          },
+          "default": [
+            {
+              "name": "nuget.org",
+              "url": "https://api.nuget.org/v3/index.json"
+            }
+          ],
+          "description": "NuGet package sources. Each source needs a name and a V3 service index URL."
+        },
+        "toolkit.nuget.requestTimeout": {
+          "type": "number",
+          "default": 10000,
+          "description": "HTTP request timeout in milliseconds for NuGet API calls."
+        },
+        "toolkit.nuget.defaultPrerelease": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include prerelease packages by default when browsing."
         }
       }
     }
