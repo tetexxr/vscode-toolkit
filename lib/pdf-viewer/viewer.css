@@ -63,15 +63,20 @@ body {
   color: var(--vscode-descriptionForeground, #999);
 }
 
-#page-input {
-  width: 40px;
-  text-align: center;
+#page-input,
+#zoom-select,
+#search-input {
   background: var(--vscode-input-background, #3c3c3c);
   color: var(--vscode-input-foreground, #ccc);
   border: 1px solid var(--vscode-input-border, #3c3c3c);
   border-radius: 3px;
-  padding: 2px 4px;
   font-size: 12px;
+}
+
+#page-input {
+  width: 40px;
+  text-align: center;
+  padding: 2px 4px;
   -moz-appearance: textfield;
 }
 
@@ -89,10 +94,6 @@ body {
 }
 
 #zoom-select {
-  background: var(--vscode-input-background, #3c3c3c);
-  color: var(--vscode-input-foreground, #ccc);
-  border: 1px solid var(--vscode-input-border, #3c3c3c);
-  border-radius: 3px;
   padding: 2px 4px;
   font-size: 11px;
   cursor: pointer;
@@ -230,12 +231,7 @@ body {
 #search-input {
   flex: 1;
   max-width: 260px;
-  background: var(--vscode-input-background, #3c3c3c);
-  color: var(--vscode-input-foreground, #ccc);
-  border: 1px solid var(--vscode-input-border, #3c3c3c);
-  border-radius: 3px;
   padding: 3px 8px;
-  font-size: 12px;
   outline: none;
 }
 
@@ -296,15 +292,21 @@ body {
   overflow: hidden;
 }
 
-/* Thumbnails */
+/* Side panels (shared) */
 
-#thumbs-panel {
+#thumbs-panel,
+#outline-panel {
   display: none;
-  width: 180px;
   flex-shrink: 0;
   overflow-y: auto;
   background: var(--vscode-sideBar-background, #252526);
   border-right: 1px solid var(--vscode-sideBar-border, #454545);
+}
+
+/* Thumbnails */
+
+#thumbs-panel {
+  width: 180px;
   padding: 8px;
   gap: 8px;
 }
@@ -348,12 +350,7 @@ body {
 /* Outline */
 
 #outline-panel {
-  display: none;
   width: 240px;
-  flex-shrink: 0;
-  overflow-y: auto;
-  background: var(--vscode-sideBar-background, #252526);
-  border-right: 1px solid var(--vscode-sideBar-border, #454545);
   padding: 8px 0;
   font-size: 12px;
 }
@@ -523,28 +520,25 @@ body {
 
 /* Loading & Error */
 
-#loading {
-  display: flex;
+#loading,
+#error {
   align-items: center;
   justify-content: center;
   position: absolute;
   inset: 0;
   font-size: 14px;
-  color: var(--vscode-descriptionForeground, #999);
   background: var(--vscode-editor-background, #1e1e1e);
   z-index: 10;
 }
 
+#loading {
+  display: flex;
+  color: var(--vscode-descriptionForeground, #999);
+}
+
 #error {
   display: none;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  inset: 0;
-  font-size: 14px;
   color: var(--vscode-errorForeground, #f48771);
-  background: var(--vscode-editor-background, #1e1e1e);
   padding: 32px;
   text-align: center;
-  z-index: 10;
 }

@@ -128,6 +128,23 @@
     var activeScaleMode = INITIAL_SCALE;
     var rotation = 0;
 
+    function vpOpts(s) { return { scale: s, rotation: rotation }; }
+
+    function clearPageLayers(info) {
+      if (info.canvas) { info.div.removeChild(info.canvas); info.canvas = null; }
+      if (info.textLayer) { info.div.removeChild(info.textLayer); info.textLayer = null; }
+      if (info.linkLayer) { info.div.removeChild(info.linkLayer); info.linkLayer = null; }
+      info.rendering = false;
+    }
+
+    function forEachPage(count, fn) {
+      var chain = Promise.resolve();
+      for (var i = 0; i < count; i++) {
+        (function(idx) { chain = chain.then(function() { return fn(idx); }); })(i);
+      }
+      return chain;
+    }
+
     function showError(msg) {
       loadingEl.style.display = 'none';
       errorEl.style.display = 'flex';
@@ -149,7 +166,7 @@
         pageInput.max = pdf.numPages;
         return pdf.getPage(1);
       }).then(function(firstPage) {
-        var vp = firstPage.getViewport({ scale: 1.0, rotation: rotation });
+        var vp = firstPage.getViewport(vpOpts(1.0));
         scale = resolveScale(vp, INITIAL_SCALE);
         updateZoomDisplay();
         return createPagePlaceholders();
@@ -168,24 +185,19 @@
     }
 
     function createPagePlaceholders() {
-      var chain = Promise.resolve();
-      for (var i = 1; i <= pdf.numPages; i++) {
-        (function(pageNum) {
-          chain = chain.then(function() {
-            return pdf.getPage(pageNum);
-          }).then(function(page) {
-            var vp = page.getViewport({ scale: scale, rotation: rotation });
-            var div = document.createElement('div');
-            div.className = 'page';
-            div.dataset.pageNumber = String(pageNum);
-            div.style.width = Math.floor(vp.width) + 'px';
-            div.style.height = Math.floor(vp.height) + 'px';
-            viewer.appendChild(div);
-            pages.push({ div: div, canvas: null, rendering: false, pageNum: pageNum });
-          });
-        })(i);
-      }
-      return chain;
+      return forEachPage(pdf.numPages, function(idx) {
+        var pageNum = idx + 1;
+        return pdf.getPage(pageNum).then(function(page) {
+          var vp = page.getViewport(vpOpts(scale));
+          var div = document.createElement('div');
+          div.className = 'page';
+          div.dataset.pageNumber = String(pageNum);
+          div.style.width = Math.floor(vp.width) + 'px';
+          div.style.height = Math.floor(vp.height) + 'px';
+          viewer.appendChild(div);
+          pages.push({ div: div, canvas: null, rendering: false, pageNum: pageNum });
+        });
+      });
     }
 
     // --- Lazy rendering ---
@@ -212,7 +224,7 @@
       info.rendering = true;
 
       pdf.getPage(num).then(function(page) {
-        var vp = page.getViewport({ scale: scale, rotation: rotation });
+        var vp = page.getViewport(vpOpts(scale));
         var dpr = window.devicePixelRatio || 1;
 
         var canvas = document.createElement('canvas');
@@ -311,33 +323,16 @@
       if (!pdf) return;
       var scrollRatio = container.scrollTop / (container.scrollHeight || 1);
 
-      var chain = Promise.resolve();
-      for (var i = 0; i < pages.length; i++) {
-        (function(info) {
-          if (info.canvas) {
-            info.div.removeChild(info.canvas);
-            info.canvas = null;
-          }
-          if (info.textLayer) {
-            info.div.removeChild(info.textLayer);
-            info.textLayer = null;
-          }
-          if (info.linkLayer) {
-            info.div.removeChild(info.linkLayer);
-            info.linkLayer = null;
-          }
-          info.rendering = false;
-          chain = chain.then(function() {
-            return pdf.getPage(info.pageNum);
-          }).then(function(page) {
-            var vp = page.getViewport({ scale: scale, rotation: rotation });
-            info.div.style.width = Math.floor(vp.width) + 'px';
-            info.div.style.height = Math.floor(vp.height) + 'px';
-          });
-        })(pages[i]);
-      }
+      for (var i = 0; i < pages.length; i++) clearPageLayers(pages[i]);
 
-      chain.then(function() {
+      forEachPage(pages.length, function(idx) {
+        var info = pages[idx];
+        return pdf.getPage(info.pageNum).then(function(page) {
+          var vp = page.getViewport(vpOpts(scale));
+          info.div.style.width = Math.floor(vp.width) + 'px';
+          info.div.style.height = Math.floor(vp.height) + 'px';
+        });
+      }).then(function() {
         setupObserver();
         requestAnimationFrame(function() {
           container.scrollTop = scrollRatio * container.scrollHeight;
@@ -356,7 +351,7 @@
     function fitTo(preset) {
       if (!pdf) return;
       pdf.getPage(1).then(function(page) {
-        var vp = page.getViewport({ scale: 1.0, rotation: rotation });
+        var vp = page.getViewport(vpOpts(1.0));
         scale = resolveScale(vp, preset);
         updateZoomDisplay();
         rerender();
@@ -476,27 +471,21 @@
         return;
       }
 
-      var chain = Promise.resolve();
-      for (var i = 1; i <= pdf.numPages; i++) {
-        (function(pageNum) {
-          chain = chain.then(function() {
-            return pdf.getPage(pageNum);
-          }).then(function(page) {
-            return page.getTextContent();
-          }).then(function(textContent) {
-            for (var j = 0; j < textContent.items.length; j++) {
-              var str = textContent.items[j].str;
-              if (!str) continue;
-              var matches = findMatches(str, query);
-              for (var m = 0; m < matches.length; m++) {
-                searchResults.push({ pageNum: pageNum });
-              }
+      forEachPage(pdf.numPages, function(idx) {
+        var pageNum = idx + 1;
+        return pdf.getPage(pageNum).then(function(page) {
+          return page.getTextContent();
+        }).then(function(textContent) {
+          for (var j = 0; j < textContent.items.length; j++) {
+            var str = textContent.items[j].str;
+            if (!str) continue;
+            var matches = findMatches(str, query);
+            for (var m = 0; m < matches.length; m++) {
+              searchResults.push({ pageNum: pageNum });
             }
-          });
-        })(i);
-      }
-
-      chain.then(function() {
+          }
+        });
+      }).then(function() {
         if (searchResults.length > 0) {
           searchIndex = 0;
           showSearchResult();
@@ -582,21 +571,15 @@
       }
     }
 
-    function searchNext() {
+    function searchNavigate(delta) {
       if (searchResults.length === 0) return;
-      searchIndex = (searchIndex + 1) % searchResults.length;
-      showSearchResult();
-    }
-
-    function searchPrev() {
-      if (searchResults.length === 0) return;
-      searchIndex = (searchIndex - 1 + searchResults.length) % searchResults.length;
+      searchIndex = (searchIndex + delta + searchResults.length) % searchResults.length;
       showSearchResult();
     }
 
     $('search-close').onclick = closeSearch;
-    $('search-next').onclick = searchNext;
-    $('search-prev').onclick = searchPrev;
+    $('search-next').onclick = function() { searchNavigate(1); };
+    $('search-prev').onclick = function() { searchNavigate(-1); };
 
     searchCaseBtn.onclick = function() { searchCaseBtn.classList.toggle('active'); doSearch(); };
     searchWordBtn.onclick = function() { searchWordBtn.classList.toggle('active'); doSearch(); };
@@ -605,7 +588,7 @@
     searchInput.addEventListener('input', doSearch);
     searchInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
-        e.shiftKey ? searchPrev() : searchNext();
+        e.shiftKey ? searchNavigate(-1) : searchNavigate(1);
       } else if (e.key === 'Escape') {
         closeSearch();
       }
@@ -670,7 +653,7 @@
           thumbsPanel.appendChild(wrapper);
 
           pdf.getPage(pageNum).then(function(page) {
-            var vp = page.getViewport({ scale: 1.0, rotation: rotation });
+            var vp = page.getViewport(vpOpts(1.0));
             var thumbScale = 150 / vp.width;
             var tvp = page.getViewport({ scale: thumbScale, rotation: rotation });
 
@@ -690,8 +673,6 @@
       }
     }
 
-    // Sync thumbnail highlight with scroll
-    var origScrollHandler = container.onscroll;
     container.addEventListener('scroll', function() {
       if (thumbsBuilt) updateThumbActive(parseInt(pageInput.value));
     });

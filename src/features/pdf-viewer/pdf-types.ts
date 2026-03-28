@@ -18,12 +18,9 @@ export interface TemplateValues {
 }
 
 export function buildTemplateHtml(template: string, values: TemplateValues): string {
-  return template
-    .replaceAll('${pdfUri}', values.pdfUri)
-    .replaceAll('${pdfJsUri}', values.pdfJsUri)
-    .replaceAll('${workerUri}', values.workerUri)
-    .replaceAll('${viewerCssUri}', values.viewerCssUri)
-    .replaceAll('${cspSource}', values.cspSource)
-    .replaceAll('${nonce}', values.nonce)
-    .replaceAll('${scale}', values.scale);
+  let result = template;
+  for (const [key, value] of Object.entries(values)) {
+    result = result.replaceAll('${' + key + '}', value);
+  }
+  return result;
 }

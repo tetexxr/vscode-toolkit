@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import { parseScale, buildTemplateHtml, TemplateValues } from './pdf-types';
 
 export class PdfPreview implements vscode.Disposable {
+  private readonly libUri: vscode.Uri;
   private disposables: vscode.Disposable[] = [];
 
   constructor(
@@ -12,11 +13,11 @@ export class PdfPreview implements vscode.Disposable {
     private readonly documentUri: vscode.Uri,
     private readonly panel: vscode.WebviewPanel,
   ) {
-    const libUri = vscode.Uri.joinPath(extensionUri, 'lib', 'pdf-viewer');
+    this.libUri = vscode.Uri.joinPath(extensionUri, 'lib', 'pdf-viewer');
 
     this.panel.webview.options = {
       enableScripts: true,
-      localResourceRoots: [libUri, vscode.Uri.joinPath(documentUri, '..')],
+      localResourceRoots: [this.libUri, vscode.Uri.joinPath(documentUri, '..')],
     };
 
     this.panel.webview.html = this.getHtml();
@@ -26,7 +27,6 @@ export class PdfPreview implements vscode.Disposable {
 
   private getHtml(): string {
     const webview = this.panel.webview;
-    const libUri = vscode.Uri.joinPath(this.extensionUri, 'lib', 'pdf-viewer');
 
     const templatePath = path.join(this.extensionUri.fsPath, 'lib', 'pdf-viewer', 'viewer.html');
     const template = fs.readFileSync(templatePath, 'utf8');
@@ -34,9 +34,9 @@ export class PdfPreview implements vscode.Disposable {
     const configScale = vscode.workspace.getConfiguration('toolkit.pdfViewer').get('scale', 'auto');
     const values: TemplateValues = {
       pdfUri: webview.asWebviewUri(this.documentUri).toString(),
-      pdfJsUri: webview.asWebviewUri(vscode.Uri.joinPath(libUri, 'pdf.min.mjs')).toString(),
-      workerUri: webview.asWebviewUri(vscode.Uri.joinPath(libUri, 'pdf.worker.min.mjs')).toString(),
-      viewerCssUri: webview.asWebviewUri(vscode.Uri.joinPath(libUri, 'viewer.css')).toString(),
+      pdfJsUri: webview.asWebviewUri(vscode.Uri.joinPath(this.libUri, 'pdf.min.mjs')).toString(),
+      workerUri: webview.asWebviewUri(vscode.Uri.joinPath(this.libUri, 'pdf.worker.min.mjs')).toString(),
+      viewerCssUri: webview.asWebviewUri(vscode.Uri.joinPath(this.libUri, 'viewer.css')).toString(),
       cspSource: webview.cspSource,
       nonce: crypto.randomBytes(16).toString('hex'),
       scale: parseScale(configScale),
