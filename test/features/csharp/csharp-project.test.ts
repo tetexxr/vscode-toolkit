@@ -6,8 +6,8 @@ import {
   extractUsings,
   parseGlobalUsings,
   sanitizeNamespace,
-} from '../../src/features/csharp/csharp-project';
-import { ProjectInfo } from '../../src/features/csharp/csharp-types';
+} from '../../../src/features/csharp/csharp-project';
+import { ProjectInfo } from '../../../src/features/csharp/csharp-types';
 
 describe('extractXmlValue', () => {
   it('should extract a simple tag value', () => {

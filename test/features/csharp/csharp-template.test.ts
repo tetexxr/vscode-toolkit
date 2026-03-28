@@ -4,8 +4,8 @@ import {
   toFileScopedNamespace,
   findCursorPosition,
   buildTemplate,
-} from '../../src/features/csharp/csharp-template';
-import { BuildTemplateOptions } from '../../src/features/csharp/csharp-types';
+} from '../../../src/features/csharp/csharp-template';
+import { BuildTemplateOptions } from '../../../src/features/csharp/csharp-types';
 import * as path from 'path';
 
 const EXTENSION_PATH = path.resolve(__dirname, '..', '..');
