@@ -150,6 +150,46 @@ Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution O
 | `toolkit.nuget.requestTimeout` | `10000` | HTTP timeout in milliseconds |
 | `toolkit.nuget.defaultPrerelease` | `false` | Include prerelease packages by default |
 
+### New C# File
+
+Create C# files from templates with automatic namespace detection, using statements, and file-scoped namespace support. Available from the explorer right-click menu on any folder via the **New C#** submenu.
+
+| Group | Templates |
+|---|---|
+| **Types** | Class, Interface, Enum, Struct, Record, Record Struct |
+| **ASP.NET Core** | Controller, API Controller, Razor Page, Minimal API Endpoint, Middleware |
+| **Blazor** | Blazor Component, Blazor Page |
+| **Test** | xUnit Test, NUnit Test, MSTest |
+| **Resources** | Resource File |
+
+Also available from the Command Palette under the **New C#** category.
+
+**Smart features:**
+
+- **Namespace detection** — reads `<RootNamespace>` from the nearest `.csproj` and appends subdirectory segments automatically.
+- **File-scoped namespaces** — generates `namespace X;` syntax by default for .NET 6+ projects.
+- **Implicit usings** — filters out usings already included globally in .NET 6+ projects (`ImplicitUsings=enable`).
+- **Using statements** — includes and sorts relevant usings per template type (System.* first).
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.csharp.useFileScopedNamespace` | `true` | Use file-scoped namespaces (.NET 6+) |
+| `toolkit.csharp.includeUsings` | `true` | Include default using statements |
+| `toolkit.csharp.filterImplicitUsings` | `true` | Filter out implicit usings (.NET 6+) |
+| `toolkit.csharp.useThisForCtorAssignments` | `true` | Use `this.` in generated constructors |
+| `toolkit.csharp.privateMemberPrefix` | `""` | Prefix for private members in generated constructors |
+
+### C# Code Actions
+
+Two refactoring code actions available via `Ctrl+.` (or `Cmd+.`) in C# files:
+
+- **Generate constructor from properties** — scans the class for auto-properties and generates a constructor with assignments.
+- **Generate expression-bodied constructor from properties** — same, but uses expression body syntax: `=> (A, B) = (a, b);`.
+
+Supports properties with generics (`List<string>`), nullable types (`string?`), arrays (`int[]`), `init` accessors, and the `required` modifier.
+
 ### Generic Dark Theme
 
 A dark color theme that combines the best of three worlds. Built on top of VS Code's Dark+ as a base, it applies language-specific syntax highlighting inspired by JetBrains IDEs:
@@ -219,7 +259,7 @@ Run the unit test suite:
 npm test
 ```
 
-Tests cover all pure logic in `src/utils/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns).
+Tests cover all pure logic in `src/utils/` and `src/features/csharp/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns, C# namespace detection, template building, file-scoped namespace conversion).
 
 ### Package
 
@@ -278,5 +318,5 @@ npm test
 To uninstall the old version, build, package, and install the new version in one command:
 
 ```bash
-code --uninstall-extension tete.vscode-toolkit && npx --yes vsce package --allow-missing-repository --skip-license && code --install-extension vscode-toolkit-0.1.0.vsix --force
+code --uninstall-extension tete.vscode-toolkit && npx --yes vsce package --allow-missing-repository --skip-license && code --install-extension vscode-toolkit-1.0.0.vsix --force
 ```
