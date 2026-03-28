@@ -31,6 +31,23 @@
         "path": "./themes/dark-jetbrains-icon-theme.json"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "nuget-explorer",
+          "title": "NuGet",
+          "icon": "themes/icons/nuget.svg"
+        }
+      ]
+    },
+    "views": {
+      "nuget-explorer": [
+        {
+          "id": "nugetProjects",
+          "name": "Projects"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "toolkit.changeCase",
