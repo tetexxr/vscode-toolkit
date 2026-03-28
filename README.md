@@ -263,6 +263,16 @@ VS Code will replace the previous version automatically.
 code --uninstall-extension tete.vscode-toolkit
 ```
 
+### Update Dependencies
+
+```bash
+npm outdated
+npx npm-check-updates -u
+npm install
+npm run compile
+npm test
+```
+
 ### One line command
 
 To uninstall the old version, build, package, and install the new version in one command:
