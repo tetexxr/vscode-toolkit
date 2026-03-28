@@ -99,7 +99,7 @@ html, body {
 
 .project-header {
   background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid rgba(255,255,255,0.15);
   border-bottom: none;
 }
 
@@ -119,24 +119,34 @@ html, body {
 .pkg-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid var(--vscode-panel-border);
-  table-layout: auto;
+  border: 1px solid rgba(255,255,255,0.15);
 }
+
+.pkg-table col.col-name    { width: 40%; }
+.pkg-table col.col-version { width: 18%; }
+.pkg-table col.col-status  { width: 12%; }
+.pkg-table col.col-latest  { width: 18%; }
+.pkg-table col.col-actions { width: 12%; }
 
 .pkg-table th {
   background: var(--vscode-editorGroupHeader-tabsBackground);
   font-weight: 600;
-  text-align: left;
+  text-align: center;
   padding: 0.4rem 0.75rem;
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid rgba(255,255,255,0.15);
   white-space: nowrap;
 }
+.pkg-table th:first-child { text-align: left; }
 
 .pkg-table td {
   padding: 0.35rem 0.75rem;
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid rgba(255,255,255,0.15);
   white-space: nowrap;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.pkg-table td:first-child { text-align: left; }
 
 .pkg-table tbody tr:hover {
   background: var(--vscode-list-hoverBackground);
@@ -148,12 +158,6 @@ html, body {
 .pkg-table tbody tr:nth-child(even):hover {
   background: var(--vscode-list-hoverBackground);
 }
-
-.col-name { min-width: 200px; }
-.col-version { text-align: center !important; }
-.col-status { text-align: center !important; width: 90px; }
-.col-latest { text-align: center !important; }
-.col-actions { text-align: center !important; width: 80px; }
 
 /* ── Status badges ────────────────────────────── */
 
@@ -303,6 +307,13 @@ const JS = /*js*/`
       html += '</div>';
 
       html += '<table class="pkg-table">';
+      html += '<colgroup>' +
+        '<col class="col-name">' +
+        '<col class="col-version">' +
+        '<col class="col-status">' +
+        '<col class="col-latest">' +
+        '<col class="col-actions">' +
+      '</colgroup>';
       html += '<thead><tr>' +
         '<th class="col-name">Package Name</th>' +
         '<th class="col-version">Installed Version</th>' +
