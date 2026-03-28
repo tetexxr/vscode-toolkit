@@ -98,6 +98,119 @@ body {
   cursor: pointer;
 }
 
+/* Tools menu */
+
+.tools-wrapper {
+  position: relative;
+}
+
+#tools-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background: var(--vscode-menu-background, #303031);
+  border: 1px solid var(--vscode-menu-border, #454545);
+  border-radius: 4px;
+  padding: 4px 0;
+  z-index: 100;
+  min-width: 200px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+#tools-menu.open {
+  display: block;
+}
+
+#tools-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--vscode-menu-foreground, #ccc);
+  padding: 6px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+#tools-menu button:hover {
+  background: var(--vscode-menu-selectionBackground, #094771);
+  color: var(--vscode-menu-selectionForeground, #fff);
+}
+
+.menu-separator {
+  height: 1px;
+  background: var(--vscode-menu-separatorBackground, #454545);
+  margin: 4px 8px;
+}
+
+/* Properties dialog */
+
+#props-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+
+#props-overlay.open {
+  display: flex;
+}
+
+#props-dialog {
+  background: var(--vscode-editorWidget-background, #252526);
+  border: 1px solid var(--vscode-editorWidget-border, #454545);
+  border-radius: 6px;
+  min-width: 360px;
+  max-width: 480px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.props-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--vscode-editorWidget-border, #454545);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.props-header button {
+  background: transparent;
+  border: none;
+  color: var(--vscode-icon-foreground, #c5c5c5);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+}
+
+#props-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+#props-table th {
+  text-align: left;
+  padding: 6px 16px;
+  color: var(--vscode-descriptionForeground, #999);
+  font-weight: normal;
+  width: 120px;
+}
+
+#props-table td {
+  padding: 6px 16px;
+  color: var(--vscode-foreground, #ccc);
+  word-break: break-word;
+}
+
 /* Search bar */
 
 #search-bar {
