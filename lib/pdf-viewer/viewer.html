@@ -42,6 +42,7 @@
       <button id="zoom-in" title="Zoom In (Ctrl+=)">+</button>
     </div>
     <div class="toolbar-group">
+      <button id="toggle-thumbs" title="Toggle Thumbnails" class="text-btn">&#9638;</button>
       <button id="toggle-outline" title="Toggle Outline" class="text-btn" style="display:none">&#9776;</button>
       <div class="tools-wrapper">
         <button id="tools-btn" title="Tools">&#9881;</button>
@@ -70,6 +71,7 @@
   </div>
 
   <div id="main">
+    <div id="thumbs-panel"></div>
     <div id="outline-panel"></div>
     <div id="viewer-container">
       <div id="viewer"></div>
@@ -107,6 +109,7 @@
     var totalPagesEl = $('total-pages');
     var zoomLevel = $('zoom-level');
     var zoomSelect = $('zoom-select');
+    var thumbsPanel = $('thumbs-panel');
     var outlinePanel = $('outline-panel');
     var toggleOutlineBtn = $('toggle-outline');
     var searchBar = $('search-bar');
@@ -421,7 +424,8 @@
     }
 
     toggleOutlineBtn.onclick = function() {
-      outlinePanel.classList.toggle('open');
+      var isOpen = outlinePanel.classList.toggle('open');
+      if (isOpen) thumbsPanel.classList.remove('open');
     };
 
     // --- Search ---
@@ -605,6 +609,66 @@
       } else if (e.key === 'Escape') {
         closeSearch();
       }
+    });
+
+    // --- Thumbnails ---
+
+    var thumbsBuilt = false;
+
+    $('toggle-thumbs').onclick = function() {
+      var isOpen = thumbsPanel.classList.toggle('open');
+      // Close outline if opening thumbs
+      if (isOpen) outlinePanel.classList.remove('open');
+      if (isOpen && !thumbsBuilt) buildThumbnails();
+    };
+
+    function buildThumbnails() {
+      if (!pdf || thumbsBuilt) return;
+      thumbsBuilt = true;
+
+      for (var i = 1; i <= pdf.numPages; i++) {
+        (function(pageNum) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'thumb';
+          wrapper.onclick = function() {
+            goToPage(pageNum);
+            updateThumbActive(pageNum);
+          };
+
+          var canvas = document.createElement('canvas');
+          wrapper.appendChild(canvas);
+
+          var label = document.createElement('span');
+          label.textContent = pageNum;
+          wrapper.appendChild(label);
+
+          thumbsPanel.appendChild(wrapper);
+
+          pdf.getPage(pageNum).then(function(page) {
+            var vp = page.getViewport({ scale: 1.0, rotation: rotation });
+            var thumbScale = 150 / vp.width;
+            var tvp = page.getViewport({ scale: thumbScale, rotation: rotation });
+
+            canvas.width = tvp.width;
+            canvas.height = tvp.height;
+            var ctx = canvas.getContext('2d');
+            page.render({ canvasContext: ctx, viewport: tvp });
+          });
+        })(i);
+      }
+    }
+
+    function updateThumbActive(pageNum) {
+      var thumbs = thumbsPanel.querySelectorAll('.thumb');
+      for (var i = 0; i < thumbs.length; i++) {
+        thumbs[i].classList.toggle('active', i === pageNum - 1);
+      }
+    }
+
+    // Sync thumbnail highlight with scroll
+    var origScrollHandler = container.onscroll;
+    container.addEventListener('scroll', function() {
+      if (thumbsBuilt) updateThumbActive(parseInt(pageInput.value));
     });
 
     // --- Tools menu ---
