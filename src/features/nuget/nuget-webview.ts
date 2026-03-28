@@ -251,11 +251,14 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   height: 36px;
   flex-shrink: 0;
   position: relative;
+  overflow: hidden;
+  border-radius: 4px;
 }
 .pkg-icon img {
   width: 36px;
   height: 36px;
   object-fit: contain;
+  display: block;
 }
 .pkg-icon-placeholder {
   width: 36px;
@@ -263,18 +266,28 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  opacity: 0.5;
+  background: var(--vscode-badge-background, #333);
+  color: var(--vscode-badge-foreground, #ccc);
+  font-size: 0.7rem;
+  font-weight: bold;
+  letter-spacing: -0.5px;
 }
 .pkg-status {
   position: absolute;
-  bottom: -4px;
-  right: -4px;
-  font-size: 0.7rem;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
   line-height: 1;
+  color: white;
 }
-.pkg-status-installed { color: forestgreen; }
-.pkg-status-outdated { color: cornflowerblue; }
+.pkg-status-installed { background: forestgreen; }
+.pkg-status-outdated { background: cornflowerblue; }
 
 .pkg-info {
   flex: 1;
@@ -350,9 +363,19 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
-.detail-icon { width: 48px; height: 48px; flex-shrink: 0; }
-.detail-icon img { width: 48px; height: 48px; object-fit: contain; }
-.detail-icon-placeholder { font-size: 2.5rem; opacity: 0.5; }
+.detail-icon { width: 48px; height: 48px; flex-shrink: 0; overflow: hidden; border-radius: 4px; }
+.detail-icon img { width: 48px; height: 48px; object-fit: contain; display: block; }
+.detail-icon-placeholder {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--vscode-badge-background, #333);
+  color: var(--vscode-badge-foreground, #ccc);
+  font-size: 0.85rem;
+  font-weight: bold;
+}
 .detail-name { font-size: 1.15rem; font-weight: bold; }
 
 .detail-version-row {
@@ -580,15 +603,16 @@ const JS = /*js*/`
 
       // Icon
       html += '<div class="pkg-icon">';
+      const initials = pkg.id.replace(/[^A-Z]/g, '').slice(0, 3) || pkg.id.slice(0, 2).toUpperCase();
       if (pkg.iconUrl) {
-        html += '<img src="' + esc(pkg.iconUrl) + '" class="pkg-img" />';
-        html += '<div class="pkg-icon-placeholder" style="display:none">&#x1f4e6;</div>';
+        html += '<img src="' + esc(pkg.iconUrl) + '" />';
+        html += '<div class="pkg-icon-placeholder" style="display:none">' + esc(initials) + '</div>';
       } else {
-        html += '<div class="pkg-icon-placeholder">&#x1f4e6;</div>';
+        html += '<div class="pkg-icon-placeholder">' + esc(initials) + '</div>';
       }
       if (pkg.isInstalled) {
         html += '<span class="pkg-status ' + (pkg.isOutdated ? 'pkg-status-outdated' : 'pkg-status-installed') + '">' +
-          (pkg.isOutdated ? '&#x2B06;' : '&#x2714;') + '</span>';
+          (pkg.isOutdated ? '&#x25B2;' : '&#x2713;') + '</span>';
       }
       html += '</div>';
 
@@ -690,10 +714,11 @@ const JS = /*js*/`
     // Header
     html += '<div class="detail-header">';
     html += '<div class="detail-icon">';
+    const detailInitials = pkg.id.replace(/[^A-Z]/g, '').slice(0, 3) || pkg.id.slice(0, 2).toUpperCase();
     if (pkg.iconUrl) {
-      html += '<img src="' + esc(pkg.iconUrl) + '" class="detail-img" />';
+      html += '<img src="' + esc(pkg.iconUrl) + '" />';
     } else {
-      html += '<div class="detail-icon-placeholder">&#x1f4e6;</div>';
+      html += '<div class="detail-icon-placeholder">' + esc(detailInitials) + '</div>';
     }
     html += '</div>';
     html += '<div class="detail-name">' + esc(pkg.id) + '</div>';
