@@ -232,10 +232,10 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 .pkg-row {
   display: flex;
   align-items: center;
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   min-height: 52px;
   cursor: pointer;
-  gap: 0.5rem;
+  gap: 0.9rem;
 }
 .pkg-row:hover {
   background: var(--vscode-list-hoverBackground);
@@ -321,7 +321,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   align-items: center;
   gap: 0.35rem;
   white-space: nowrap;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
 }
 .pkg-ver-installed { opacity: 0.6; text-decoration: line-through; }
 .pkg-action-btn {
