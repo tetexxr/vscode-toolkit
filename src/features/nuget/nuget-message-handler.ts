@@ -73,19 +73,18 @@ export class NugetMessageHandler implements vscode.Disposable {
     const source = sources[sourceIndex] || sources[0];
     const timeout = this.getConfig().requestTimeout;
 
+    const project = await reloadProject(this.projectFsPath);
     let packages: PackageViewModel[];
 
     if (category === 'browse') {
       packages = await nugetApi.searchPackages(query, prerelease, source, timeout);
     } else {
-      const project = await reloadProject(this.projectFsPath);
       packages = await nugetApi.fetchInstalledPackagesMetadata(
         project.packages, query, prerelease, source, timeout,
       );
     }
 
     // Mark installed status
-    const project = await reloadProject(this.projectFsPath);
     for (const pkg of packages) {
       const installed = project.packages.find(p => p.id === pkg.id);
       pkg.isInstalled = !!installed;

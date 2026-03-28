@@ -581,7 +581,7 @@ const JS = /*js*/`
       // Icon
       html += '<div class="pkg-icon">';
       if (pkg.iconUrl) {
-        html += '<img src="' + esc(pkg.iconUrl) + '" onerror="this.style.display=\\'none\\';this.nextElementSibling.style.display=\\'flex\\'" />';
+        html += '<img src="' + esc(pkg.iconUrl) + '" class="pkg-img" />';
         html += '<div class="pkg-icon-placeholder" style="display:none">&#x1f4e6;</div>';
       } else {
         html += '<div class="pkg-icon-placeholder">&#x1f4e6;</div>';
@@ -691,7 +691,7 @@ const JS = /*js*/`
     html += '<div class="detail-header">';
     html += '<div class="detail-icon">';
     if (pkg.iconUrl) {
-      html += '<img src="' + esc(pkg.iconUrl) + '" onerror="this.style.display=\\'none\\'" />';
+      html += '<img src="' + esc(pkg.iconUrl) + '" class="detail-img" />';
     } else {
       html += '<div class="detail-icon-placeholder">&#x1f4e6;</div>';
     }
@@ -864,6 +864,16 @@ const JS = /*js*/`
     $details.style.width = (100 - clamped) + '%';
   });
   window.addEventListener('mouseup', () => { resizing = false; });
+
+  // ── Broken image fallback (CSP blocks inline onerror) ──
+  document.addEventListener('error', (e) => {
+    const img = e.target;
+    if (img && img.tagName === 'IMG') {
+      img.style.display = 'none';
+      const placeholder = img.nextElementSibling;
+      if (placeholder) placeholder.style.display = 'flex';
+    }
+  }, true);
 
   // ── Init ─────────────────────────────────────────
   post({ command: 'ready' });
