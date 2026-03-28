@@ -1,0 +1,12 @@
+${namespaces}namespace ${namespace}
+{
+    public static class ${classname}
+    {
+        public static IEndpointRouteBuilder Map${classname}(this IEndpointRouteBuilder app)
+        {
+            app.MapGet("/", () => Results.Ok());${cursor}
+
+            return app;
+        }
+    }
+}

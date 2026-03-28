@@ -1,0 +1,18 @@
+${namespaces}namespace ${namespace}
+{
+    public class ${classname}
+    {
+        private readonly RequestDelegate _next;
+
+        public ${classname}(RequestDelegate next)
+        {
+            _next = next;
+        }
+
+        public async Task InvokeAsync(HttpContext context)
+        {
+            ${cursor}
+            await _next(context);
+        }
+    }
+}
