@@ -354,6 +354,21 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   font-size: 1.1rem;
 }
 
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  height: 120px;
+}
+.error-message {
+  color: var(--vscode-errorForeground);
+  font-size: 1.1rem;
+  text-align: center;
+  padding: 0 1rem;
+}
+
 .load-more-bar {
   display: flex;
   justify-content: center;
@@ -913,7 +928,12 @@ const JS = /*js*/`
 
   // ── Render: Error ────────────────────────────────
   function renderError(message) {
-    $list.innerHTML = '<div class="empty-message" style="color:var(--vscode-errorForeground)">Error: ' + esc(message) + '</div>';
+    $list.innerHTML =
+      '<div class="error-container">' +
+        '<div class="error-message">Error: ' + esc(message) + '</div>' +
+        '<button class="btn" id="retry-btn">Retry</button>' +
+      '</div>';
+    document.getElementById('retry-btn').addEventListener('click', triggerSearch);
   }
 
   // ── Helpers ──────────────────────────────────────
