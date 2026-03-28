@@ -7,39 +7,6 @@ import * as vscode from 'vscode';
  *   open → show → organizeImports? → format → save → close
  */
 
-async function formatFileList(files: vscode.Uri[], token: vscode.CancellationToken): Promise<number> {
-  const config = vscode.workspace.getConfiguration('toolkit.formatFiles');
-  const runOrganizeImports = config.get<boolean>('runOrganizeImports', false);
-
-  let processed = 0;
-
-  for (const file of files) {
-    if (token.isCancellationRequested) { break; }
-
-    try {
-      const doc = await vscode.workspace.openTextDocument(file);
-      await vscode.window.showTextDocument(doc, {
-        preview: false,
-        viewColumn: vscode.ViewColumn.One,
-      });
-
-      if (runOrganizeImports) {
-        await vscode.commands.executeCommand('editor.action.organizeImports');
-      }
-
-      await vscode.commands.executeCommand('editor.action.formatDocument');
-      await vscode.commands.executeCommand('workbench.action.files.save');
-      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-
-      processed++;
-    } catch {
-      // Skip files that fail to format (binary files, etc.)
-    }
-  }
-
-  return processed;
-}
-
 function buildExcludeGlob(): string {
   const config = vscode.workspace.getConfiguration('toolkit.formatFiles');
   const excludedFolders = config.get<string[]>('excludedFolders', [
