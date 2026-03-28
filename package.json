@@ -171,6 +171,97 @@
         "command": "toolkit.nuget.solutionOverview",
         "title": "Toolkit: NuGet Solution Overview",
         "icon": "$(list-flat)"
+      },
+      {
+        "command": "toolkit.csharp.createClass",
+        "title": "Class",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createInterface",
+        "title": "Interface",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createEnum",
+        "title": "Enum",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createStruct",
+        "title": "Struct",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createRecord",
+        "title": "Record",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createRecordStruct",
+        "title": "Record Struct",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createController",
+        "title": "Controller",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createApiController",
+        "title": "API Controller",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createRazorPage",
+        "title": "Razor Page",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createBlazorComponent",
+        "title": "Blazor Component",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createBlazorPage",
+        "title": "Blazor Page",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createMinimalApi",
+        "title": "Minimal API Endpoint",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createMiddleware",
+        "title": "Middleware",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createXUnitTest",
+        "title": "xUnit Test",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createNUnitTest",
+        "title": "NUnit Test",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createMSTest",
+        "title": "MSTest",
+        "category": "New C#"
+      },
+      {
+        "command": "toolkit.csharp.createResx",
+        "title": "Resource File",
+        "category": "New C#"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "toolkit.csharp.new",
+        "label": "New C#"
       }
     ],
     "menus": {
@@ -181,7 +272,82 @@
           "group": "navigation"
         }
       ],
+      "toolkit.csharp.new": [
+        {
+          "command": "toolkit.csharp.createClass",
+          "group": "1_types@1"
+        },
+        {
+          "command": "toolkit.csharp.createInterface",
+          "group": "1_types@2"
+        },
+        {
+          "command": "toolkit.csharp.createEnum",
+          "group": "1_types@3"
+        },
+        {
+          "command": "toolkit.csharp.createStruct",
+          "group": "1_types@4"
+        },
+        {
+          "command": "toolkit.csharp.createRecord",
+          "group": "1_types@5"
+        },
+        {
+          "command": "toolkit.csharp.createRecordStruct",
+          "group": "1_types@6"
+        },
+        {
+          "command": "toolkit.csharp.createController",
+          "group": "2_web@1"
+        },
+        {
+          "command": "toolkit.csharp.createApiController",
+          "group": "2_web@2"
+        },
+        {
+          "command": "toolkit.csharp.createRazorPage",
+          "group": "2_web@3"
+        },
+        {
+          "command": "toolkit.csharp.createMinimalApi",
+          "group": "2_web@4"
+        },
+        {
+          "command": "toolkit.csharp.createMiddleware",
+          "group": "2_web@5"
+        },
+        {
+          "command": "toolkit.csharp.createBlazorComponent",
+          "group": "3_blazor@1"
+        },
+        {
+          "command": "toolkit.csharp.createBlazorPage",
+          "group": "3_blazor@2"
+        },
+        {
+          "command": "toolkit.csharp.createXUnitTest",
+          "group": "4_test@1"
+        },
+        {
+          "command": "toolkit.csharp.createNUnitTest",
+          "group": "4_test@2"
+        },
+        {
+          "command": "toolkit.csharp.createMSTest",
+          "group": "4_test@3"
+        },
+        {
+          "command": "toolkit.csharp.createResx",
+          "group": "5_resources@1"
+        }
+      ],
       "explorer/context": [
+        {
+          "submenu": "toolkit.csharp.new",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@8"
+        },
         {
           "command": "toolkit.expandRecursively",
           "when": "explorerResourceIsFolder",
@@ -380,6 +546,31 @@
           "type": "boolean",
           "default": false,
           "description": "Include prerelease packages by default when browsing."
+        },
+        "toolkit.csharp.useFileScopedNamespace": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use file-scoped namespaces in generated C# files (.NET 6+)."
+        },
+        "toolkit.csharp.includeUsings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include default using statements in generated C# files."
+        },
+        "toolkit.csharp.filterImplicitUsings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Filter out implicit usings from generated files (.NET 6+ with ImplicitUsings enabled)."
+        },
+        "toolkit.csharp.useThisForCtorAssignments": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use 'this.' prefix in generated constructor property assignments."
+        },
+        "toolkit.csharp.privateMemberPrefix": {
+          "type": "string",
+          "default": "",
+          "description": "Prefix for private members in generated constructors (e.g., '_')."
         }
       }
     }
