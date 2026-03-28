@@ -300,6 +300,20 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   text-overflow: ellipsis;
 }
 .pkg-name { font-weight: bold; font-size: 1.2rem; }
+.pkg-verified {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--vscode-button-background);
+  color: white;
+  font-size: 9px;
+  margin-left: 0.3rem;
+  vertical-align: middle;
+  line-height: 1;
+}
 .pkg-author, .pkg-downloads { font-size: 0.95rem; margin-left: 0.4rem; opacity: 0.8; }
 .pkg-desc {
   font-size: 1.05rem;
@@ -619,8 +633,9 @@ const JS = /*js*/`
       // Info
       html += '<div class="pkg-info">';
       html += '<div class="pkg-title"><span class="pkg-name">' + esc(pkg.id) + '</span>';
+      if (pkg.verified) html += '<span class="pkg-verified" title="Package ID prefix is reserved on this source">&#x2713;</span>';
       if (pkg.authors) html += '<span class="pkg-author">by ' + esc(pkg.authors) + '</span>';
-      if (pkg.totalDownloads) html += '<span class="pkg-downloads">' + formatDl(pkg.totalDownloads) + ' downloads</span>';
+      if (pkg.totalDownloads) html += '<span class="pkg-downloads"><strong>' + formatDl(pkg.totalDownloads) + '</strong> downloads</span>';
       html += '</div>';
       html += '<div class="pkg-desc">' + esc(desc) + '</div>';
       html += '</div>';
