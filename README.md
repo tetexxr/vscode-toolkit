@@ -181,6 +181,31 @@ Also available from the Command Palette under the **New C#** category.
 | `toolkit.csharp.useThisForCtorAssignments` | `true` | Use `this.` in generated constructors |
 | `toolkit.csharp.privateMemberPrefix` | `""` | Prefix for private members in generated constructors |
 
+### NPM Intellisense
+
+Autocompletes npm module names in `import` and `require()` statements. Reads your project's `package.json` and suggests matching packages as you type.
+
+Works in TypeScript, JavaScript, JSX, and TSX files by default. Supports monorepos (recursive `package.json` lookup), scoped packages (`@scope/pkg`), and multi-root workspaces.
+
+**Import command:**
+
+Run **Toolkit: NPM Intellisense - Import Module** from the Command Palette to pick a package and insert an `import` or `require` statement at the cursor position.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.npmIntellisense.languages` | `[typescript, javascript, ...]` | Language IDs to activate on (requires reload) |
+| `toolkit.npmIntellisense.scanDevDependencies` | `false` | Include devDependencies in completions |
+| `toolkit.npmIntellisense.recursivePackageJsonLookup` | `true` | Find nearest package.json instead of workspace root |
+| `toolkit.npmIntellisense.packageSubfoldersIntellisense` | `false` | (Experimental) Suggest subfolders of packages |
+| `toolkit.npmIntellisense.showBuiltinModules` | `false` | Include built-in Node.js modules (fs, path, etc.) |
+| `toolkit.npmIntellisense.excludePackages` | `[]` | Package names to exclude from completions |
+| `toolkit.npmIntellisense.importES6` | `true` | Use `import` syntax instead of `require()` |
+| `toolkit.npmIntellisense.importQuotes` | `'` | Quote style for the import command |
+| `toolkit.npmIntellisense.importLinebreak` | `;\n` | Line ending after the import statement |
+| `toolkit.npmIntellisense.importDeclarationType` | `const` | Declaration type for `require()` imports |
+
 ### C# Code Actions
 
 Two refactoring code actions available via `Ctrl+.` (or `Cmd+.`) in C# files:
@@ -259,7 +284,7 @@ Run the unit test suite:
 npm test
 ```
 
-Tests cover all pure logic in `src/utils/` and `src/features/csharp/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns, C# namespace detection, template building, file-scoped namespace conversion).
+Tests cover all pure logic in `src/utils/` and `src/features/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns, C# namespace detection, template building, file-scoped namespace conversion, npm intellisense context detection).
 
 ### Package
 
@@ -318,5 +343,5 @@ npm test
 To uninstall the old version, build, package, and install the new version in one command:
 
 ```bash
-code --uninstall-extension tete.vscode-toolkit && npx --yes vsce package --allow-missing-repository --skip-license && code --install-extension vscode-toolkit-1.0.0.vsix --force
+code --uninstall-extension tete.vscode-toolkit && npx --yes vsce package --allow-missing-repository --skip-license && code --install-extension vscode-toolkit-1.2.0.vsix --force
 ```
