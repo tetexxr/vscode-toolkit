@@ -2,12 +2,17 @@
  * HTTP utilities using Node.js built-in modules.
  * Zero external dependencies — replaces node-fetch / axios.
  * Handles gzip/deflate/br responses (required by NuGet API).
+ * Uses persistent keep-alive agents for connection reuse.
  */
 
 import * as https from 'https';
 import * as http from 'http';
 import * as zlib from 'zlib';
-import { pipeline, Readable, Transform } from 'stream';
+import { Readable } from 'stream';
+
+/** Shared agents with keep-alive for connection reuse across requests. */
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 16 });
+const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 16 });
 
 export interface HttpRequestOptions {
   url: string;
@@ -18,15 +23,18 @@ export interface HttpRequestOptions {
 /**
  * Makes an HTTP/HTTPS GET request and parses the JSON response.
  * Automatically decompresses gzip, deflate, and br responses.
+ * Reuses TCP/TLS connections via keep-alive agents.
  */
 export function httpGetJson<T>(options: HttpRequestOptions): Promise<T> {
   const { url, headers = {}, timeout = 10_000 } = options;
 
-  const lib = url.startsWith('https') ? https : http;
+  const isHttps = url.startsWith('https');
+  const lib = isHttps ? https : http;
+  const agent = isHttps ? httpsAgent : httpAgent;
   const requestHeaders = { ...headers, 'Accept-Encoding': 'gzip, deflate' };
 
   return new Promise((resolve, reject) => {
-    const req = lib.get(url, { headers: requestHeaders, timeout }, (res) => {
+    const req = lib.get(url, { headers: requestHeaders, timeout, agent }, (res) => {
       if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
         res.resume();
         reject(new Error(`HTTP ${res.statusCode} for ${url}`));
