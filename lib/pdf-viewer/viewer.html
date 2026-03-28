@@ -334,7 +334,7 @@
     function goToPage(num) {
       num = Math.max(1, Math.min(pdf.numPages, num));
       pageInput.value = num;
-      pages[num - 1].div.scrollIntoView({ behavior: 'smooth' });
+      pages[num - 1].div.scrollIntoView({ behavior: 'instant' });
     }
 
     // --- Outline ---
@@ -481,7 +481,7 @@
                 hl.style.cssText = 'position:absolute;left:' + (rects[r].left - pageRect.left) + 'px;top:' + (rects[r].top - pageRect.top) + 'px;width:' + rects[r].width + 'px;height:' + rects[r].height + 'px;';
                 info.div.appendChild(hl);
               }
-              spans[s].scrollIntoView({ behavior: 'smooth', block: 'center' });
+              spans[s].scrollIntoView({ behavior: 'instant', block: 'center' });
             }
             searchInfo.textContent = (searchIndex + 1) + ' / ' + searchResults.length;
             return;
