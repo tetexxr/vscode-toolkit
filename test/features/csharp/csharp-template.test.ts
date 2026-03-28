@@ -8,7 +8,7 @@ import {
 import { BuildTemplateOptions } from '../../../src/features/csharp/csharp-types';
 import * as path from 'path';
 
-const EXTENSION_PATH = path.resolve(__dirname, '..', '..');
+const EXTENSION_PATH = path.resolve(__dirname, '..', '..', '..');
 
 describe('buildUsings', () => {
   function opts(overrides: Partial<BuildTemplateOptions> = {}): BuildTemplateOptions {
