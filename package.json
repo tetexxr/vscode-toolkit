@@ -1,7 +1,7 @@
 {
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
-  "description": "All-in-one utility extension: change case, slugify, auto rename tag, open in GitHub, format files, expand recursively.",
+  "description": "All-in-one utility extension: change case, slugify, auto rename tag, open in GitHub, format files, expand recursively, npm intellisense, C# file generation, NuGet package manager.",
   "version": "1.1.0",
   "publisher": "tete",
   "engines": {
@@ -256,6 +256,10 @@
         "command": "toolkit.csharp.createResx",
         "title": "Resource File",
         "category": "New C#"
+      },
+      {
+        "command": "toolkit.npmIntellisense.import",
+        "title": "Toolkit: NPM Intellisense - Import Module"
       }
     ],
     "submenus": [
@@ -571,6 +575,46 @@
           "type": "string",
           "default": "",
           "description": "Prefix for private members in generated constructors (e.g., '_')."
+        },
+        "toolkit.npmIntellisense.scanDevDependencies": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also scan devDependencies for completions."
+        },
+        "toolkit.npmIntellisense.recursivePackageJsonLookup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Look for package.json in the nearest parent directory instead of workspace root."
+        },
+        "toolkit.npmIntellisense.packageSubfoldersIntellisense": {
+          "type": "boolean",
+          "default": false,
+          "description": "(Experimental) Enable path completions for subfolders of npm packages."
+        },
+        "toolkit.npmIntellisense.showBuiltinModules": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include built-in Node.js modules (fs, path, etc.) in completions."
+        },
+        "toolkit.npmIntellisense.importES6": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use ES6 import syntax instead of require() for the import command."
+        },
+        "toolkit.npmIntellisense.importQuotes": {
+          "type": "string",
+          "default": "'",
+          "description": "Quote style for the import command."
+        },
+        "toolkit.npmIntellisense.importLinebreak": {
+          "type": "string",
+          "default": ";\n",
+          "description": "Line ending appended after the import statement."
+        },
+        "toolkit.npmIntellisense.importDeclarationType": {
+          "type": "string",
+          "default": "const",
+          "description": "Declaration type for require() imports (const, let, var)."
         }
       }
     }
