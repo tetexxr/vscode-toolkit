@@ -12,6 +12,7 @@ interface NpmIntellisenseConfig {
   recursivePackageJsonLookup: boolean;
   packageSubfoldersIntellisense: boolean;
   showBuiltinModules: boolean;
+  excludePackages: string[];
   importES6: boolean;
   importQuotes: string;
   importLinebreak: string;
@@ -25,6 +26,7 @@ function getConfig(): NpmIntellisenseConfig {
     recursivePackageJsonLookup: c.get('recursivePackageJsonLookup', true),
     packageSubfoldersIntellisense: c.get('packageSubfoldersIntellisense', false),
     showBuiltinModules: c.get('showBuiltinModules', false),
+    excludePackages: c.get<string[]>('excludePackages', []),
     importES6: c.get('importES6', true),
     importQuotes: c.get('importQuotes', "'"),
     importLinebreak: c.get('importLinebreak', ';\n'),
@@ -34,11 +36,13 @@ function getConfig(): NpmIntellisenseConfig {
 
 // --- Registration ---
 
+const DEFAULT_LANGUAGES = ['typescript', 'javascript', 'javascriptreact', 'typescriptreact'];
+
 export function registerNpmIntellisenseCommands(context: vscode.ExtensionContext): void {
   const provider = new NpmCompletionProvider();
-  const selector: vscode.DocumentSelector = [
-    'typescript', 'javascript', 'javascriptreact', 'typescriptreact',
-  ];
+  const c = vscode.workspace.getConfiguration('toolkit.npmIntellisense');
+  const languages = c.get<string[]>('languages', DEFAULT_LANGUAGES);
+  const selector: vscode.DocumentSelector = languages;
 
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(selector, provider, '"', "'", '/'),
@@ -93,11 +97,12 @@ async function getNpmPackages(
     const content = await readFile(packageJsonPath, 'utf-8');
     const pkg = JSON.parse(content);
 
+    const exclude = new Set(config.excludePackages);
     return [
       ...Object.keys(pkg.dependencies || {}),
       ...(config.scanDevDependencies ? Object.keys(pkg.devDependencies || {}) : []),
       ...(config.showBuiltinModules ? getBuiltinModules() : []),
-    ];
+    ].filter(name => !exclude.has(name));
   } catch {
     return [];
   }

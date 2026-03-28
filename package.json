@@ -576,6 +576,19 @@
           "default": "",
           "description": "Prefix for private members in generated constructors (e.g., '_')."
         },
+        "toolkit.npmIntellisense.languages": {
+          "type": "array",
+          "default": [
+            "typescript",
+            "javascript",
+            "typescriptreact",
+            "javascriptreact"
+          ],
+          "description": "Languages for which npm intellisense is active. Requires reload after change.",
+          "items": {
+            "type": "string"
+          }
+        },
         "toolkit.npmIntellisense.scanDevDependencies": {
           "type": "boolean",
           "default": false,
@@ -595,6 +608,14 @@
           "type": "boolean",
           "default": false,
           "description": "Include built-in Node.js modules (fs, path, etc.) in completions."
+        },
+        "toolkit.npmIntellisense.excludePackages": {
+          "type": "array",
+          "default": [],
+          "description": "Package names to exclude from completions.",
+          "items": {
+            "type": "string"
+          }
         },
         "toolkit.npmIntellisense.importES6": {
           "type": "boolean",
