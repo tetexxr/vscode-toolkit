@@ -231,16 +231,16 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 
 .pkg-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   padding: 0.5rem 0.75rem;
-  min-height: 56px;
+  min-height: 52px;
   cursor: pointer;
   gap: 0.5rem;
 }
 .pkg-row:hover {
   background: var(--vscode-list-hoverBackground);
 }
-.pkg-row:hover .pkg-actions { visibility: visible; }
+.pkg-row:hover .pkg-action-btn { visibility: visible; }
 .pkg-row.active {
   background: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);
@@ -310,24 +310,24 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   margin-top: 2px;
 }
 
-.pkg-versions {
+.pkg-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  flex-shrink: 0;
+}
+.pkg-right-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   white-space: nowrap;
   font-size: 0.8rem;
-  flex-shrink: 0;
 }
 .pkg-ver-installed { opacity: 0.6; text-decoration: line-through; }
-
-.pkg-actions {
+.pkg-action-btn {
   visibility: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-shrink: 0;
 }
+.pkg-row:hover .pkg-action-btn { visibility: visible; }
 
 .pkg-checkbox { align-self: center; margin-right: 0.25rem; }
 
@@ -625,22 +625,27 @@ const JS = /*js*/`
       html += '<div class="pkg-desc">' + esc(desc) + '</div>';
       html += '</div>';
 
-      // Versions
-      html += '<div class="pkg-versions">';
-      if (pkg.isOutdated) html += '<span class="pkg-ver-installed">' + esc(pkg.installedVersion) + '</span>';
-      html += '<span>' + esc(pkg.version) + '</span>';
-      html += '</div>';
-
-      // Actions
-      html += '<div class="pkg-actions">';
-      if (!pkg.isInstalled) {
-        html += '<button class="btn btn-secondary btn-icon" data-action="install" data-pkg="' + esc(pkg.id) + '" data-ver="' + esc(pkg.version) + '" data-src="' + esc(pkg.sourceUrl) + '" title="Install">&#x2B07;</button>';
-      }
-      if (pkg.isInstalled) {
-        html += '<button class="btn btn-secondary btn-icon" data-action="uninstall" data-pkg="' + esc(pkg.id) + '" title="Uninstall">&#x2716;</button>';
-      }
+      // Right side: version + action per row
+      html += '<div class="pkg-right">';
       if (pkg.isOutdated) {
-        html += '<button class="btn btn-secondary btn-icon" data-action="update" data-pkg="' + esc(pkg.id) + '" data-ver="' + esc(pkg.version) + '" data-src="' + esc(pkg.sourceUrl) + '" title="Update">&#x2B06;</button>';
+        html += '<div class="pkg-right-row">';
+        html += '<span class="pkg-ver-installed">' + esc(pkg.installedVersion) + '</span>';
+        html += '<button class="btn btn-secondary btn-icon pkg-action-btn" data-action="uninstall" data-pkg="' + esc(pkg.id) + '" title="Uninstall">&#x2716;</button>';
+        html += '</div>';
+        html += '<div class="pkg-right-row">';
+        html += '<span>' + esc(pkg.version) + '</span>';
+        html += '<button class="btn btn-secondary btn-icon pkg-action-btn" data-action="update" data-pkg="' + esc(pkg.id) + '" data-ver="' + esc(pkg.version) + '" data-src="' + esc(pkg.sourceUrl) + '" title="Update">&#x2191;</button>';
+        html += '</div>';
+      } else if (pkg.isInstalled) {
+        html += '<div class="pkg-right-row">';
+        html += '<span>' + esc(pkg.version) + '</span>';
+        html += '<button class="btn btn-secondary btn-icon pkg-action-btn" data-action="uninstall" data-pkg="' + esc(pkg.id) + '" title="Uninstall">&#x2716;</button>';
+        html += '</div>';
+      } else {
+        html += '<div class="pkg-right-row">';
+        html += '<span>' + esc(pkg.version) + '</span>';
+        html += '<button class="btn btn-secondary btn-icon pkg-action-btn" data-action="install" data-pkg="' + esc(pkg.id) + '" data-ver="' + esc(pkg.version) + '" data-src="' + esc(pkg.sourceUrl) + '" title="Install">&#x2193;</button>';
+        html += '</div>';
       }
       html += '</div>';
 
