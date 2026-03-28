@@ -282,18 +282,26 @@
     $('prev-page').onclick = function() { goToPage(parseInt(pageInput.value) - 1); };
     $('next-page').onclick = function() { goToPage(parseInt(pageInput.value) + 1); };
     pageInput.onchange = function() { goToPage(parseInt(pageInput.value)); };
-    $('zoom-out').onclick = function() { zoom(-0.25); };
-    $('zoom-in').onclick = function() { zoom(0.25); };
+    $('zoom-out').onclick = function() { zoom(-0.1); };
+    $('zoom-in').onclick = function() { zoom(0.1); };
     $('fit-width').onclick = function() { fitTo('page-width'); };
     $('fit-page').onclick = function() { fitTo('page-fit'); };
 
     document.addEventListener('keydown', function(e) {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === '=' || e.key === '+') { e.preventDefault(); zoom(0.25); }
-        else if (e.key === '-') { e.preventDefault(); zoom(-0.25); }
+        if (e.key === '=' || e.key === '+') { e.preventDefault(); zoom(0.1); }
+        else if (e.key === '-') { e.preventDefault(); zoom(-0.1); }
         else if (e.key === '0') { e.preventDefault(); fitTo('auto'); }
       }
     });
+
+    container.addEventListener('wheel', function(e) {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        var delta = e.deltaY > 0 ? -0.1 : 0.1;
+        zoom(delta);
+      }
+    }, { passive: false });
 
     // --- Resize ---
 
