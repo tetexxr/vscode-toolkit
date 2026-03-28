@@ -173,7 +173,36 @@
           }).render();
         });
 
-        return Promise.all([renderPromise, textPromise]);
+        var linksPromise = page.getAnnotations().then(function(annotations) {
+          var linkDiv = document.createElement('div');
+          linkDiv.className = 'linkLayer';
+          info.div.appendChild(linkDiv);
+          info.linkLayer = linkDiv;
+
+          for (var a = 0; a < annotations.length; a++) {
+            var ann = annotations[a];
+            if (ann.subtype !== 'Link' || !ann.url) continue;
+
+            var rect = ann.rect;
+            var x1 = rect[0], y1 = rect[1], x2 = rect[2], y2 = rect[3];
+            var coords = vp.convertToViewportPoint(x1, y1);
+            var coords2 = vp.convertToViewportPoint(x2, y2);
+            var left = Math.min(coords[0], coords2[0]);
+            var top = Math.min(coords[1], coords2[1]);
+            var width = Math.abs(coords2[0] - coords[0]);
+            var height = Math.abs(coords2[1] - coords[1]);
+
+            var link = document.createElement('a');
+            link.href = ann.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.title = ann.url;
+            link.style.cssText = 'position:absolute;left:' + left + 'px;top:' + top + 'px;width:' + width + 'px;height:' + height + 'px;';
+            linkDiv.appendChild(link);
+          }
+        });
+
+        return Promise.all([renderPromise, textPromise, linksPromise]);
       }).then(function() {
         info.rendering = false;
       }).catch(function(e) {
@@ -222,6 +251,10 @@
           if (info.textLayer) {
             info.div.removeChild(info.textLayer);
             info.textLayer = null;
+          }
+          if (info.linkLayer) {
+            info.div.removeChild(info.linkLayer);
+            info.linkLayer = null;
           }
           info.rendering = false;
           chain = chain.then(function() {

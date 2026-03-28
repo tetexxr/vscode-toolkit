@@ -197,6 +197,27 @@ body {
   cursor: default;
 }
 
+/* Link layer */
+
+.linkLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.linkLayer a {
+  pointer-events: all;
+  display: block;
+  cursor: pointer;
+}
+
+.linkLayer a:hover {
+  background: rgba(255, 255, 0, 0.15);
+  outline: 1px solid rgba(255, 255, 0, 0.4);
+  border-radius: 2px;
+}
+
 /* Loading & Error */
 
 #loading {
