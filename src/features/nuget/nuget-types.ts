@@ -131,7 +131,7 @@ export type Category = 'browse' | 'installed' | 'updates';
 
 export type WebviewMessage =
   | { command: 'ready' }
-  | { command: 'search'; query: string; prerelease: boolean; sourceIndex: number; category: Category }
+  | { command: 'search'; query: string; prerelease: boolean; sourceIndex: number; category: Category; skip: number }
   | { command: 'select-package'; packageId: string }
   | { command: 'install'; packageId: string; version: string; sourceUrl: string }
   | { command: 'uninstall'; packageId: string }
@@ -144,7 +144,7 @@ export type WebviewMessage =
 
 export type ExtensionMessage =
   | { type: 'init'; project: Project; sources: PackageSource[]; config: NugetConfig }
-  | { type: 'packages'; packages: PackageViewModel[]; category: Category }
+  | { type: 'packages'; packages: PackageViewModel[]; category: Category; totalHits: number; append: boolean }
   | { type: 'package-details'; pkg: PackageViewModel }
   | { type: 'loading'; loading: boolean }
   | { type: 'task-started'; packageId: string; action: string }

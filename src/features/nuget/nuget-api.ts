@@ -75,16 +75,19 @@ function findEndpoint(resources: ApiResource[], preferred: string[]): string | u
 
 /** Search for packages using the SearchQueryService endpoint. */
 export async function searchPackages(
-  query: string, prerelease: boolean, source: PackageSource, timeout: number,
-): Promise<PackageViewModel[]> {
+  query: string, prerelease: boolean, source: PackageSource, timeout: number, skip: number = 0,
+): Promise<{ packages: PackageViewModel[]; totalHits: number }> {
   const endpoints = await resolveEndpoints(source, timeout);
   const headers = authHeaders(source);
 
   const separator = endpoints.search.includes('?') ? '&' : '?';
-  const url = `${endpoints.search}${separator}q=${encodeURIComponent(query)}&prerelease=${prerelease}&semVerLevel=2.0.0&take=30`;
+  const url = `${endpoints.search}${separator}q=${encodeURIComponent(query)}&prerelease=${prerelease}&semVerLevel=2.0.0&skip=${skip}&take=30`;
 
   const results = await httpGetJson<SearchResults>({ url, headers, timeout });
-  return results.data.map(pkg => searchResultToViewModel(pkg, source.url));
+  return {
+    packages: results.data.map(pkg => searchResultToViewModel(pkg, source.url)),
+    totalHits: results.totalHits,
+  };
 }
 
 function searchResultToViewModel(pkg: SearchResultPackage, sourceUrl: string): PackageViewModel {

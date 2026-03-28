@@ -354,6 +354,12 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   font-size: 1.1rem;
 }
 
+.load-more-bar {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
 /* ── Loading spinner ────────────────────────────── */
 
 .spinner {
@@ -463,6 +469,8 @@ const JS = /*js*/`
     project: null,
     config: { defaultPrerelease: false, requestTimeout: 10000 },
     loading: false,
+    totalHits: 0,
+    skip: 0,
   };
 
   // ── DOM refs ─────────────────────────────────────
@@ -487,8 +495,14 @@ const JS = /*js*/`
         triggerSearch();
         break;
       case 'packages':
-        state.packages = msg.packages;
+        if (msg.append && state.packages) {
+          state.packages = state.packages.concat(msg.packages);
+        } else {
+          state.packages = msg.packages;
+        }
         state.category = msg.category;
+        state.totalHits = msg.totalHits;
+        state.skip = state.packages ? state.packages.length : 0;
         renderList();
         break;
       case 'package-details':
@@ -526,9 +540,19 @@ const JS = /*js*/`
     state.packages = null;
     state.selectedId = null;
     state.selectedPkg = null;
+    state.totalHits = 0;
+    state.skip = 0;
     renderList();
     renderDetails();
-    post({ command: 'search', query, prerelease, sourceIndex, category: state.category });
+    post({ command: 'search', query, prerelease, sourceIndex, category: state.category, skip: 0 });
+  }
+
+  function loadMore() {
+    const query = (document.getElementById('search-input') || {}).value || '';
+    const prerelease = (document.getElementById('prerelease-cb') || {}).checked || false;
+    const sourceSelect = document.getElementById('source-select');
+    const sourceIndex = sourceSelect ? sourceSelect.selectedIndex : 0;
+    post({ command: 'search', query, prerelease, sourceIndex, category: state.category, skip: state.skip });
   }
 
   function debouncedSearch() {
@@ -670,7 +694,20 @@ const JS = /*js*/`
       html += '</div>';
     }
 
+    // Load More button (browse only, when there are more results)
+    if (state.category === 'browse' && state.packages.length < state.totalHits) {
+      html += '<div class="load-more-bar">' +
+        '<button class="btn" id="load-more-btn">Load more (' + state.packages.length + ' of ' + state.totalHits + ')</button>' +
+      '</div>';
+    }
+
     $list.innerHTML = html;
+
+    // Load more button
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', loadMore);
+    }
 
     // Event delegation: row clicks
     $list.querySelectorAll('.pkg-row').forEach(row => {

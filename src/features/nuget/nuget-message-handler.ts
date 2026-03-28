@@ -38,7 +38,7 @@ export class NugetMessageHandler implements vscode.Disposable {
     try {
       switch (msg.command) {
         case 'ready': return await this.sendInit();
-        case 'search': return await this.handleSearch(msg.query, msg.prerelease, msg.sourceIndex, msg.category);
+        case 'search': return await this.handleSearch(msg.query, msg.prerelease, msg.sourceIndex, msg.category, msg.skip);
         case 'select-package': return await this.handleSelectPackage(msg.packageId);
         case 'install': return await this.handleInstallOrUpdate(msg.packageId, msg.version, msg.sourceUrl, 'install');
         case 'update': return await this.handleInstallOrUpdate(msg.packageId, msg.version, msg.sourceUrl, 'update');
@@ -66,7 +66,7 @@ export class NugetMessageHandler implements vscode.Disposable {
 
   // ── Search ─────────────────────────────────────────────
 
-  private async handleSearch(query: string, prerelease: boolean, sourceIndex: number, category: Category): Promise<void> {
+  private async handleSearch(query: string, prerelease: boolean, sourceIndex: number, category: Category, skip: number = 0): Promise<void> {
     this.post({ type: 'loading', loading: true });
 
     const sources = this.getSources();
@@ -75,13 +75,17 @@ export class NugetMessageHandler implements vscode.Disposable {
 
     const project = await reloadProject(this.projectFsPath);
     let packages: PackageViewModel[];
+    let totalHits = 0;
 
     if (category === 'browse') {
-      packages = await nugetApi.searchPackages(query, prerelease, source, timeout);
+      const result = await nugetApi.searchPackages(query, prerelease, source, timeout, skip);
+      packages = result.packages;
+      totalHits = result.totalHits;
     } else {
       packages = await nugetApi.fetchInstalledPackagesMetadata(
         project.packages, query, prerelease, source, timeout,
       );
+      totalHits = packages.length;
     }
 
     // Mark installed status
@@ -97,7 +101,7 @@ export class NugetMessageHandler implements vscode.Disposable {
       packages = packages.filter(p => p.isOutdated);
     }
 
-    this.post({ type: 'packages', packages, category });
+    this.post({ type: 'packages', packages, category, totalHits, append: skip > 0 });
     this.post({ type: 'loading', loading: false });
   }
 
