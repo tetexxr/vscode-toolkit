@@ -77,124 +77,74 @@ async function copyUrl(url: string): Promise<void> {
   vscode.window.showInformationMessage('Link copied to clipboard.');
 }
 
+async function buildFileUrl(
+  segment: 'blob' | 'blame' | 'commits',
+  options?: { useCommitHash?: boolean },
+): Promise<string | undefined> {
+  const editor = vscode.window.activeTextEditor;
+  const info = await getGitInfo(editor?.document.uri.fsPath);
+  if (!info) { return undefined; }
+
+  const fileInfo = getFilePathAndLines(info.repoRoot);
+  if (!fileInfo) {
+    vscode.window.showErrorMessage('No active file.');
+    return undefined;
+  }
+
+  let ref: string;
+  if (options?.useCommitHash) {
+    try {
+      ref = await getCommitHash(info.cwd);
+    } catch (err: any) {
+      vscode.window.showErrorMessage(`Git error: ${err.message}`);
+      return undefined;
+    }
+  } else {
+    ref = encodeURIComponent(info.branch);
+  }
+
+  const encodedPath = fileInfo.relativePath.split('/').map(encodeURIComponent).join('/');
+  const lineFragment = segment === 'commits' ? '' : fileInfo.lineFragment;
+  return `${info.baseUrl}/${segment}/${ref}/${encodedPath}${lineFragment}`;
+}
+
 export function registerOpenInGitHubCommands(context: vscode.ExtensionContext): void {
-  // Open file at current line
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.openInGitHub.file', async () => {
-      const editor = vscode.window.activeTextEditor;
-      const info = await getGitInfo(editor?.document.uri.fsPath);
-      if (!info) { return; }
+      const url = await buildFileUrl('blob');
+      if (url) { await openUrl(url); }
+    }),
 
-      const fileInfo = getFilePathAndLines(info.repoRoot);
-      if (!fileInfo) {
-        vscode.window.showErrorMessage('No active file.');
-        return;
-      }
-
-      const encodedPath = fileInfo.relativePath.split('/').map(encodeURIComponent).join('/');
-      const url = `${info.baseUrl}/blob/${encodeURIComponent(info.branch)}/${encodedPath}${fileInfo.lineFragment}`;
-      await openUrl(url);
-    })
-  );
-
-  // Open repository
-  context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.openInGitHub.repo', async () => {
       const info = await getGitInfo();
-      if (!info) { return; }
-      await openUrl(info.baseUrl);
-    })
-  );
+      if (info) { await openUrl(info.baseUrl); }
+    }),
 
-  // Open blame
-  context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.openInGitHub.blame', async () => {
-      const editor = vscode.window.activeTextEditor;
-      const info = await getGitInfo(editor?.document.uri.fsPath);
-      if (!info) { return; }
+      const url = await buildFileUrl('blame');
+      if (url) { await openUrl(url); }
+    }),
 
-      const fileInfo = getFilePathAndLines(info.repoRoot);
-      if (!fileInfo) {
-        vscode.window.showErrorMessage('No active file.');
-        return;
-      }
-
-      const encodedPath = fileInfo.relativePath.split('/').map(encodeURIComponent).join('/');
-      const url = `${info.baseUrl}/blame/${encodeURIComponent(info.branch)}/${encodedPath}${fileInfo.lineFragment}`;
-      await openUrl(url);
-    })
-  );
-
-  // Open file history
-  context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.openInGitHub.history', async () => {
-      const editor = vscode.window.activeTextEditor;
-      const info = await getGitInfo(editor?.document.uri.fsPath);
-      if (!info) { return; }
+      const url = await buildFileUrl('commits');
+      if (url) { await openUrl(url); }
+    }),
 
-      const fileInfo = getFilePathAndLines(info.repoRoot);
-      if (!fileInfo) {
-        vscode.window.showErrorMessage('No active file.');
-        return;
-      }
-
-      const encodedPath = fileInfo.relativePath.split('/').map(encodeURIComponent).join('/');
-      const url = `${info.baseUrl}/commits/${encodeURIComponent(info.branch)}/${encodedPath}`;
-      await openUrl(url);
-    })
-  );
-
-  // Copy file link
-  context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.openInGitHub.copyFileLink', async () => {
-      const editor = vscode.window.activeTextEditor;
-      const info = await getGitInfo(editor?.document.uri.fsPath);
-      if (!info) { return; }
+      const url = await buildFileUrl('blob');
+      if (url) { await copyUrl(url); }
+    }),
 
-      const fileInfo = getFilePathAndLines(info.repoRoot);
-      if (!fileInfo) {
-        vscode.window.showErrorMessage('No active file.');
-        return;
-      }
-
-      const encodedPath = fileInfo.relativePath.split('/').map(encodeURIComponent).join('/');
-      const url = `${info.baseUrl}/blob/${encodeURIComponent(info.branch)}/${encodedPath}${fileInfo.lineFragment}`;
-      await copyUrl(url);
-    })
-  );
-
-  // Copy permalink (with commit hash instead of branch)
-  context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.openInGitHub.copyPermalink', async () => {
-      const editor = vscode.window.activeTextEditor;
-      const info = await getGitInfo(editor?.document.uri.fsPath);
-      if (!info) { return; }
+      const url = await buildFileUrl('blob', { useCommitHash: true });
+      if (url) { await copyUrl(url); }
+    }),
 
-      const fileInfo = getFilePathAndLines(info.repoRoot);
-      if (!fileInfo) {
-        vscode.window.showErrorMessage('No active file.');
-        return;
-      }
-
-      try {
-        const commitHash = await getCommitHash(info.cwd);
-        const encodedPath = fileInfo.relativePath.split('/').map(encodeURIComponent).join('/');
-        const url = `${info.baseUrl}/blob/${commitHash}/${encodedPath}${fileInfo.lineFragment}`;
-        await copyUrl(url);
-      } catch (err: any) {
-        vscode.window.showErrorMessage(`Git error: ${err.message}`);
-      }
-    })
-  );
-
-  // Open file from explorer context menu (receives a Uri, not from active editor)
-  context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.openInGitHub.explorerFile', async (uri: vscode.Uri) => {
       if (!uri) {
         vscode.window.showErrorMessage('No file selected.');
         return;
       }
-
       const info = await getGitInfo(uri.fsPath);
       if (!info) { return; }
 

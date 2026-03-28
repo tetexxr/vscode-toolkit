@@ -6,8 +6,8 @@
 import * as vscode from 'vscode';
 import {
   OverviewWebviewMessage, OverviewExtensionMessage, OverviewProject, OverviewPackage,
-  PackageSource, NugetConfig,
 } from './nuget-types';
+import { getNugetSources, getNugetConfig } from './nuget-config';
 import * as nugetApi from './nuget-api';
 import { discoverProjectFiles, loadProject } from './nuget-project-loader';
 import { NugetTaskManager } from './nuget-task-manager';
@@ -43,9 +43,8 @@ export class NugetOverviewHandler implements vscode.Disposable {
 
   private async sendOverview(loadVersions: boolean): Promise<void> {
     const projectUris = await discoverProjectFiles();
-    const source = this.getSources()[0];
-    const timeout = this.getConfig().requestTimeout;
-    const prerelease = this.getConfig().defaultPrerelease;
+    const source = getNugetSources()[0];
+    const config = getNugetConfig();
 
     // Load all projects and their installed packages
     const projects: OverviewProject[] = [];
@@ -75,10 +74,10 @@ export class NugetOverviewHandler implements vscode.Disposable {
     }
 
     const latestMap = new Map<string, string>();
-    const results = await Promise.allSettled(
+    await Promise.allSettled(
       [...uniqueIds].map(async (id) => {
         const metadata = await nugetApi.fetchInstalledPackagesMetadata(
-          [{ id, version: '' }], '', prerelease, source, timeout,
+          [{ id, version: '' }], '', config.defaultPrerelease, source, config.requestTimeout,
         );
         if (metadata.length > 0) {
           latestMap.set(id, metadata[0].version);
@@ -115,21 +114,6 @@ export class NugetOverviewHandler implements vscode.Disposable {
 
   private post(msg: OverviewExtensionMessage): void {
     this.webview.postMessage(msg);
-  }
-
-  private getSources(): PackageSource[] {
-    const config = vscode.workspace.getConfiguration('toolkit.nuget');
-    return config.get<PackageSource[]>('sources', [
-      { name: 'nuget.org', url: 'https://api.nuget.org/v3/index.json' },
-    ]);
-  }
-
-  private getConfig(): NugetConfig {
-    const config = vscode.workspace.getConfiguration('toolkit.nuget');
-    return {
-      requestTimeout: config.get<number>('requestTimeout', 10000),
-      defaultPrerelease: config.get<boolean>('defaultPrerelease', false),
-    };
   }
 
   public dispose(): void {

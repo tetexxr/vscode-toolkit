@@ -7,8 +7,10 @@
 import * as vscode from 'vscode';
 import {
   WebviewMessage, ExtensionMessage,
-  PackageSource, PackageViewModel, NugetConfig, Category,
+  PackageViewModel, Category,
 } from './nuget-types';
+import { getNugetSources, getNugetConfig } from './nuget-config';
+import { isPrerelease } from '../../utils/semver';
 import * as nugetApi from './nuget-api';
 import { loadProject, reloadProject } from './nuget-project-loader';
 import { NugetTaskManager } from './nuget-task-manager';
@@ -59,8 +61,8 @@ export class NugetMessageHandler implements vscode.Disposable {
 
   private async sendInit(): Promise<void> {
     const project = await loadProject(vscode.Uri.file(this.projectFsPath));
-    const sources = this.getSources();
-    const config = this.getConfig();
+    const sources = getNugetSources();
+    const config = getNugetConfig();
     this.post({ type: 'init', project, sources, config });
   }
 
@@ -69,9 +71,9 @@ export class NugetMessageHandler implements vscode.Disposable {
   private async handleSearch(query: string, prerelease: boolean, sourceIndex: number, category: Category, skip: number = 0): Promise<void> {
     this.post({ type: 'loading', loading: true });
 
-    const sources = this.getSources();
+    const sources = getNugetSources();
     const source = sources[sourceIndex] || sources[0];
-    const timeout = this.getConfig().requestTimeout;
+    const timeout = getNugetConfig().requestTimeout;
 
     const project = await reloadProject(this.projectFsPath);
     let packages: PackageViewModel[];
@@ -110,9 +112,9 @@ export class NugetMessageHandler implements vscode.Disposable {
   private async handleSelectPackage(packageId: string): Promise<void> {
     this.post({ type: 'loading', loading: true });
 
-    const sources = this.getSources();
+    const sources = getNugetSources();
     const source = sources[0];
-    const timeout = this.getConfig().requestTimeout;
+    const timeout = getNugetConfig().requestTimeout;
 
     // Fetch all versions (including prerelease) for the dropdown
     const allVersions = await nugetApi.fetchPackageVersions(packageId, true, source, timeout);
@@ -120,7 +122,7 @@ export class NugetMessageHandler implements vscode.Disposable {
     const installed = project.packages.find(p => p.id === packageId);
 
     // Use latest stable version as the "main" version for display
-    const latestStable = allVersions.find(v => !/-/.test(v.version.replace(/^\d+\.\d+\.\d+(?:\.\d+)?/, '')));
+    const latestStable = allVersions.find(v => !isPrerelease(v.version));
     const latest = latestStable || allVersions[0];
 
     if (latest) {
@@ -187,21 +189,6 @@ export class NugetMessageHandler implements vscode.Disposable {
 
   private post(msg: ExtensionMessage): void {
     this.webview.postMessage(msg);
-  }
-
-  private getSources(): PackageSource[] {
-    const config = vscode.workspace.getConfiguration('toolkit.nuget');
-    return config.get<PackageSource[]>('sources', [
-      { name: 'nuget.org', url: 'https://api.nuget.org/v3/index.json' },
-    ]);
-  }
-
-  private getConfig(): NugetConfig {
-    const config = vscode.workspace.getConfiguration('toolkit.nuget');
-    return {
-      requestTimeout: config.get<number>('requestTimeout', 10000),
-      defaultPrerelease: config.get<boolean>('defaultPrerelease', false),
-    };
   }
 
   public dispose(): void {
