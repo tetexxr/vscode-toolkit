@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one utility extension: change case, slugify, auto rename tag, open in GitHub, format files, expand recursively, npm intellisense, C# file generation, NuGet package manager.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.110.0"

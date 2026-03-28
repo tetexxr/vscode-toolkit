@@ -343,5 +343,5 @@ npm test
 To uninstall the old version, build, package, and install the new version in one command:
 
 ```bash
-code --uninstall-extension tete.vscode-toolkit && npx --yes vsce package --allow-missing-repository --skip-license && code --install-extension vscode-toolkit-1.1.0.vsix --force
+code --uninstall-extension tete.vscode-toolkit && npx --yes vsce package --allow-missing-repository --skip-license && code --install-extension vscode-toolkit-1.2.0.vsix --force
 ```
