@@ -7,6 +7,7 @@ import { registerFormatFilesCommands } from './features/format-files';
 import { registerExpandRecursivelyCommands } from './features/expand-recursively';
 import { registerNugetCommands } from './features/nuget/nuget';
 import { registerCSharpCommands } from './features/csharp/csharp';
+import { registerNpmIntellisenseCommands } from './features/npm-intellisense';
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context);
@@ -17,6 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerExpandRecursivelyCommands(context);
   registerNugetCommands(context);
   registerCSharpCommands(context);
+  registerNpmIntellisenseCommands(context);
 }
 
 export function deactivate() {}
