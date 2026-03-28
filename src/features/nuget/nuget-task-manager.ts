@@ -4,6 +4,7 @@
  */
 
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 const TASK_NAME = 'toolkit-nuget';
 
@@ -55,6 +56,7 @@ export class NugetTaskManager implements vscode.Disposable {
 
   /** Build a `dotnet add <project> package <id> -v <version> -s <source>` task. */
   static buildAddTask(projectPath: string, packageId: string, version: string, sourceUrl: string): vscode.Task {
+    const cwd = path.dirname(projectPath);
     const args: (string | vscode.ShellQuotedString)[] = [
       'add',
       { value: projectPath, quoting: vscode.ShellQuoting.Strong },
@@ -70,12 +72,13 @@ export class NugetTaskManager implements vscode.Disposable {
       vscode.TaskScope.Workspace,
       TASK_NAME,
       'dotnet',
-      new vscode.ShellExecution('dotnet', args),
+      new vscode.ShellExecution('dotnet', args, { cwd }),
     );
   }
 
   /** Build a `dotnet remove <project> package <id>` task. */
   static buildRemoveTask(projectPath: string, packageId: string): vscode.Task {
+    const cwd = path.dirname(projectPath);
     const args: (string | vscode.ShellQuotedString)[] = [
       'remove',
       { value: projectPath, quoting: vscode.ShellQuoting.Strong },
@@ -88,7 +91,7 @@ export class NugetTaskManager implements vscode.Disposable {
       vscode.TaskScope.Workspace,
       TASK_NAME,
       'dotnet',
-      new vscode.ShellExecution('dotnet', args),
+      new vscode.ShellExecution('dotnet', args, { cwd }),
     );
   }
 }
