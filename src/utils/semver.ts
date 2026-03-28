@@ -112,7 +112,8 @@ function comparePrerelease(a: string, b: string): number {
 
 /** Returns true if the version string contains a prerelease tag. */
 export function isPrerelease(version: string): boolean {
-  return /-/.test(version.replace(/^\d+\.\d+\.\d+(?:\.\d+)?/, ''));
+  const parsed = parseSemVer(version);
+  return parsed ? parsed.prerelease !== '' : false;
 }
 
 /**
