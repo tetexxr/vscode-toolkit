@@ -360,7 +360,7 @@ code --uninstall-extension tete.vscode-toolkit
 ```bash
 npm outdated
 npx npm-check-updates -u
-npm install
+npm install --ignore-scripts
 npm run compile
 npm test
 ```
