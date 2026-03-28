@@ -18,6 +18,22 @@
 <body>
   <div id="toolbar">
     <div class="toolbar-group">
+      <button id="toggle-thumbs" title="Toggle Thumbnails" class="text-btn">&#9638;</button>
+      <button id="toggle-outline" title="Toggle Outline" class="text-btn" style="display:none">&#9776;</button>
+      <div class="tools-wrapper">
+        <button id="tools-btn" title="Tools">&#9881;</button>
+        <div id="tools-menu">
+          <button id="go-first">Go to First Page</button>
+          <button id="go-last">Go to Last Page</button>
+          <div class="menu-separator"></div>
+          <button id="rotate-cw">&#8635; Rotate Clockwise</button>
+          <button id="rotate-ccw">&#8634; Rotate Counterclockwise</button>
+          <div class="menu-separator"></div>
+          <button id="doc-props">Document Properties</button>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar-group">
       <button id="prev-page" title="Previous Page">&#9664;</button>
       <span class="page-info">
         <input id="page-input" type="number" min="1" value="1">
@@ -40,22 +56,6 @@
         <option value="custom" hidden>Custom</option>
       </select>
       <button id="zoom-in" title="Zoom In (Ctrl+=)">+</button>
-    </div>
-    <div class="toolbar-group">
-      <button id="toggle-thumbs" title="Toggle Thumbnails" class="text-btn">&#9638;</button>
-      <button id="toggle-outline" title="Toggle Outline" class="text-btn" style="display:none">&#9776;</button>
-      <div class="tools-wrapper">
-        <button id="tools-btn" title="Tools">&#9881;</button>
-        <div id="tools-menu">
-          <button id="go-first">Go to First Page</button>
-          <button id="go-last">Go to Last Page</button>
-          <div class="menu-separator"></div>
-          <button id="rotate-cw">&#8635; Rotate Clockwise</button>
-          <button id="rotate-ccw">&#8634; Rotate Counterclockwise</button>
-          <div class="menu-separator"></div>
-          <button id="doc-props">Document Properties</button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -96,9 +96,11 @@
 
     var WORKER_URL = '${workerUri}';
     var PDF_URL = '${pdfUri}';
-    var INITIAL_SCALE = '${scale}';
+    var INITIAL_SCALE = '${lastScale}' || '${scale}';
+    var INITIAL_MODE = '${lastScaleMode}' || '${scale}';
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_URL;
+    var vscodeApi = acquireVsCodeApi();
 
     var $ = function(id) { return document.getElementById(id); };
     var container = $('viewer-container');
@@ -125,7 +127,7 @@
     var observer = null;
     var searchResults = [];
     var searchIndex = -1;
-    var activeScaleMode = INITIAL_SCALE;
+    var activeScaleMode = INITIAL_MODE;
     var rotation = 0;
 
     function vpOpts(s) { return { scale: s, rotation: rotation }; }
@@ -168,6 +170,10 @@
       }).then(function(firstPage) {
         var vp = firstPage.getViewport(vpOpts(1.0));
         scale = resolveScale(vp, INITIAL_SCALE);
+        // Set dropdown to match the active mode
+        var opt = zoomSelect.querySelector('option[value="' + activeScaleMode + '"]');
+        if (opt) { zoomSelect.value = activeScaleMode; }
+        else if (activeScaleMode === 'custom') { zoomSelect.value = 'custom'; }
         updateZoomDisplay();
         return createPagePlaceholders();
       }).then(function() {
@@ -317,6 +323,7 @@
 
     function updateZoomDisplay() {
       zoomLevel.textContent = Math.round(scale * 100) + '%';
+      vscodeApi.postMessage({ type: 'zoomChanged', scale: String(scale), mode: activeScaleMode });
     }
 
     function rerender() {

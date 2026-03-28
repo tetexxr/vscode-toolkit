@@ -3,6 +3,8 @@ import { PdfPreview } from './pdf-preview';
 
 export class PdfProvider implements vscode.CustomReadonlyEditorProvider {
   static readonly viewType = 'toolkit.pdfPreview';
+  private lastScale = '';
+  private lastScaleMode = '';
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -14,7 +16,14 @@ export class PdfProvider implements vscode.CustomReadonlyEditorProvider {
     document: vscode.CustomDocument,
     webviewPanel: vscode.WebviewPanel,
   ): void {
-    new PdfPreview(this.extensionUri, document.uri, webviewPanel);
+    const preview = new PdfPreview(
+      this.extensionUri, document.uri, webviewPanel,
+      this.lastScale, this.lastScaleMode,
+    );
+    preview.onZoomChanged((scale, mode) => {
+      this.lastScale = scale;
+      this.lastScaleMode = mode;
+    });
   }
 }
 

@@ -15,6 +15,8 @@ export interface TemplateValues {
   cspSource: string;
   nonce: string;
   scale: string;
+  lastScale: string;
+  lastScaleMode: string;
 }
 
 export function buildTemplateHtml(template: string, values: TemplateValues): string {

@@ -45,6 +45,8 @@ describe('buildTemplateHtml', () => {
     cspSource: 'vscode-webview://*',
     nonce: 'abc123def456',
     scale: 'auto',
+    lastScale: '1.25',
+    lastScaleMode: 'custom',
   };
 
   it('should replace all placeholders', () => {
