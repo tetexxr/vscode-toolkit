@@ -313,15 +313,15 @@ const JS = /*js*/`
       html += '<colgroup>' +
         '<col class="col-name">' +
         '<col class="col-version">' +
-        '<col class="col-status">' +
         '<col class="col-latest">' +
+        '<col class="col-status">' +
         '<col class="col-actions">' +
       '</colgroup>';
       html += '<thead><tr>' +
         '<th class="col-name">Package Name</th>' +
         '<th class="col-version">Installed Version</th>' +
-        '<th class="col-status">Is Updated</th>' +
         '<th class="col-latest">Latest Version</th>' +
+        '<th class="col-status">Is Updated</th>' +
         '<th class="col-actions">Actions</th>' +
         '</tr></thead>';
       html += '<tbody>';
@@ -340,8 +340,8 @@ const JS = /*js*/`
         html += '<tr>';
         html += '<td class="col-name">' + esc(pkg.id) + '</td>';
         html += '<td class="col-version">' + esc(pkg.installedVersion) + '</td>';
-        html += '<td class="col-status">' + statusBadge + '</td>';
         html += '<td class="col-latest">' + (hasLatest ? esc(pkg.latestVersion) : '-') + '</td>';
+        html += '<td class="col-status">' + statusBadge + '</td>';
         html += '<td class="col-actions">';
         if (pkg.isOutdated) {
           html += '<button class="btn btn-update-sm" data-project="' + esc(proj.fsPath) + '" data-pkg="' + esc(pkg.id) + '" data-ver="' + esc(pkg.latestVersion) + '">Update</button>';
