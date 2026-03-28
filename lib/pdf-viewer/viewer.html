@@ -32,10 +32,16 @@
       <button id="fit-width" title="Fit Width" class="text-btn">Width</button>
       <button id="fit-page" title="Fit Page" class="text-btn">Page</button>
     </div>
+    <div class="toolbar-group">
+      <button id="toggle-outline" title="Toggle Outline" class="text-btn" style="display:none">&#9776;</button>
+    </div>
   </div>
 
-  <div id="viewer-container">
-    <div id="viewer"></div>
+  <div id="main">
+    <div id="outline-panel"></div>
+    <div id="viewer-container">
+      <div id="viewer"></div>
+    </div>
   </div>
 
   <div id="loading">Loading PDF&#8230;</div>
@@ -58,6 +64,8 @@
     var pageInput = $('page-input');
     var totalPagesEl = $('total-pages');
     var zoomLevelEl = $('zoom-level');
+    var outlinePanel = $('outline-panel');
+    var toggleOutlineBtn = $('toggle-outline');
 
     var pdf = null;
     var scale = 1.0;
@@ -92,6 +100,12 @@
       }).then(function() {
         setupObserver();
         loadingEl.style.display = 'none';
+        return pdf.getOutline();
+      }).then(function(outline) {
+        if (outline && outline.length > 0) {
+          buildOutline(outline);
+          toggleOutlineBtn.style.display = '';
+        }
       }).catch(function(e) {
         showError('Failed to load PDF: ' + e.message);
       });
@@ -309,6 +323,51 @@
       pageInput.value = num;
       pages[num - 1].div.scrollIntoView({ behavior: 'smooth' });
     }
+
+    // --- Outline ---
+
+    function buildOutline(items) {
+      outlinePanel.innerHTML = '';
+      var ul = buildOutlineList(items);
+      outlinePanel.appendChild(ul);
+    }
+
+    function buildOutlineList(items) {
+      var ul = document.createElement('ul');
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var li = document.createElement('li');
+        var btn = document.createElement('button');
+        btn.textContent = item.title;
+        btn.onclick = (function(dest) {
+          return function() { navigateToDest(dest); };
+        })(item.dest);
+        li.appendChild(btn);
+        if (item.items && item.items.length > 0) {
+          li.appendChild(buildOutlineList(item.items));
+        }
+        ul.appendChild(li);
+      }
+      return ul;
+    }
+
+    function navigateToDest(dest) {
+      if (!dest) return;
+      var destPromise = typeof dest === 'string'
+        ? pdf.getDestination(dest)
+        : Promise.resolve(dest);
+
+      destPromise.then(function(resolved) {
+        if (!resolved) return;
+        return pdf.getPageIndex(resolved[0]).then(function(pageIndex) {
+          goToPage(pageIndex + 1);
+        });
+      });
+    }
+
+    toggleOutlineBtn.onclick = function() {
+      outlinePanel.classList.toggle('open');
+    };
 
     // --- Controls ---
 
