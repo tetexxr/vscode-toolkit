@@ -215,6 +215,28 @@ Two refactoring code actions available via `Ctrl+.` (or `Cmd+.`) in C# files:
 
 Supports properties with generics (`List<string>`), nullable types (`string?`), arrays (`int[]`), `init` accessors, and the `required` modifier.
 
+### PDF Viewer
+
+View PDF files directly in VS Code. Uses Mozilla's PDF.js (pdfjs-dist) for high-fidelity rendering with a lightweight custom UI.
+
+**Features:**
+
+- Renders PDF pages to canvas with retina display support
+- Lazy page rendering via IntersectionObserver (only visible pages are rendered)
+- Page navigation: previous/next buttons, go-to-page input
+- Zoom controls: zoom in/out, fit to width, fit to page
+- Keyboard shortcuts: `Ctrl+=` / `Ctrl+-` for zoom, `Ctrl+0` to reset
+- Auto-reload when the PDF file changes on disk
+- Respects VS Code theme colors
+
+Just open any `.pdf` file and it renders in an editor tab.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.pdfViewer.scale` | `auto` | Default zoom level (`auto`, `page-actual`, `page-fit`, `page-width`, or a numeric value like `1.5`) |
+
 ### Generic Dark Theme
 
 A dark color theme that combines the best of three worlds. Built on top of VS Code's Dark+ as a base, it applies language-specific syntax highlighting inspired by JetBrains IDEs:
@@ -284,7 +306,7 @@ Run the unit test suite:
 npm test
 ```
 
-Tests cover all pure logic in `src/utils/` and `src/features/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns, C# namespace detection, template building, file-scoped namespace conversion, npm intellisense context detection).
+Tests cover all pure logic in `src/utils/` and `src/features/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns, C# namespace detection, template building, file-scoped namespace conversion, npm intellisense context detection, PDF viewer scale parsing and template rendering).
 
 ### Package
 
