@@ -118,6 +118,38 @@ Supports multi-select — select several folders, right-click, and expand/collap
 |---|---|---|
 | `toolkit.expandRecursively.excludePatterns` | `[node_modules, .git, dist, ...]` | Folder names to skip |
 
+### NuGet Package Manager
+
+Manage NuGet packages for .NET projects directly from VS Code. Supports browsing, installing, updating, and uninstalling packages using the NuGet V3 API.
+
+**Access:**
+
+- **Activity Bar** — click the NuGet icon in the sidebar to see all `.csproj` / `.fsproj` / `.vbproj` projects in the workspace. Click a project to open its package manager.
+- **Explorer context menu** — right-click a project file and select **Manage NuGet Packages**.
+- **Command Palette** — run **Toolkit: Manage NuGet Packages** to pick a project file.
+
+**Package Manager panel:**
+
+| Tab | Description |
+|---|---|
+| Browse | Search the NuGet gallery with pagination (Load More) |
+| Installed | View all installed packages and their status |
+| Updates | View packages with available updates, with bulk update support |
+
+Click any package to view its details: all versions, description, dependencies, vulnerabilities, license, and project URL.
+
+**Solution Overview:**
+
+Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution Overview**) to open a summary table of all projects and their packages. Click **Load Package Versions** to check for updates across the entire solution — outdated packages are highlighted with a red "No" badge.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.nuget.sources` | `[nuget.org]` | NuGet V3 package sources (supports private feeds with auth) |
+| `toolkit.nuget.requestTimeout` | `10000` | HTTP timeout in milliseconds |
+| `toolkit.nuget.defaultPrerelease` | `false` | Include prerelease packages by default |
+
 ### Generic Dark Theme
 
 A dark color theme that combines the best of three worlds. Built on top of VS Code's Dark+ as a base, it applies language-specific syntax highlighting inspired by JetBrains IDEs:
