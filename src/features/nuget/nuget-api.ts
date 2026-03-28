@@ -106,8 +106,9 @@ function searchResultToViewModel(pkg: SearchResultPackage, sourceUrl: string): P
 // ── Metadata fetch (Installed / Updates mode) ──────────────
 
 /**
- * Fetch version metadata for a list of installed packages in parallel.
- * Used for the Installed and Updates views.
+ * Fetch metadata for installed packages using the Registration API.
+ * Same approach as visual-nuget: one registration request per package,
+ * all in parallel, extracting metadata from the latest catalog entry.
  */
 export async function fetchInstalledPackagesMetadata(
   installedPackages: InstalledPackage[],
@@ -119,14 +120,20 @@ export async function fetchInstalledPackagesMetadata(
   const endpoints = await resolveEndpoints(source, timeout);
   const headers = authHeaders(source);
 
-  const results = await Promise.all(
+  const results = await Promise.allSettled(
     installedPackages.map(pkg =>
       fetchSinglePackageMetadata(pkg.id, endpoints.registration, headers, prerelease, source.url, timeout)
-        .catch(() => null) // Package may not exist on this source
     )
   );
 
-  return filterAndSortResults(results, query);
+  const packages: PackageViewModel[] = [];
+  for (const result of results) {
+    if (result.status === 'fulfilled' && result.value) {
+      packages.push(result.value);
+    }
+  }
+
+  return filterAndSortResults(packages, query);
 }
 
 /** Fetch all version metadata for a single package (for the details panel). */
@@ -145,6 +152,7 @@ export async function fetchPackageVersions(
 
 // ── Internal helpers ───────────────────────────────────────
 
+/** Fetch metadata for a single package from its registration index. */
 async function fetchSinglePackageMetadata(
   packageId: string,
   registrationBase: string,
@@ -173,7 +181,6 @@ async function fetchSinglePackageMetadata(
     installedVersion: '',
     isOutdated: false,
     sourceUrl,
-    versions: entries,
   };
 }
 
