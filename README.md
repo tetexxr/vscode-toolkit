@@ -313,41 +313,22 @@ npm test
 
 Tests cover all pure logic in `src/utils/` and `src/features/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns, C# namespace detection, template building, file-scoped namespace conversion, npm intellisense context detection, PDF viewer scale parsing and template rendering).
 
-### Package
+### Package & Install
 
-Generate a `.vsix` file for distribution:
+Build, package, and install the extension into VS Code:
 
 ```bash
+npm install --ignore-scripts
+npm run compile
 npm run package
-```
-
-This produces `vscode-toolkit-<version>.vsix` in the project root.
-
-### Install
-
-Install the packaged extension into VS Code:
-
-```bash
 code --install-extension vscode-toolkit-<version>.vsix
 ```
 
 Then reload VS Code (`Cmd+Shift+P` → "Developer: Reload Window").
 
-### Update
+`npm run package` generates a `vscode-toolkit-<version>.vsix` file in the project root. If the extension is already installed, VS Code will replace the previous version automatically.
 
-After making changes:
-
-1. Bump the `version` in `package.json`
-2. Build and package:
-   ```bash
-   npm run package
-   ```
-3. Install the new version:
-   ```bash
-   code --install-extension vscode-toolkit-<version>.vsix
-   ```
-
-VS Code will replace the previous version automatically.
+When releasing a new version, bump the `version` in `package.json` before packaging.
 
 ### Uninstall
 
@@ -363,12 +344,4 @@ npx npm-check-updates -u
 npm install --ignore-scripts
 npm run compile
 npm test
-```
-
-### One line command
-
-To uninstall the old version, build, package, and install the new version in one command:
-
-```bash
-code --uninstall-extension tete.vscode-toolkit && npx --yes vsce package --allow-missing-repository --skip-license && code --install-extension vscode-toolkit-1.2.1.vsix --force
 ```
