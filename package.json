@@ -683,7 +683,7 @@
     "@types/vscode": "^1.110.0",
     "@vscode/vsce": "^3.7.1",
     "mocha": "^11.7.5",
-    "pdfjs-dist": "^5.5.207",
+    "pdfjs-dist": "^5.6.205",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
