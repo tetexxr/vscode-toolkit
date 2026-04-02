@@ -54,38 +54,6 @@ export interface RemoteInfo {
   repo: string;
 }
 
-export interface FileLogEntry {
-  hash: string;
-  shortHash: string;
-  author: string;
-  date: string;
-  message: string;
-}
-
-export async function getFileLog(cwd: string, relativePath: string): Promise<FileLogEntry[]> {
-  const separator = '---GIT-ENTRY---';
-  const format = `${separator}%n%H%n%h%n%an%n%ar%n%s`;
-  const output = await gitExec(cwd, ['log', `--format=${format}`, '--', relativePath], 15000);
-
-  return output
-    .split(separator)
-    .filter(Boolean)
-    .map(entry => {
-      const lines = entry.trim().split('\n');
-      return {
-        hash: lines[0],
-        shortHash: lines[1],
-        author: lines[2],
-        date: lines[3],
-        message: lines[4],
-      };
-    });
-}
-
-export async function getFileAtCommit(cwd: string, ref: string, relativePath: string): Promise<string> {
-  return gitExec(cwd, ['show', `${ref}:${relativePath}`], 10000);
-}
-
 export async function getFileLogPatch(cwd: string, relativePath: string): Promise<string> {
   return gitExec(cwd, ['log', '-p', '--format=%n---COMMIT---%ncommit %H%nAuthor: %an <%ae>%nDate:   %ar (%ai)%n%n    %s%n', '--', relativePath], 30000);
 }
