@@ -1,5 +1,33 @@
 import { strict as assert } from 'assert';
-import { parseRemoteUrl } from '../../src/utils/git';
+import * as path from 'path';
+import { parseRemoteUrl, getFileLogPatch } from '../../src/utils/git';
+
+describe('getFileLogPatch', () => {
+  const repoRoot = path.resolve(__dirname, '../..');
+
+  it('should return log with patch for a tracked file', async () => {
+    const result = await getFileLogPatch(repoRoot, 'package.json');
+    assert.ok(result.length > 0);
+    assert.ok(result.includes('---COMMIT---'));
+    assert.ok(result.includes('commit '));
+    assert.ok(result.includes('Author:'));
+  });
+
+  it('should include diff hunks in the output', async () => {
+    const result = await getFileLogPatch(repoRoot, 'package.json');
+    assert.ok(result.includes('diff --git'));
+    assert.ok(result.includes('@@'));
+  });
+
+  it('should return empty string for an untracked file', async () => {
+    const result = await getFileLogPatch(repoRoot, 'nonexistent-file-that-does-not-exist.txt');
+    assert.equal(result, '');
+  });
+
+  it('should reject for an invalid cwd', async () => {
+    await assert.rejects(() => getFileLogPatch('/nonexistent-dir', 'file.txt'));
+  });
+});
 
 describe('parseRemoteUrl', () => {
   it('should parse SSH remote URL', () => {
