@@ -46,13 +46,6 @@
           "id": "nugetProjects",
           "name": "Projects"
         }
-      ],
-      "explorer": [
-        {
-          "id": "toolkitGitFileHistory",
-          "name": "Git File History",
-          "when": "toolkit.gitHistoryActive"
-        }
       ]
     },
     "customEditors": [
@@ -284,15 +277,6 @@
         "command": "toolkit.gitHistory",
         "title": "Toolkit: Git File History",
         "icon": "$(history)"
-      },
-      {
-        "command": "toolkit.gitHistory.showDiff",
-        "title": "Toolkit: Git History - Show Diff"
-      },
-      {
-        "command": "toolkit.gitHistory.close",
-        "title": "Toolkit: Git History - Close",
-        "icon": "$(close)"
       }
     ],
     "submenus": [
@@ -306,11 +290,6 @@
         {
           "command": "toolkit.nuget.solutionOverview",
           "when": "view == nugetProjects",
-          "group": "navigation"
-        },
-        {
-          "command": "toolkit.gitHistory.close",
-          "when": "view == toolkitGitFileHistory",
           "group": "navigation"
         }
       ],
@@ -424,14 +403,6 @@
       "commandPalette": [
         {
           "command": "toolkit.nuget.managePackages",
-          "when": "false"
-        },
-        {
-          "command": "toolkit.gitHistory.showDiff",
-          "when": "false"
-        },
-        {
-          "command": "toolkit.gitHistory.close",
           "when": "false"
         }
       ],

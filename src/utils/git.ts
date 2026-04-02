@@ -86,6 +86,10 @@ export async function getFileAtCommit(cwd: string, ref: string, relativePath: st
   return gitExec(cwd, ['show', `${ref}:${relativePath}`], 10000);
 }
 
+export async function getFileLogPatch(cwd: string, relativePath: string): Promise<string> {
+  return gitExec(cwd, ['log', '-p', '--format=%n---COMMIT---%ncommit %H%nAuthor: %an <%ae>%nDate:   %ar (%ai)%n%n    %s%n', '--', relativePath], 30000);
+}
+
 export function parseRemoteUrl(url: string): RemoteInfo | undefined {
   const match = url.match(/([\w-]+(?:\.[\w-]+)+)[:/]+([^/]+)\/(.*?)(?:\.git|\/)?$/);
   if (!match) { return undefined; }
