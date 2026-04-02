@@ -4,9 +4,9 @@
 
 import { execFile } from 'child_process';
 
-function gitExec(cwd: string, args: string[]): Promise<string> {
+function gitExec(cwd: string, args: string[], timeout = 5000): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile('git', args, { cwd, timeout: 5000 }, (err, stdout) => {
+    execFile('git', args, { cwd, timeout, maxBuffer: 10 * 1024 * 1024 }, (err, stdout) => {
       if (err) {
         reject(err);
       } else {
@@ -52,6 +52,38 @@ export interface RemoteInfo {
   domain: string;
   owner: string;
   repo: string;
+}
+
+export interface FileLogEntry {
+  hash: string;
+  shortHash: string;
+  author: string;
+  date: string;
+  message: string;
+}
+
+export async function getFileLog(cwd: string, relativePath: string): Promise<FileLogEntry[]> {
+  const separator = '---GIT-ENTRY---';
+  const format = `${separator}%n%H%n%h%n%an%n%ar%n%s`;
+  const output = await gitExec(cwd, ['log', `--format=${format}`, '--', relativePath], 15000);
+
+  return output
+    .split(separator)
+    .filter(Boolean)
+    .map(entry => {
+      const lines = entry.trim().split('\n');
+      return {
+        hash: lines[0],
+        shortHash: lines[1],
+        author: lines[2],
+        date: lines[3],
+        message: lines[4],
+      };
+    });
+}
+
+export async function getFileAtCommit(cwd: string, ref: string, relativePath: string): Promise<string> {
+  return gitExec(cwd, ['show', `${ref}:${relativePath}`], 10000);
 }
 
 export function parseRemoteUrl(url: string): RemoteInfo | undefined {
