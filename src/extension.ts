@@ -10,6 +10,7 @@ import { registerCSharpCommands } from './features/csharp/csharp';
 import { registerNpmIntellisenseCommands } from './features/npm-intellisense';
 import { registerPdfViewer } from './features/pdf-viewer/pdf-provider';
 import { registerGitHistoryCommands } from './features/git-history';
+import { registerAddBracesCodeActions } from './features/add-braces';
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context);
@@ -23,6 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerNpmIntellisenseCommands(context);
   registerPdfViewer(context);
   registerGitHistoryCommands(context);
+  registerAddBracesCodeActions(context);
 }
 
 export function deactivate() {}
