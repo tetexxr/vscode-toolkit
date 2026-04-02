@@ -9,6 +9,7 @@ import { registerNugetCommands } from './features/nuget/nuget';
 import { registerCSharpCommands } from './features/csharp/csharp';
 import { registerNpmIntellisenseCommands } from './features/npm-intellisense';
 import { registerPdfViewer } from './features/pdf-viewer/pdf-provider';
+import { registerGitHistoryCommands } from './features/git-history';
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context);
@@ -21,6 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerCSharpCommands(context);
   registerNpmIntellisenseCommands(context);
   registerPdfViewer(context);
+  registerGitHistoryCommands(context);
 }
 
 export function deactivate() {}
