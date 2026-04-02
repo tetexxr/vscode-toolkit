@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one utility extension: change case, slugify, auto rename tag, open in GitHub, format files, expand recursively, npm intellisense, C# file generation, NuGet package manager, PDF viewer.",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.110.0"
@@ -272,6 +272,11 @@
       {
         "command": "toolkit.npmIntellisense.import",
         "title": "Toolkit: NPM Intellisense - Import Module"
+      },
+      {
+        "command": "toolkit.gitHistory",
+        "title": "Toolkit: Git File History",
+        "icon": "$(history)"
       }
     ],
     "submenus": [
@@ -388,6 +393,11 @@
           "command": "toolkit.nuget.managePackages",
           "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
           "group": "navigation@14"
+        },
+        {
+          "command": "toolkit.gitHistory",
+          "when": "!explorerResourceIsFolder",
+          "group": "navigation@15"
         }
       ],
       "commandPalette": [
@@ -410,6 +420,10 @@
         {
           "command": "toolkit.openInGitHub.file",
           "group": "1_modification@3"
+        },
+        {
+          "command": "toolkit.gitHistory",
+          "group": "1_modification@4"
         }
       ]
     },

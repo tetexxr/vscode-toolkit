@@ -4,9 +4,9 @@
 
 import { execFile } from 'child_process';
 
-function gitExec(cwd: string, args: string[]): Promise<string> {
+function gitExec(cwd: string, args: string[], timeout = 5000): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile('git', args, { cwd, timeout: 5000 }, (err, stdout) => {
+    execFile('git', args, { cwd, timeout, maxBuffer: 10 * 1024 * 1024 }, (err, stdout) => {
       if (err) {
         reject(err);
       } else {
@@ -52,6 +52,10 @@ export interface RemoteInfo {
   domain: string;
   owner: string;
   repo: string;
+}
+
+export async function getFileLogPatch(cwd: string, relativePath: string): Promise<string> {
+  return gitExec(cwd, ['log', '-p', '--format=%n---COMMIT---%ncommit %H%nAuthor: %an <%ae>%nDate:   %ar (%ai)%n%n    %s%n', '--', relativePath], 30000);
 }
 
 export function parseRemoteUrl(url: string): RemoteInfo | undefined {
