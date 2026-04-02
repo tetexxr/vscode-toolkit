@@ -332,7 +332,7 @@ Run the unit test suite:
 npm test
 ```
 
-Tests cover all pure logic in `src/utils/` and `src/features/` (text transformations, slug generation, git URL parsing, tag matching, file exclusion patterns, C# namespace detection, template building, file-scoped namespace conversion, npm intellisense context detection, PDF viewer scale parsing and template rendering).
+Tests cover the pure logic in `src/utils/` and `src/features/`.
 
 ### Package & Install
 
