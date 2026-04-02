@@ -206,6 +206,27 @@ Run **Toolkit: NPM Intellisense - Import Module** from the Command Palette to pi
 | `toolkit.npmIntellisense.importLinebreak` | `;\n` | Line ending after the import statement |
 | `toolkit.npmIntellisense.importDeclarationType` | `const` | Declaration type for `require()` imports |
 
+### Git File History
+
+View the full commit history and diffs for any file directly in VS Code. Renders a rich HTML panel with syntax-highlighted patches, showing each commit's author, date, message, and changes.
+
+Available from:
+
+- **Explorer context menu** — right-click a file and select **Toolkit: Git File History**
+- **Editor context menu** — right-click inside an editor
+- **Command Palette** — run **Toolkit: Git File History**
+
+Reuses the same panel if the file is already open. Supports VS Code's built-in find widget (`Ctrl+F` / `Cmd+F`) inside the history view.
+
+### Add / Remove Braces
+
+Code actions available via `Ctrl+.` (or `Cmd+.`) in TypeScript, JavaScript, TSX, and JSX files:
+
+- **Add braces** — wraps a braceless control statement body in `{ }`. Appears when the cursor is on (or inside) an `if`, `else`, `else if`, `for`, or `while` without braces.
+- **Remove braces** — removes `{ }` from a single-statement block. Appears when the block contains exactly one statement and is not followed by `else`.
+
+Works with and without semicolons, respects the editor's indentation settings (spaces/tabs, tab size), and handles multi-line bodies including method chaining.
+
 ### C# Code Actions
 
 Two refactoring code actions available via `Ctrl+.` (or `Cmd+.`) in C# files:
