@@ -5,8 +5,8 @@
  */
 
 export interface PackageReference {
-  id: string;
-  version: string;
+  id: string
+  version: string
 }
 
 /**
@@ -23,39 +23,41 @@ export interface PackageReference {
  * Attribute order (Include/Version) does not matter.
  */
 export function parsePackageReferences(xml: string): PackageReference[] {
-  const results: PackageReference[] = [];
+  const results: PackageReference[] = []
 
   // Match every <PackageReference ...> or <PackageReference ... /> tag.
   // We capture everything between the opening < and the closing > or />.
-  const tagRe = /<PackageReference\s([^>]*?)\/?>/gi;
-  let tagMatch: RegExpExecArray | null;
+  const tagRe = /<PackageReference\s([^>]*?)\/?>/gi
+  let tagMatch: RegExpExecArray | null
 
   while ((tagMatch = tagRe.exec(xml)) !== null) {
-    const attrs = tagMatch[1];
-    const id = extractAttribute(attrs, 'Include');
-    if (!id) { continue; }
+    const attrs = tagMatch[1]
+    const id = extractAttribute(attrs, 'Include')
+    if (!id) {
+      continue
+    }
 
     // Try Version as an attribute first
-    let version = extractAttribute(attrs, 'Version');
+    let version = extractAttribute(attrs, 'Version')
 
     // If not found as attribute, look for a <Version> child element
     if (!version) {
-      const afterTag = xml.slice(tagMatch.index + tagMatch[0].length);
-      const childMatch = afterTag.match(/<Version\s*>(.*?)<\/Version\s*>/i);
+      const afterTag = xml.slice(tagMatch.index + tagMatch[0].length)
+      const childMatch = afterTag.match(/<Version\s*>(.*?)<\/Version\s*>/i)
       if (childMatch) {
-        version = childMatch[1].trim();
+        version = childMatch[1].trim()
       }
     }
 
-    results.push({ id, version: version || '' });
+    results.push({ id, version: version || '' })
   }
 
-  return results;
+  return results
 }
 
 /** Extracts the value of a named attribute from an XML attribute string. */
 function extractAttribute(attrs: string, name: string): string | undefined {
-  const re = new RegExp(`${name}\\s*=\\s*"([^"]*)"`, 'i');
-  const match = attrs.match(re);
-  return match ? match[1] : undefined;
+  const re = new RegExp(`${name}\\s*=\\s*"([^"]*)"`, 'i')
+  const match = attrs.match(re)
+  return match ? match[1] : undefined
 }

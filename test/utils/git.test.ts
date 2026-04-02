@@ -1,70 +1,70 @@
-import { strict as assert } from 'assert';
-import * as path from 'path';
-import { parseRemoteUrl, getFileLogPatch } from '../../src/utils/git';
+import { strict as assert } from 'assert'
+import * as path from 'path'
+import { parseRemoteUrl, getFileLogPatch } from '../../src/utils/git'
 
 describe('getFileLogPatch', () => {
-  const repoRoot = path.resolve(__dirname, '../..');
+  const repoRoot = path.resolve(__dirname, '../..')
 
   it('should return log with patch for a tracked file', async () => {
-    const result = await getFileLogPatch(repoRoot, 'package.json');
-    assert.ok(result.length > 0);
-    assert.ok(result.includes('---COMMIT---'));
-    assert.ok(result.includes('commit '));
-    assert.ok(result.includes('Author:'));
-  });
+    const result = await getFileLogPatch(repoRoot, 'package.json')
+    assert.ok(result.length > 0)
+    assert.ok(result.includes('---COMMIT---'))
+    assert.ok(result.includes('commit '))
+    assert.ok(result.includes('Author:'))
+  })
 
   it('should include diff hunks in the output', async () => {
-    const result = await getFileLogPatch(repoRoot, 'package.json');
-    assert.ok(result.includes('diff --git'));
-    assert.ok(result.includes('@@'));
-  });
+    const result = await getFileLogPatch(repoRoot, 'package.json')
+    assert.ok(result.includes('diff --git'))
+    assert.ok(result.includes('@@'))
+  })
 
   it('should return empty string for an untracked file', async () => {
-    const result = await getFileLogPatch(repoRoot, 'nonexistent-file-that-does-not-exist.txt');
-    assert.equal(result, '');
-  });
+    const result = await getFileLogPatch(repoRoot, 'nonexistent-file-that-does-not-exist.txt')
+    assert.equal(result, '')
+  })
 
   it('should reject for an invalid cwd', async () => {
-    await assert.rejects(() => getFileLogPatch('/nonexistent-dir', 'file.txt'));
-  });
-});
+    await assert.rejects(() => getFileLogPatch('/nonexistent-dir', 'file.txt'))
+  })
+})
 
 describe('parseRemoteUrl', () => {
   it('should parse SSH remote URL', () => {
-    const result = parseRemoteUrl('git@github.com:owner/repo.git');
-    assert.deepEqual(result, { domain: 'github.com', owner: 'owner', repo: 'repo' });
-  });
+    const result = parseRemoteUrl('git@github.com:owner/repo.git')
+    assert.deepEqual(result, { domain: 'github.com', owner: 'owner', repo: 'repo' })
+  })
 
   it('should parse HTTPS remote URL', () => {
-    const result = parseRemoteUrl('https://github.com/owner/repo.git');
-    assert.deepEqual(result, { domain: 'github.com', owner: 'owner', repo: 'repo' });
-  });
+    const result = parseRemoteUrl('https://github.com/owner/repo.git')
+    assert.deepEqual(result, { domain: 'github.com', owner: 'owner', repo: 'repo' })
+  })
 
   it('should parse HTTPS remote URL without .git suffix', () => {
-    const result = parseRemoteUrl('https://github.com/owner/repo');
-    assert.deepEqual(result, { domain: 'github.com', owner: 'owner', repo: 'repo' });
-  });
+    const result = parseRemoteUrl('https://github.com/owner/repo')
+    assert.deepEqual(result, { domain: 'github.com', owner: 'owner', repo: 'repo' })
+  })
 
   it('should parse ssh:// protocol URL', () => {
-    const result = parseRemoteUrl('ssh://git@github.com/owner/repo.git');
-    assert.deepEqual(result, { domain: 'github.com', owner: 'owner', repo: 'repo' });
-  });
+    const result = parseRemoteUrl('ssh://git@github.com/owner/repo.git')
+    assert.deepEqual(result, { domain: 'github.com', owner: 'owner', repo: 'repo' })
+  })
 
   it('should parse GitHub Enterprise URL', () => {
-    const result = parseRemoteUrl('git@github.corp.com:team/project.git');
-    assert.deepEqual(result, { domain: 'github.corp.com', owner: 'team', repo: 'project' });
-  });
+    const result = parseRemoteUrl('git@github.corp.com:team/project.git')
+    assert.deepEqual(result, { domain: 'github.corp.com', owner: 'team', repo: 'project' })
+  })
 
   it('should handle hyphens in owner and repo names', () => {
-    const result = parseRemoteUrl('git@github.com:my-org/my-repo.git');
-    assert.deepEqual(result, { domain: 'github.com', owner: 'my-org', repo: 'my-repo' });
-  });
+    const result = parseRemoteUrl('git@github.com:my-org/my-repo.git')
+    assert.deepEqual(result, { domain: 'github.com', owner: 'my-org', repo: 'my-repo' })
+  })
 
   it('should return undefined for an invalid URL', () => {
-    assert.equal(parseRemoteUrl('not-a-url'), undefined);
-  });
+    assert.equal(parseRemoteUrl('not-a-url'), undefined)
+  })
 
   it('should return undefined for an empty string', () => {
-    assert.equal(parseRemoteUrl(''), undefined);
-  });
-});
+    assert.equal(parseRemoteUrl(''), undefined)
+  })
+})

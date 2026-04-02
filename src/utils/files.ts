@@ -9,11 +9,15 @@
 export function isExcluded(name: string, excludePatterns: string[]): boolean {
   for (const pattern of excludePatterns) {
     if (pattern.includes('*')) {
-      const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$', 'i');
-      if (regex.test(name)) { return true; }
+      const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$', 'i')
+      if (regex.test(name)) {
+        return true
+      }
     } else {
-      if (name.toLowerCase() === pattern.toLowerCase()) { return true; }
+      if (name.toLowerCase() === pattern.toLowerCase()) {
+        return true
+      }
     }
   }
-  return false;
+  return false
 }

@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { strict as assert } from 'assert'
 import {
   calculateNamespace,
   isNet6Plus,
@@ -6,25 +6,25 @@ import {
   extractUsings,
   parseGlobalUsings,
   sanitizeNamespace,
-} from '../../../src/features/csharp/csharp-project';
-import { ProjectInfo } from '../../../src/features/csharp/csharp-types';
+} from '../../../src/features/csharp/csharp-project'
+import { ProjectInfo } from '../../../src/features/csharp/csharp-types'
 
 describe('extractXmlValue', () => {
   it('should extract a simple tag value', () => {
-    assert.equal(extractXmlValue('<RootNamespace>MyApp</RootNamespace>', 'RootNamespace'), 'MyApp');
-  });
+    assert.equal(extractXmlValue('<RootNamespace>MyApp</RootNamespace>', 'RootNamespace'), 'MyApp')
+  })
 
   it('should extract value with surrounding whitespace', () => {
-    assert.equal(extractXmlValue('<TargetFramework>  net8.0  </TargetFramework>', 'TargetFramework'), 'net8.0');
-  });
+    assert.equal(extractXmlValue('<TargetFramework>  net8.0  </TargetFramework>', 'TargetFramework'), 'net8.0')
+  })
 
   it('should return null when tag is missing', () => {
-    assert.equal(extractXmlValue('<Project></Project>', 'RootNamespace'), null);
-  });
+    assert.equal(extractXmlValue('<Project></Project>', 'RootNamespace'), null)
+  })
 
   it('should return null for empty string', () => {
-    assert.equal(extractXmlValue('', 'RootNamespace'), null);
-  });
+    assert.equal(extractXmlValue('', 'RootNamespace'), null)
+  })
 
   it('should extract from a realistic csproj', () => {
     const csproj = `<Project Sdk="Microsoft.NET.Sdk.Web">
@@ -33,36 +33,36 @@ describe('extractXmlValue', () => {
     <RootNamespace>My.Cool.App</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-</Project>`;
-    assert.equal(extractXmlValue(csproj, 'RootNamespace'), 'My.Cool.App');
-    assert.equal(extractXmlValue(csproj, 'TargetFramework'), 'net8.0');
-    assert.equal(extractXmlValue(csproj, 'ImplicitUsings'), 'enable');
-  });
-});
+</Project>`
+    assert.equal(extractXmlValue(csproj, 'RootNamespace'), 'My.Cool.App')
+    assert.equal(extractXmlValue(csproj, 'TargetFramework'), 'net8.0')
+    assert.equal(extractXmlValue(csproj, 'ImplicitUsings'), 'enable')
+  })
+})
 
 describe('extractUsings', () => {
   it('should extract Using Include items', () => {
     const xml = `<ItemGroup>
   <Using Include="System.Net.Http" />
   <Using Include="MyLib.Helpers" />
-</ItemGroup>`;
-    assert.deepEqual(extractUsings(xml, 'Include'), ['System.Net.Http', 'MyLib.Helpers']);
-  });
+</ItemGroup>`
+    assert.deepEqual(extractUsings(xml, 'Include'), ['System.Net.Http', 'MyLib.Helpers'])
+  })
 
   it('should extract Using Remove items', () => {
-    const xml = '<Using Remove="System.Net.Http" />';
-    assert.deepEqual(extractUsings(xml, 'Remove'), ['System.Net.Http']);
-  });
+    const xml = '<Using Remove="System.Net.Http" />'
+    assert.deepEqual(extractUsings(xml, 'Remove'), ['System.Net.Http'])
+  })
 
   it('should return empty array when no usings', () => {
-    assert.deepEqual(extractUsings('<Project></Project>', 'Include'), []);
-  });
+    assert.deepEqual(extractUsings('<Project></Project>', 'Include'), [])
+  })
 
   it('should handle non-self-closing Using tags', () => {
-    const xml = '<Using Include="System.Text">';
-    assert.deepEqual(extractUsings(xml, 'Include'), ['System.Text']);
-  });
-});
+    const xml = '<Using Include="System.Text">'
+    assert.deepEqual(extractUsings(xml, 'Include'), ['System.Text'])
+  })
+})
 
 describe('parseGlobalUsings', () => {
   it('should parse global using statements', () => {
@@ -71,92 +71,92 @@ global using global::System;
 global using global::System.Collections.Generic;
 global using global::System.Linq;
 global using global::System.Threading.Tasks;
-`;
+`
     assert.deepEqual(parseGlobalUsings(content), [
       'System',
       'System.Collections.Generic',
       'System.Linq',
       'System.Threading.Tasks',
-    ]);
-  });
+    ])
+  })
 
   it('should return empty array for empty content', () => {
-    assert.deepEqual(parseGlobalUsings(''), []);
-  });
+    assert.deepEqual(parseGlobalUsings(''), [])
+  })
 
   it('should ignore non-global using lines', () => {
     const content = `using System;
 global using global::Microsoft.AspNetCore.Builder;
 // comment
-`;
-    assert.deepEqual(parseGlobalUsings(content), ['Microsoft.AspNetCore.Builder']);
-  });
-});
+`
+    assert.deepEqual(parseGlobalUsings(content), ['Microsoft.AspNetCore.Builder'])
+  })
+})
 
 describe('sanitizeNamespace', () => {
   it('should keep valid identifiers unchanged', () => {
-    assert.equal(sanitizeNamespace('MyApp'), 'MyApp');
-  });
+    assert.equal(sanitizeNamespace('MyApp'), 'MyApp')
+  })
 
   it('should replace hyphens with underscores', () => {
-    assert.equal(sanitizeNamespace('my-app'), 'my_app');
-  });
+    assert.equal(sanitizeNamespace('my-app'), 'my_app')
+  })
 
   it('should replace dots with underscores', () => {
-    assert.equal(sanitizeNamespace('my.app'), 'my_app');
-  });
+    assert.equal(sanitizeNamespace('my.app'), 'my_app')
+  })
 
   it('should replace spaces with underscores', () => {
-    assert.equal(sanitizeNamespace('my app'), 'my_app');
-  });
+    assert.equal(sanitizeNamespace('my app'), 'my_app')
+  })
 
   it('should prefix leading digits with underscore', () => {
-    assert.equal(sanitizeNamespace('3DModels'), '_3DModels');
-  });
+    assert.equal(sanitizeNamespace('3DModels'), '_3DModels')
+  })
 
   it('should handle all-special-chars', () => {
-    assert.equal(sanitizeNamespace('@#$'), '___');
-  });
-});
+    assert.equal(sanitizeNamespace('@#$'), '___')
+  })
+})
 
 describe('isNet6Plus', () => {
   it('should return true for net6.0', () => {
-    assert.equal(isNet6Plus('net6.0'), true);
-  });
+    assert.equal(isNet6Plus('net6.0'), true)
+  })
 
   it('should return true for net7.0', () => {
-    assert.equal(isNet6Plus('net7.0'), true);
-  });
+    assert.equal(isNet6Plus('net7.0'), true)
+  })
 
   it('should return true for net8.0', () => {
-    assert.equal(isNet6Plus('net8.0'), true);
-  });
+    assert.equal(isNet6Plus('net8.0'), true)
+  })
 
   it('should return true for net9.0', () => {
-    assert.equal(isNet6Plus('net9.0'), true);
-  });
+    assert.equal(isNet6Plus('net9.0'), true)
+  })
 
   it('should return false for net5.0', () => {
-    assert.equal(isNet6Plus('net5.0'), false);
-  });
+    assert.equal(isNet6Plus('net5.0'), false)
+  })
 
   it('should return false for netcoreapp3.1', () => {
-    assert.equal(isNet6Plus('netcoreapp3.1'), false);
-  });
+    assert.equal(isNet6Plus('netcoreapp3.1'), false)
+  })
 
   it('should return false for netstandard2.0', () => {
-    assert.equal(isNet6Plus('netstandard2.0'), false);
-  });
+    assert.equal(isNet6Plus('netstandard2.0'), false)
+  })
 
   it('should return false for net48 (Framework)', () => {
-    assert.equal(isNet6Plus('net48'), false);
-  });
-});
+    assert.equal(isNet6Plus('net48'), false)
+  })
+})
 
 describe('calculateNamespace', () => {
   it('should use directory name when no project info', () => {
-    assert.equal(calculateNamespace('/users/dev/MyApp/Services', null), 'Services');
-  });
+    assert.equal(calculateNamespace('/users/dev/MyApp/Services', null), 'Services')
+  })
 
   it('should return root namespace when dir is project root', () => {
     const info: ProjectInfo = {
@@ -167,9 +167,9 @@ describe('calculateNamespace', () => {
       implicitUsings: [],
       usingsInclude: [],
       usingsRemove: [],
-    };
-    assert.equal(calculateNamespace('/users/dev/MyApp', info), 'MyApp');
-  });
+    }
+    assert.equal(calculateNamespace('/users/dev/MyApp', info), 'MyApp')
+  })
 
   it('should append subdirectory segments to root namespace', () => {
     const info: ProjectInfo = {
@@ -180,9 +180,9 @@ describe('calculateNamespace', () => {
       implicitUsings: [],
       usingsInclude: [],
       usingsRemove: [],
-    };
-    assert.equal(calculateNamespace('/users/dev/MyApp/Services/Auth', info), 'MyApp.Services.Auth');
-  });
+    }
+    assert.equal(calculateNamespace('/users/dev/MyApp/Services/Auth', info), 'MyApp.Services.Auth')
+  })
 
   it('should use directory name as root when no RootNamespace in csproj', () => {
     const info: ProjectInfo = {
@@ -193,9 +193,9 @@ describe('calculateNamespace', () => {
       implicitUsings: [],
       usingsInclude: [],
       usingsRemove: [],
-    };
-    assert.equal(calculateNamespace('/users/dev/MyApp/Models', info), 'MyApp.Models');
-  });
+    }
+    assert.equal(calculateNamespace('/users/dev/MyApp/Models', info), 'MyApp.Models')
+  })
 
   it('should sanitize directory names with special chars', () => {
     const info: ProjectInfo = {
@@ -206,7 +206,7 @@ describe('calculateNamespace', () => {
       implicitUsings: [],
       usingsInclude: [],
       usingsRemove: [],
-    };
-    assert.equal(calculateNamespace('/users/dev/my-app/sub-folder', info), 'my_app.sub_folder');
-  });
-});
+    }
+    assert.equal(calculateNamespace('/users/dev/my-app/sub-folder', info), 'my_app.sub_folder')
+  })
+})

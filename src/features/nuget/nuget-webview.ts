@@ -4,7 +4,7 @@
  * Uses VS Code CSS custom properties for native theme integration.
  */
 
-import * as vscode from 'vscode';
+import * as vscode from 'vscode'
 
 export function generateWebviewHtml(webview: vscode.Webview, nonce: string): string {
   return `<!DOCTYPE html>
@@ -31,12 +31,12 @@ export function generateWebviewHtml(webview: vscode.Webview, nonce: string): str
   </div>
   <script nonce="${nonce}">${JS}</script>
 </body>
-</html>`;
+</html>`
 }
 
 // ── CSS ──────────────────────────────────────────────────
 
-const CSS = /*css*/`
+const CSS = /*css*/ `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -466,11 +466,11 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   opacity: 0.5;
   font-size: 1.05rem;
 }
-`;
+`
 
 // ── JavaScript ───────────────────────────────────────────
 
-const JS = /*js*/`
+const JS = /*js*/ `
 (function() {
   const vscode = acquireVsCodeApi();
 
@@ -988,4 +988,4 @@ const JS = /*js*/`
   // ── Init ─────────────────────────────────────────
   post({ command: 'ready' });
 })();
-`;
+`

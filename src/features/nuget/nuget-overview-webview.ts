@@ -3,7 +3,7 @@
  * Shows a table per project with installed packages, versions and update status.
  */
 
-import * as vscode from 'vscode';
+import * as vscode from 'vscode'
 
 export function generateOverviewHtml(webview: vscode.Webview, nonce: string): string {
   return `<!DOCTYPE html>
@@ -23,12 +23,12 @@ export function generateOverviewHtml(webview: vscode.Webview, nonce: string): st
   </div>
   <script nonce="${nonce}">${JS}</script>
 </body>
-</html>`;
+</html>`
 }
 
 // ── CSS ──────────────────────────────────────────────────
 
-const CSS = /*css*/`
+const CSS = /*css*/ `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -228,11 +228,11 @@ html, body {
   font-size: 0.8rem;
   padding: 2px 8px;
 }
-`;
+`
 
 // ── JS ──────────────────────────────────────────────────
 
-const JS = /*js*/`
+const JS = /*js*/ `
 (function() {
   const vscode = acquireVsCodeApi();
 
@@ -393,4 +393,4 @@ const JS = /*js*/`
 
   post({ command: 'ready' });
 })();
-`;
+`

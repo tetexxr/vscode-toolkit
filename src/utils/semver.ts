@@ -7,12 +7,12 @@
  */
 
 export interface SemVer {
-  major: number;
-  minor: number;
-  patch: number;
-  revision: number;
-  prerelease: string;
-  original: string;
+  major: number
+  minor: number
+  patch: number
+  revision: number
+  prerelease: string
+  original: string
 }
 
 /**
@@ -26,10 +26,10 @@ export interface SemVer {
  *   "1.2.3.4-rc.2"    → { major: 1, minor: 2, patch: 3, revision: 4, prerelease: 'rc.2' }
  */
 export function parseSemVer(version: string): SemVer | null {
-  const match = version.match(
-    /^(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?(?:-(.+))?$/
-  );
-  if (!match) { return null; }
+  const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?(?:-(.+))?$/)
+  if (!match) {
+    return null
+  }
   return {
     major: Number(match[1]),
     minor: Number(match[2]),
@@ -37,7 +37,7 @@ export function parseSemVer(version: string): SemVer | null {
     revision: match[4] !== undefined ? Number(match[4]) : 0,
     prerelease: match[5] || '',
     original: version,
-  };
+  }
 }
 
 /**
@@ -51,69 +51,87 @@ export function parseSemVer(version: string): SemVer | null {
  * lexicographically otherwise.
  */
 export function compareSemVer(a: string, b: string): number {
-  const pa = parseSemVer(a);
-  const pb = parseSemVer(b);
+  const pa = parseSemVer(a)
+  const pb = parseSemVer(b)
 
   // Unparseable versions sort to the end
-  if (!pa && !pb) { return 0; }
-  if (!pa) { return -1; }
-  if (!pb) { return 1; }
+  if (!pa && !pb) {
+    return 0
+  }
+  if (!pa) {
+    return -1
+  }
+  if (!pb) {
+    return 1
+  }
 
-  const diff =
-    (pa.major - pb.major) ||
-    (pa.minor - pb.minor) ||
-    (pa.patch - pb.patch) ||
-    (pa.revision - pb.revision);
+  const diff = pa.major - pb.major || pa.minor - pb.minor || pa.patch - pb.patch || pa.revision - pb.revision
 
-  if (diff !== 0) { return diff; }
+  if (diff !== 0) {
+    return diff
+  }
 
-  return comparePrerelease(pa.prerelease, pb.prerelease);
+  return comparePrerelease(pa.prerelease, pb.prerelease)
 }
 
 /** Compares prerelease strings segment by segment. */
 function comparePrerelease(a: string, b: string): number {
   // No prerelease on either — equal
-  if (!a && !b) { return 0; }
+  if (!a && !b) {
+    return 0
+  }
   // Having a prerelease is less than not having one (1.0.0-beta < 1.0.0)
-  if (a && !b) { return -1; }
-  if (!a && b) { return 1; }
+  if (a && !b) {
+    return -1
+  }
+  if (!a && b) {
+    return 1
+  }
 
-  const partsA = a.split('.');
-  const partsB = b.split('.');
-  const len = Math.max(partsA.length, partsB.length);
+  const partsA = a.split('.')
+  const partsB = b.split('.')
+  const len = Math.max(partsA.length, partsB.length)
 
   for (let i = 0; i < len; i++) {
-    const segA = partsA[i];
-    const segB = partsB[i];
+    const segA = partsA[i]
+    const segB = partsB[i]
 
     // Fewer segments means lower precedence
-    if (segA === undefined) { return -1; }
-    if (segB === undefined) { return 1; }
+    if (segA === undefined) {
+      return -1
+    }
+    if (segB === undefined) {
+      return 1
+    }
 
-    const numA = Number(segA);
-    const numB = Number(segB);
-    const aIsNum = !isNaN(numA);
-    const bIsNum = !isNaN(numB);
+    const numA = Number(segA)
+    const numB = Number(segB)
+    const aIsNum = !isNaN(numA)
+    const bIsNum = !isNaN(numB)
 
     if (aIsNum && bIsNum) {
-      if (numA !== numB) { return numA - numB; }
+      if (numA !== numB) {
+        return numA - numB
+      }
     } else if (aIsNum) {
-      return -1; // numeric < string
+      return -1 // numeric < string
     } else if (bIsNum) {
-      return 1;
+      return 1
     } else {
-      const cmp = segA.localeCompare(segB);
-      if (cmp !== 0) { return cmp; }
+      const cmp = segA.localeCompare(segB)
+      if (cmp !== 0) {
+        return cmp
+      }
     }
   }
 
-  return 0;
+  return 0
 }
 
 /** Returns true if the version string contains a prerelease tag. */
 export function isPrerelease(version: string): boolean {
-  const parsed = parseSemVer(version);
-  return parsed ? parsed.prerelease !== '' : false;
+  const parsed = parseSemVer(version)
+  return parsed ? parsed.prerelease !== '' : false
 }
 
 /**
@@ -126,12 +144,18 @@ export function isPrerelease(version: string): boolean {
  *   5_000_000_000 → "5B"
  */
 export function formatDownloads(count: number): string {
-  if (count < 1_000) { return String(count); }
-  if (count < 1_000_000) { return trimTrailingZero((count / 1_000).toFixed(1)) + 'K'; }
-  if (count < 1_000_000_000) { return trimTrailingZero((count / 1_000_000).toFixed(1)) + 'M'; }
-  return trimTrailingZero((count / 1_000_000_000).toFixed(1)) + 'B';
+  if (count < 1_000) {
+    return String(count)
+  }
+  if (count < 1_000_000) {
+    return trimTrailingZero((count / 1_000).toFixed(1)) + 'K'
+  }
+  if (count < 1_000_000_000) {
+    return trimTrailingZero((count / 1_000_000).toFixed(1)) + 'M'
+  }
+  return trimTrailingZero((count / 1_000_000_000).toFixed(1)) + 'B'
 }
 
 function trimTrailingZero(s: string): string {
-  return s.replace(/\.0$/, '');
+  return s.replace(/\.0$/, '')
 }

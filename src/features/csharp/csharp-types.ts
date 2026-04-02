@@ -1,35 +1,35 @@
 export interface TemplateFileInfo {
-  template: string;
-  extension: string;
+  template: string
+  extension: string
 }
 
 export interface ProjectInfo {
-  projectPath: string;
-  rootNamespace: string | null;
-  targetFramework: string | null;
-  useImplicitUsings: boolean;
-  implicitUsings: string[];
-  usingsInclude: string[];
-  usingsRemove: string[];
+  projectPath: string
+  rootNamespace: string | null
+  targetFramework: string | null
+  useImplicitUsings: boolean
+  implicitUsings: string[]
+  usingsInclude: string[]
+  usingsRemove: string[]
 }
 
 export interface BuildTemplateOptions {
-  extensionPath: string;
-  templateFile: string;
-  className: string;
-  namespace: string;
-  requiredUsings: string[];
-  optionalUsings: string[];
-  useFileScopedNamespace: boolean;
-  implicitUsings: string[];
-  usingsRemove: string[];
-  eol: string;
-  tabSize: number;
+  extensionPath: string
+  templateFile: string
+  className: string
+  namespace: string
+  requiredUsings: string[]
+  optionalUsings: string[]
+  useFileScopedNamespace: boolean
+  implicitUsings: string[]
+  usingsRemove: string[]
+  eol: string
+  tabSize: number
 }
 
 export interface BuildTemplateResult {
-  content: string;
-  cursorPosition: [number, number] | null;
+  content: string
+  cursorPosition: [number, number] | null
 }
 
 export const TEMPLATE_MAP: Record<string, TemplateFileInfo[]> = {
@@ -53,7 +53,7 @@ export const TEMPLATE_MAP: Record<string, TemplateFileInfo[]> = {
   NUnit: [{ template: 'nunit.tmpl', extension: '.cs' }],
   MSTest: [{ template: 'mstest.tmpl', extension: '.cs' }],
   Resx: [{ template: 'resx.tmpl', extension: '.resx' }],
-};
+}
 
 export const REQUIRED_USINGS: Record<string, string[]> = {
   Controller: ['System.Diagnostics', 'Microsoft.AspNetCore.Mvc', 'Microsoft.Extensions.Logging'],
@@ -64,11 +64,6 @@ export const REQUIRED_USINGS: Record<string, string[]> = {
   XUnit: ['Xunit'],
   NUnit: ['NUnit.Framework'],
   MSTest: ['Microsoft.VisualStudio.TestTools.UnitTesting'],
-};
+}
 
-export const OPTIONAL_USINGS = [
-  'System',
-  'System.Collections.Generic',
-  'System.Linq',
-  'System.Threading.Tasks',
-];
+export const OPTIONAL_USINGS = ['System', 'System.Collections.Generic', 'System.Linq', 'System.Threading.Tasks']

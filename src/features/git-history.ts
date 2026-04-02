@@ -1,76 +1,90 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-import { getRepoRoot, getFileLogPatch } from '../utils/git';
+import * as vscode from 'vscode'
+import * as path from 'path'
+import { getRepoRoot, getFileLogPatch } from '../utils/git'
 
 function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
 function renderPatch(raw: string): string {
-  const lines = raw.split('\n');
-  const html: string[] = [];
-  let inDiff = false;
+  const lines = raw.split('\n')
+  const html: string[] = []
+  let inDiff = false
 
   for (const line of lines) {
     if (line.startsWith('---COMMIT---')) {
       if (html.length > 0) {
-        if (inDiff) { html.push('</div>'); inDiff = false; }
-        html.push('</section>');
+        if (inDiff) {
+          html.push('</div>')
+          inDiff = false
+        }
+        html.push('</section>')
       }
-      html.push('<section class="commit">');
-      continue;
+      html.push('<section class="commit">')
+      continue
     }
 
     if (line.startsWith('commit ')) {
-      html.push(`<div class="commit-header">${escapeHtml(line)}</div>`);
-      continue;
+      html.push(`<div class="commit-header">${escapeHtml(line)}</div>`)
+      continue
     }
 
     if (line.startsWith('Author:') || line.startsWith('Date:')) {
-      html.push(`<div class="commit-meta">${escapeHtml(line)}</div>`);
-      continue;
+      html.push(`<div class="commit-meta">${escapeHtml(line)}</div>`)
+      continue
     }
 
     if (line.startsWith('diff --git')) {
-      if (inDiff) { html.push('</div>'); }
-      html.push('<div class="diff-block">');
-      html.push(`<div class="diff-header">${escapeHtml(line)}</div>`);
-      inDiff = true;
-      continue;
+      if (inDiff) {
+        html.push('</div>')
+      }
+      html.push('<div class="diff-block">')
+      html.push(`<div class="diff-header">${escapeHtml(line)}</div>`)
+      inDiff = true
+      continue
     }
 
     if (inDiff) {
       if (line.startsWith('@@')) {
-        html.push(`<div class="hunk-header">${escapeHtml(line)}</div>`);
+        html.push(`<div class="hunk-header">${escapeHtml(line)}</div>`)
       } else if (line.startsWith('+')) {
-        html.push(`<div class="line-add">${escapeHtml(line)}</div>`);
+        html.push(`<div class="line-add">${escapeHtml(line)}</div>`)
       } else if (line.startsWith('-')) {
-        html.push(`<div class="line-del">${escapeHtml(line)}</div>`);
-      } else if (line.startsWith('index ') || line.startsWith('---') || line.startsWith('+++') || line.startsWith('new file') || line.startsWith('deleted file') || line.startsWith('similarity') || line.startsWith('rename')) {
-        html.push(`<div class="diff-meta">${escapeHtml(line)}</div>`);
+        html.push(`<div class="line-del">${escapeHtml(line)}</div>`)
+      } else if (
+        line.startsWith('index ') ||
+        line.startsWith('---') ||
+        line.startsWith('+++') ||
+        line.startsWith('new file') ||
+        line.startsWith('deleted file') ||
+        line.startsWith('similarity') ||
+        line.startsWith('rename')
+      ) {
+        html.push(`<div class="diff-meta">${escapeHtml(line)}</div>`)
       } else {
-        html.push(`<div class="line-ctx">${escapeHtml(line)}</div>`);
+        html.push(`<div class="line-ctx">${escapeHtml(line)}</div>`)
       }
-      continue;
+      continue
     }
 
     // Commit message (indented lines)
     if (line.startsWith('    ')) {
-      html.push(`<div class="commit-message">${escapeHtml(line)}</div>`);
+      html.push(`<div class="commit-message">${escapeHtml(line)}</div>`)
     }
   }
 
-  if (inDiff) { html.push('</div>'); }
-  if (html.length > 0) { html.push('</section>'); }
+  if (inDiff) {
+    html.push('</div>')
+  }
+  if (html.length > 0) {
+    html.push('</section>')
+  }
 
-  return html.join('\n');
+  return html.join('\n')
 }
 
 function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string): string {
-  return /* html */`<!DOCTYPE html>
+  return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -167,59 +181,59 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string): s
   <h1>History: ${escapeHtml(fileName)}</h1>
   ${patchHtml}
 </body>
-</html>`;
+</html>`
 }
 
 function getNonce(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let nonce = '';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let nonce = ''
   for (let i = 0; i < 32; i++) {
-    nonce += chars.charAt(Math.floor(Math.random() * chars.length));
+    nonce += chars.charAt(Math.floor(Math.random() * chars.length))
   }
-  return nonce;
+  return nonce
 }
 
-const panels = new Map<string, vscode.WebviewPanel>();
+const panels = new Map<string, vscode.WebviewPanel>()
 
 export function registerGitHistoryCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.gitHistory', async (uri?: vscode.Uri) => {
-      const filePath = uri?.fsPath ?? vscode.window.activeTextEditor?.document.uri.fsPath;
+      const filePath = uri?.fsPath ?? vscode.window.activeTextEditor?.document.uri.fsPath
       if (!filePath) {
-        vscode.window.showErrorMessage('No file selected.');
-        return;
+        vscode.window.showErrorMessage('No file selected.')
+        return
       }
 
-      const existing = panels.get(filePath);
+      const existing = panels.get(filePath)
       if (existing) {
-        existing.reveal();
-        return;
+        existing.reveal()
+        return
       }
 
-      const cwd = path.dirname(filePath);
-      const fileName = path.basename(filePath);
+      const cwd = path.dirname(filePath)
+      const fileName = path.basename(filePath)
 
-      let repoRoot: string;
+      let repoRoot: string
       try {
-        repoRoot = await getRepoRoot(cwd);
+        repoRoot = await getRepoRoot(cwd)
       } catch {
-        vscode.window.showErrorMessage('Not a git repository.');
-        return;
+        vscode.window.showErrorMessage('Not a git repository.')
+        return
       }
 
-      const relativePath = path.relative(repoRoot, filePath).replace(/\\/g, '/');
+      const relativePath = path.relative(repoRoot, filePath).replace(/\\/g, '/')
 
-      let raw: string;
+      let raw: string
       try {
-        raw = await getFileLogPatch(repoRoot, relativePath);
+        raw = await getFileLogPatch(repoRoot, relativePath)
       } catch {
-        vscode.window.showErrorMessage('Could not retrieve git history for this file.');
-        return;
+        vscode.window.showErrorMessage('Could not retrieve git history for this file.')
+        return
       }
 
       if (!raw) {
-        vscode.window.showInformationMessage('No git history found for this file.');
-        return;
+        vscode.window.showInformationMessage('No git history found for this file.')
+        return
       }
 
       const panel = vscode.window.createWebviewPanel(
@@ -227,14 +241,14 @@ export function registerGitHistoryCommands(context: vscode.ExtensionContext): vo
         `History: ${fileName}`,
         vscode.ViewColumn.One,
         { enableFindWidget: true },
-      );
+      )
 
-      panels.set(filePath, panel);
-      panel.onDidDispose(() => panels.delete(filePath));
+      panels.set(filePath, panel)
+      panel.onDidDispose(() => panels.delete(filePath))
 
-      const nonce = getNonce();
-      const patchHtml = renderPatch(raw);
-      panel.webview.html = buildWebviewHtml(fileName, patchHtml, nonce);
+      const nonce = getNonce()
+      const patchHtml = renderPatch(raw)
+      panel.webview.html = buildWebviewHtml(fileName, patchHtml, nonce)
     }),
-  );
+  )
 }
