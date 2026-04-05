@@ -30,7 +30,7 @@ function getConfig(): NpmIntellisenseConfig {
     importES6: c.get('importES6', true),
     importQuotes: c.get('importQuotes', "'"),
     importLinebreak: c.get('importLinebreak', ';\n'),
-    importDeclarationType: c.get('importDeclarationType', 'const'),
+    importDeclarationType: c.get('importDeclarationType', 'const')
   }
 }
 
@@ -46,7 +46,7 @@ export function registerNpmIntellisenseCommands(context: vscode.ExtensionContext
 
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(selector, provider, '"', "'", '/'),
-    vscode.commands.registerCommand('toolkit.npmIntellisense.import', onImportCommand),
+    vscode.commands.registerCommand('toolkit.npmIntellisense.import', onImportCommand)
   )
 }
 
@@ -55,7 +55,7 @@ export function registerNpmIntellisenseCommands(context: vscode.ExtensionContext
 class NpmCompletionProvider implements vscode.CompletionItemProvider {
   async provideCompletionItems(
     document: vscode.TextDocument,
-    position: vscode.Position,
+    position: vscode.Position
   ): Promise<vscode.CompletionItem[]> {
     const line = document.lineAt(position).text
     const cursor = position.character
@@ -101,7 +101,7 @@ async function getNpmPackages(rootPath: string, filePath: string, config: NpmInt
     return [
       ...Object.keys(pkg.dependencies || {}),
       ...(config.scanDevDependencies ? Object.keys(pkg.devDependencies || {}) : []),
-      ...(config.showBuiltinModules ? getBuiltinModules() : []),
+      ...(config.showBuiltinModules ? getBuiltinModules() : [])
     ].filter((name) => !exclude.has(name))
   } catch {
     return []

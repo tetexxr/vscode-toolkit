@@ -3,7 +3,7 @@ import {
   buildUsings,
   toFileScopedNamespace,
   findCursorPosition,
-  buildTemplate,
+  buildTemplate
 } from '../../../src/features/csharp/csharp-template'
 import { BuildTemplateOptions } from '../../../src/features/csharp/csharp-types'
 import * as path from 'path'
@@ -24,7 +24,7 @@ describe('buildUsings', () => {
       usingsRemove: [],
       eol: '\n',
       tabSize: 4,
-      ...overrides,
+      ...overrides
     }
   }
 
@@ -41,8 +41,8 @@ describe('buildUsings', () => {
     const result = buildUsings(
       opts({
         requiredUsings: ['Microsoft.AspNetCore.Mvc'],
-        optionalUsings: ['System'],
-      }),
+        optionalUsings: ['System']
+      })
     )
     assert.equal(result, 'using System;\nusing Microsoft.AspNetCore.Mvc;\n\n')
   })
@@ -50,8 +50,8 @@ describe('buildUsings', () => {
   it('should sort System namespaces first', () => {
     const result = buildUsings(
       opts({
-        requiredUsings: ['Xunit', 'System.Linq', 'System'],
-      }),
+        requiredUsings: ['Xunit', 'System.Linq', 'System']
+      })
     )
     assert.equal(result, 'using System;\nusing System.Linq;\nusing Xunit;\n\n')
   })
@@ -60,8 +60,8 @@ describe('buildUsings', () => {
     const result = buildUsings(
       opts({
         requiredUsings: ['System', 'Xunit'],
-        implicitUsings: ['System'],
-      }),
+        implicitUsings: ['System']
+      })
     )
     assert.equal(result, 'using Xunit;\n\n')
   })
@@ -70,8 +70,8 @@ describe('buildUsings', () => {
     const result = buildUsings(
       opts({
         requiredUsings: ['System', 'System.Linq'],
-        usingsRemove: ['System.Linq'],
-      }),
+        usingsRemove: ['System.Linq']
+      })
     )
     assert.equal(result, 'using System;\n\n')
   })
@@ -80,8 +80,8 @@ describe('buildUsings', () => {
     const result = buildUsings(
       opts({
         requiredUsings: ['System', 'Xunit'],
-        optionalUsings: ['System'],
-      }),
+        optionalUsings: ['System']
+      })
     )
     assert.equal(result, 'using System;\nusing Xunit;\n\n')
   })
@@ -90,8 +90,8 @@ describe('buildUsings', () => {
     const result = buildUsings(
       opts({
         requiredUsings: ['System'],
-        implicitUsings: ['System'],
-      }),
+        implicitUsings: ['System']
+      })
     )
     assert.equal(result, '')
   })
@@ -100,7 +100,7 @@ describe('buildUsings', () => {
 describe('toFileScopedNamespace', () => {
   it('should convert traditional namespace to file-scoped', () => {
     const input = ['using System;', '', 'namespace MyApp', '{', '    public class Foo', '    {', '    }', '}'].join(
-      '\n',
+      '\n'
     )
     const expected = ['using System;', '', 'namespace MyApp;', '', 'public class Foo', '{', '}'].join('\n')
     assert.equal(toFileScopedNamespace(input, 4), expected)
@@ -126,7 +126,7 @@ describe('toFileScopedNamespace', () => {
       '        {',
       '        }',
       '    }',
-      '}',
+      '}'
     ].join('\n')
     const expected = [
       'namespace MyApp;',
@@ -136,7 +136,7 @@ describe('toFileScopedNamespace', () => {
       '    public void Bar()',
       '    {',
       '    }',
-      '}',
+      '}'
     ].join('\n')
     assert.equal(toFileScopedNamespace(input, 4), expected)
   })
@@ -185,7 +185,7 @@ describe('buildTemplate', () => {
       implicitUsings: [],
       usingsRemove: [],
       eol: '\n',
-      tabSize: 4,
+      tabSize: 4
     })
     assert.ok(result.content.includes('namespace MyApp.Services;'))
     assert.ok(result.content.includes('public class MyService'))
@@ -206,7 +206,7 @@ describe('buildTemplate', () => {
       implicitUsings: [],
       usingsRemove: [],
       eol: '\n',
-      tabSize: 4,
+      tabSize: 4
     })
     assert.ok(result.content.includes('namespace MyApp\n{'))
     assert.ok(result.content.includes('    public class MyService'))
@@ -224,7 +224,7 @@ describe('buildTemplate', () => {
       implicitUsings: [],
       usingsRemove: [],
       eol: '\n',
-      tabSize: 4,
+      tabSize: 4
     })
     assert.ok(result.content.includes('public enum Status'))
     assert.ok(!result.content.includes('using System'))
@@ -242,7 +242,7 @@ describe('buildTemplate', () => {
       implicitUsings: [],
       usingsRemove: [],
       eol: '\n',
-      tabSize: 4,
+      tabSize: 4
     })
     assert.ok(result.content.includes('<h3>Counter</h3>'))
     assert.ok(result.content.includes('@code {'))
@@ -260,7 +260,7 @@ describe('buildTemplate', () => {
       implicitUsings: ['System', 'System.Linq'],
       usingsRemove: [],
       eol: '\n',
-      tabSize: 4,
+      tabSize: 4
     })
     assert.ok(!result.content.includes('using '))
   })
@@ -277,7 +277,7 @@ describe('buildTemplate', () => {
       implicitUsings: [],
       usingsRemove: [],
       eol: '\r\n',
-      tabSize: 4,
+      tabSize: 4
     })
     assert.ok(result.content.includes('\r\n'))
     assert.ok(!result.content.includes('\n\n'))
@@ -295,7 +295,7 @@ describe('buildTemplate', () => {
       implicitUsings: [],
       usingsRemove: [],
       eol: '\n',
-      tabSize: 4,
+      tabSize: 4
     })
     assert.ok(result.content.includes('<?xml version="1.0"'))
     assert.ok(result.content.includes('<root>'))

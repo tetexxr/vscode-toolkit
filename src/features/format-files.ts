@@ -15,7 +15,7 @@ function buildExcludeGlob(): string {
     '.git',
     'dist',
     'build',
-    '.chrome',
+    '.chrome'
   ])
   // Build a glob pattern like: {node_modules,dist,.git}/**
   if (excludedFolders.length === 0) {
@@ -52,7 +52,7 @@ async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Prom
     {
       location: vscode.ProgressLocation.Notification,
       title: 'Formatting documents',
-      cancellable: true,
+      cancellable: true
     },
     async (progress, token) => {
       const increment = (1 / files.length) * 100
@@ -63,7 +63,7 @@ async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Prom
       const processed = await formatWithProgress(files, token, progress, increment)
 
       vscode.window.showInformationMessage(`Format Files completed. Processed ${processed} file(s).`, { modal: true })
-    },
+    }
   )
 }
 
@@ -71,7 +71,7 @@ async function formatWithProgress(
   files: vscode.Uri[],
   token: vscode.CancellationToken,
   progress: vscode.Progress<{ message?: string; increment?: number }>,
-  increment: number,
+  increment: number
 ): Promise<number> {
   const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
   const runOrganizeImports = config.get<boolean>('runOrganizeImports', false)
@@ -90,7 +90,7 @@ async function formatWithProgress(
       const doc = await vscode.workspace.openTextDocument(file)
       await vscode.window.showTextDocument(doc, {
         preview: false,
-        viewColumn: vscode.ViewColumn.One,
+        viewColumn: vscode.ViewColumn.One
       })
 
       if (runOrganizeImports) {
@@ -117,10 +117,10 @@ export function registerFormatFilesCommands(context: vscode.ExtensionContext): v
       const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
       const includeGlob = config.get<string>(
         'includeGlob',
-        '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml}',
+        '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml}'
       )
       await findAndFormat(includeGlob)
-    }),
+    })
   )
 
   // Format from custom glob
@@ -129,13 +129,13 @@ export function registerFormatFilesCommands(context: vscode.ExtensionContext): v
       const glob = await vscode.window.showInputBox({
         prompt: 'Enter a glob pattern for files to format',
         placeHolder: '**/*.{ts,js}',
-        value: '**/*.{ts,js}',
+        value: '**/*.{ts,js}'
       })
       if (!glob) {
         return
       }
       await findAndFormat(glob)
-    }),
+    })
   )
 
   // Format files in specific folder (from context menu)
@@ -148,9 +148,9 @@ export function registerFormatFilesCommands(context: vscode.ExtensionContext): v
       const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
       const includeGlob = config.get<string>(
         'includeGlob',
-        '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml}',
+        '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml}'
       )
       await findAndFormat(includeGlob, uri)
-    }),
+    })
   )
 }

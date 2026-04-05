@@ -43,7 +43,7 @@ export const TEMPLATE_MAP: Record<string, TemplateFileInfo[]> = {
   ApiController: [{ template: 'api-controller.tmpl', extension: '.cs' }],
   RazorPage: [
     { template: 'razor-page.cs.tmpl', extension: '.cshtml.cs' },
-    { template: 'razor-page.cshtml.tmpl', extension: '.cshtml' },
+    { template: 'razor-page.cshtml.tmpl', extension: '.cshtml' }
   ],
   BlazorComponent: [{ template: 'blazor-component.razor.tmpl', extension: '.razor' }],
   BlazorPage: [{ template: 'blazor-page.razor.tmpl', extension: '.razor' }],
@@ -52,7 +52,7 @@ export const TEMPLATE_MAP: Record<string, TemplateFileInfo[]> = {
   XUnit: [{ template: 'xunit.tmpl', extension: '.cs' }],
   NUnit: [{ template: 'nunit.tmpl', extension: '.cs' }],
   MSTest: [{ template: 'mstest.tmpl', extension: '.cs' }],
-  Resx: [{ template: 'resx.tmpl', extension: '.resx' }],
+  Resx: [{ template: 'resx.tmpl', extension: '.resx' }]
 }
 
 export const REQUIRED_USINGS: Record<string, string[]> = {
@@ -63,7 +63,7 @@ export const REQUIRED_USINGS: Record<string, string[]> = {
   Middleware: ['Microsoft.AspNetCore.Http'],
   XUnit: ['Xunit'],
   NUnit: ['NUnit.Framework'],
-  MSTest: ['Microsoft.VisualStudio.TestTools.UnitTesting'],
+  MSTest: ['Microsoft.VisualStudio.TestTools.UnitTesting']
 }
 
 export const OPTIONAL_USINGS = ['System', 'System.Collections.Generic', 'System.Linq', 'System.Threading.Tasks']

@@ -3,7 +3,7 @@ import {
   findBracelessControl,
   findBracedSingleStatementControl,
   computeAddBraces,
-  computeRemoveBraces,
+  computeRemoveBraces
 } from '../utils/braces'
 
 const LANGUAGES = ['typescript', 'javascript', 'typescriptreact', 'javascriptreact']
@@ -13,8 +13,8 @@ export function registerAddBracesCodeActions(context: vscode.ExtensionContext) {
   for (const lang of LANGUAGES) {
     context.subscriptions.push(
       vscode.languages.registerCodeActionsProvider(lang, provider, {
-        providedCodeActionKinds: BracesCodeActionProvider.providedCodeActionKinds,
-      }),
+        providedCodeActionKinds: BracesCodeActionProvider.providedCodeActionKinds
+      })
     )
   }
 }
@@ -51,7 +51,7 @@ class BracesCodeActionProvider implements vscode.CodeActionProvider {
 
 function toWorkspaceEdit(
   uri: vscode.Uri,
-  edit: { startLine: number; startCol: number; endLine: number; endCol: number; text: string },
+  edit: { startLine: number; startCol: number; endLine: number; endCol: number; text: string }
 ): vscode.WorkspaceEdit {
   const wsEdit = new vscode.WorkspaceEdit()
   wsEdit.replace(uri, new vscode.Range(edit.startLine, edit.startCol, edit.endLine, edit.endCol), edit.text)

@@ -32,8 +32,8 @@ export class NugetOverviewPanel implements vscode.Disposable {
       vscode.ViewColumn.One,
       {
         enableScripts: true,
-        retainContextWhenHidden: true,
-      },
+        retainContextWhenHidden: true
+      }
     )
 
     const nonce = crypto.randomBytes(16).toString('hex')

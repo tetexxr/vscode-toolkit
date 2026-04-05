@@ -19,7 +19,7 @@ export class NugetMessageHandler implements vscode.Disposable {
 
   constructor(
     private webview: vscode.Webview,
-    projectFileUri: vscode.Uri,
+    projectFileUri: vscode.Uri
   ) {
     this.projectFsPath = projectFileUri.fsPath
     this.taskManager = new NugetTaskManager()
@@ -30,7 +30,7 @@ export class NugetMessageHandler implements vscode.Disposable {
       vscode.workspace.onDidChangeConfiguration(() => {
         nugetApi.clearEndpointCache()
         this.sendInit()
-      }),
+      })
     )
   }
 
@@ -54,7 +54,7 @@ export class NugetMessageHandler implements vscode.Disposable {
         case 'open-settings':
           return void vscode.commands.executeCommand(
             'workbench.action.openSettings',
-            '@ext:tete.vscode-toolkit toolkit.nuget',
+            '@ext:tete.vscode-toolkit toolkit.nuget'
           )
         case 'open-url':
           return void vscode.env.openExternal(vscode.Uri.parse(msg.url))
@@ -81,7 +81,7 @@ export class NugetMessageHandler implements vscode.Disposable {
     prerelease: boolean,
     sourceIndex: number,
     category: Category,
-    skip: number = 0,
+    skip: number = 0
   ): Promise<void> {
     this.post({ type: 'loading', loading: true })
 
@@ -149,7 +149,7 @@ export class NugetMessageHandler implements vscode.Disposable {
         installedVersion: installed?.version || '',
         isOutdated: !!installed && installed.version !== latest.version,
         sourceUrl: source.url,
-        versions: allVersions,
+        versions: allVersions
       }
       this.post({ type: 'package-details', pkg })
     }
@@ -163,7 +163,7 @@ export class NugetMessageHandler implements vscode.Disposable {
     packageId: string,
     version: string,
     sourceUrl: string,
-    action: string,
+    action: string
   ): Promise<void> {
     this.post({ type: 'task-started', packageId, action })
 

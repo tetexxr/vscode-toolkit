@@ -19,7 +19,7 @@ import {
   CatalogEntry,
   PackageSource,
   PackageViewModel,
-  InstalledPackage,
+  InstalledPackage
 } from './nuget-types'
 
 // ── Endpoint discovery ─────────────────────────────────────
@@ -82,7 +82,7 @@ export async function searchPackages(
   prerelease: boolean,
   source: PackageSource,
   timeout: number,
-  skip: number = 0,
+  skip: number = 0
 ): Promise<{ packages: PackageViewModel[]; totalHits: number }> {
   const endpoints = await resolveEndpoints(source, timeout)
   const headers = authHeaders(source)
@@ -93,7 +93,7 @@ export async function searchPackages(
   const results = await httpGetJson<SearchResults>({ url, headers, timeout })
   return {
     packages: results.data.map((pkg) => searchResultToViewModel(pkg, source.url)),
-    totalHits: results.totalHits,
+    totalHits: results.totalHits
   }
 }
 
@@ -109,7 +109,7 @@ function searchResultToViewModel(pkg: SearchResultPackage, sourceUrl: string): P
     isInstalled: false,
     installedVersion: '',
     isOutdated: false,
-    sourceUrl,
+    sourceUrl
   }
 }
 
@@ -125,15 +125,15 @@ export async function fetchInstalledPackagesMetadata(
   query: string,
   prerelease: boolean,
   source: PackageSource,
-  timeout: number,
+  timeout: number
 ): Promise<PackageViewModel[]> {
   const endpoints = await resolveEndpoints(source, timeout)
   const headers = authHeaders(source)
 
   const results = await Promise.allSettled(
     installedPackages.map((pkg) =>
-      fetchSinglePackageMetadata(pkg.id, endpoints.registration, headers, prerelease, source.url, timeout),
-    ),
+      fetchSinglePackageMetadata(pkg.id, endpoints.registration, headers, prerelease, source.url, timeout)
+    )
   )
 
   const packages: PackageViewModel[] = []
@@ -151,7 +151,7 @@ export async function fetchPackageVersions(
   packageId: string,
   prerelease: boolean,
   source: PackageSource,
-  timeout: number,
+  timeout: number
 ): Promise<CatalogEntry[]> {
   const endpoints = await resolveEndpoints(source, timeout)
   const headers = authHeaders(source)
@@ -172,7 +172,7 @@ async function fetchSinglePackageMetadata(
   headers: Record<string, string>,
   prerelease: boolean,
   sourceUrl: string,
-  timeout: number,
+  timeout: number
 ): Promise<PackageViewModel | null> {
   const url = ensureTrailingSlash(registrationBase) + `${packageId.toLowerCase()}/index.json`
   const index = await httpGetJson<RegistrationIndex>({ url, headers, timeout })
@@ -195,7 +195,7 @@ async function fetchSinglePackageMetadata(
     isInstalled: false,
     installedVersion: '',
     isOutdated: false,
-    sourceUrl,
+    sourceUrl
   }
 }
 
@@ -208,7 +208,7 @@ async function fetchSinglePackageMetadata(
 async function fetchAllLeafs(
   index: RegistrationIndex,
   headers: Record<string, string>,
-  timeout: number,
+  timeout: number
 ): Promise<RegistrationLeaf[]> {
   const results = await Promise.allSettled(
     index.items.map((page) => {
@@ -216,7 +216,7 @@ async function fetchAllLeafs(
         return Promise.resolve(page.items)
       }
       return httpGetJson<RegistrationPage>({ url: page['@id'], headers, timeout }).then((p) => p.items || [])
-    }),
+    })
   )
 
   const leafs: RegistrationLeaf[] = []

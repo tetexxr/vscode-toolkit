@@ -37,7 +37,7 @@ export class NugetPanel implements vscode.Disposable {
 
     this.panel = vscode.window.createWebviewPanel('toolkitNuget', `NuGet: ${projectName}`, vscode.ViewColumn.One, {
       enableScripts: true,
-      retainContextWhenHidden: true,
+      retainContextWhenHidden: true
     })
 
     const nonce = crypto.randomBytes(16).toString('hex')

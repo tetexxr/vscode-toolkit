@@ -12,7 +12,7 @@ import {
   toPathCase,
   toSentenceCase,
   toSwapCase,
-  toNoCase,
+  toNoCase
 } from '../utils/text'
 
 interface CaseDefinition {
@@ -30,7 +30,7 @@ const CASE_DEFINITIONS: CaseDefinition[] = [
     command: 'toolkit.changeCaseConstant',
     label: 'CONSTANT_CASE',
     description: 'Convert to CONSTANT_CASE',
-    fn: toConstantCase,
+    fn: toConstantCase
   },
   { command: 'toolkit.changeCaseKebab', label: 'kebab-case', description: 'Convert to kebab-case', fn: toKebabCase },
   { command: 'toolkit.changeCaseTitle', label: 'Title Case', description: 'Convert to Title Case', fn: toTitleCase },
@@ -42,10 +42,10 @@ const CASE_DEFINITIONS: CaseDefinition[] = [
     command: 'toolkit.changeCaseSentence',
     label: 'Sentence case',
     description: 'Convert to Sentence case',
-    fn: toSentenceCase,
+    fn: toSentenceCase
   },
   { command: 'toolkit.changeCaseSwap', label: 'sWAP cASE', description: 'Convert to sWAP cASE', fn: toSwapCase },
-  { command: 'toolkit.changeCaseNo', label: 'no case', description: 'Convert to no case', fn: toNoCase },
+  { command: 'toolkit.changeCaseNo', label: 'no case', description: 'Convert to no case', fn: toNoCase }
 ]
 
 /**
@@ -162,17 +162,17 @@ export function registerChangeCaseCommands(context: vscode.ExtensionContext): vo
       const items = CASE_DEFINITIONS.map((def) => ({
         label: def.label,
         description: previewText ? `→ ${def.fn(previewText)}` : def.description,
-        fn: def.fn,
+        fn: def.fn
       }))
 
       const picked = await vscode.window.showQuickPick(items, {
         matchOnDescription: true,
-        placeHolder: 'What case do you want to convert to?',
+        placeHolder: 'What case do you want to convert to?'
       })
 
       if (picked) {
         applyTransformation(picked.fn)
       }
-    }),
+    })
   )
 }

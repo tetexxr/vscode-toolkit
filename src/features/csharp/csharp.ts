@@ -23,7 +23,7 @@ const COMMANDS: [string, string][] = [
   ['createXUnitTest', 'XUnit'],
   ['createNUnitTest', 'NUnit'],
   ['createMSTest', 'MSTest'],
-  ['createResx', 'Resx'],
+  ['createResx', 'Resx']
 ]
 
 const PLACEHOLDERS: Record<string, string> = {
@@ -38,22 +38,22 @@ const PLACEHOLDERS: Record<string, string> = {
   XUnit: 'MyClassTests',
   NUnit: 'MyClassTests',
   MSTest: 'MyClassTests',
-  Resx: 'Resources',
+  Resx: 'Resources'
 }
 
 export function registerCSharpCommands(context: vscode.ExtensionContext) {
   for (const [commandName, templateKey] of COMMANDS) {
     context.subscriptions.push(
       vscode.commands.registerCommand(`toolkit.csharp.${commandName}`, (uri?: vscode.Uri) =>
-        createCSharpFile(context.extensionPath, templateKey, uri),
-      ),
+        createCSharpFile(context.extensionPath, templateKey, uri)
+      )
     )
   }
 
   context.subscriptions.push(
     vscode.languages.registerCodeActionsProvider('csharp', new CSharpCodeActionProvider(), {
-      providedCodeActionKinds: CSharpCodeActionProvider.providedCodeActionKinds,
-    }),
+      providedCodeActionKinds: CSharpCodeActionProvider.providedCodeActionKinds
+    })
   )
 }
 
@@ -74,7 +74,7 @@ async function createCSharpFile(extensionPath: string, templateKey: string, uri?
       if (!value?.trim()) return 'Name is required'
       if (!/^[A-Za-z_]\w*$/.test(value.trim())) return 'Invalid C# identifier'
       return null
-    },
+    }
   })
   if (!input) return
 
@@ -129,7 +129,7 @@ async function createCSharpFile(extensionPath: string, templateKey: string, uri?
       implicitUsings: filterImplicitUsings && projectInfo ? projectInfo.implicitUsings : [],
       usingsRemove: projectInfo?.usingsRemove || [],
       eol,
-      tabSize,
+      tabSize
     })
 
     fs.writeFileSync(filePath, result.content)

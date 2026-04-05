@@ -19,7 +19,7 @@ export class NugetOverviewHandler implements vscode.Disposable {
 
     this.disposables.push(
       this.webview.onDidReceiveMessage((msg: OverviewWebviewMessage) => this.handleMessage(msg)),
-      this.taskManager,
+      this.taskManager
     )
   }
 
@@ -35,7 +35,7 @@ export class NugetOverviewHandler implements vscode.Disposable {
         case 'open-settings':
           return void vscode.commands.executeCommand(
             'workbench.action.openSettings',
-            '@ext:tete.vscode-toolkit toolkit.nuget',
+            '@ext:tete.vscode-toolkit toolkit.nuget'
           )
       }
     } catch (err: any) {
@@ -56,7 +56,7 @@ export class NugetOverviewHandler implements vscode.Disposable {
         id: p.id,
         installedVersion: p.version,
         latestVersion: '',
-        isOutdated: false,
+        isOutdated: false
       }))
       projects.push({ name: project.name, fsPath: project.fsPath, packages: overviewPkgs })
     }
@@ -87,12 +87,12 @@ export class NugetOverviewHandler implements vscode.Disposable {
           '',
           config.defaultPrerelease,
           source,
-          config.requestTimeout,
+          config.requestTimeout
         )
         if (metadata.length > 0) {
           latestMap.set(id, metadata[0].version)
         }
-      }),
+      })
     )
 
     // Update projects with resolved versions
@@ -113,7 +113,7 @@ export class NugetOverviewHandler implements vscode.Disposable {
     projectFsPath: string,
     packageId: string,
     version: string,
-    sourceUrl: string,
+    sourceUrl: string
   ): Promise<void> {
     this.post({ type: 'task-started', packageId, action: 'update' })
 

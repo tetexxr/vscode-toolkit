@@ -70,7 +70,7 @@ export class NugetTaskManager implements vscode.Disposable {
       version,
       '-s',
       sourceUrl,
-      '--interactive',
+      '--interactive'
     ]
 
     return new vscode.Task(
@@ -78,7 +78,7 @@ export class NugetTaskManager implements vscode.Disposable {
       vscode.TaskScope.Workspace,
       TASK_NAME,
       'dotnet',
-      new vscode.ShellExecution('dotnet', args, { cwd }),
+      new vscode.ShellExecution('dotnet', args, { cwd })
     )
   }
 
@@ -89,7 +89,7 @@ export class NugetTaskManager implements vscode.Disposable {
       'remove',
       { value: projectPath, quoting: vscode.ShellQuoting.Strong },
       'package',
-      packageId,
+      packageId
     ]
 
     return new vscode.Task(
@@ -97,7 +97,7 @@ export class NugetTaskManager implements vscode.Disposable {
       vscode.TaskScope.Workspace,
       TASK_NAME,
       'dotnet',
-      new vscode.ShellExecution('dotnet', args, { cwd }),
+      new vscode.ShellExecution('dotnet', args, { cwd })
     )
   }
 }

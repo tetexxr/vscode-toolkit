@@ -36,7 +36,7 @@ export function parseSemVer(version: string): SemVer | null {
     patch: Number(match[3]),
     revision: match[4] !== undefined ? Number(match[4]) : 0,
     prerelease: match[5] || '',
-    original: version,
+    original: version
   }
 }
 

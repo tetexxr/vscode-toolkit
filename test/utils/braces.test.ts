@@ -8,14 +8,14 @@ import {
   findBracelessControl,
   findBracedSingleStatementControl,
   computeAddBraces,
-  computeRemoveBraces,
+  computeRemoveBraces
 } from '../../src/utils/braces'
 
 // ── Helper ─────────────────────────────────────────────────────────
 
 function applyEdit(
   input: string,
-  edit: { startLine: number; startCol: number; endLine: number; endCol: number; text: string },
+  edit: { startLine: number; startCol: number; endLine: number; endCol: number; text: string }
 ): string {
   const lines = input.split('\n')
   const before =

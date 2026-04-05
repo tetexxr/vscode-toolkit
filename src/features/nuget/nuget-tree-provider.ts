@@ -15,7 +15,7 @@ export class NugetProjectTreeItem extends vscode.TreeItem {
     this.command = {
       command: 'toolkit.nuget.managePackages',
       title: 'Manage NuGet Packages',
-      arguments: [uri],
+      arguments: [uri]
     }
     this.contextValue = 'nugetProject'
   }

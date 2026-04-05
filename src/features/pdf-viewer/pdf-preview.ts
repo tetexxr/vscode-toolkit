@@ -14,13 +14,13 @@ export class PdfPreview implements vscode.Disposable {
     private readonly documentUri: vscode.Uri,
     private readonly panel: vscode.WebviewPanel,
     private readonly lastScale: string,
-    private readonly lastScaleMode: string,
+    private readonly lastScaleMode: string
   ) {
     this.libUri = vscode.Uri.joinPath(extensionUri, 'lib', 'pdf-viewer')
 
     this.panel.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this.libUri, vscode.Uri.joinPath(documentUri, '..')],
+      localResourceRoots: [this.libUri, vscode.Uri.joinPath(documentUri, '..')]
     }
 
     this.panel.webview.html = this.getHtml()
@@ -50,7 +50,7 @@ export class PdfPreview implements vscode.Disposable {
       nonce: crypto.randomBytes(16).toString('hex'),
       scale: parseScale(configScale),
       lastScale: this.lastScale,
-      lastScaleMode: this.lastScaleMode,
+      lastScaleMode: this.lastScaleMode
     }
 
     return buildTemplateHtml(template, values)
@@ -64,7 +64,7 @@ export class PdfPreview implements vscode.Disposable {
         this.panel.webview.postMessage({ type: 'reload' })
       },
       null,
-      this.disposables,
+      this.disposables
     )
 
     watcher.onDidDelete(
@@ -72,7 +72,7 @@ export class PdfPreview implements vscode.Disposable {
         this.panel.dispose()
       },
       null,
-      this.disposables,
+      this.disposables
     )
 
     this.disposables.push(watcher)
@@ -86,7 +86,7 @@ export class PdfPreview implements vscode.Disposable {
         }
       },
       null,
-      this.disposables,
+      this.disposables
     )
   }
 

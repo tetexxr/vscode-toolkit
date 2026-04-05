@@ -54,7 +54,7 @@ export function findBracelessControl(lines: string[], cursorLine: number): Brace
         condEnd: parsed.condEnd,
         bodyStart,
         bodyEnd,
-        indent: parsed.indent,
+        indent: parsed.indent
       }
     }
 
@@ -117,7 +117,7 @@ export function computeAddBraces(
   lines: string[],
   info: BracelessControl,
   indentUnit: string,
-  eol: string,
+  eol: string
 ): TextReplacement {
   const bodyIndent = info.indent + indentUnit
   const bodyLines = extractBodyLines(lines, info, bodyIndent)
@@ -126,7 +126,7 @@ export function computeAddBraces(
     startCol: info.condEnd.col,
     endLine: info.bodyEnd.line,
     endCol: info.bodyEnd.col + 1,
-    text: ` {${eol}${bodyLines.join(eol)}${eol}${info.indent}}`,
+    text: ` {${eol}${bodyLines.join(eol)}${eol}${info.indent}}`
   }
 }
 
@@ -134,7 +134,7 @@ export function computeRemoveBraces(
   lines: string[],
   info: BracedControl,
   indentUnit: string,
-  eol: string,
+  eol: string
 ): TextReplacement {
   const bodyIndent = info.indent + indentUnit
 
@@ -150,7 +150,7 @@ export function computeRemoveBraces(
     startCol,
     endLine: info.closeBrace.line,
     endCol: info.closeBrace.col + 1,
-    text: `${eol}${bodyIndent}${info.stmtText.trim()}`,
+    text: `${eol}${bodyIndent}${info.stmtText.trim()}`
   }
 }
 

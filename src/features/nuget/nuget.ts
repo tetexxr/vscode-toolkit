@@ -19,21 +19,21 @@ export function registerNugetCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     watcher,
     watcher.onDidCreate(() => treeProvider.refresh()),
-    watcher.onDidDelete(() => treeProvider.refresh()),
+    watcher.onDidDelete(() => treeProvider.refresh())
   )
 
   // Solution overview
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.nuget.solutionOverview', () => {
       NugetOverviewPanel.createOrShow(context)
-    }),
+    })
   )
 
   // Right-click on .csproj/.fsproj/.vbproj in explorer
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.nuget.managePackages', (uri: vscode.Uri) => {
       NugetPanel.createOrShow(context, uri)
-    }),
+    })
   )
 
   // Command palette (shows QuickPick to select project file)
@@ -43,6 +43,6 @@ export function registerNugetCommands(context: vscode.ExtensionContext): void {
       if (uri) {
         NugetPanel.createOrShow(context, uri)
       }
-    }),
+    })
   )
 }

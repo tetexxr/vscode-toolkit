@@ -24,6 +24,6 @@ export function registerSlugCommands(context: vscode.ExtensionContext): void {
           editBuilder.replace(selection, slug)
         }
       })
-    }),
+    })
   )
 }

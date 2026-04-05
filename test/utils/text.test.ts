@@ -14,7 +14,7 @@ import {
   toSentenceCase,
   toSwapCase,
   toNoCase,
-  toSlug,
+  toSlug
 } from '../../src/utils/text'
 
 describe('splitWords', () => {

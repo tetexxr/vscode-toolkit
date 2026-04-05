@@ -28,7 +28,7 @@ async function getSubfolders(uri: vscode.Uri, excludePatterns: string[]): Promis
 async function expandFolder(
   uri: vscode.Uri,
   excludePatterns: string[],
-  token: vscode.CancellationToken,
+  token: vscode.CancellationToken
 ): Promise<void> {
   if (token.isCancellationRequested) {
     return
@@ -58,7 +58,7 @@ async function expandFolder(
 async function collectFoldersPostOrder(
   uri: vscode.Uri,
   excludePatterns: string[],
-  result: vscode.Uri[],
+  result: vscode.Uri[]
 ): Promise<void> {
   const subfolders = await getSubfolders(uri, excludePatterns)
   for (const subfolder of subfolders) {
@@ -73,7 +73,7 @@ async function collectFoldersPostOrder(
 async function collapseFolder(
   uri: vscode.Uri,
   excludePatterns: string[],
-  token: vscode.CancellationToken,
+  token: vscode.CancellationToken
 ): Promise<void> {
   if (token.isCancellationRequested) {
     return
@@ -111,7 +111,7 @@ function getExcludePatterns(): string[] {
     'build',
     'target',
     'bin',
-    'obj',
+    'obj'
   ])
 }
 
@@ -143,7 +143,7 @@ export function registerExpandRecursivelyCommands(context: vscode.ExtensionConte
           {
             location: vscode.ProgressLocation.Notification,
             title: 'Expanding folders...',
-            cancellable: true,
+            cancellable: true
           },
           async (_progress, token) => {
             // Focus explorer first
@@ -156,10 +156,10 @@ export function registerExpandRecursivelyCommands(context: vscode.ExtensionConte
               }
               await expandFolder(target, excludePatterns, token)
             }
-          },
+          }
         )
-      },
-    ),
+      }
+    )
   )
 
   // Collapse recursively
@@ -187,7 +187,7 @@ export function registerExpandRecursivelyCommands(context: vscode.ExtensionConte
           {
             location: vscode.ProgressLocation.Notification,
             title: 'Collapsing folders...',
-            cancellable: true,
+            cancellable: true
           },
           async (_progress, token) => {
             await vscode.commands.executeCommand('workbench.files.action.focusFilesExplorer')
@@ -199,9 +199,9 @@ export function registerExpandRecursivelyCommands(context: vscode.ExtensionConte
               }
               await collapseFolder(target, excludePatterns, token)
             }
-          },
+          }
         )
-      },
-    ),
+      }
+    )
   )
 }

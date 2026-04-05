@@ -62,9 +62,9 @@ export async function getFileLogPatch(cwd: string, relativePath: string): Promis
       '-p',
       '--format=%n---COMMIT---%ncommit %H%nAuthor: %an <%ae>%nDate:   %ar (%ai)%n%n    %s%n',
       '--',
-      relativePath,
+      relativePath
     ],
-    30000,
+    30000
   )
 }
 
@@ -76,6 +76,6 @@ export function parseRemoteUrl(url: string): RemoteInfo | undefined {
   return {
     domain: match[1],
     owner: match[2],
-    repo: match[3],
+    repo: match[3]
   }
 }

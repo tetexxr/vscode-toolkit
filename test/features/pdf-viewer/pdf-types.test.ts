@@ -47,7 +47,7 @@ describe('buildTemplateHtml', () => {
     nonce: 'abc123def456',
     scale: 'auto',
     lastScale: '1.25',
-    lastScaleMode: 'custom',
+    lastScaleMode: 'custom'
   }
 
   it('should replace all placeholders', () => {
@@ -55,7 +55,7 @@ describe('buildTemplateHtml', () => {
     const result = buildTemplateHtml(template, values)
     assert.equal(
       result,
-      'vscode-webview://id/file.pdf vscode-webview://id/pdf.min.mjs vscode-webview://id/pdf.worker.min.mjs vscode-webview://id/viewer.css vscode-webview://* abc123def456 auto',
+      'vscode-webview://id/file.pdf vscode-webview://id/pdf.min.mjs vscode-webview://id/pdf.worker.min.mjs vscode-webview://id/viewer.css vscode-webview://* abc123def456 auto'
     )
   })
 

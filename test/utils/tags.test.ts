@@ -4,7 +4,7 @@ import {
   isSelfClosingAt,
   findMatchingClosingTag,
   findMatchingOpeningTag,
-  SELF_CLOSING_TAGS,
+  SELF_CLOSING_TAGS
 } from '../../src/utils/tags'
 
 describe('getTagAtOffset', () => {
@@ -15,7 +15,7 @@ describe('getTagAtOffset', () => {
       isClosing: false,
       tagNameStart: 1,
       tagNameEnd: 4,
-      tagName: 'div',
+      tagName: 'div'
     })
   })
 
@@ -26,7 +26,7 @@ describe('getTagAtOffset', () => {
       isClosing: true,
       tagNameStart: 2,
       tagNameEnd: 5,
-      tagName: 'div',
+      tagName: 'div'
     })
   })
 
@@ -37,7 +37,7 @@ describe('getTagAtOffset', () => {
       isClosing: false,
       tagNameStart: 1,
       tagNameEnd: 5,
-      tagName: 'span',
+      tagName: 'span'
     })
   })
 

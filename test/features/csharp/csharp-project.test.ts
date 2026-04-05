@@ -5,7 +5,7 @@ import {
   extractXmlValue,
   extractUsings,
   parseGlobalUsings,
-  sanitizeNamespace,
+  sanitizeNamespace
 } from '../../../src/features/csharp/csharp-project'
 import { ProjectInfo } from '../../../src/features/csharp/csharp-types'
 
@@ -76,7 +76,7 @@ global using global::System.Threading.Tasks;
       'System',
       'System.Collections.Generic',
       'System.Linq',
-      'System.Threading.Tasks',
+      'System.Threading.Tasks'
     ])
   })
 
@@ -166,7 +166,7 @@ describe('calculateNamespace', () => {
       useImplicitUsings: false,
       implicitUsings: [],
       usingsInclude: [],
-      usingsRemove: [],
+      usingsRemove: []
     }
     assert.equal(calculateNamespace('/users/dev/MyApp', info), 'MyApp')
   })
@@ -179,7 +179,7 @@ describe('calculateNamespace', () => {
       useImplicitUsings: false,
       implicitUsings: [],
       usingsInclude: [],
-      usingsRemove: [],
+      usingsRemove: []
     }
     assert.equal(calculateNamespace('/users/dev/MyApp/Services/Auth', info), 'MyApp.Services.Auth')
   })
@@ -192,7 +192,7 @@ describe('calculateNamespace', () => {
       useImplicitUsings: false,
       implicitUsings: [],
       usingsInclude: [],
-      usingsRemove: [],
+      usingsRemove: []
     }
     assert.equal(calculateNamespace('/users/dev/MyApp/Models', info), 'MyApp.Models')
   })
@@ -205,7 +205,7 @@ describe('calculateNamespace', () => {
       useImplicitUsings: false,
       implicitUsings: [],
       usingsInclude: [],
-      usingsRemove: [],
+      usingsRemove: []
     }
     assert.equal(calculateNamespace('/users/dev/my-app/sub-folder', info), 'my_app.sub_folder')
   })

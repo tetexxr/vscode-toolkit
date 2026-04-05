@@ -47,7 +47,7 @@ function isInsideScriptOrStyle(text: string, offset: number): boolean {
   // Find the last <script...> or <style...> opening before offset
   const patterns = [
     { open: /<script[\s>]/gi, close: /<\/script\s*>/gi },
-    { open: /<style[\s>]/gi, close: /<\/style\s*>/gi },
+    { open: /<style[\s>]/gi, close: /<\/style\s*>/gi }
   ]
 
   for (const { open, close } of patterns) {
@@ -180,12 +180,12 @@ export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
           (editBuilder) => {
             editBuilder.replace(matchVscRange, newTagName)
           },
-          { undoStopBefore: false, undoStopAfter: false },
+          { undoStopBefore: false, undoStopAfter: false }
         )
         if (success) {
           lastAutoRenameVersion = {
             fsPath: document.uri.fsPath,
-            version: document.version,
+            version: document.version
           }
         }
       } finally {

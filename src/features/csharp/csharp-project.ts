@@ -50,7 +50,7 @@ export function getProjectInfo(dir: string): ProjectInfo | null {
     useImplicitUsings,
     implicitUsings,
     usingsInclude,
-    usingsRemove,
+    usingsRemove
   }
 }
 
@@ -95,7 +95,7 @@ export function extractUsings(xml: string, attr: string): string[] {
 function readImplicitUsings(projectDir: string, targetFramework: string): string[] {
   const searchDirs = [
     path.join(projectDir, 'obj', 'Debug', targetFramework),
-    path.join(projectDir, 'obj', 'Release', targetFramework),
+    path.join(projectDir, 'obj', 'Release', targetFramework)
   ]
 
   for (const dir of searchDirs) {

@@ -25,7 +25,7 @@ export class CSharpCodeActionProvider implements vscode.CodeActionProvider {
 
     const exprAction = new vscode.CodeAction(
       'Generate expression-bodied constructor from properties',
-      vscode.CodeActionKind.Refactor,
+      vscode.CodeActionKind.Refactor
     )
     exprAction.edit = buildConstructorEdit(document, className, properties, true)
     actions.push(exprAction)
@@ -48,7 +48,7 @@ function findProperties(text: string): PropertyInfo[] {
     props.push({
       type: match[1].trim(),
       name: match[2],
-      end: match.index + match[0].length,
+      end: match.index + match[0].length
     })
   }
   return props
@@ -70,7 +70,7 @@ function buildConstructorEdit(
   document: vscode.TextDocument,
   className: string,
   properties: PropertyInfo[],
-  expressionBodied: boolean,
+  expressionBodied: boolean
 ): vscode.WorkspaceEdit {
   const edit = new vscode.WorkspaceEdit()
   const text = document.getText()

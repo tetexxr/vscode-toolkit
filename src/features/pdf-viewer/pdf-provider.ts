@@ -26,7 +26,7 @@ export function registerPdfViewer(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(PdfProvider.viewType, provider, {
-      webviewOptions: { retainContextWhenHidden: true },
-    }),
+      webviewOptions: { retainContextWhenHidden: true }
+    })
   )
 }

@@ -142,7 +142,7 @@ const CHAR_MAP: Record<string, string> = {
   ț: 't',
   '&': ' and ',
   '@': ' at ',
-  '#': ' number ',
+  '#': ' number '
 }
 
 export interface SlugOptions {

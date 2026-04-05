@@ -27,11 +27,11 @@ export async function pickProjectFile(): Promise<vscode.Uri | undefined> {
   const items = files.map((uri) => ({
     label: path.basename(uri.fsPath),
     description: vscode.workspace.asRelativePath(uri),
-    uri,
+    uri
   }))
 
   const picked = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Select a project file',
+    placeHolder: 'Select a project file'
   })
 
   return picked?.uri
@@ -46,7 +46,7 @@ export async function loadProject(projectFileUri: vscode.Uri): Promise<Project> 
   return {
     name: path.basename(projectFileUri.fsPath),
     fsPath: projectFileUri.fsPath,
-    packages,
+    packages
   }
 }
 

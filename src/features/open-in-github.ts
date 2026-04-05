@@ -19,7 +19,7 @@ async function getGitInfo(filePath?: string) {
     const [repoRoot, remoteUrlRaw, branch] = await Promise.all([
       getRepoRoot(cwd),
       getRemoteUrl(cwd, remoteName),
-      useCurrentBranch ? getCurrentBranch(cwd) : Promise.resolve(defaultBranch),
+      useCurrentBranch ? getCurrentBranch(cwd) : Promise.resolve(defaultBranch)
     ])
 
     const remote = parseRemoteUrl(remoteUrlRaw)
@@ -34,7 +34,7 @@ async function getGitInfo(filePath?: string) {
       repoRoot,
       baseUrl,
       branch: branch || defaultBranch,
-      cwd,
+      cwd
     }
   } catch (err: any) {
     vscode.window.showErrorMessage(`Git error: ${err.message}`)
@@ -79,7 +79,7 @@ async function copyUrl(url: string): Promise<void> {
 
 async function buildFileUrl(
   segment: 'blob' | 'blame' | 'commits',
-  options?: { useCommitHash?: boolean },
+  options?: { useCommitHash?: boolean }
 ): Promise<string | undefined> {
   const editor = vscode.window.activeTextEditor
   const info = await getGitInfo(editor?.document.uri.fsPath)
@@ -168,6 +168,6 @@ export function registerOpenInGitHubCommands(context: vscode.ExtensionContext): 
       const encodedPath = relativePath.split('/').map(encodeURIComponent).join('/')
       const url = `${info.baseUrl}/blob/${encodeURIComponent(info.branch)}/${encodedPath}`
       await openUrl(url)
-    }),
+    })
   )
 }

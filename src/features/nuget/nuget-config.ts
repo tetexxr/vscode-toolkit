@@ -17,6 +17,6 @@ export function getNugetConfig(): NugetConfig {
   const config = vscode.workspace.getConfiguration('toolkit.nuget')
   return {
     requestTimeout: config.get<number>('requestTimeout', 10000),
-    defaultPrerelease: config.get<boolean>('defaultPrerelease', false),
+    defaultPrerelease: config.get<boolean>('defaultPrerelease', false)
   }
 }

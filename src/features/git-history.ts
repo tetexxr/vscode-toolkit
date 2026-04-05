@@ -240,7 +240,7 @@ export function registerGitHistoryCommands(context: vscode.ExtensionContext): vo
         'toolkitGitHistory',
         `History: ${fileName}`,
         vscode.ViewColumn.One,
-        { enableFindWidget: true },
+        { enableFindWidget: true }
       )
 
       panels.set(filePath, panel)
@@ -249,6 +249,6 @@ export function registerGitHistoryCommands(context: vscode.ExtensionContext): vo
       const nonce = getNonce()
       const patchHtml = renderPatch(raw)
       panel.webview.html = buildWebviewHtml(fileName, patchHtml, nonce)
-    }),
+    })
   )
 }
