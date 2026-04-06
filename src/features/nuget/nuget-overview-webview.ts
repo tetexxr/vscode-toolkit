@@ -266,13 +266,33 @@ const JS = /*js*/ `
     }
   });
 
+  function getOutdatedPackages() {
+    var pkgs = [];
+    for (var i = 0; i < state.projects.length; i++) {
+      var proj = state.projects[i];
+      for (var j = 0; j < proj.packages.length; j++) {
+        var pkg = proj.packages[j];
+        if (pkg.isOutdated) {
+          pkgs.push({ projectFsPath: proj.fsPath, packageId: pkg.id, version: pkg.latestVersion, sourceUrl: '' });
+        }
+      }
+    }
+    return pkgs;
+  }
+
   function renderToolbar() {
+    var outdated = getOutdatedPackages();
+    var hasOutdated = outdated.length > 0;
+
     $toolbar.innerHTML =
       '<span class="toolbar-title">Solution Overview</span>' +
       '<input id="filter-input" class="search-box" type="search" placeholder="Filter packages..." value="' + esc(state.filter) + '" />' +
       '<button class="btn" id="load-versions-btn"' + (state.loading ? ' disabled' : '') + '>' +
         (state.loading ? '<span class="spinner"></span> Loading...' : 'Load Package Versions') +
       '</button>' +
+      (hasOutdated
+        ? '<button class="btn" id="update-all-btn"' + (state.loading ? ' disabled' : '') + '>Update All (' + outdated.length + ')</button>'
+        : '') +
       '<button class="btn btn-secondary" id="settings-btn" title="Settings">&#x2699;</button>';
 
     document.getElementById('filter-input').addEventListener('input', (e) => {
@@ -285,6 +305,16 @@ const JS = /*js*/ `
       post({ command: 'load-versions' });
     });
     document.getElementById('settings-btn').addEventListener('click', () => post({ command: 'open-settings' }));
+
+    var updateAllBtn = document.getElementById('update-all-btn');
+    if (updateAllBtn) {
+      updateAllBtn.addEventListener('click', () => {
+        var pkgs = getOutdatedPackages();
+        if (pkgs.length) {
+          post({ command: 'update-all', packages: pkgs });
+        }
+      });
+    }
   }
 
   function renderContent() {

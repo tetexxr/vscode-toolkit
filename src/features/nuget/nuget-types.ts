@@ -148,6 +148,10 @@ export type OverviewWebviewMessage =
   | { command: 'ready' }
   | { command: 'load-versions' }
   | { command: 'update'; projectFsPath: string; packageId: string; version: string; sourceUrl: string }
+  | {
+      command: 'update-all'
+      packages: Array<{ projectFsPath: string; packageId: string; version: string; sourceUrl: string }>
+    }
   | { command: 'open-settings' }
 
 // ── IPC: Extension → Overview Webview ─────────────────────────

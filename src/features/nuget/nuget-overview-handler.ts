@@ -32,6 +32,8 @@ export class NugetOverviewHandler implements vscode.Disposable {
           return await this.sendOverview(true)
         case 'update':
           return await this.handleUpdate(msg.projectFsPath, msg.packageId, msg.version, msg.sourceUrl)
+        case 'update-all':
+          return await this.handleUpdateAll(msg.packages)
         case 'open-settings':
           return void vscode.commands.executeCommand(
             'workbench.action.openSettings',
@@ -125,6 +127,24 @@ export class NugetOverviewHandler implements vscode.Disposable {
         await this.sendOverview(true)
       }
     })
+  }
+
+  private async handleUpdateAll(
+    packages: Array<{ projectFsPath: string; packageId: string; version: string; sourceUrl: string }>
+  ): Promise<void> {
+    for (const pkg of packages) {
+      this.post({ type: 'task-started', packageId: pkg.packageId, action: 'update' })
+
+      const task = NugetTaskManager.buildAddTask(pkg.projectFsPath, pkg.packageId, pkg.version, pkg.sourceUrl)
+      const isLast = pkg === packages[packages.length - 1]
+      this.taskManager.enqueue(task, async (exitCode) => {
+        const success = exitCode === 0
+        this.post({ type: 'task-finished', packageId: pkg.packageId, action: 'update', success })
+        if (isLast) {
+          await this.sendOverview(true)
+        }
+      })
+    }
   }
 
   private post(msg: OverviewExtensionMessage): void {
