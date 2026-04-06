@@ -142,7 +142,7 @@ Click any package to view its details: all versions, description, dependencies, 
 
 **Solution Overview:**
 
-Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution Overview**) to open a summary table of all projects and their packages. Click **Load Package Versions** to check for updates across the entire solution — outdated packages are highlighted with a red "No" badge.
+Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution Overview**) to open a summary table of all projects and their packages. Click **Load Package Versions** to check for updates across the entire solution — outdated packages are highlighted with a red "No" badge. Once versions are loaded, click **Update All** to update every outdated package across all projects in one go.
 
 **Settings:**
 
