@@ -504,6 +504,7 @@
         ".eslintignore": "file_eslint",
         "eslint.config.js": "file_eslint",
         "eslint.config.ts": "file_eslint",
+        ".prettierrc": "file_prettier",
         ".prettierrc.json": "file_prettier",
         "go.mod": "file_gomod",
         "go.sum": "file_gosum",
