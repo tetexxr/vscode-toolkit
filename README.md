@@ -220,6 +220,21 @@ Available from:
 
 Reuses the same panel if the file is already open. Supports VS Code's built-in find widget (`Ctrl+F` / `Cmd+F`) inside the history view.
 
+### Git Blame (Inline Annotations)
+
+Show git blame annotations for every line in the editor, similar to JetBrains IDEs. Displays author, date, and commit message inline before each line of code.
+
+Toggle with **Toolkit: Toggle Git Blame** from the Command Palette.
+
+**Features:**
+
+- Annotations appear on **all lines at once** — not just the current line
+- Consecutive lines from the same commit are grouped: only the first line shows the annotation, the rest stay clean
+- Groups alternate between two subtle background colors to visually separate commits
+- Hover over any line to see full commit details (hash, author, date, message)
+- Annotations update automatically when switching files or saving
+- Toggle on/off with the same command
+
 ### Add / Remove Braces
 
 Code actions available via `Ctrl+.` (or `Cmd+.`) in TypeScript, JavaScript, TSX, and JSX files:
