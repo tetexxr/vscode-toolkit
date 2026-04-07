@@ -44,7 +44,8 @@
       "nuget-explorer": [
         {
           "id": "nugetProjects",
-          "name": "Projects"
+          "name": "Projects",
+          "icon": "themes/icons/nuget.svg"
         }
       ]
     },
