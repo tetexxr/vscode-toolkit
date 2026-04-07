@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert'
 import * as path from 'path'
-import { parseRemoteUrl, getFileLogPatch } from '../../src/utils/git'
+import { parseRemoteUrl, getFileLogPatch, getFileBlame, BlameInfo } from '../../src/utils/git'
 
 describe('getFileLogPatch', () => {
   const repoRoot = path.resolve(__dirname, '../..')
@@ -26,6 +26,41 @@ describe('getFileLogPatch', () => {
 
   it('should reject for an invalid cwd', async () => {
     await assert.rejects(() => getFileLogPatch('/nonexistent-dir', 'file.txt'))
+  })
+})
+
+describe('getFileBlame', () => {
+  const repoRoot = path.resolve(__dirname, '../..')
+
+  it('should return blame info for a tracked file', async () => {
+    const result = await getFileBlame(repoRoot, 'package.json')
+    assert.ok(result.length > 0)
+    for (const entry of result) {
+      assert.ok(entry.hash.length === 40, 'hash should be 40 characters')
+      assert.ok(entry.author.length > 0, 'author should not be empty')
+      assert.ok(entry.authorTime > 0, 'authorTime should be a positive timestamp')
+      assert.ok(entry.summary.length > 0, 'summary should not be empty')
+    }
+  })
+
+  it('should return one entry per line of the file', async () => {
+    const result = await getFileBlame(repoRoot, 'package.json')
+    const fs = await import('fs')
+    const fileContent = fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8')
+    const lineCount = fileContent.split('\n').length
+    // git blame may omit the final empty line
+    assert.ok(
+      result.length === lineCount || result.length === lineCount - 1,
+      `expected ~${lineCount} entries, got ${result.length}`
+    )
+  })
+
+  it('should reject for an untracked file', async () => {
+    await assert.rejects(() => getFileBlame(repoRoot, 'nonexistent-file-that-does-not-exist.txt'))
+  })
+
+  it('should reject for an invalid cwd', async () => {
+    await assert.rejects(() => getFileBlame('/nonexistent-dir', 'file.txt'))
   })
 })
 
