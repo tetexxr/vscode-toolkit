@@ -1,4 +1,5 @@
 import { strict as assert } from 'assert'
+import * as fs from 'fs'
 import * as path from 'path'
 import { parseRemoteUrl, getFileLogPatch, getFileBlame, BlameInfo } from '../../src/utils/git'
 
@@ -45,7 +46,6 @@ describe('getFileBlame', () => {
 
   it('should return one entry per line of the file', async () => {
     const result = await getFileBlame(repoRoot, 'package.json')
-    const fs = await import('fs')
     const fileContent = fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8')
     const lineCount = fileContent.split('\n').length
     // git blame may omit the final empty line
