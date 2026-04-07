@@ -8,8 +8,8 @@ const GROUP_COLORS = [
   'rgba(255, 255, 255, 0.08)'
 ]
 
-/** How many characters the annotation column occupies (author + date + summary). */
-const ANNOTATION_WIDTH = 50
+/** How many characters the annotation column occupies (date + author). */
+const ANNOTATION_WIDTH = 30
 
 let enabled = false
 let blameDecorationTypes: vscode.TextEditorDecorationType[] = []
@@ -121,15 +121,12 @@ function renderAnnotations(editor: vscode.TextEditor, blameData: BlameInfo[]): v
 
       let text: string
       if (isFirstInGroup) {
-        const author = info.author.length > 15
-          ? info.author.substring(0, 14) + '…'
-          : info.author
         const date = formatDate(info.authorTime)
-        const summaryMax = ANNOTATION_WIDTH - author.length - date.length - 4
-        const summary = info.summary.length > summaryMax
-          ? info.summary.substring(0, summaryMax - 1) + '…'
-          : info.summary
-        text = `${author}  ${date}  ${summary}`
+        const maxAuthor = ANNOTATION_WIDTH - date.length - 2
+        const author = info.author.length > maxAuthor
+          ? info.author.substring(0, maxAuthor - 1) + '…'
+          : info.author
+        text = `${date}  ${author}`
       } else {
         text = ''
       }
