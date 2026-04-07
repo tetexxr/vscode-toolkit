@@ -68,8 +68,7 @@ export class NugetTaskManager implements vscode.Disposable {
       packageId,
       '-v',
       version,
-      '-s',
-      sourceUrl,
+      ...(sourceUrl ? ['-s', sourceUrl] : []),
       '--interactive'
     ]
 
