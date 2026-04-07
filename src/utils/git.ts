@@ -68,6 +68,63 @@ export async function getFileLogPatch(cwd: string, relativePath: string): Promis
   )
 }
 
+export interface BlameInfo {
+  hash: string
+  author: string
+  authorTime: number
+  summary: string
+}
+
+export async function getFileBlame(cwd: string, relativePath: string): Promise<BlameInfo[]> {
+  const raw = await gitExec(cwd, ['blame', '--porcelain', '--', relativePath], 30000)
+  const lines = raw.split('\n')
+  const commits = new Map<string, BlameInfo>()
+  const result: BlameInfo[] = []
+
+  let i = 0
+  while (i < lines.length) {
+    const headerMatch = lines[i].match(/^([0-9a-f]{40})\s+\d+\s+(\d+)/)
+    if (!headerMatch) {
+      i++
+      continue
+    }
+
+    const hash = headerMatch[1]
+    const finalLine = parseInt(headerMatch[2], 10)
+    i++
+
+    if (!commits.has(hash)) {
+      const info: BlameInfo = { hash, author: '', authorTime: 0, summary: '' }
+      while (i < lines.length && !lines[i].startsWith('\t')) {
+        if (lines[i].startsWith('author ')) {
+          info.author = lines[i].substring(7)
+        } else if (lines[i].startsWith('author-time ')) {
+          info.authorTime = parseInt(lines[i].substring(12), 10)
+        } else if (lines[i].startsWith('summary ')) {
+          info.summary = lines[i].substring(8)
+        }
+        i++
+      }
+      commits.set(hash, info)
+    } else {
+      // Skip metadata lines until content line
+      while (i < lines.length && !lines[i].startsWith('\t')) {
+        i++
+      }
+    }
+
+    // Skip the tab-prefixed content line
+    if (i < lines.length && lines[i].startsWith('\t')) {
+      i++
+    }
+
+    const commitInfo = commits.get(hash)!
+    result[finalLine - 1] = { ...commitInfo }
+  }
+
+  return result
+}
+
 export function parseRemoteUrl(url: string): RemoteInfo | undefined {
   const match = url.match(/([\w-]+(?:\.[\w-]+)+)[:/]+([^/]+)\/(.*?)(?:\.git|\/)?$/)
   if (!match) {

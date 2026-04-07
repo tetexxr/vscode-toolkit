@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.110.0"
@@ -44,7 +44,8 @@
       "nuget-explorer": [
         {
           "id": "nugetProjects",
-          "name": "Projects"
+          "name": "Projects",
+          "icon": "themes/icons/nuget.svg"
         }
       ]
     },
@@ -277,6 +278,10 @@
         "command": "toolkit.gitHistory",
         "title": "Toolkit: Git File History",
         "icon": "$(history)"
+      },
+      {
+        "command": "toolkit.toggleGitBlame",
+        "title": "Toolkit: Toggle Git Blame"
       }
     ],
     "submenus": [
@@ -398,6 +403,11 @@
           "command": "toolkit.gitHistory",
           "when": "!explorerResourceIsFolder",
           "group": "navigation@15"
+        },
+        {
+          "command": "toolkit.toggleGitBlame",
+          "when": "!explorerResourceIsFolder",
+          "group": "navigation@16"
         }
       ],
       "commandPalette": [
@@ -424,6 +434,10 @@
         {
           "command": "toolkit.gitHistory",
           "group": "1_modification@4"
+        },
+        {
+          "command": "toolkit.toggleGitBlame",
+          "group": "1_modification@5"
         }
       ]
     },
