@@ -278,6 +278,10 @@
         "command": "toolkit.gitHistory",
         "title": "Toolkit: Git File History",
         "icon": "$(history)"
+      },
+      {
+        "command": "toolkit.toggleGitBlame",
+        "title": "Toolkit: Toggle Git Blame"
       }
     ],
     "submenus": [
@@ -399,6 +403,11 @@
           "command": "toolkit.gitHistory",
           "when": "!explorerResourceIsFolder",
           "group": "navigation@15"
+        },
+        {
+          "command": "toolkit.toggleGitBlame",
+          "when": "!explorerResourceIsFolder",
+          "group": "navigation@16"
         }
       ],
       "commandPalette": [
@@ -425,6 +434,10 @@
         {
           "command": "toolkit.gitHistory",
           "group": "1_modification@4"
+        },
+        {
+          "command": "toolkit.toggleGitBlame",
+          "group": "1_modification@5"
         }
       ]
     },
