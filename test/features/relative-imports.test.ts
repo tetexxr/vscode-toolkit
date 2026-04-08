@@ -12,7 +12,7 @@ import {
   loadPathsFromConfig,
   findImportMatches,
   findAliasMatches,
-  type ResolvedPaths,
+  type ResolvedPaths
 } from '../../src/features/relative-imports-utils'
 
 // --- helpers ---
@@ -58,17 +58,17 @@ describe('stripJsonComments', () => {
 
 describe('buildMappings', () => {
   it('should create wildcard mapping', () => {
-    const mappings = buildMappings({ '@server/*': ['src/server/*'] })
+    const mappings = buildMappings({ '@lib/*': ['src/lib/*'] })
     assert.equal(mappings.length, 1)
-    assert.equal(mappings[0].prefix, '@server/')
+    assert.equal(mappings[0].prefix, '@lib/')
     assert.equal(mappings[0].wildcard, true)
-    assert.deepEqual(mappings[0].targets, ['src/server/*'])
+    assert.deepEqual(mappings[0].targets, ['src/lib/*'])
   })
 
   it('should create exact mapping', () => {
-    const mappings = buildMappings({ '@utils': ['src/utils/index'] })
+    const mappings = buildMappings({ '@config': ['src/config/index'] })
     assert.equal(mappings.length, 1)
-    assert.equal(mappings[0].prefix, '@utils')
+    assert.equal(mappings[0].prefix, '@config')
     assert.equal(mappings[0].wildcard, false)
   })
 
@@ -76,7 +76,7 @@ describe('buildMappings', () => {
     const mappings = buildMappings({
       '@a/*': ['a/*'],
       '@a/b/*': ['ab/*'],
-      '@ab/c/*': ['abc/*'],
+      '@ab/c/*': ['abc/*']
     })
     assert.equal(mappings[0].prefix, '@ab/c/')
     assert.equal(mappings[1].prefix, '@a/b/')
@@ -88,20 +88,20 @@ describe('resolveAlias', () => {
   const config: ResolvedPaths = {
     baseUrl: '/project',
     mappings: buildMappings({
-      '@server/*': ['src/server/*'],
-      '@utils': ['src/utils/index'],
-      '@components/*': ['src/ui/components/*'],
-    }),
+      '@lib/*': ['src/lib/*'],
+      '@config': ['src/config/index'],
+      '@views/*': ['src/ui/views/*']
+    })
   }
 
   it('should resolve wildcard alias', () => {
-    const result = resolveAlias('@server/payments/repository', config)
-    assert.equal(result, path.resolve('/project', 'src/server/payments/repository'))
+    const result = resolveAlias('@lib/orders/store', config)
+    assert.equal(result, path.resolve('/project', 'src/lib/orders/store'))
   })
 
   it('should resolve exact alias', () => {
-    const result = resolveAlias('@utils', config)
-    assert.equal(result, path.resolve('/project', 'src/utils/index'))
+    const result = resolveAlias('@config', config)
+    assert.equal(result, path.resolve('/project', 'src/config/index'))
   })
 
   it('should return undefined for non-matching import', () => {
@@ -110,41 +110,35 @@ describe('resolveAlias', () => {
   })
 
   it('should resolve deeply nested wildcard path', () => {
-    const result = resolveAlias('@components/Button/styles', config)
-    assert.equal(result, path.resolve('/project', 'src/ui/components/Button/styles'))
+    const result = resolveAlias('@views/Dashboard/styles', config)
+    assert.equal(result, path.resolve('/project', 'src/ui/views/Dashboard/styles'))
   })
 
   it('should not match partial prefix', () => {
-    // '@serverExtra/foo' should NOT match '@server/*'
-    assert.equal(resolveAlias('@serverExtra/foo', config), undefined)
+    // '@library/foo' should NOT match '@lib/*'
+    assert.equal(resolveAlias('@library/foo', config), undefined)
   })
 })
 
 describe('toRelative', () => {
   it('should return ./ for same directory', () => {
-    const result = toRelative('/project/src/a/handler.ts', '/project/src/a/repository')
-    assert.equal(result, './repository')
+    const result = toRelative('/project/src/a/controller.ts', '/project/src/a/model')
+    assert.equal(result, './model')
   })
 
   it('should return ../ for parent directory', () => {
-    const result = toRelative('/project/src/a/handler.ts', '/project/src/b/service')
-    assert.equal(result, '../b/service')
+    const result = toRelative('/project/src/a/controller.ts', '/project/src/b/helpers')
+    assert.equal(result, '../b/helpers')
   })
 
   it('should handle deeply nested paths', () => {
-    const result = toRelative(
-      '/project/src/server/payments/handler.ts',
-      '/project/src/server/auth/service'
-    )
-    assert.equal(result, '../auth/service')
+    const result = toRelative('/project/src/lib/orders/controller.ts', '/project/src/lib/catalog/helpers')
+    assert.equal(result, '../catalog/helpers')
   })
 
   it('should handle going up multiple levels', () => {
-    const result = toRelative(
-      '/project/src/deep/nested/file.ts',
-      '/project/src/utils/helpers'
-    )
-    assert.equal(result, '../../utils/helpers')
+    const result = toRelative('/project/src/deep/nested/file.ts', '/project/src/common/format')
+    assert.equal(result, '../../common/format')
   })
 
   it('should always start with ./ or ../', () => {
@@ -207,8 +201,8 @@ describe('loadPathsFromConfig', () => {
     writeJson(path.join(root, 'tsconfig.json'), {
       compilerOptions: {
         baseUrl: '.',
-        paths: { '@app/*': ['src/*'] },
-      },
+        paths: { '@app/*': ['src/*'] }
+      }
     })
     const result = loadPathsFromConfig(path.join(root, 'tsconfig.json'))
     assert.ok(result)
@@ -221,8 +215,8 @@ describe('loadPathsFromConfig', () => {
     writeJson(path.join(root, 'tsconfig.json'), {
       compilerOptions: {
         baseUrl: 'src',
-        paths: { '@/*': ['*'] },
-      },
+        paths: { '@/*': ['*'] }
+      }
     })
     const result = loadPathsFromConfig(path.join(root, 'tsconfig.json'))
     assert.ok(result)
@@ -233,11 +227,11 @@ describe('loadPathsFromConfig', () => {
     writeJson(path.join(root, 'tsconfig.base.json'), {
       compilerOptions: {
         baseUrl: '.',
-        paths: { '@lib/*': ['lib/*'] },
-      },
+        paths: { '@lib/*': ['lib/*'] }
+      }
     })
     writeJson(path.join(root, 'tsconfig.json'), {
-      extends: './tsconfig.base.json',
+      extends: './tsconfig.base.json'
     })
     const result = loadPathsFromConfig(path.join(root, 'tsconfig.json'))
     assert.ok(result)
@@ -249,12 +243,12 @@ describe('loadPathsFromConfig', () => {
     writeJson(path.join(root, 'tsconfig.base.json'), {
       compilerOptions: {
         baseUrl: '.',
-        paths: { '@/*': ['*'] },
-      },
+        paths: { '@/*': ['*'] }
+      }
     })
     writeJson(path.join(root, 'tsconfig.json'), {
       extends: './tsconfig.base.json',
-      compilerOptions: { baseUrl: 'src' },
+      compilerOptions: { baseUrl: 'src' }
     })
     const result = loadPathsFromConfig(path.join(root, 'tsconfig.json'))
     assert.ok(result)
@@ -263,7 +257,7 @@ describe('loadPathsFromConfig', () => {
 
   it('should return undefined when no paths are defined', () => {
     writeJson(path.join(root, 'tsconfig.json'), {
-      compilerOptions: { strict: true },
+      compilerOptions: { strict: true }
     })
     assert.equal(loadPathsFromConfig(path.join(root, 'tsconfig.json')), undefined)
   })
@@ -291,54 +285,54 @@ describe('findImportMatches', () => {
   const config: ResolvedPaths = {
     baseUrl: '/project',
     mappings: buildMappings({
-      '@server/*': ['src/server/*'],
-      '@utils': ['src/utils/index'],
-    }),
+      '@lib/*': ['src/lib/*'],
+      '@config': ['src/config/index']
+    })
   }
 
-  const filePath = '/project/src/server/payments/handler.ts'
+  const filePath = '/project/src/lib/orders/controller.ts'
 
   it('should match import ... from', () => {
-    const source = `import * as repository from '@server/payments/repository'`
+    const source = `import * as store from '@lib/orders/store'`
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].importPath, '@server/payments/repository')
-    assert.equal(matches[0].relativePath, './repository')
+    assert.equal(matches[0].importPath, '@lib/orders/store')
+    assert.equal(matches[0].relativePath, './store')
   })
 
   it('should match named imports', () => {
-    const source = `import { create, update } from '@server/payments/repository'`
+    const source = `import { create, update } from '@lib/orders/store'`
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, './repository')
+    assert.equal(matches[0].relativePath, './store')
   })
 
   it('should match require()', () => {
-    const source = `const repo = require('@server/payments/repository')`
+    const source = `const store = require('@lib/orders/store')`
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, './repository')
+    assert.equal(matches[0].relativePath, './store')
   })
 
   it('should match dynamic import()', () => {
-    const source = `const mod = await import('@server/payments/repository')`
+    const source = `const mod = await import('@lib/orders/store')`
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, './repository')
+    assert.equal(matches[0].relativePath, './store')
   })
 
   it('should match export ... from', () => {
-    const source = `export { create } from '@server/payments/repository'`
+    const source = `export { create } from '@lib/orders/store'`
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, './repository')
+    assert.equal(matches[0].relativePath, './store')
   })
 
   it('should match export * from', () => {
-    const source = `export * from '@server/payments/repository'`
+    const source = `export * from '@lib/orders/store'`
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, './repository')
+    assert.equal(matches[0].relativePath, './store')
   })
 
   it('should skip relative imports', () => {
@@ -361,46 +355,49 @@ describe('findImportMatches', () => {
 
   it('should handle multiple imports in one file', () => {
     const source = [
-      `import * as repo from '@server/payments/repository'`,
-      `import { auth } from '@server/auth/service'`,
+      `import * as store from '@lib/orders/store'`,
+      `import { search } from '@lib/catalog/helpers'`,
       `import express from 'express'`,
-      `import { helper } from './helper'`,
+      `import { validate } from './validate'`
     ].join('\n')
 
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 2)
-    assert.equal(matches[0].relativePath, './repository')
-    assert.equal(matches[1].relativePath, '../auth/service')
+    assert.equal(matches[0].relativePath, './store')
+    assert.equal(matches[1].relativePath, '../catalog/helpers')
   })
 
   it('should handle double quotes', () => {
-    const source = `import { foo } from "@server/payments/repository"`
+    const source = `import { foo } from "@lib/orders/store"`
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, './repository')
+    assert.equal(matches[0].relativePath, './store')
   })
 
   it('should correctly compute pathStart offset', () => {
-    const source = `import { foo } from '@server/payments/repository'`
+    const source = `import { foo } from '@lib/orders/store'`
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 1)
     // The import path starts right after the opening quote
-    assert.equal(source.slice(matches[0].pathStart, matches[0].pathStart + matches[0].importPath.length), '@server/payments/repository')
+    assert.equal(
+      source.slice(matches[0].pathStart, matches[0].pathStart + matches[0].importPath.length),
+      '@lib/orders/store'
+    )
   })
 
   it('should resolve cross-directory alias to correct relative path', () => {
-    const deepFile = '/project/src/web/controllers/auth.ts'
-    const source = `import { repo } from '@server/payments/repository'`
+    const deepFile = '/project/src/web/routes/orders.ts'
+    const source = `import { store } from '@lib/orders/store'`
     const matches = findImportMatches(source, deepFile, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, '../../server/payments/repository')
+    assert.equal(matches[0].relativePath, '../../lib/orders/store')
   })
 
   it('should resolve exact alias', () => {
-    const source = `import { helpers } from '@utils'`
+    const source = `import { settings } from '@config'`
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, '../../utils/index')
+    assert.equal(matches[0].relativePath, '../../config/index')
   })
 })
 
@@ -408,20 +405,20 @@ describe('toAlias', () => {
   const config: ResolvedPaths = {
     baseUrl: '/project',
     mappings: buildMappings({
-      '@server/*': ['src/server/*'],
-      '@utils': ['src/utils/index'],
-      '@components/*': ['src/ui/components/*'],
-    }),
+      '@lib/*': ['src/lib/*'],
+      '@config': ['src/config/index'],
+      '@views/*': ['src/ui/views/*']
+    })
   }
 
   it('should convert absolute path to wildcard alias', () => {
-    const result = toAlias('/project/src/server/payments/repository', config)
-    assert.equal(result, '@server/payments/repository')
+    const result = toAlias('/project/src/lib/orders/store', config)
+    assert.equal(result, '@lib/orders/store')
   })
 
   it('should convert absolute path to exact alias', () => {
-    const result = toAlias('/project/src/utils/index', config)
-    assert.equal(result, '@utils')
+    const result = toAlias('/project/src/config/index', config)
+    assert.equal(result, '@config')
   })
 
   it('should return undefined for paths outside any alias', () => {
@@ -429,8 +426,8 @@ describe('toAlias', () => {
   })
 
   it('should handle nested alias paths', () => {
-    const result = toAlias('/project/src/ui/components/Button/styles', config)
-    assert.equal(result, '@components/Button/styles')
+    const result = toAlias('/project/src/ui/views/Dashboard/styles', config)
+    assert.equal(result, '@views/Dashboard/styles')
   })
 
   it('should use the most specific alias', () => {
@@ -438,11 +435,11 @@ describe('toAlias', () => {
       baseUrl: '/project',
       mappings: buildMappings({
         '@app/*': ['src/*'],
-        '@app/server/*': ['src/server/*'],
-      }),
+        '@app/lib/*': ['src/lib/*']
+      })
     }
-    const result = toAlias('/project/src/server/handler', config2)
-    assert.equal(result, '@app/server/handler')
+    const result = toAlias('/project/src/lib/logger', config2)
+    assert.equal(result, '@app/lib/logger')
   })
 })
 
@@ -452,26 +449,26 @@ describe('findAliasMatches', () => {
   const config: ResolvedPaths = {
     baseUrl: '/project',
     mappings: buildMappings({
-      '@server/*': ['src/server/*'],
-      '@utils': ['src/utils/index'],
-    }),
+      '@lib/*': ['src/lib/*'],
+      '@config': ['src/config/index']
+    })
   }
 
-  const filePath = '/project/src/server/payments/handler.ts'
+  const filePath = '/project/src/lib/orders/controller.ts'
 
   it('should convert relative import to alias', () => {
-    const source = `import * as repository from './repository'`
+    const source = `import * as store from './store'`
     const matches = findAliasMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].importPath, './repository')
-    assert.equal(matches[0].relativePath, '@server/payments/repository')
+    assert.equal(matches[0].importPath, './store')
+    assert.equal(matches[0].relativePath, '@lib/orders/store')
   })
 
   it('should convert parent-relative import to alias', () => {
-    const source = `import { auth } from '../auth/service'`
+    const source = `import { search } from '../catalog/helpers'`
     const matches = findAliasMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, '@server/auth/service')
+    assert.equal(matches[0].relativePath, '@lib/catalog/helpers')
   })
 
   it('should skip alias imports (non-relative)', () => {
@@ -488,38 +485,38 @@ describe('findAliasMatches', () => {
 
   it('should handle multiple relative imports', () => {
     const source = [
-      `import * as repo from './repository'`,
-      `import { auth } from '../auth/service'`,
-      `import express from 'express'`,
+      `import * as store from './store'`,
+      `import { search } from '../catalog/helpers'`,
+      `import express from 'express'`
     ].join('\n')
 
     const matches = findAliasMatches(source, filePath, config)
     assert.equal(matches.length, 2)
-    assert.equal(matches[0].relativePath, '@server/payments/repository')
-    assert.equal(matches[1].relativePath, '@server/auth/service')
+    assert.equal(matches[0].relativePath, '@lib/orders/store')
+    assert.equal(matches[1].relativePath, '@lib/catalog/helpers')
   })
 
   it('should handle require()', () => {
-    const source = `const repo = require('./repository')`
+    const source = `const store = require('./store')`
     const matches = findAliasMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, '@server/payments/repository')
+    assert.equal(matches[0].relativePath, '@lib/orders/store')
   })
 
   it('should handle dynamic import()', () => {
-    const source = `const mod = await import('./repository')`
+    const source = `const mod = await import('./store')`
     const matches = findAliasMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(matches[0].relativePath, '@server/payments/repository')
+    assert.equal(matches[0].relativePath, '@lib/orders/store')
   })
 
   it('should correctly compute pathStart offset', () => {
-    const source = `import { foo } from './repository'`
+    const source = `import { foo } from './store'`
     const matches = findAliasMatches(source, filePath, config)
     assert.equal(matches.length, 1)
     assert.equal(
       source.slice(matches[0].pathStart, matches[0].pathStart + matches[0].importPath.length),
-      './repository'
+      './store'
     )
   })
 })
