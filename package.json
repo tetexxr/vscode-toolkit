@@ -787,7 +787,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.5.2",
     "@types/vscode": "^1.110.0",
     "@vscode/vsce": "^3.7.1",
     "mocha": "^11.7.5",
