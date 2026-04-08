@@ -231,7 +231,8 @@ async function fetchSinglePackageMetadata(
 }
 
 /** Extract version details from full package metadata. */
-function extractVersionDetails(metadata: NpmPackageMetadata, prerelease: boolean): NpmVersionDetail[] {
+/** Extract and sort version details from full package metadata. Exported for testing. */
+export function extractVersionDetails(metadata: NpmPackageMetadata, prerelease: boolean): NpmVersionDetail[] {
   const versions = Object.keys(metadata.versions || {})
   const timeMap = metadata.time || {}
 
@@ -255,7 +256,8 @@ function extractVersionDetails(metadata: NpmPackageMetadata, prerelease: boolean
   })
 }
 
-function filterAndSortResults(results: NpmPackageViewModel[], query: string): NpmPackageViewModel[] {
+/** Filter by query and sort alphabetically. Exported for testing. */
+export function filterAndSortResults(results: NpmPackageViewModel[], query: string): NpmPackageViewModel[] {
   const trimmed = query.trim().toLowerCase()
 
   const filtered = results.filter((r) => {

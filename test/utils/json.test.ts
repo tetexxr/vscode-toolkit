@@ -99,6 +99,46 @@ describe('parsePackageJsonDependencies', () => {
     assert.deepEqual(parsePackageJsonDependencies('42'), [])
   })
 
+  it('should handle dependency with empty string version', () => {
+    const json = JSON.stringify({ dependencies: { pkg: '' } })
+    const result = parsePackageJsonDependencies(json)
+    assert.equal(result[0].versionRange, '')
+  })
+
+  it('should handle git URL versions', () => {
+    const json = JSON.stringify({
+      dependencies: { pkg: 'git+https://github.com/user/repo.git#v1.0.0' }
+    })
+    const result = parsePackageJsonDependencies(json)
+    assert.equal(result[0].versionRange, 'git+https://github.com/user/repo.git#v1.0.0')
+  })
+
+  it('should handle file path versions', () => {
+    const json = JSON.stringify({ dependencies: { pkg: 'file:../local-pkg' } })
+    const result = parsePackageJsonDependencies(json)
+    assert.equal(result[0].versionRange, 'file:../local-pkg')
+  })
+
+  it('should handle many dependencies', () => {
+    const deps: Record<string, string> = {}
+    for (let i = 0; i < 50; i++) deps[`pkg-${i}`] = `^${i}.0.0`
+    const json = JSON.stringify({ dependencies: deps })
+    const result = parsePackageJsonDependencies(json)
+    assert.equal(result.length, 50)
+  })
+
+  it('should ignore non-dependency fields', () => {
+    const json = JSON.stringify({
+      dependencies: { express: '^4.0.0' },
+      peerDependencies: { react: '>=16' },
+      optionalDependencies: { fsevents: '^2.0.0' },
+      bundleDependencies: ['bundled-pkg']
+    })
+    const result = parsePackageJsonDependencies(json)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].name, 'express')
+  })
+
   it('should handle a realistic full package.json', () => {
     const json = JSON.stringify({
       name: '@myorg/api-server',
@@ -149,5 +189,21 @@ describe('parsePackageJsonName', () => {
 
   it('should return empty string for empty string', () => {
     assert.equal(parsePackageJsonName(''), '')
+  })
+
+  it('should return empty string for null name', () => {
+    assert.equal(parsePackageJsonName('{"name": null}'), '')
+  })
+
+  it('should return empty string for boolean name', () => {
+    assert.equal(parsePackageJsonName('{"name": true}'), '')
+  })
+
+  it('should return empty string for array root', () => {
+    assert.equal(parsePackageJsonName('[]'), '')
+  })
+
+  it('should extract name with special characters', () => {
+    assert.equal(parsePackageJsonName('{"name": "my-cool_pkg.v2"}'), 'my-cool_pkg.v2')
   })
 })
