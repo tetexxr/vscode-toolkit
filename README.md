@@ -305,6 +305,19 @@ Toggle with **Toolkit: Toggle Git Blame** from the Command Palette.
 - Annotations update automatically when switching files or saving
 - Toggle on/off with the same command
 
+### Move Symbol Up / Down
+
+Move functions, methods, classes, and other code symbols up or down past their siblings — similar to JetBrains' "Move Statement" feature. Swaps the symbol under the cursor with the adjacent one above or below, preserving spacing between them.
+
+Works with any language that has a symbol provider (language server) installed — including TypeScript, JavaScript, C#, Go, Python, Rust, Java, and more.
+
+**Context-aware:** if the cursor is inside a method of a class, it moves the method within the class. If the cursor is on a top-level function, it moves it among other top-level declarations.
+
+| Command | Default Keybinding |
+|---|---|
+| Toolkit: Move Symbol Up | `Cmd+Shift+Up` |
+| Toolkit: Move Symbol Down | `Cmd+Shift+Down` |
+
 ### Add / Remove Braces
 
 Code actions available via `Ctrl+.` (or `Cmd+.`) in TypeScript, JavaScript, TSX, and JSX files:
