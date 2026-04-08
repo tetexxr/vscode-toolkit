@@ -14,6 +14,7 @@ import { registerAddBracesCodeActions } from './features/add-braces'
 import { registerGitBlameCommands } from './features/git-blame'
 import { registerNpmCommands } from './features/npm/npm'
 import { registerRelativeImportsCommands } from './features/relative-imports'
+import { registerMoveSymbolCommands } from './features/move-symbol'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -31,6 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerGitBlameCommands(context)
   registerNpmCommands(context)
   registerRelativeImportsCommands(context)
+  registerMoveSymbolCommands(context)
 }
 
 export function deactivate() {}
