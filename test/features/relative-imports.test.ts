@@ -6,10 +6,12 @@ import {
   stripJsonComments,
   buildMappings,
   resolveAlias,
+  toAlias,
   toRelative,
   findTsConfig,
   loadPathsFromConfig,
   findImportMatches,
+  findAliasMatches,
   type ResolvedPaths,
 } from '../../src/features/relative-imports-utils'
 
@@ -399,5 +401,125 @@ describe('findImportMatches', () => {
     const matches = findImportMatches(source, filePath, config)
     assert.equal(matches.length, 1)
     assert.equal(matches[0].relativePath, '../../utils/index')
+  })
+})
+
+describe('toAlias', () => {
+  const config: ResolvedPaths = {
+    baseUrl: '/project',
+    mappings: buildMappings({
+      '@server/*': ['src/server/*'],
+      '@utils': ['src/utils/index'],
+      '@components/*': ['src/ui/components/*'],
+    }),
+  }
+
+  it('should convert absolute path to wildcard alias', () => {
+    const result = toAlias('/project/src/server/payments/repository', config)
+    assert.equal(result, '@server/payments/repository')
+  })
+
+  it('should convert absolute path to exact alias', () => {
+    const result = toAlias('/project/src/utils/index', config)
+    assert.equal(result, '@utils')
+  })
+
+  it('should return undefined for paths outside any alias', () => {
+    assert.equal(toAlias('/project/src/other/thing', config), undefined)
+  })
+
+  it('should handle nested alias paths', () => {
+    const result = toAlias('/project/src/ui/components/Button/styles', config)
+    assert.equal(result, '@components/Button/styles')
+  })
+
+  it('should use the most specific alias', () => {
+    const config2: ResolvedPaths = {
+      baseUrl: '/project',
+      mappings: buildMappings({
+        '@app/*': ['src/*'],
+        '@app/server/*': ['src/server/*'],
+      }),
+    }
+    const result = toAlias('/project/src/server/handler', config2)
+    assert.equal(result, '@app/server/handler')
+  })
+})
+
+// --- findAliasMatches ---
+
+describe('findAliasMatches', () => {
+  const config: ResolvedPaths = {
+    baseUrl: '/project',
+    mappings: buildMappings({
+      '@server/*': ['src/server/*'],
+      '@utils': ['src/utils/index'],
+    }),
+  }
+
+  const filePath = '/project/src/server/payments/handler.ts'
+
+  it('should convert relative import to alias', () => {
+    const source = `import * as repository from './repository'`
+    const matches = findAliasMatches(source, filePath, config)
+    assert.equal(matches.length, 1)
+    assert.equal(matches[0].importPath, './repository')
+    assert.equal(matches[0].relativePath, '@server/payments/repository')
+  })
+
+  it('should convert parent-relative import to alias', () => {
+    const source = `import { auth } from '../auth/service'`
+    const matches = findAliasMatches(source, filePath, config)
+    assert.equal(matches.length, 1)
+    assert.equal(matches[0].relativePath, '@server/auth/service')
+  })
+
+  it('should skip alias imports (non-relative)', () => {
+    const source = `import express from 'express'`
+    const matches = findAliasMatches(source, filePath, config)
+    assert.equal(matches.length, 0)
+  })
+
+  it('should skip relative imports outside any alias', () => {
+    const source = `import { foo } from '../../../other/thing'`
+    const matches = findAliasMatches(source, filePath, config)
+    assert.equal(matches.length, 0)
+  })
+
+  it('should handle multiple relative imports', () => {
+    const source = [
+      `import * as repo from './repository'`,
+      `import { auth } from '../auth/service'`,
+      `import express from 'express'`,
+    ].join('\n')
+
+    const matches = findAliasMatches(source, filePath, config)
+    assert.equal(matches.length, 2)
+    assert.equal(matches[0].relativePath, '@server/payments/repository')
+    assert.equal(matches[1].relativePath, '@server/auth/service')
+  })
+
+  it('should handle require()', () => {
+    const source = `const repo = require('./repository')`
+    const matches = findAliasMatches(source, filePath, config)
+    assert.equal(matches.length, 1)
+    assert.equal(matches[0].relativePath, '@server/payments/repository')
+  })
+
+  it('should handle dynamic import()', () => {
+    const source = `const mod = await import('./repository')`
+    const matches = findAliasMatches(source, filePath, config)
+    assert.equal(matches.length, 1)
+    assert.equal(matches[0].relativePath, '@server/payments/repository')
+  })
+
+  it('should correctly compute pathStart offset', () => {
+    const source = `import { foo } from './repository'`
+    const matches = findAliasMatches(source, filePath, config)
+    assert.equal(matches.length, 1)
+    assert.equal(
+      source.slice(matches[0].pathStart, matches[0].pathStart + matches[0].importPath.length),
+      './repository'
+    )
   })
 })

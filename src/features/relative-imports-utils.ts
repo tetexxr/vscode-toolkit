@@ -152,6 +152,56 @@ export function loadPathsFromConfig(configPath: string, depth = 0): ResolvedPath
 }
 
 /**
+ * Given an absolute path, find the best matching alias for it.
+ * Returns the alias import string (e.g. '@server/payments/repository') or undefined.
+ */
+export function toAlias(absolutePath: string, config: ResolvedPaths): string | undefined {
+  for (const m of config.mappings) {
+    if (m.wildcard) {
+      const target = m.targets[0]
+      const targetBase = path.resolve(config.baseUrl, target.replace('*', ''))
+      const rel = path.relative(targetBase, absolutePath)
+      if (!rel.startsWith('..') && !path.isAbsolute(rel)) {
+        return m.prefix + rel.replace(/\\/g, '/')
+      }
+    } else {
+      const target = path.resolve(config.baseUrl, m.targets[0])
+      if (absolutePath === target) {
+        return m.prefix
+      }
+    }
+  }
+  return undefined
+}
+
+/**
+ * Scan source text for relative imports that could be converted to aliases.
+ */
+export function findAliasMatches(
+  sourceText: string,
+  filePath: string,
+  config: ResolvedPaths
+): ImportMatch[] {
+  const matches: ImportMatch[] = []
+  const re = new RegExp(PATH_RE.source, 'g')
+  let match: RegExpExecArray | null
+
+  while ((match = re.exec(sourceText)) !== null) {
+    const quote = match[1]
+    const importPath = match[2]
+    if (!importPath.startsWith('.')) continue
+
+    const absolute = path.resolve(path.dirname(filePath), importPath)
+    const alias = toAlias(absolute, config)
+    if (!alias) continue
+
+    const pathStart = match.index + match[0].indexOf(quote + importPath) + 1
+    matches.push({ pathStart, importPath, relativePath: alias })
+  }
+  return matches
+}
+
+/**
  * Scan source text for alias imports and return the edits needed to convert them to relative paths.
  */
 export function findImportMatches(

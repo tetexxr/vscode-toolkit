@@ -311,6 +311,10 @@
       {
         "command": "toolkit.convertImportsToRelative",
         "title": "Toolkit: Convert Imports to Relative Paths"
+      },
+      {
+        "command": "toolkit.convertImportsToAlias",
+        "title": "Toolkit: Convert Imports to Alias Paths"
       }
     ],
     "submenus": [

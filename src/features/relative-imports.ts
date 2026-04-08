@@ -4,8 +4,10 @@ import {
   findTsConfig,
   loadPathsFromConfig,
   resolveAlias,
+  toAlias,
   toRelative,
   findImportMatches,
+  findAliasMatches,
   PATH_RE,
 } from './relative-imports-utils'
 
@@ -56,6 +58,52 @@ export function registerRelativeImportsCommands(context: vscode.ExtensionContext
     })
   )
 
+  // Command: convert all relative imports to aliases in current file
+  context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.convertImportsToAlias', async () => {
+      const editor = vscode.window.activeTextEditor
+      if (!editor) return
+
+      const configPath = findTsConfig(path.dirname(editor.document.uri.fsPath))
+      if (!configPath) {
+        vscode.window.showWarningMessage('No tsconfig.json or jsconfig.json found.')
+        return
+      }
+
+      const config = loadPathsFromConfig(configPath)
+      if (!config) {
+        vscode.window.showWarningMessage('No path aliases found in tsconfig/jsconfig.')
+        return
+      }
+
+      const matches = findAliasMatches(
+        editor.document.getText(),
+        editor.document.uri.fsPath,
+        config
+      )
+      if (matches.length === 0) {
+        vscode.window.showInformationMessage('No relative imports to convert.')
+        return
+      }
+
+      await editor.edit((eb) => {
+        for (const m of matches) {
+          eb.replace(
+            new vscode.Range(
+              editor.document.positionAt(m.pathStart),
+              editor.document.positionAt(m.pathStart + m.importPath.length)
+            ),
+            m.relativePath
+          )
+        }
+      })
+
+      vscode.window.showInformationMessage(
+        `Converted ${matches.length} import${matches.length > 1 ? 's' : ''} to alias paths.`
+      )
+    })
+  )
+
   // Code Action provider: offer conversion on individual import lines
   const codeActionProvider: vscode.CodeActionProvider = {
     provideCodeActions(document, range) {
@@ -73,28 +121,50 @@ export function registerRelativeImportsCommands(context: vscode.ExtensionContext
       while ((match = re.exec(line.text)) !== null) {
         const quote = match[1]
         const importPath = match[2]
-        if (importPath.startsWith('.') || importPath.startsWith('/')) continue
-
-        const absolute = resolveAlias(importPath, config)
-        if (!absolute) continue
-
-        const relative = toRelative(document.uri.fsPath, absolute)
         const pathStart = match.index + match[0].indexOf(quote + importPath) + 1
 
-        const action = new vscode.CodeAction(
-          `Convert to relative import: '${relative}'`,
-          vscode.CodeActionKind.RefactorRewrite
-        )
-        action.edit = new vscode.WorkspaceEdit()
-        action.edit.replace(
-          document.uri,
-          new vscode.Range(
-            new vscode.Position(range.start.line, pathStart),
-            new vscode.Position(range.start.line, pathStart + importPath.length)
-          ),
-          relative
-        )
-        actions.push(action)
+        if (importPath.startsWith('.')) {
+          // Relative → alias
+          const absolute = path.resolve(path.dirname(document.uri.fsPath), importPath)
+          const alias = toAlias(absolute, config)
+          if (!alias) continue
+
+          const action = new vscode.CodeAction(
+            `Convert to alias import: '${alias}'`,
+            vscode.CodeActionKind.RefactorRewrite
+          )
+          action.edit = new vscode.WorkspaceEdit()
+          action.edit.replace(
+            document.uri,
+            new vscode.Range(
+              new vscode.Position(range.start.line, pathStart),
+              new vscode.Position(range.start.line, pathStart + importPath.length)
+            ),
+            alias
+          )
+          actions.push(action)
+        } else if (!importPath.startsWith('/')) {
+          // Alias → relative
+          const absolute = resolveAlias(importPath, config)
+          if (!absolute) continue
+
+          const relative = toRelative(document.uri.fsPath, absolute)
+
+          const action = new vscode.CodeAction(
+            `Convert to relative import: '${relative}'`,
+            vscode.CodeActionKind.RefactorRewrite
+          )
+          action.edit = new vscode.WorkspaceEdit()
+          action.edit.replace(
+            document.uri,
+            new vscode.Range(
+              new vscode.Position(range.start.line, pathStart),
+              new vscode.Position(range.start.line, pathStart + importPath.length)
+            ),
+            relative
+          )
+          actions.push(action)
+        }
       }
       return actions
     },
