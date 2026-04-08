@@ -37,6 +37,11 @@
           "id": "nuget-explorer",
           "title": "NuGet",
           "icon": "themes/icons/nuget.svg"
+        },
+        {
+          "id": "npm-explorer",
+          "title": "npm",
+          "icon": "themes/icons/npm.svg"
         }
       ]
     },
@@ -46,6 +51,13 @@
           "id": "nugetProjects",
           "name": "Projects",
           "icon": "themes/icons/nuget.svg"
+        }
+      ],
+      "npm-explorer": [
+        {
+          "id": "npmProjects",
+          "name": "Projects",
+          "icon": "themes/icons/npm.svg"
         }
       ]
     },
@@ -186,6 +198,19 @@
         "icon": "$(list-flat)"
       },
       {
+        "command": "toolkit.npm.managePackages",
+        "title": "Toolkit: Manage npm Packages"
+      },
+      {
+        "command": "toolkit.npm.managePackagesPalette",
+        "title": "Toolkit: Manage npm Packages"
+      },
+      {
+        "command": "toolkit.npm.workspaceOverview",
+        "title": "Toolkit: npm Workspace Overview",
+        "icon": "$(list-flat)"
+      },
+      {
         "command": "toolkit.csharp.createClass",
         "title": "Class",
         "category": "New C#"
@@ -296,6 +321,11 @@
           "command": "toolkit.nuget.solutionOverview",
           "when": "view == nugetProjects",
           "group": "navigation"
+        },
+        {
+          "command": "toolkit.npm.workspaceOverview",
+          "when": "view == npmProjects",
+          "group": "navigation"
         }
       ],
       "toolkit.csharp.new": [
@@ -400,6 +430,11 @@
           "group": "navigation@14"
         },
         {
+          "command": "toolkit.npm.managePackages",
+          "when": "resourceFilename == package.json",
+          "group": "navigation@15"
+        },
+        {
           "command": "toolkit.gitHistory",
           "when": "!explorerResourceIsFolder",
           "group": "navigation@15"
@@ -413,6 +448,10 @@
       "commandPalette": [
         {
           "command": "toolkit.nuget.managePackages",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.npm.managePackages",
           "when": "false"
         }
       ],
@@ -587,6 +626,47 @@
           "description": "HTTP request timeout in milliseconds for NuGet API calls."
         },
         "toolkit.nuget.defaultPrerelease": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include prerelease packages by default when browsing."
+        },
+        "toolkit.npm.sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name for this package source."
+              },
+              "url": {
+                "type": "string",
+                "description": "npm registry URL."
+              },
+              "authorizationHeader": {
+                "type": "string",
+                "description": "Authorization header value (e.g., 'Bearer npm_xxxxx')."
+              }
+            },
+            "required": [
+              "name",
+              "url"
+            ]
+          },
+          "default": [
+            {
+              "name": "npmjs.org",
+              "url": "https://registry.npmjs.org"
+            }
+          ],
+          "description": "npm package sources. Each source needs a name and a registry URL."
+        },
+        "toolkit.npm.requestTimeout": {
+          "type": "number",
+          "default": 10000,
+          "description": "HTTP request timeout in milliseconds for npm registry API calls."
+        },
+        "toolkit.npm.defaultPrerelease": {
           "type": "boolean",
           "default": false,
           "description": "Include prerelease packages by default when browsing."
