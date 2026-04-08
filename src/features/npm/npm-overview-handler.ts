@@ -4,7 +4,12 @@
  */
 
 import * as vscode from 'vscode'
-import { NpmOverviewWebviewMessage, NpmOverviewExtensionMessage, NpmOverviewProject, NpmOverviewPackage } from './npm-types'
+import {
+  NpmOverviewWebviewMessage,
+  NpmOverviewExtensionMessage,
+  NpmOverviewProject,
+  NpmOverviewPackage
+} from './npm-types'
 import { getNpmSources, getNpmConfig } from './npm-config'
 import { stripVersionRange } from './npm-api'
 import * as npmApi from './npm-api'
@@ -125,7 +130,13 @@ export class NpmOverviewHandler implements vscode.Disposable {
     const project = await loadNpmProject(vscode.Uri.file(projectFsPath))
     const existing = project.packages.find((p) => p.name === packageName)
     const isDev = existing ? existing.dependencyType === 'devDependencies' : devDependency
-    const task = NpmTaskManager.buildInstallTask(project.directoryPath, packageName, version, isDev, project.packageManager)
+    const task = NpmTaskManager.buildInstallTask(
+      project.directoryPath,
+      packageName,
+      version,
+      isDev,
+      project.packageManager
+    )
 
     this.taskManager.enqueue(task, async (exitCode) => {
       const success = exitCode === 0
@@ -145,7 +156,13 @@ export class NpmOverviewHandler implements vscode.Disposable {
       const project = await loadNpmProject(vscode.Uri.file(pkg.projectFsPath))
       const existing = project.packages.find((p) => p.name === pkg.packageName)
       const isDev = existing ? existing.dependencyType === 'devDependencies' : pkg.devDependency
-      const task = NpmTaskManager.buildInstallTask(project.directoryPath, pkg.packageName, pkg.version, isDev, project.packageManager)
+      const task = NpmTaskManager.buildInstallTask(
+        project.directoryPath,
+        pkg.packageName,
+        pkg.version,
+        isDev,
+        project.packageManager
+      )
       const isLast = pkg === packages[packages.length - 1]
 
       this.taskManager.enqueue(task, async (exitCode) => {

@@ -43,7 +43,7 @@ export function buildMappings(pathsObj: Record<string, string[]>): PathMapping[]
     mappings.push({
       prefix: wildcard ? pattern.replace('/*', '/').replace('*', '') : pattern,
       wildcard,
-      targets,
+      targets
     })
   }
   // Longest prefix first for greedy matching
@@ -124,7 +124,7 @@ export function loadPathsFromConfig(configPath: string, depth = 0): ResolvedPath
     if (opts.paths && Object.keys(opts.paths).length > 0) {
       return {
         baseUrl: path.resolve(configDir, opts.baseUrl || '.'),
-        mappings: buildMappings(opts.paths),
+        mappings: buildMappings(opts.paths)
       }
     }
 
@@ -177,11 +177,7 @@ export function toAlias(absolutePath: string, config: ResolvedPaths): string | u
 /**
  * Scan source text for relative imports that could be converted to aliases.
  */
-export function findAliasMatches(
-  sourceText: string,
-  filePath: string,
-  config: ResolvedPaths
-): ImportMatch[] {
+export function findAliasMatches(sourceText: string, filePath: string, config: ResolvedPaths): ImportMatch[] {
   const matches: ImportMatch[] = []
   const re = new RegExp(PATH_RE.source, 'g')
   let match: RegExpExecArray | null
@@ -204,11 +200,7 @@ export function findAliasMatches(
 /**
  * Scan source text for alias imports and return the edits needed to convert them to relative paths.
  */
-export function findImportMatches(
-  sourceText: string,
-  filePath: string,
-  config: ResolvedPaths
-): ImportMatch[] {
+export function findImportMatches(sourceText: string, filePath: string, config: ResolvedPaths): ImportMatch[] {
   const matches: ImportMatch[] = []
   const re = new RegExp(PATH_RE.source, 'g')
   let match: RegExpExecArray | null

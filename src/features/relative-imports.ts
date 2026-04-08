@@ -8,7 +8,7 @@ import {
   toRelative,
   findImportMatches,
   findAliasMatches,
-  PATH_RE,
+  PATH_RE
 } from './relative-imports-utils'
 
 export function registerRelativeImportsCommands(context: vscode.ExtensionContext): void {
@@ -30,11 +30,7 @@ export function registerRelativeImportsCommands(context: vscode.ExtensionContext
         return
       }
 
-      const matches = findImportMatches(
-        editor.document.getText(),
-        editor.document.uri.fsPath,
-        config
-      )
+      const matches = findImportMatches(editor.document.getText(), editor.document.uri.fsPath, config)
       if (matches.length === 0) {
         vscode.window.showInformationMessage('No alias imports to convert.')
         return
@@ -76,11 +72,7 @@ export function registerRelativeImportsCommands(context: vscode.ExtensionContext
         return
       }
 
-      const matches = findAliasMatches(
-        editor.document.getText(),
-        editor.document.uri.fsPath,
-        config
-      )
+      const matches = findAliasMatches(editor.document.getText(), editor.document.uri.fsPath, config)
       if (matches.length === 0) {
         vscode.window.showInformationMessage('No relative imports to convert.')
         return
@@ -167,7 +159,7 @@ export function registerRelativeImportsCommands(context: vscode.ExtensionContext
         }
       }
       return actions
-    },
+    }
   }
 
   const languages = [
@@ -176,12 +168,12 @@ export function registerRelativeImportsCommands(context: vscode.ExtensionContext
     'javascript',
     'javascriptreact',
     'vue',
-    'svelte',
+    'svelte'
   ]
   for (const lang of languages) {
     context.subscriptions.push(
       vscode.languages.registerCodeActionsProvider(lang, codeActionProvider, {
-        providedCodeActionKinds: [vscode.CodeActionKind.RefactorRewrite],
+        providedCodeActionKinds: [vscode.CodeActionKind.RefactorRewrite]
       })
     )
   }
