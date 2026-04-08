@@ -41,7 +41,7 @@
         {
           "id": "npm-explorer",
           "title": "npm",
-          "icon": "themes/icons/npm.svg"
+          "icon": "themes/icons/npm-simple.svg"
         }
       ]
     },
