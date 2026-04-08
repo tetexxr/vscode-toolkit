@@ -12,6 +12,7 @@ import { registerPdfViewer } from './features/pdf-viewer/pdf-provider'
 import { registerGitHistoryCommands } from './features/git-history'
 import { registerAddBracesCodeActions } from './features/add-braces'
 import { registerGitBlameCommands } from './features/git-blame'
+import { registerNpmCommands } from './features/npm/npm'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -27,6 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerGitHistoryCommands(context)
   registerAddBracesCodeActions(context)
   registerGitBlameCommands(context)
+  registerNpmCommands(context)
 }
 
 export function deactivate() {}
