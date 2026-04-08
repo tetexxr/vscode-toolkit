@@ -463,6 +463,15 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   font-size: 0.9rem;
 }
 
+.detail-installed-type {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--vscode-panel-border);
+  font-size: 1rem;
+  opacity: 0.8;
+}
+.detail-installed-type .label { font-weight: bold; }
+
 .detail-empty {
   display: flex;
   align-items: center;
@@ -889,6 +898,14 @@ const JS = /*js*/ `
         html += '<div class="dep-item">' + esc(depName) + ' ' + esc(depRange) + '</div>';
       }
       html += '</details>';
+    }
+
+    // Installed as
+    if (pkg.isInstalled && pkg.dependencyType) {
+      var typeLabel = pkg.dependencyType === 'devDependencies' ? 'Development dependency' : 'Production dependency';
+      html += '<div class="detail-installed-type">';
+      html += '<span class="label">Installed as:</span> ' + typeLabel;
+      html += '</div>';
     }
 
     $details.innerHTML = html;
