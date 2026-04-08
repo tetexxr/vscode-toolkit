@@ -19,6 +19,7 @@ export interface NpmConfig {
 // ── Project ────────────────────────────────────────────────
 
 export type DependencyType = 'dependencies' | 'devDependencies'
+export type PackageManager = 'npm' | 'yarn' | 'pnpm'
 
 export interface InstalledNpmPackage {
   name: string
@@ -30,6 +31,7 @@ export interface NpmProject {
   name: string
   fsPath: string
   directoryPath: string
+  packageManager: PackageManager
   packages: InstalledNpmPackage[]
 }
 

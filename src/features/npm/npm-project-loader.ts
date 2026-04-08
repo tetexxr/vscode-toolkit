@@ -6,6 +6,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { parsePackageJsonDependencies, parsePackageJsonName } from '../../utils/json'
+import { detectPackageManager } from './npm-commands'
 import { NpmProject } from './npm-types'
 
 const PROJECT_GLOB = '**/package.json'
@@ -44,11 +45,13 @@ export async function loadNpmProject(packageJsonUri: vscode.Uri): Promise<NpmPro
   const json = Buffer.from(content).toString('utf-8')
   const packages = parsePackageJsonDependencies(json)
   const projectName = parsePackageJsonName(json) || path.basename(path.dirname(packageJsonUri.fsPath))
+  const directoryPath = path.dirname(packageJsonUri.fsPath)
 
   return {
     name: projectName,
     fsPath: packageJsonUri.fsPath,
-    directoryPath: path.dirname(packageJsonUri.fsPath),
+    directoryPath,
+    packageManager: detectPackageManager(directoryPath),
     packages
   }
 }

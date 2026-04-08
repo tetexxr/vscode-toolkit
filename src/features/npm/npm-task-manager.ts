@@ -1,9 +1,11 @@
 /**
- * Sequential task queue for npm CLI operations.
+ * Sequential task queue for npm/yarn/pnpm CLI operations.
  * Ensures install/uninstall commands run one at a time to prevent conflicts.
  */
 
 import * as vscode from 'vscode'
+import { PackageManager } from './npm-types'
+import { buildInstallArgs, buildUninstallArgs } from './npm-commands'
 
 const TASK_NAME = 'toolkit-npm'
 
@@ -36,7 +38,7 @@ export class NpmTaskManager implements vscode.Disposable {
     })
   }
 
-  /** Queue an npm CLI task. The callback fires when that task completes. */
+  /** Queue a CLI task. The callback fires when that task completes. */
   public enqueue(task: vscode.Task, callback: TaskFinishedCallback): void {
     this.queue.push({ task, callback })
     this.runNext()
@@ -57,32 +59,33 @@ export class NpmTaskManager implements vscode.Disposable {
 
   // ── Task factory methods ───────────────────────────────
 
-  /** Build an `npm install <package>@<version> [--save-dev]` task. */
-  static buildInstallTask(projectDir: string, packageName: string, version: string, devDependency: boolean): vscode.Task {
-    const args = ['install', `${packageName}@${version}`]
-    if (devDependency) {
-      args.push('--save-dev')
-    }
+  static buildInstallTask(
+    projectDir: string,
+    packageName: string,
+    version: string,
+    devDependency: boolean,
+    pm: PackageManager
+  ): vscode.Task {
+    const { cmd, args } = buildInstallArgs(pm, packageName, version, devDependency)
 
     return new vscode.Task(
       { type: 'npm', task: 'install' },
       vscode.TaskScope.Workspace,
       TASK_NAME,
-      'npm',
-      new vscode.ShellExecution('npm', args, { cwd: projectDir })
+      pm,
+      new vscode.ShellExecution(cmd, args, { cwd: projectDir })
     )
   }
 
-  /** Build an `npm uninstall <package>` task. */
-  static buildUninstallTask(projectDir: string, packageName: string): vscode.Task {
-    const args = ['uninstall', packageName]
+  static buildUninstallTask(projectDir: string, packageName: string, pm: PackageManager): vscode.Task {
+    const { cmd, args } = buildUninstallArgs(pm, packageName)
 
     return new vscode.Task(
       { type: 'npm', task: 'uninstall' },
       vscode.TaskScope.Workspace,
       TASK_NAME,
-      'npm',
-      new vscode.ShellExecution('npm', args, { cwd: projectDir })
+      pm,
+      new vscode.ShellExecution(cmd, args, { cwd: projectDir })
     )
   }
 }

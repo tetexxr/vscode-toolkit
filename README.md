@@ -154,7 +154,7 @@ Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution O
 
 ### npm Package Manager
 
-Manage npm packages for Node.js projects directly from VS Code. Supports browsing, installing, updating, and uninstalling packages using the npm registry API.
+Manage npm packages for Node.js projects directly from VS Code. Supports browsing, installing, updating, and uninstalling packages using the npm registry API. Automatically detects and uses the project's package manager — **npm**, **yarn**, or **pnpm** — based on the lock file present in the project directory.
 
 **Access:**
 

@@ -166,7 +166,9 @@ export class NpmMessageHandler implements vscode.Disposable {
     this.post({ type: 'task-started', packageName, action })
 
     const project = await reloadNpmProject(this.projectFsPath)
-    const task = NpmTaskManager.buildInstallTask(project.directoryPath, packageName, version, devDependency)
+    const existing = project.packages.find((p) => p.name === packageName)
+    const isDev = existing ? existing.dependencyType === 'devDependencies' : devDependency
+    const task = NpmTaskManager.buildInstallTask(project.directoryPath, packageName, version, isDev, project.packageManager)
 
     this.taskManager.enqueue(task, async (exitCode) => {
       const success = exitCode === 0
@@ -184,7 +186,7 @@ export class NpmMessageHandler implements vscode.Disposable {
     this.post({ type: 'task-started', packageName, action: 'uninstall' })
 
     const project = await reloadNpmProject(this.projectFsPath)
-    const task = NpmTaskManager.buildUninstallTask(project.directoryPath, packageName)
+    const task = NpmTaskManager.buildUninstallTask(project.directoryPath, packageName, project.packageManager)
 
     this.taskManager.enqueue(task, async (exitCode) => {
       const success = exitCode === 0

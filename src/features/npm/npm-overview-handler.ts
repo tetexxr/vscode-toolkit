@@ -123,7 +123,9 @@ export class NpmOverviewHandler implements vscode.Disposable {
     this.post({ type: 'task-started', packageName, action: 'update' })
 
     const project = await loadNpmProject(vscode.Uri.file(projectFsPath))
-    const task = NpmTaskManager.buildInstallTask(project.directoryPath, packageName, version, devDependency)
+    const existing = project.packages.find((p) => p.name === packageName)
+    const isDev = existing ? existing.dependencyType === 'devDependencies' : devDependency
+    const task = NpmTaskManager.buildInstallTask(project.directoryPath, packageName, version, isDev, project.packageManager)
 
     this.taskManager.enqueue(task, async (exitCode) => {
       const success = exitCode === 0
@@ -141,7 +143,9 @@ export class NpmOverviewHandler implements vscode.Disposable {
       this.post({ type: 'task-started', packageName: pkg.packageName, action: 'update' })
 
       const project = await loadNpmProject(vscode.Uri.file(pkg.projectFsPath))
-      const task = NpmTaskManager.buildInstallTask(project.directoryPath, pkg.packageName, pkg.version, pkg.devDependency)
+      const existing = project.packages.find((p) => p.name === pkg.packageName)
+      const isDev = existing ? existing.dependencyType === 'devDependencies' : pkg.devDependency
+      const task = NpmTaskManager.buildInstallTask(project.directoryPath, pkg.packageName, pkg.version, isDev, project.packageManager)
       const isLast = pkg === packages[packages.length - 1]
 
       this.taskManager.enqueue(task, async (exitCode) => {
