@@ -9,8 +9,6 @@ import {
 } from '../../../src/features/npm/npm-api'
 import type { NpmSearchObject, NpmPackageMetadata, NpmPackageViewModel } from '../../../src/features/npm/npm-types'
 
-// ── stripVersionRange ─────────────────────────────────────
-
 describe('stripVersionRange', () => {
   it('should strip caret prefix', () => {
     assert.equal(stripVersionRange('^1.2.3'), '1.2.3')
@@ -69,8 +67,6 @@ describe('stripVersionRange', () => {
   })
 })
 
-// ── encodePackageName ─────────────────────────────────────
-
 describe('encodePackageName', () => {
   it('should return simple name unchanged', () => {
     assert.equal(encodePackageName('express'), 'express')
@@ -97,8 +93,6 @@ describe('encodePackageName', () => {
   })
 })
 
-// ── resolveAuthor ─────────────────────────────────────────
-
 describe('resolveAuthor', () => {
   it('should return name from object', () => {
     assert.equal(resolveAuthor({ name: 'John Doe', email: 'john@example.com' }), 'John Doe')
@@ -124,8 +118,6 @@ describe('resolveAuthor', () => {
     assert.equal(resolveAuthor('John Doe <john@example.com>'), 'John Doe <john@example.com>')
   })
 })
-
-// ── searchResultToViewModel ───────────────────────────────
 
 describe('searchResultToViewModel', () => {
   function makeSearchObject(
@@ -214,8 +206,6 @@ describe('searchResultToViewModel', () => {
     assert.equal(result.license, '')
   })
 })
-
-// ── extractVersionDetails ─────────────────────────────────
 
 describe('extractVersionDetails', () => {
   function makeMetadata(versions: Record<string, object>, time?: Record<string, string>): NpmPackageMetadata {
@@ -307,8 +297,6 @@ describe('extractVersionDetails', () => {
     assert.equal(result[result.length - 1].version, '0.1.0')
   })
 })
-
-// ── filterAndSortResults ──────────────────────────────────
 
 describe('filterAndSortResults', () => {
   function makePkg(name: string, description: string = ''): NpmPackageViewModel {
