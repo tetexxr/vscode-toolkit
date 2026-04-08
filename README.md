@@ -152,6 +152,38 @@ Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution O
 | `toolkit.nuget.requestTimeout` | `10000` | HTTP timeout in milliseconds |
 | `toolkit.nuget.defaultPrerelease` | `false` | Include prerelease packages by default |
 
+### npm Package Manager
+
+Manage npm packages for Node.js projects directly from VS Code. Supports browsing, installing, updating, and uninstalling packages using the npm registry API.
+
+**Access:**
+
+- **Activity Bar** — click the npm icon in the sidebar to see all `package.json` projects in the workspace. Click a project to open its package manager.
+- **Explorer context menu** — right-click a `package.json` file and select **Manage npm Packages**.
+- **Command Palette** — run **Toolkit: Manage npm Packages** to pick a project.
+
+**Package Manager panel:**
+
+| Tab | Description |
+|---|---|
+| Browse | Search the npm registry with pagination (shows popular packages by default) |
+| Installed | View all installed packages with their dependency type (dep/dev) |
+| Updates | View packages with available updates, with bulk update support |
+
+Click any package to view its details: all versions, description, author, license, homepage, keywords, dependencies, peer dependencies, and deprecation warnings. When installing a new package, a checkbox allows choosing between regular and dev dependency.
+
+**Workspace Overview:**
+
+Click the list icon in the sidebar title bar (or run **Toolkit: npm Workspace Overview**) to open a summary table of all projects and their packages. Click **Load Package Versions** to check for updates across the entire workspace — outdated packages are highlighted with a red "No" badge. Once versions are loaded, click **Update All** to update every outdated package across all projects in one go.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.npm.sources` | `[npmjs.org]` | npm registry sources (supports private registries with auth) |
+| `toolkit.npm.requestTimeout` | `10000` | HTTP timeout in milliseconds |
+| `toolkit.npm.defaultPrerelease` | `false` | Include prerelease packages by default |
+
 ### New C# File
 
 Create C# files from templates with automatic namespace detection, using statements, and file-scoped namespace support. Available from the explorer right-click menu on any folder via the **New C#** submenu.
