@@ -307,6 +307,10 @@
       {
         "command": "toolkit.toggleGitBlame",
         "title": "Toolkit: Toggle Git Blame"
+      },
+      {
+        "command": "toolkit.convertImportsToRelative",
+        "title": "Toolkit: Convert Imports to Relative Paths"
       }
     ],
     "submenus": [
