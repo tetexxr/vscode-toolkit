@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.110.0"
@@ -307,6 +307,14 @@
       {
         "command": "toolkit.toggleGitBlame",
         "title": "Toolkit: Toggle Git Blame"
+      },
+      {
+        "command": "toolkit.convertImportsToRelative",
+        "title": "Toolkit: Convert Imports to Relative Paths"
+      },
+      {
+        "command": "toolkit.convertImportsToAlias",
+        "title": "Toolkit: Convert Imports to Alias Paths"
       }
     ],
     "submenus": [

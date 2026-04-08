@@ -80,7 +80,9 @@ export async function fetchInstalledNpmPackagesMetadata(
   const headers = authHeaders(source)
 
   const results = await Promise.allSettled(
-    installedPackages.map((pkg) => fetchSinglePackageMetadata(pkg.name, baseUrl, headers, prerelease, source.url, timeout))
+    installedPackages.map((pkg) =>
+      fetchSinglePackageMetadata(pkg.name, baseUrl, headers, prerelease, source.url, timeout)
+    )
   )
 
   const packages: NpmPackageViewModel[] = []

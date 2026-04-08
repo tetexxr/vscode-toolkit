@@ -20,7 +20,7 @@ export const SELF_CLOSING_TAGS = new Set([
   'param',
   'source',
   'track',
-  'wbr',
+  'wbr'
 ])
 
 export const TAG_NAME_RE = /^[!:\w$]((?![>/])[\S])*/

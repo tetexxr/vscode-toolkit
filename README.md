@@ -215,6 +215,44 @@ Also available from the Command Palette under the **New C#** category.
 | `toolkit.csharp.useThisForCtorAssignments` | `true` | Use `this.` in generated constructors |
 | `toolkit.csharp.privateMemberPrefix` | `""` | Prefix for private members in generated constructors |
 
+### Convert Import Paths
+
+Convert between alias imports and relative imports using path mappings from `tsconfig.json` or `jsconfig.json`. Supports the `extends` chain and both wildcard (`@server/*`) and exact (`@utils`) aliases.
+
+| Command | Description |
+|---|---|
+| Convert Imports to Relative Paths | Convert all alias imports in the current file to relative paths |
+| Convert Imports to Alias Paths | Convert all relative imports in the current file to alias paths |
+
+**Example — alias to relative:**
+
+```typescript
+// tsconfig.json: { "paths": { "@lib/*": ["src/lib/*"] } }
+
+// File: src/lib/orders/controller.ts
+import * as store from '@lib/orders/store'
+// → import * as store from './store'
+
+import { search } from '@lib/catalog/helpers'
+// → import { search } from '../catalog/helpers'
+```
+
+**Example — relative to alias:**
+
+```typescript
+import * as store from './store'
+// → import * as store from '@lib/orders/store'
+
+import { search } from '../catalog/helpers'
+// → import { search } from '@lib/catalog/helpers'
+```
+
+**Code actions:**
+
+When the cursor is on an import line, a code action (lightbulb / `Ctrl+.`) offers the conversion in the appropriate direction — alias to relative or relative to alias.
+
+Works with `import ... from`, `export ... from`, `require()`, and dynamic `import()`. Supported languages: TypeScript, JavaScript, TSX, JSX, Vue, Svelte.
+
 ### NPM Intellisense
 
 Autocompletes npm module names in `import` and `require()` statements. Reads your project's `package.json` and suggests matching packages as you type.

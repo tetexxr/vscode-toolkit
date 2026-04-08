@@ -156,7 +156,7 @@ function renderAnnotations(editor: vscode.TextEditor, blameData: BlameInfo[]): v
       isWholeLine: true,
       backgroundColor: GROUP_COLORS[colorIndex],
       before: {
-        width: `${ANNOTATION_WIDTH}ch`,
+        width: `${ANNOTATION_WIDTH}ch`
       }
     })
     blameDecorationTypes.push(dt)
