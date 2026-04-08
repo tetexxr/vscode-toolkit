@@ -315,6 +315,26 @@
       {
         "command": "toolkit.convertImportsToAlias",
         "title": "Toolkit: Convert Imports to Alias Paths"
+      },
+      {
+        "command": "toolkit.moveSymbolUp",
+        "title": "Toolkit: Move Symbol Up"
+      },
+      {
+        "command": "toolkit.moveSymbolDown",
+        "title": "Toolkit: Move Symbol Down"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "toolkit.moveSymbolUp",
+        "key": "cmd+shift+up",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "toolkit.moveSymbolDown",
+        "key": "cmd+shift+down",
+        "when": "editorTextFocus"
       }
     ],
     "submenus": [
