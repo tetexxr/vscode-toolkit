@@ -125,6 +125,66 @@ export async function getFileBlame(cwd: string, relativePath: string): Promise<B
   return result
 }
 
+export interface ChangedFile {
+  status: string
+  path: string
+}
+
+/**
+ * Parses `git status --porcelain` output into a list of changed files.
+ * Skips deleted files (they don't exist on disk). Handles renames by using the new path.
+ */
+export function parseGitStatus(output: string): ChangedFile[] {
+  const files: ChangedFile[] = []
+  for (const line of output.split('\n')) {
+    if (!line || line.length < 4) continue
+    const x = line[0]
+    const y = line[1]
+    // Skip deleted files
+    if (x === 'D' || y === 'D') continue
+    // Skip ignored files
+    if (x === '!' || y === '!') continue
+    let filePath = line.substring(3)
+    // Handle renames: "R  old -> new" — take the new path
+    if (x === 'R') {
+      const arrow = filePath.indexOf(' -> ')
+      if (arrow !== -1) {
+        filePath = filePath.substring(arrow + 4)
+      }
+    }
+    files.push({ status: `${x}${y}`.trim(), path: filePath })
+  }
+  return files
+}
+
+export async function getChangedFiles(cwd: string): Promise<ChangedFile[]> {
+  const output = await gitExec(cwd, ['status', '--porcelain'])
+  return parseGitStatus(output)
+}
+
+/**
+ * Given a list of file paths (relative to repo root), returns the unique
+ * parent directories sorted from shallowest to deepest.
+ */
+export function getChangedFileDirectories(filePaths: string[]): string[] {
+  const dirs = new Set<string>()
+  for (const filePath of filePaths) {
+    const parts = filePath.split('/')
+    // Remove the filename, keep directory segments
+    parts.pop()
+    // Add all ancestor directories
+    for (let i = 1; i <= parts.length; i++) {
+      dirs.add(parts.slice(0, i).join('/'))
+    }
+  }
+  return [...dirs].sort((a, b) => {
+    const depthA = a.split('/').length
+    const depthB = b.split('/').length
+    if (depthA !== depthB) return depthA - depthB
+    return a.localeCompare(b)
+  })
+}
+
 export function parseRemoteUrl(url: string): RemoteInfo | undefined {
   const match = url.match(/([\w-]+(?:\.[\w-]+)+)[:/]+([^/]+)\/(.*?)(?:\.git|\/)?$/)
   if (!match) {
