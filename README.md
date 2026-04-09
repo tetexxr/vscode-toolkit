@@ -120,6 +120,17 @@ Supports multi-select — select several folders, right-click, and expand/collap
 |---|---|---|
 | `toolkit.expandRecursively.excludePatterns` | `[node_modules, .git, dist, ...]` | Folder names to skip |
 
+### Expand Changed Files
+
+Expand only the folders in the file explorer that contain git-modified, added, or untracked files. Useful for quickly navigating to the parts of the project you're actively working on without expanding the entire tree.
+
+**Access:**
+
+- **Explorer context menu** — right-click a folder and select **Toolkit: Expand Changed Files** to expand only within that folder.
+- **Command Palette** — run **Toolkit: Expand Changed Files** to expand across the entire workspace.
+
+Folders are expanded from shallowest to deepest, revealing the full path to every changed file. Deleted files are ignored since they no longer exist on disk. Renames are handled by expanding to the new file location.
+
 ### NuGet Package Manager
 
 Manage NuGet packages for .NET projects directly from VS Code. Supports browsing, installing, updating, and uninstalling packages using the NuGet V3 API.
