@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.110.0"
@@ -323,6 +323,11 @@
       {
         "command": "toolkit.moveSymbolDown",
         "title": "Toolkit: Move Symbol Down"
+      },
+      {
+        "command": "toolkit.expandChangedFiles",
+        "title": "Toolkit: Expand Changed Files",
+        "icon": "$(git-compare)"
       }
     ],
     "keybindings": [
@@ -439,6 +444,11 @@
         },
         {
           "command": "toolkit.collapseRecursively",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@11"
+        },
+        {
+          "command": "toolkit.expandChangedFiles",
           "when": "explorerResourceIsFolder",
           "group": "navigation@11"
         },
