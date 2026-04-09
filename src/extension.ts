@@ -16,6 +16,7 @@ import { registerNpmCommands } from './features/npm/npm'
 import { registerRelativeImportsCommands } from './features/relative-imports'
 import { registerMoveSymbolCommands } from './features/move-symbol'
 import { registerExpandChangedFilesCommands } from './features/expand-changed'
+import { registerDiagnosticHighlightCommands } from './features/diagnostic-highlight'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -35,6 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerRelativeImportsCommands(context)
   registerMoveSymbolCommands(context)
   registerExpandChangedFilesCommands(context)
+  registerDiagnosticHighlightCommands(context)
 }
 
 export function deactivate() {}
