@@ -1,7 +1,13 @@
 import { strict as assert } from 'assert'
 import * as fs from 'fs'
 import * as path from 'path'
-import { parseRemoteUrl, getFileLogPatch, getFileBlame, BlameInfo } from '../../src/utils/git'
+import {
+  parseRemoteUrl,
+  getFileLogPatch,
+  getFileBlame,
+  parseGitStatus,
+  BlameInfo
+} from '../../src/utils/git'
 
 describe('getFileLogPatch', () => {
   const repoRoot = path.resolve(__dirname, '../..')
@@ -61,6 +67,94 @@ describe('getFileBlame', () => {
 
   it('should reject for an invalid cwd', async () => {
     await assert.rejects(() => getFileBlame('/nonexistent-dir', 'file.txt'))
+  })
+})
+
+describe('parseGitStatus', () => {
+  it('should parse modified files', () => {
+    const output = ' M src/utils/git.ts\n M README.md'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 2)
+    assert.equal(result[0].path, 'src/utils/git.ts')
+    assert.equal(result[0].status, 'M')
+    assert.equal(result[1].path, 'README.md')
+  })
+
+  it('should parse staged modified files', () => {
+    const output = 'M  src/utils/git.ts'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'src/utils/git.ts')
+    assert.equal(result[0].status, 'M')
+  })
+
+  it('should parse added files', () => {
+    const output = 'A  src/features/new-feature.ts'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'src/features/new-feature.ts')
+    assert.equal(result[0].status, 'A')
+  })
+
+  it('should parse untracked files', () => {
+    const output = '?? src/new-file.ts'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'src/new-file.ts')
+    assert.equal(result[0].status, '??')
+  })
+
+  it('should skip deleted files', () => {
+    const output = 'D  src/old-file.ts\n M src/utils/git.ts'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'src/utils/git.ts')
+  })
+
+  it('should skip worktree-deleted files', () => {
+    const output = ' D src/old-file.ts'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 0)
+  })
+
+  it('should handle renames by using the new path', () => {
+    const output = 'R  src/old-name.ts -> src/new-name.ts'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'src/new-name.ts')
+    assert.equal(result[0].status, 'R')
+  })
+
+  it('should handle mixed statuses', () => {
+    const output = [
+      'M  src/a.ts',
+      ' M src/b.ts',
+      'A  src/c.ts',
+      'D  src/d.ts',
+      '?? src/e.ts',
+      'R  src/f.ts -> src/g.ts'
+    ].join('\n')
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 5)
+    const paths = result.map((f) => f.path)
+    assert.deepEqual(paths, ['src/a.ts', 'src/b.ts', 'src/c.ts', 'src/e.ts', 'src/g.ts'])
+  })
+
+  it('should return empty array for empty output', () => {
+    assert.deepEqual(parseGitStatus(''), [])
+  })
+
+  it('should skip ignored files', () => {
+    const output = '!! ignored-file.log'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 0)
+  })
+
+  it('should handle files in deeply nested directories', () => {
+    const output = ' M src/features/nuget/nuget-api.ts'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'src/features/nuget/nuget-api.ts')
   })
 })
 
