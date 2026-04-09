@@ -20,7 +20,8 @@ describe('extension entry point', () => {
     'registerGitBlameCommands',
     'registerNpmCommands',
     'registerRelativeImportsCommands',
-    'registerMoveSymbolCommands'
+    'registerMoveSymbolCommands',
+    'registerExpandChangedFilesCommands'
   ]
 
   for (const fn of expectedRegistrations) {
