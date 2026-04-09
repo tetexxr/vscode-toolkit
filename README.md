@@ -2,6 +2,32 @@
 
 All-in-one VS Code utility extension.
 
+## Table of Contents
+
+- [Features](#features)
+  - [Change Case](#change-case)
+  - [Slugify](#slugify)
+  - [Auto Rename Tag](#auto-rename-tag)
+  - [Open in GitHub](#open-in-github)
+  - [Format Files](#format-files)
+  - [Expand / Collapse Recursively](#expand--collapse-recursively)
+  - [Expand Changed Files](#expand-changed-files)
+  - [NuGet Package Manager](#nuget-package-manager)
+  - [npm Package Manager](#npm-package-manager)
+  - [New C# File](#new-c-file)
+  - [Convert Import Paths](#convert-import-paths)
+  - [NPM Intellisense](#npm-intellisense)
+  - [Git File History](#git-file-history)
+  - [Git Blame (Inline Annotations)](#git-blame-inline-annotations)
+  - [Move Symbol Up / Down](#move-symbol-up--down)
+  - [Add / Remove Braces](#add--remove-braces)
+  - [C# Code Actions](#c-code-actions)
+  - [PDF Viewer](#pdf-viewer)
+  - [Diagnostic Highlight](#diagnostic-highlight)
+  - [Generic Dark Theme](#generic-dark-theme)
+  - [JetBrains Dark Icons](#jetbrains-dark-icons)
+- [Development](#development)
+
 ## Features
 
 ### Change Case
