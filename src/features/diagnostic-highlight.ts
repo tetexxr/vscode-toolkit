@@ -87,28 +87,24 @@ function getConfig(): vscode.WorkspaceConfiguration {
 function createDecorationTypes(): void {
   const config = getConfig()
 
+  const styles: Record<string, string> = {
+    hint: 'dotted',
+    info: 'dashed',
+    warning: 'solid'
+  }
+
   for (const severity of ['hint', 'info', 'warning'] as const) {
     const defaults = DEFAULT_COLORS[severity]
     const color = config.get<string>(`${severity}Color`, defaults.border)
 
     decorationTypes.set(severity, vscode.window.createTextEditorDecorationType({
-      backgroundColor: hexToRgba(color, 0.12),
       borderWidth: '0 0 2px 0',
-      borderStyle: 'solid',
+      borderStyle: `none none ${styles[severity]} none`,
       borderColor: color,
       overviewRulerColor: color,
       overviewRulerLane: vscode.OverviewRulerLane.Right
     }))
   }
-}
-
-function hexToRgba(hex: string, alpha: number): string {
-  const match = hex.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)
-  if (!match) return `rgba(128, 128, 128, ${alpha})`
-  const r = parseInt(match[1], 16)
-  const g = parseInt(match[2], 16)
-  const b = parseInt(match[3], 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 function disposeDecorationTypes(): void {
