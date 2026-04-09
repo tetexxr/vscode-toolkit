@@ -328,6 +328,10 @@
         "command": "toolkit.expandChangedFiles",
         "title": "Toolkit: Expand Changed Files",
         "icon": "$(git-compare)"
+      },
+      {
+        "command": "toolkit.toggleDiagnosticHighlight",
+        "title": "Toolkit: Toggle Diagnostic Highlight"
       }
     ],
     "keybindings": [
@@ -811,6 +815,41 @@
             "Fit page width to container"
           ],
           "description": "Default zoom level when opening PDF files. You can also use a numeric value (e.g. \"1.5\" for 150%)."
+        },
+        "toolkit.diagnosticHighlight.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable enhanced visibility for diagnostics (hints, info, warnings)."
+        },
+        "toolkit.diagnosticHighlight.highlightHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight Hint-level diagnostics (the nearly invisible three dots)."
+        },
+        "toolkit.diagnosticHighlight.highlightInfo": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight Information-level diagnostics."
+        },
+        "toolkit.diagnosticHighlight.highlightWarnings": {
+          "type": "boolean",
+          "default": false,
+          "description": "Highlight Warning-level diagnostics (already visible by default in VS Code)."
+        },
+        "toolkit.diagnosticHighlight.hintColor": {
+          "type": "string",
+          "default": "#4EC9B0",
+          "description": "Color for Hint diagnostics (underline + background tint)."
+        },
+        "toolkit.diagnosticHighlight.infoColor": {
+          "type": "string",
+          "default": "#3794FF",
+          "description": "Color for Information diagnostics (underline + background tint)."
+        },
+        "toolkit.diagnosticHighlight.warningColor": {
+          "type": "string",
+          "default": "#CCA700",
+          "description": "Color for Warning diagnostics (underline + background tint)."
         }
       }
     }
