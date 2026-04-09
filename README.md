@@ -374,6 +374,34 @@ Just open any `.pdf` file and it renders in an editor tab.
 |---|---|---|
 | `toolkit.pdfViewer.scale` | `auto` | Default zoom level (`auto`, `page-actual`, `page-fit`, `page-width`, or a numeric value like `1.5`) |
 
+### Diagnostic Highlight
+
+Enhances the visibility of VS Code diagnostics — especially **Hints** (the nearly invisible three dots) and **Information** messages — by adding colored underlines, similar to JetBrains IDEs.
+
+VS Code renders Hint diagnostics as tiny dots under the first few characters, which are very easy to miss. This feature replaces them with clear, colored underlines and adds markers to the scrollbar overview ruler.
+
+| Severity | Style | Default color |
+|---|---|---|
+| Hint | Dotted underline | Green (`#4EC9B0`) |
+| Information | Dashed underline | Blue (`#3794FF`) |
+| Warning | Solid underline | Yellow (`#CCA700`) — disabled by default |
+
+Toggle with **Toolkit: Toggle Diagnostic Highlight** from the Command Palette.
+
+Multi-line diagnostics are split into per-line decorations that cover only the text portion of each line (no underline bleeding into leading whitespace).
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.diagnosticHighlight.enabled` | `true` | Enable enhanced diagnostic visibility |
+| `toolkit.diagnosticHighlight.highlightHints` | `true` | Highlight Hint-level diagnostics |
+| `toolkit.diagnosticHighlight.highlightInfo` | `true` | Highlight Information-level diagnostics |
+| `toolkit.diagnosticHighlight.highlightWarnings` | `false` | Highlight Warning-level diagnostics |
+| `toolkit.diagnosticHighlight.hintColor` | `#4EC9B0` | Color for Hint diagnostics |
+| `toolkit.diagnosticHighlight.infoColor` | `#3794FF` | Color for Information diagnostics |
+| `toolkit.diagnosticHighlight.warningColor` | `#CCA700` | Color for Warning diagnostics |
+
 ### Generic Dark Theme
 
 A dark color theme that combines the best of three worlds. Built on top of VS Code's Dark+ as a base, it applies language-specific syntax highlighting inspired by JetBrains IDEs:
