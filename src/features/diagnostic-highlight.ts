@@ -148,25 +148,23 @@ function updateEditor(editor: vscode.TextEditor): void {
   const warningDecorations: vscode.DecorationOptions[] = []
 
   for (const diag of diagnostics) {
-    const decoration: vscode.DecorationOptions = {
-      range: diag.range,
-      hoverMessage: buildHover(diag)
-    }
+    const hover = buildHover(diag)
+    const lineDecorations = splitRangePerLine(editor, diag.range, hover)
 
     switch (diag.severity) {
       case vscode.DiagnosticSeverity.Hint:
         if (highlightHints) {
-          hintDecorations.push(decoration)
+          hintDecorations.push(...lineDecorations)
         }
         break
       case vscode.DiagnosticSeverity.Information:
         if (highlightInfo) {
-          infoDecorations.push(decoration)
+          infoDecorations.push(...lineDecorations)
         }
         break
       case vscode.DiagnosticSeverity.Warning:
         if (highlightWarnings) {
-          warningDecorations.push(decoration)
+          warningDecorations.push(...lineDecorations)
         }
         break
     }
@@ -179,6 +177,41 @@ function updateEditor(editor: vscode.TextEditor): void {
   if (hintDt) editor.setDecorations(hintDt, hintDecorations)
   if (infoDt) editor.setDecorations(infoDt, infoDecorations)
   if (warningDt) editor.setDecorations(warningDt, warningDecorations)
+}
+
+function splitRangePerLine(
+  editor: vscode.TextEditor,
+  range: vscode.Range,
+  hover: vscode.MarkdownString
+): vscode.DecorationOptions[] {
+  const doc = editor.document
+  const startLine = range.start.line
+  const endLine = range.end.line
+
+  // Single-line range — use as-is
+  if (startLine === endLine) {
+    return [{ range, hoverMessage: hover }]
+  }
+
+  // Multi-line: create one decoration per line covering only the text
+  const decorations: vscode.DecorationOptions[] = []
+  for (let line = startLine; line <= endLine; line++) {
+    const textLine = doc.lineAt(line)
+    if (textLine.isEmptyOrWhitespace) continue
+
+    const lineStart = line === startLine
+      ? range.start
+      : new vscode.Position(line, textLine.firstNonWhitespaceCharacterIndex)
+    const lineEnd = line === endLine
+      ? range.end
+      : textLine.range.end
+
+    decorations.push({
+      range: new vscode.Range(lineStart, lineEnd),
+      hoverMessage: hover
+    })
+  }
+  return decorations
 }
 
 function buildHover(diag: vscode.Diagnostic): vscode.MarkdownString {
