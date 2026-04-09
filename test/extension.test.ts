@@ -21,7 +21,8 @@ describe('extension entry point', () => {
     'registerNpmCommands',
     'registerRelativeImportsCommands',
     'registerMoveSymbolCommands',
-    'registerExpandChangedFilesCommands'
+    'registerExpandChangedFilesCommands',
+    'registerDiagnosticHighlightCommands'
   ]
 
   for (const fn of expectedRegistrations) {
