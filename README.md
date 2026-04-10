@@ -9,6 +9,7 @@ All-in-one VS Code utility extension.
     - [Open in GitHub](#open-in-github)
     - [Git File History](#git-file-history)
     - [Git Blame (Inline Annotations)](#git-blame-inline-annotations)
+    - [Edit Commit Message](#edit-commit-message)
     - [Expand Changed Files](#expand-changed-files)
   - [Package Management](#package-management)
     - [NuGet Package Manager](#nuget-package-manager)
@@ -86,6 +87,33 @@ Toggle with **Toolkit: Toggle Git Blame** from the Command Palette.
 - Hover over any line to see full commit details (hash, author, date, message)
 - Annotations update automatically when switching files or saving
 - Toggle on/off with the same command
+
+#### Edit Commit Message
+
+Edit the message of any commit in the repository history, similar to JetBrains IDEs. Provides a **Commit History** tree view in the Source Control sidebar listing the most recent commits.
+
+**Access:**
+
+- **Source Control sidebar** — expand the **Commit History** section, select a commit, and click the pencil icon.
+- **Command Palette** — run **Toolkit: Edit Commit Message** when a commit is selected.
+
+**Workflow:**
+
+1. Select a commit in the tree view and click the pencil icon.
+2. A temporary editor opens with the full commit message (supports multi-line).
+3. Edit the message, then click the **checkmark** button in the editor title bar to apply, or the **X** button to discard.
+4. The commit history refreshes automatically after a successful edit.
+
+**How it works:**
+
+- **HEAD commit** — uses `git commit --amend`.
+- **Older commits** — uses an automated `git rebase -i` that rewords only the selected commit.
+
+**Safeguards:**
+
+- If there are **staged changes** when editing HEAD, the operation is rejected to prevent accidentally including them in the amend.
+- If the **working tree is dirty** when editing an older commit, the operation is rejected (rebase requires a clean tree). Commit or stash your changes first.
+- Editing commit messages **rewrites git history**. If the commits have already been pushed, a force push will be required.
 
 #### Expand Changed Files
 
