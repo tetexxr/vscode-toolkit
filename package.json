@@ -350,16 +350,6 @@
         "command": "toolkit.gitCommitList.refresh",
         "title": "Toolkit: Refresh Commit List",
         "icon": "$(refresh)"
-      },
-      {
-        "command": "toolkit.gitCommitList.applyMessageEdit",
-        "title": "Toolkit: Apply Commit Message",
-        "icon": "$(check)"
-      },
-      {
-        "command": "toolkit.gitCommitList.discardMessageEdit",
-        "title": "Toolkit: Discard Commit Message Edit",
-        "icon": "$(close)"
       }
     ],
     "keybindings": [
@@ -403,18 +393,6 @@
           "command": "toolkit.gitCommitList.editMessage",
           "when": "view == toolkitCommitList && viewItem == commit",
           "group": "inline"
-        }
-      ],
-      "editor/title": [
-        {
-          "command": "toolkit.gitCommitList.applyMessageEdit",
-          "when": "toolkit.editingCommitMessage",
-          "group": "navigation"
-        },
-        {
-          "command": "toolkit.gitCommitList.discardMessageEdit",
-          "when": "toolkit.editingCommitMessage",
-          "group": "navigation"
         }
       ],
       "toolkit.csharp.new": [
@@ -546,14 +524,6 @@
         },
         {
           "command": "toolkit.npm.managePackages",
-          "when": "false"
-        },
-        {
-          "command": "toolkit.gitCommitList.applyMessageEdit",
-          "when": "false"
-        },
-        {
-          "command": "toolkit.gitCommitList.discardMessageEdit",
           "when": "false"
         }
       ],
