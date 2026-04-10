@@ -46,6 +46,14 @@
       ]
     },
     "views": {
+      "scm": [
+        {
+          "id": "toolkitCommitList",
+          "name": "Commit History",
+          "when": "gitOpenRepositoryCount != 0",
+          "visibility": "collapsed"
+        }
+      ],
       "nuget-explorer": [
         {
           "id": "nugetProjects",
@@ -332,6 +340,26 @@
       {
         "command": "toolkit.toggleDiagnosticHighlight",
         "title": "Toolkit: Toggle Diagnostic Highlight"
+      },
+      {
+        "command": "toolkit.gitCommitList.editMessage",
+        "title": "Toolkit: Edit Commit Message",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "toolkit.gitCommitList.refresh",
+        "title": "Toolkit: Refresh Commit List",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.gitCommitList.applyMessageEdit",
+        "title": "Toolkit: Apply Commit Message",
+        "icon": "$(check)"
+      },
+      {
+        "command": "toolkit.gitCommitList.discardMessageEdit",
+        "title": "Toolkit: Discard Commit Message Edit",
+        "icon": "$(close)"
       }
     ],
     "keybindings": [
@@ -355,6 +383,11 @@
     "menus": {
       "view/title": [
         {
+          "command": "toolkit.gitCommitList.refresh",
+          "when": "view == toolkitCommitList",
+          "group": "navigation"
+        },
+        {
           "command": "toolkit.nuget.solutionOverview",
           "when": "view == nugetProjects",
           "group": "navigation"
@@ -362,6 +395,25 @@
         {
           "command": "toolkit.npm.workspaceOverview",
           "when": "view == npmProjects",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "toolkit.gitCommitList.editMessage",
+          "when": "view == toolkitCommitList && viewItem == commit",
+          "group": "inline"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "toolkit.gitCommitList.applyMessageEdit",
+          "when": "toolkit.editingCommitMessage",
+          "group": "navigation"
+        },
+        {
+          "command": "toolkit.gitCommitList.discardMessageEdit",
+          "when": "toolkit.editingCommitMessage",
           "group": "navigation"
         }
       ],
@@ -494,6 +546,14 @@
         },
         {
           "command": "toolkit.npm.managePackages",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitCommitList.applyMessageEdit",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitCommitList.discardMessageEdit",
           "when": "false"
         }
       ],
