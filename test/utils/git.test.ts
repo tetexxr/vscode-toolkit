@@ -1,11 +1,16 @@
 import { strict as assert } from 'assert'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as os from 'os'
+import { execFileSync } from 'child_process'
 import {
   parseRemoteUrl,
   getFileLogPatch,
   getFileBlame,
   parseGitStatus,
+  getCommitLog,
+  getCommitMessage,
+  editCommitMessage,
   BlameInfo
 } from '../../src/utils/git'
 
@@ -195,5 +200,128 @@ describe('parseRemoteUrl', () => {
 
   it('should return undefined for an empty string', () => {
     assert.equal(parseRemoteUrl(''), undefined)
+  })
+})
+
+describe('getCommitLog', () => {
+  const repoRoot = path.resolve(__dirname, '../..')
+
+  it('should return an array of commit entries', async () => {
+    const result = await getCommitLog(repoRoot)
+    assert.ok(result.length > 0)
+    for (const entry of result) {
+      assert.ok(entry.hash.length === 40, 'hash should be 40 characters')
+      assert.ok(entry.subject.length > 0, 'subject should not be empty')
+      assert.ok(entry.author.length > 0, 'author should not be empty')
+      assert.ok(entry.date.length > 0, 'date should not be empty')
+    }
+  })
+
+  it('should respect the count parameter', async () => {
+    const result = await getCommitLog(repoRoot, 3)
+    assert.ok(result.length <= 3)
+    assert.ok(result.length > 0)
+  })
+
+  it('should return commits in reverse chronological order', async () => {
+    const result = await getCommitLog(repoRoot, 5)
+    // First entry should be the most recent (HEAD)
+    const headHash = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot }).toString().trim()
+    assert.equal(result[0].hash, headHash)
+  })
+
+  it('should reject for an invalid cwd', async () => {
+    await assert.rejects(() => getCommitLog('/nonexistent-dir'))
+  })
+})
+
+describe('getCommitMessage', () => {
+  const repoRoot = path.resolve(__dirname, '../..')
+
+  it('should return the full commit message for HEAD', async () => {
+    const log = await getCommitLog(repoRoot, 1)
+    const message = await getCommitMessage(repoRoot, log[0].hash)
+    assert.ok(message.length > 0)
+    assert.ok(message.includes(log[0].subject))
+  })
+
+  it('should reject for an invalid hash', async () => {
+    await assert.rejects(() => getCommitMessage(repoRoot, 'invalid-hash'))
+  })
+})
+
+describe('editCommitMessage', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'initial')
+    git('add', 'file.txt')
+    git('commit', '-m', 'first commit')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'second')
+    git('add', 'file.txt')
+    git('commit', '-m', 'second commit')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'third')
+    git('add', 'file.txt')
+    git('commit', '-m', 'third commit')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should amend the HEAD commit message', async () => {
+    await editCommitMessage(tmpRepo, git('rev-parse', 'HEAD'), 'updated third commit')
+    const msg = git('log', '-1', '--format=%s')
+    assert.equal(msg, 'updated third commit')
+  })
+
+  it('should not change other commits when amending HEAD', async () => {
+    const secondHash = git('log', '--format=%H', '--skip=1', '-1')
+    await editCommitMessage(tmpRepo, git('rev-parse', 'HEAD'), 'updated third')
+    const secondMsg = git('log', '-1', '--format=%s', secondHash)
+    assert.equal(secondMsg, 'second commit')
+  })
+
+  it('should reword a non-HEAD commit via rebase', async () => {
+    const secondHash = git('log', '--format=%H', '--skip=1', '-1')
+    await editCommitMessage(tmpRepo, secondHash, 'reworded second commit')
+    const msg = git('log', '--format=%s', '--skip=1', '-1')
+    assert.equal(msg, 'reworded second commit')
+  })
+
+  it('should preserve HEAD message when rewording an older commit', async () => {
+    const secondHash = git('log', '--format=%H', '--skip=1', '-1')
+    await editCommitMessage(tmpRepo, secondHash, 'reworded second')
+    const headMsg = git('log', '-1', '--format=%s')
+    assert.equal(headMsg, 'third commit')
+  })
+
+  it('should reject when there are staged changes and editing HEAD', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'staged change')
+    git('add', 'file.txt')
+    await assert.rejects(
+      () => editCommitMessage(tmpRepo, git('rev-parse', 'HEAD'), 'should fail'),
+      /staged changes/
+    )
+  })
+
+  it('should reject when working tree is dirty and editing non-HEAD', async () => {
+    const secondHash = git('log', '--format=%H', '--skip=1', '-1')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'dirty change')
+    await assert.rejects(
+      () => editCommitMessage(tmpRepo, secondHash, 'should fail'),
+      /uncommitted changes/
+    )
   })
 })
