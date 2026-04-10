@@ -100,8 +100,8 @@ Edit the message of any commit in the repository history, similar to JetBrains I
 **Workflow:**
 
 1. Select a commit in the tree view and click the pencil icon.
-2. A temporary editor opens with the full commit message (supports multi-line).
-3. Edit the message, then click the **checkmark** button in the editor title bar to apply, or the **X** button to discard.
+2. A panel opens showing the commit info and a text area with the full message.
+3. Edit the message, then click **Apply** (or press `Ctrl+Enter`) to save, or **Discard** to cancel.
 4. The commit history refreshes automatically after a successful edit.
 
 **How it works:**
