@@ -226,6 +226,45 @@ export async function getCommitMessage(cwd: string, hash: string): Promise<strin
   return gitExec(cwd, ['log', '-1', '--format=%B', hash])
 }
 
+export interface CommitFileInfo {
+  status: string
+  path: string
+  additions: number
+  deletions: number
+}
+
+export async function getCommitFiles(cwd: string, hash: string): Promise<CommitFileInfo[]> {
+  const [statusRaw, numstatRaw] = await Promise.all([
+    gitExec(cwd, ['diff-tree', '--no-commit-id', '--root', '-r', '--name-status', hash], 30000),
+    gitExec(cwd, ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', hash], 30000)
+  ])
+
+  const stats = new Map<string, { additions: number; deletions: number }>()
+  for (const line of numstatRaw.split('\n').filter(Boolean)) {
+    const [add, del, ...rest] = line.split('\t')
+    const filePath = rest.join('\t')
+    stats.set(filePath, {
+      additions: add === '-' ? 0 : parseInt(add, 10),
+      deletions: del === '-' ? 0 : parseInt(del, 10)
+    })
+  }
+
+  const files: CommitFileInfo[] = []
+  for (const line of statusRaw.split('\n').filter(Boolean)) {
+    const [statusCode, ...pathParts] = line.split('\t')
+    const filePath = pathParts[pathParts.length - 1]
+    const status = statusCode.charAt(0)
+    const stat = stats.get(filePath) || { additions: 0, deletions: 0 }
+    files.push({ status, path: filePath, ...stat })
+  }
+
+  return files
+}
+
+export async function getCommitDiff(cwd: string, hash: string): Promise<string> {
+  return gitExec(cwd, ['diff-tree', '--root', '--no-commit-id', '-p', hash], 30000)
+}
+
 export async function editCommitMessage(cwd: string, hash: string, newMessage: string): Promise<void> {
   const headHash = await gitExec(cwd, ['rev-parse', 'HEAD'])
 
