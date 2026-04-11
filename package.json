@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.9.2",
+  "version": "1.10.0",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.110.0"
@@ -46,6 +46,14 @@
       ]
     },
     "views": {
+      "scm": [
+        {
+          "id": "toolkitCommitList",
+          "name": "Commit History",
+          "when": "gitOpenRepositoryCount != 0",
+          "visibility": "collapsed"
+        }
+      ],
       "nuget-explorer": [
         {
           "id": "nugetProjects",
@@ -332,6 +340,16 @@
       {
         "command": "toolkit.toggleDiagnosticHighlight",
         "title": "Toolkit: Toggle Diagnostic Highlight"
+      },
+      {
+        "command": "toolkit.gitCommitList.editMessage",
+        "title": "Toolkit: Edit Commit Message",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "toolkit.gitCommitList.refresh",
+        "title": "Toolkit: Refresh Commit List",
+        "icon": "$(refresh)"
       }
     ],
     "keybindings": [
@@ -355,6 +373,11 @@
     "menus": {
       "view/title": [
         {
+          "command": "toolkit.gitCommitList.refresh",
+          "when": "view == toolkitCommitList",
+          "group": "navigation"
+        },
+        {
           "command": "toolkit.nuget.solutionOverview",
           "when": "view == nugetProjects",
           "group": "navigation"
@@ -363,6 +386,13 @@
           "command": "toolkit.npm.workspaceOverview",
           "when": "view == npmProjects",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "toolkit.gitCommitList.editMessage",
+          "when": "view == toolkitCommitList && viewItem == commit",
+          "group": "inline"
         }
       ],
       "toolkit.csharp.new": [
@@ -864,12 +894,12 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^25.5.2",
+    "@types/node": "^25.6.0",
     "@types/vscode": "^1.110.0",
     "@vscode/vsce": "^3.7.1",
     "mocha": "^11.7.5",
     "pdfjs-dist": "^5.6.205",
-    "prettier": "^3.8.1",
+    "prettier": "^3.8.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }

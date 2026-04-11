@@ -3,10 +3,19 @@
  */
 
 import { execFile } from 'child_process'
+import * as path from 'path'
+import * as os from 'os'
+import * as fs from 'fs'
 
-function gitExec(cwd: string, args: string[], timeout = 5000): Promise<string> {
+function gitExec(cwd: string, args: string[], timeout = 5000, env?: Record<string, string>): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile('git', args, { cwd, timeout, maxBuffer: 10 * 1024 * 1024 }, (err, stdout) => {
+    const options: { cwd: string; timeout: number; maxBuffer: number; env?: NodeJS.ProcessEnv } = {
+      cwd, timeout, maxBuffer: 10 * 1024 * 1024
+    }
+    if (env) {
+      options.env = { ...process.env, ...env }
+    }
+    execFile('git', args, options, (err, stdout) => {
       if (err) {
         reject(err)
       } else {
@@ -194,5 +203,98 @@ export function parseRemoteUrl(url: string): RemoteInfo | undefined {
     domain: match[1],
     owner: match[2],
     repo: match[3]
+  }
+}
+
+export interface CommitLogEntry {
+  hash: string
+  subject: string
+  author: string
+  date: string
+}
+
+export async function getCommitLog(cwd: string, count = 200): Promise<CommitLogEntry[]> {
+  const raw = await gitExec(cwd, ['log', `--max-count=${count}`, '--format=%H%x00%s%x00%an%x00%ar'], 30000)
+  if (!raw) return []
+  return raw.split('\n').filter(Boolean).map(line => {
+    const [hash, subject, author, date] = line.split('\x00')
+    return { hash, subject, author, date }
+  })
+}
+
+export async function getCommitMessage(cwd: string, hash: string): Promise<string> {
+  return gitExec(cwd, ['log', '-1', '--format=%B', hash])
+}
+
+export interface CommitFileInfo {
+  status: string
+  path: string
+  additions: number
+  deletions: number
+}
+
+export async function getCommitFiles(cwd: string, hash: string): Promise<CommitFileInfo[]> {
+  const [statusRaw, numstatRaw] = await Promise.all([
+    gitExec(cwd, ['diff-tree', '--no-commit-id', '--root', '-r', '--name-status', hash], 30000),
+    gitExec(cwd, ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', hash], 30000)
+  ])
+
+  const stats = new Map<string, { additions: number; deletions: number }>()
+  for (const line of numstatRaw.split('\n').filter(Boolean)) {
+    const [add, del, ...rest] = line.split('\t')
+    const filePath = rest.join('\t')
+    stats.set(filePath, {
+      additions: add === '-' ? 0 : parseInt(add, 10),
+      deletions: del === '-' ? 0 : parseInt(del, 10)
+    })
+  }
+
+  const files: CommitFileInfo[] = []
+  for (const line of statusRaw.split('\n').filter(Boolean)) {
+    const [statusCode, ...pathParts] = line.split('\t')
+    const filePath = pathParts[pathParts.length - 1]
+    const status = statusCode.charAt(0)
+    const stat = stats.get(filePath) || { additions: 0, deletions: 0 }
+    files.push({ status, path: filePath, ...stat })
+  }
+
+  return files
+}
+
+export async function getCommitDiff(cwd: string, hash: string): Promise<string> {
+  return gitExec(cwd, ['diff-tree', '--root', '--no-commit-id', '-p', hash], 30000)
+}
+
+export async function editCommitMessage(cwd: string, hash: string, newMessage: string): Promise<void> {
+  const headHash = await gitExec(cwd, ['rev-parse', 'HEAD'])
+
+  if (hash === headHash) {
+    const staged = await gitExec(cwd, ['diff', '--cached', '--name-only']).catch(() => '')
+    if (staged) {
+      throw new Error('There are staged changes that would be included in the amend. Please unstage or commit them first.')
+    }
+    await gitExec(cwd, ['commit', '--amend', '-m', newMessage], 30000)
+  } else {
+    const status = await gitExec(cwd, ['status', '--porcelain']).catch(() => '')
+    if (status) {
+      throw new Error('Working tree has uncommitted changes. Please commit or stash them before editing older commits.')
+    }
+
+    const shortHash = hash.substring(0, 7)
+    const msgFile = path.join(os.tmpdir(), `toolkit-reword-${Date.now()}.txt`)
+    fs.writeFileSync(msgFile, newMessage)
+
+    const sedInPlace = process.platform === 'darwin'
+      ? `sed -i '' 's/^pick ${shortHash}/reword ${shortHash}/'`
+      : `sed -i 's/^pick ${shortHash}/reword ${shortHash}/'`
+
+    try {
+      await gitExec(cwd, ['rebase', '-i', `${hash}^`], 60000, {
+        GIT_SEQUENCE_EDITOR: sedInPlace,
+        GIT_EDITOR: `cp "${msgFile}"`
+      })
+    } finally {
+      try { fs.unlinkSync(msgFile) } catch {}
+    }
   }
 }
