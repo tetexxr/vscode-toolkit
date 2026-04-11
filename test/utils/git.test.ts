@@ -10,6 +10,8 @@ import {
   parseGitStatus,
   getCommitLog,
   getCommitMessage,
+  getCommitFiles,
+  getCommitDiff,
   editCommitMessage,
   BlameInfo
 } from '../../src/utils/git'
@@ -247,6 +249,53 @@ describe('getCommitMessage', () => {
 
   it('should reject for an invalid hash', async () => {
     await assert.rejects(() => getCommitMessage(repoRoot, 'invalid-hash'))
+  })
+})
+
+describe('getCommitFiles', () => {
+  const repoRoot = path.resolve(__dirname, '../..')
+
+  it('should return file info for a commit', async () => {
+    const log = await getCommitLog(repoRoot, 1)
+    const files = await getCommitFiles(repoRoot, log[0].hash)
+    assert.ok(Array.isArray(files))
+    for (const file of files) {
+      assert.ok(file.path.length > 0, 'path should not be empty')
+      assert.ok(['A', 'M', 'D', 'R', 'C', 'T'].includes(file.status), `unexpected status: ${file.status}`)
+      assert.ok(typeof file.additions === 'number')
+      assert.ok(typeof file.deletions === 'number')
+    }
+  })
+
+  it('should return at least one file for a non-empty commit', async () => {
+    const log = await getCommitLog(repoRoot, 1)
+    const files = await getCommitFiles(repoRoot, log[0].hash)
+    assert.ok(files.length > 0)
+  })
+
+  it('should reject for an invalid hash', async () => {
+    await assert.rejects(() => getCommitFiles(repoRoot, 'invalid-hash'))
+  })
+})
+
+describe('getCommitDiff', () => {
+  const repoRoot = path.resolve(__dirname, '../..')
+
+  it('should return diff content for a commit', async () => {
+    const log = await getCommitLog(repoRoot, 1)
+    const diff = await getCommitDiff(repoRoot, log[0].hash)
+    assert.ok(diff.length > 0)
+    assert.ok(diff.includes('diff --git'))
+  })
+
+  it('should include hunk headers', async () => {
+    const log = await getCommitLog(repoRoot, 1)
+    const diff = await getCommitDiff(repoRoot, log[0].hash)
+    assert.ok(diff.includes('@@'))
+  })
+
+  it('should reject for an invalid hash', async () => {
+    await assert.rejects(() => getCommitDiff(repoRoot, 'invalid-hash'))
   })
 })
 
