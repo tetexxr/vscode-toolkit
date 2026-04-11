@@ -104,6 +104,13 @@ Edit the message of any commit in the repository history, similar to JetBrains I
 3. Edit the message, then click **Apply** (or press `Ctrl+Enter`) to save, or **Discard** to cancel.
 4. The commit history refreshes automatically after a successful edit.
 
+**Panel contents:**
+
+- **Commit info** — hash, author, and date.
+- **Commit message** — editable text area (supports multi-line).
+- **Changed Files** — list of files affected by the commit with status (M/A/D), directory and file name, and per-file addition/deletion counts. Click a file to scroll to its diff.
+- **Changes** — full diff with syntax-highlighted patches (additions in green, deletions in red, hunk headers in blue).
+
 **How it works:**
 
 - **HEAD commit** — uses `git commit --amend`.
