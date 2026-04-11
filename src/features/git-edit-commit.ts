@@ -46,7 +46,7 @@ function renderDiff(raw: string): string {
   for (const line of lines) {
     if (line.startsWith('diff --git')) {
       if (inDiff) html.push('</div>')
-      const match = line.match(/b\/(.+)$/)
+      const match = line.match(/ b\/(.+)$/)
       const filePath = match ? match[1] : ''
       html.push(`<div class="diff-block" data-diff-path="${escapeHtml(filePath)}">`)
       html.push(`<div class="diff-header">${escapeHtml(line)}</div>`)
@@ -367,10 +367,11 @@ function buildEditWebviewHtml(
       }
     });
 
+    const diffBlocks = document.querySelectorAll('.diff-block');
     document.querySelectorAll('.file-entry').forEach(entry => {
       entry.addEventListener('click', () => {
-        const path = entry.dataset.path;
-        const target = document.querySelector('[data-diff-path="' + CSS.escape(path) + '"]');
+        const filePath = entry.dataset.path;
+        const target = [...diffBlocks].find(el => el.dataset.diffPath === filePath);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
