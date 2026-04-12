@@ -350,6 +350,10 @@
         "command": "toolkit.gitCommitList.refresh",
         "title": "Toolkit: Refresh Commit List",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.git.stageChanges",
+        "title": "Toolkit: Stage Changes"
       }
     ],
     "keybindings": [
@@ -507,14 +511,19 @@
           "group": "navigation@15"
         },
         {
+          "command": "toolkit.git.stageChanges",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "navigation@15"
+        },
+        {
           "command": "toolkit.gitHistory",
           "when": "!explorerResourceIsFolder",
-          "group": "navigation@15"
+          "group": "navigation@16"
         },
         {
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
-          "group": "navigation@16"
+          "group": "navigation@17"
         }
       ],
       "commandPalette": [
