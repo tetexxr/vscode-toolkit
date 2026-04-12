@@ -11,6 +11,7 @@ All-in-one VS Code utility extension.
     - [Git Blame (Inline Annotations)](#git-blame-inline-annotations)
     - [Edit Commit Message](#edit-commit-message)
     - [Expand Changed Files](#expand-changed-files)
+    - [Stage Changes](#stage-changes)
   - [Package Management](#package-management)
     - [NuGet Package Manager](#nuget-package-manager)
     - [NPM Package Manager](#npm-package-manager)
@@ -132,6 +133,16 @@ Expand only the folders in the file explorer that contain git-modified, added, o
 - **Command Palette** — run **Toolkit: Expand Changed Files** to expand across the entire workspace.
 
 Folders are expanded from shallowest to deepest, revealing the full path to every changed file. Deleted files are ignored since they no longer exist on disk. Renames are handled by expanding to the new file location.
+
+#### Stage Changes
+
+Stage files or folders directly from the file explorer context menu. Works with single items, multiple selections, and folders (staged recursively).
+
+**Access:**
+
+- **Explorer context menu** — right-click a file, folder, or multi-selection and select **Toolkit: Stage Changes**.
+
+Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once.
 
 ### Package Management
 
