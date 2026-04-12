@@ -41,7 +41,7 @@ export class NpmPanel implements vscode.Disposable {
     })
 
     const nonce = crypto.randomBytes(16).toString('hex')
-    this.panel.webview.html = generateWebviewHtml(this.panel.webview, nonce)
+    this.panel.webview.html = generateWebviewHtml(nonce)
 
     this.messageHandler = new NpmMessageHandler(this.panel.webview, packageJsonUri)
 

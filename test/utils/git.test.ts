@@ -14,8 +14,7 @@ import {
   getCommitDiff,
   editCommitMessage,
   stageFile,
-  getChangedFileDirectories,
-  BlameInfo
+  getChangedFileDirectories
 } from '../../src/utils/git'
 
 describe('getFileLogPatch', () => {
