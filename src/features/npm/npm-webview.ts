@@ -4,9 +4,7 @@
  * Uses VS Code CSS custom properties for native theme integration.
  */
 
-import * as vscode from 'vscode'
-
-export function generateWebviewHtml(webview: vscode.Webview, nonce: string): string {
+export function generateWebviewHtml(nonce: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

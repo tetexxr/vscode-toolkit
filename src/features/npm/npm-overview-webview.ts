@@ -3,9 +3,7 @@
  * Shows a table per project with installed packages, versions and update status.
  */
 
-import * as vscode from 'vscode'
-
-export function generateOverviewHtml(webview: vscode.Webview, nonce: string): string {
+export function generateOverviewHtml(nonce: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

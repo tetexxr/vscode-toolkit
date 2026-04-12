@@ -2,11 +2,9 @@ import { strict as assert } from 'assert'
 import { generateWebviewHtml } from '../../../src/features/npm/npm-webview'
 import { generateOverviewHtml } from '../../../src/features/npm/npm-overview-webview'
 
-const mockWebview = { cspSource: 'https://mock.vscode-resource.test' } as any
-
 describe('generateWebviewHtml', () => {
   const nonce = 'test-nonce-abc123'
-  const html = generateWebviewHtml(mockWebview, nonce)
+  const html = generateWebviewHtml(nonce)
 
   it('should return valid HTML document', () => {
     assert.ok(html.startsWith('<!DOCTYPE html>'))
@@ -54,7 +52,7 @@ describe('generateWebviewHtml', () => {
   })
 
   it('should use different nonce values correctly', () => {
-    const html2 = generateWebviewHtml(mockWebview, 'other-nonce')
+    const html2 = generateWebviewHtml('other-nonce')
     assert.ok(html2.includes('nonce-other-nonce'))
     assert.ok(!html2.includes('nonce-test-nonce-abc123'))
   })
@@ -62,7 +60,7 @@ describe('generateWebviewHtml', () => {
 
 describe('generateOverviewHtml', () => {
   const nonce = 'overview-nonce-xyz'
-  const html = generateOverviewHtml(mockWebview, nonce)
+  const html = generateOverviewHtml(nonce)
 
   it('should return valid HTML document', () => {
     assert.ok(html.startsWith('<!DOCTYPE html>'))

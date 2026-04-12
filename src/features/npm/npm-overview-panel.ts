@@ -37,7 +37,7 @@ export class NpmOverviewPanel implements vscode.Disposable {
     )
 
     const nonce = crypto.randomBytes(16).toString('hex')
-    this.panel.webview.html = generateOverviewHtml(this.panel.webview, nonce)
+    this.panel.webview.html = generateOverviewHtml(nonce)
 
     this.handler = new NpmOverviewHandler(this.panel.webview)
 

@@ -13,7 +13,8 @@ import {
   getCommitFiles,
   getCommitDiff,
   editCommitMessage,
-  BlameInfo
+  stageFile,
+  getChangedFileDirectories
 } from '../../src/utils/git'
 
 describe('getFileLogPatch', () => {
@@ -372,5 +373,123 @@ describe('editCommitMessage', () => {
       () => editCommitMessage(tmpRepo, secondHash, 'should fail'),
       /uncommitted changes/
     )
+  })
+})
+
+describe('stageFile', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-stage-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'initial')
+    git('add', 'file.txt')
+    git('commit', '-m', 'initial commit')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should stage a single modified file', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'modified')
+    await stageFile(tmpRepo, 'file.txt')
+    const staged = git('diff', '--cached', '--name-only')
+    assert.ok(staged.includes('file.txt'))
+  })
+
+  it('should stage a new untracked file', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'new.txt'), 'new file')
+    await stageFile(tmpRepo, 'new.txt')
+    const staged = git('diff', '--cached', '--name-only')
+    assert.ok(staged.includes('new.txt'))
+  })
+
+  it('should stage multiple files at once', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'a.txt'), 'a')
+    fs.writeFileSync(path.join(tmpRepo, 'b.txt'), 'b')
+    await stageFile(tmpRepo, 'a.txt', 'b.txt')
+    const staged = git('diff', '--cached', '--name-only')
+    assert.ok(staged.includes('a.txt'))
+    assert.ok(staged.includes('b.txt'))
+  })
+
+  it('should stage a folder recursively', async () => {
+    const subdir = path.join(tmpRepo, 'src')
+    fs.mkdirSync(subdir)
+    fs.writeFileSync(path.join(subdir, 'one.txt'), 'one')
+    fs.writeFileSync(path.join(subdir, 'two.txt'), 'two')
+    await stageFile(tmpRepo, 'src')
+    const staged = git('diff', '--cached', '--name-only')
+    assert.ok(staged.includes('src/one.txt'))
+    assert.ok(staged.includes('src/two.txt'))
+  })
+
+  it('should stage files in nested subdirectories', async () => {
+    const nested = path.join(tmpRepo, 'src', 'deep')
+    fs.mkdirSync(nested, { recursive: true })
+    fs.writeFileSync(path.join(nested, 'file.txt'), 'deep')
+    await stageFile(tmpRepo, 'src')
+    const staged = git('diff', '--cached', '--name-only')
+    assert.ok(staged.includes('src/deep/file.txt'))
+  })
+
+  it('should reject for a nonexistent file', async () => {
+    await assert.rejects(() => stageFile(tmpRepo, 'nonexistent.txt'))
+  })
+})
+
+describe('getChangedFileDirectories', () => {
+  it('should return parent directories of changed files', () => {
+    const result = getChangedFileDirectories(['src/utils/git.ts'])
+    assert.deepEqual(result, ['src', 'src/utils'])
+  })
+
+  it('should return empty array for root-level files', () => {
+    const result = getChangedFileDirectories(['README.md'])
+    assert.deepEqual(result, [])
+  })
+
+  it('should deduplicate shared parent directories', () => {
+    const result = getChangedFileDirectories(['src/utils/git.ts', 'src/utils/files.ts'])
+    assert.deepEqual(result, ['src', 'src/utils'])
+  })
+
+  it('should sort from shallowest to deepest', () => {
+    const result = getChangedFileDirectories([
+      'src/features/nuget/nuget-api.ts',
+      'src/utils/git.ts'
+    ])
+    assert.deepEqual(result, ['src', 'src/features', 'src/utils', 'src/features/nuget'])
+  })
+
+  it('should include all ancestor directories', () => {
+    const result = getChangedFileDirectories(['a/b/c/d/file.ts'])
+    assert.deepEqual(result, ['a', 'a/b', 'a/b/c', 'a/b/c/d'])
+  })
+
+  it('should handle multiple files in different trees', () => {
+    const result = getChangedFileDirectories(['src/a.ts', 'lib/b.ts', 'test/c.ts'])
+    assert.deepEqual(result, ['lib', 'src', 'test'])
+  })
+
+  it('should return empty array for empty input', () => {
+    assert.deepEqual(getChangedFileDirectories([]), [])
+  })
+
+  it('should handle files with mixed depths', () => {
+    const result = getChangedFileDirectories([
+      'README.md',
+      'src/extension.ts',
+      'src/features/expand-changed.ts'
+    ])
+    assert.deepEqual(result, ['src', 'src/features'])
   })
 })
