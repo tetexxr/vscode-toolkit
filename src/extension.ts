@@ -18,6 +18,7 @@ import { registerMoveSymbolCommands } from './features/move-symbol'
 import { registerExpandChangedFilesCommands } from './features/expand-changed'
 import { registerDiagnosticHighlightCommands } from './features/diagnostic-highlight'
 import { registerGitEditCommitCommands } from './features/git-edit-commit'
+import { registerGitStageCommands } from './features/git-stage'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -39,6 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerExpandChangedFilesCommands(context)
   registerDiagnosticHighlightCommands(context)
   registerGitEditCommitCommands(context)
+  registerGitStageCommands(context)
 }
 
 export function deactivate() {}
