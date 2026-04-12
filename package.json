@@ -473,57 +473,57 @@
         {
           "command": "toolkit.collapseRecursively",
           "when": "explorerResourceIsFolder",
-          "group": "z_toolkit@1"
+          "group": "1_toolkit@1"
         },
         {
           "command": "toolkit.expandChangedFiles",
           "when": "explorerResourceIsFolder",
-          "group": "z_toolkit@2"
+          "group": "1_toolkit@2"
         },
         {
           "command": "toolkit.expandRecursively",
           "when": "explorerResourceIsFolder",
-          "group": "z_toolkit@3"
+          "group": "1_toolkit@3"
         },
         {
           "command": "toolkit.formatFiles.thisFolder",
           "when": "explorerResourceIsFolder",
-          "group": "z_toolkit@4"
+          "group": "1_toolkit@4"
         },
         {
           "command": "toolkit.gitHistory",
           "when": "!explorerResourceIsFolder",
-          "group": "z_toolkit@5"
+          "group": "1_toolkit@5"
         },
         {
           "command": "toolkit.npm.managePackages",
           "when": "resourceFilename == package.json",
-          "group": "z_toolkit@6"
+          "group": "1_toolkit@6"
         },
         {
           "command": "toolkit.nuget.managePackages",
           "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
-          "group": "z_toolkit@7"
+          "group": "1_toolkit@7"
         },
         {
           "submenu": "toolkit.csharp.new",
           "when": "explorerResourceIsFolder",
-          "group": "z_toolkit@8"
+          "group": "1_toolkit@8"
         },
         {
           "command": "toolkit.openInGitHub.explorerFile",
           "when": "explorerResourceIsRoot == false",
-          "group": "z_toolkit@9"
+          "group": "1_toolkit@9"
         },
         {
           "command": "toolkit.git.stageChanges",
           "when": "gitOpenRepositoryCount != 0",
-          "group": "z_toolkit@10"
+          "group": "1_toolkit@10"
         },
         {
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
-          "group": "z_toolkit@11"
+          "group": "1_toolkit@11"
         }
       ],
       "commandPalette": [
@@ -539,25 +539,25 @@
       "editor/context": [
         {
           "command": "toolkit.changeCase",
-          "group": "z_toolkit@1",
+          "group": "1_toolkit@1",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.gitHistory",
-          "group": "z_toolkit@2"
+          "group": "1_toolkit@2"
         },
         {
           "command": "toolkit.openInGitHub.file",
-          "group": "z_toolkit@3"
+          "group": "1_toolkit@3"
         },
         {
           "command": "toolkit.slugify",
-          "group": "z_toolkit@4",
+          "group": "1_toolkit@4",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "z_toolkit@5"
+          "group": "1_toolkit@5"
         }
       ]
     },
