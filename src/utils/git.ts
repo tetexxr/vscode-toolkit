@@ -265,6 +265,10 @@ export async function getCommitDiff(cwd: string, hash: string): Promise<string> 
   return gitExec(cwd, ['diff-tree', '--root', '--no-commit-id', '-p', hash], 30000)
 }
 
+export async function stageFile(cwd: string, ...filePaths: string[]): Promise<void> {
+  await gitExec(cwd, ['add', ...filePaths])
+}
+
 export async function editCommitMessage(cwd: string, hash: string, newMessage: string): Promise<void> {
   const headHash = await gitExec(cwd, ['rev-parse', 'HEAD'])
 
