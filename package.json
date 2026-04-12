@@ -371,7 +371,7 @@
     "submenus": [
       {
         "id": "toolkit.csharp.new",
-        "label": "New C#"
+        "label": "Toolkit: New C#"
       }
     ],
     "menus": {
@@ -471,59 +471,59 @@
       ],
       "explorer/context": [
         {
-          "submenu": "toolkit.csharp.new",
-          "when": "explorerResourceIsFolder",
-          "group": "navigation@8"
-        },
-        {
-          "command": "toolkit.expandRecursively",
-          "when": "explorerResourceIsFolder",
-          "group": "navigation@10"
-        },
-        {
           "command": "toolkit.collapseRecursively",
           "when": "explorerResourceIsFolder",
-          "group": "navigation@11"
+          "group": "z_toolkit@1"
         },
         {
           "command": "toolkit.expandChangedFiles",
           "when": "explorerResourceIsFolder",
-          "group": "navigation@11"
+          "group": "z_toolkit@2"
+        },
+        {
+          "command": "toolkit.expandRecursively",
+          "when": "explorerResourceIsFolder",
+          "group": "z_toolkit@3"
         },
         {
           "command": "toolkit.formatFiles.thisFolder",
           "when": "explorerResourceIsFolder",
-          "group": "navigation@12"
-        },
-        {
-          "command": "toolkit.openInGitHub.explorerFile",
-          "when": "explorerResourceIsRoot == false",
-          "group": "navigation@13"
-        },
-        {
-          "command": "toolkit.nuget.managePackages",
-          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
-          "group": "navigation@14"
-        },
-        {
-          "command": "toolkit.npm.managePackages",
-          "when": "resourceFilename == package.json",
-          "group": "navigation@15"
-        },
-        {
-          "command": "toolkit.git.stageChanges",
-          "when": "gitOpenRepositoryCount != 0",
-          "group": "navigation@15"
+          "group": "z_toolkit@4"
         },
         {
           "command": "toolkit.gitHistory",
           "when": "!explorerResourceIsFolder",
-          "group": "navigation@16"
+          "group": "z_toolkit@5"
+        },
+        {
+          "command": "toolkit.npm.managePackages",
+          "when": "resourceFilename == package.json",
+          "group": "z_toolkit@6"
+        },
+        {
+          "command": "toolkit.nuget.managePackages",
+          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
+          "group": "z_toolkit@7"
+        },
+        {
+          "submenu": "toolkit.csharp.new",
+          "when": "explorerResourceIsFolder",
+          "group": "z_toolkit@8"
+        },
+        {
+          "command": "toolkit.openInGitHub.explorerFile",
+          "when": "explorerResourceIsRoot == false",
+          "group": "z_toolkit@9"
+        },
+        {
+          "command": "toolkit.git.stageChanges",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "z_toolkit@10"
         },
         {
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
-          "group": "navigation@17"
+          "group": "z_toolkit@11"
         }
       ],
       "commandPalette": [
@@ -539,25 +539,25 @@
       "editor/context": [
         {
           "command": "toolkit.changeCase",
-          "group": "1_modification@1",
+          "group": "z_toolkit@1",
           "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.slugify",
-          "group": "1_modification@2",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.openInGitHub.file",
-          "group": "1_modification@3"
         },
         {
           "command": "toolkit.gitHistory",
-          "group": "1_modification@4"
+          "group": "z_toolkit@2"
+        },
+        {
+          "command": "toolkit.openInGitHub.file",
+          "group": "z_toolkit@3"
+        },
+        {
+          "command": "toolkit.slugify",
+          "group": "z_toolkit@4",
+          "when": "editorHasSelection"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "1_modification@5"
+          "group": "z_toolkit@5"
         }
       ]
     },
