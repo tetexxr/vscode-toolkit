@@ -292,12 +292,12 @@ Works with any language that has a symbol provider (language server) installed �
 
 #### Add / Remove Braces
 
-Code actions available via `Ctrl+.` (or `Cmd+.`) in TypeScript, JavaScript, TSX, and JSX files:
+Code actions available via `Ctrl+.` (or `Cmd+.`) in TypeScript, JavaScript, TSX, JSX, C#, Razor, Java, C, and C++ files:
 
-- **Add braces** — wraps a braceless control statement body in `{ }`. Appears when the cursor is on (or inside) an `if`, `else`, `else if`, `for`, or `while` without braces.
-- **Remove braces** — removes `{ }` from a single-statement block. Appears when the block contains exactly one statement and is not followed by `else`.
+- **Add braces** — wraps a braceless control statement body in `{ }`. Appears when the cursor is on (or inside) an `if`, `else`, `else if`, `for`, `foreach`, or `while` without braces.
+- **Remove braces** — removes `{ }` from a single-statement block. Appears when the block contains exactly one statement and is not followed by `else` on the same line.
 
-Works with and without semicolons, respects the editor's indentation settings (spaces/tabs, tab size), and handles multi-line bodies including method chaining.
+Works with and without semicolons, respects the editor's indentation settings (spaces/tabs, tab size), and handles multi-line bodies including method chaining. C# files use Allman brace style (opening brace on its own line).
 
 #### Convert Import Paths
 
