@@ -26,7 +26,7 @@ export interface TextReplacement {
   text: string
 }
 
-const CONTROL_RE = /^(\s*)(?:\}\s*)?(if|else\s+if|else|for|while)\b/
+const CONTROL_RE = /^(\s*)(?:\}\s*)?(if|else\s+if|else|for(?:each)?|while)\b/
 const MAX_SEARCH_LINES = 20
 
 // ── Detection ──────────────────────────────────────────────────────
@@ -83,9 +83,10 @@ export function findBracedSingleStatementControl(lines: string[], cursorLine: nu
       continue
     }
 
-    // Don't offer "Remove braces" if followed by else (part of if-else chain)
+    // Don't offer "Remove braces" if else is on the same line as } (K&R style: "} else {")
+    // Allman style (else on its own line) is safe to remove braces
     const afterBrace = nextNonWhitespace(lines, closeBrace.line, closeBrace.col + 1)
-    if (afterBrace) {
+    if (afterBrace && afterBrace.line === closeBrace.line) {
       const afterText = lines[afterBrace.line].substring(afterBrace.col)
       if (/^else\b/.test(afterText)) continue
     }
@@ -117,16 +118,18 @@ export function computeAddBraces(
   lines: string[],
   info: BracelessControl,
   indentUnit: string,
-  eol: string
+  eol: string,
+  braceOnNewLine = false
 ): TextReplacement {
   const bodyIndent = info.indent + indentUnit
   const bodyLines = extractBodyLines(lines, info, bodyIndent)
+  const openBrace = braceOnNewLine ? `${eol}${info.indent}{` : ' {'
   return {
     startLine: info.condEnd.line,
     startCol: info.condEnd.col,
     endLine: info.bodyEnd.line,
     endCol: info.bodyEnd.col + 1,
-    text: ` {${eol}${bodyLines.join(eol)}${eol}${info.indent}}`
+    text: `${openBrace}${eol}${bodyLines.join(eol)}${eol}${info.indent}}`
   }
 }
 
@@ -139,14 +142,21 @@ export function computeRemoveBraces(
   const bodyIndent = info.indent + indentUnit
 
   // Eat trailing whitespace before the opening brace
+  let startLine = info.openBrace.line
   let startCol = info.openBrace.col
-  const braceLineText = lines[info.openBrace.line]
+  const braceLineText = lines[startLine]
   while (startCol > 0 && (braceLineText[startCol - 1] === ' ' || braceLineText[startCol - 1] === '\t')) {
     startCol--
   }
 
+  // If brace is alone on its line (Allman style), extend to end of previous line
+  if (startCol === 0 && startLine > 0) {
+    startLine--
+    startCol = lines[startLine].length
+  }
+
   return {
-    startLine: info.openBrace.line,
+    startLine,
     startCol,
     endLine: info.closeBrace.line,
     endCol: info.closeBrace.col + 1,

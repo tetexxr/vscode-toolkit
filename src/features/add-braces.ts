@@ -6,7 +6,13 @@ import {
   computeRemoveBraces
 } from '../utils/braces'
 
-const LANGUAGES = ['typescript', 'javascript', 'typescriptreact', 'javascriptreact']
+const LANGUAGES = [
+  'typescript', 'javascript', 'typescriptreact', 'javascriptreact',
+  'csharp', 'razor', 'aspnetcorerazor',
+  'java', 'c', 'cpp'
+]
+
+const ALLMAN_LANGUAGES = new Set(['csharp', 'razor', 'aspnetcorerazor'])
 
 export function registerAddBracesCodeActions(context: vscode.ExtensionContext) {
   const provider = new BracesCodeActionProvider()
@@ -23,23 +29,32 @@ class BracesCodeActionProvider implements vscode.CodeActionProvider {
   static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix]
 
   provideCodeActions(document: vscode.TextDocument, range: vscode.Range): vscode.CodeAction[] {
-    const lines = Array.from({ length: document.lineCount }, (_, i) => document.lineAt(i).text)
     const cursorLine = range.start.line
+    const windowStart = Math.max(0, cursorLine - 25)
+    const windowEnd = Math.min(document.lineCount - 1, cursorLine + 25)
+    const lines = Array.from({ length: windowEnd - windowStart + 1 }, (_, i) => document.lineAt(windowStart + i).text)
+    const localCursor = cursorLine - windowStart
+
     const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n'
     const indentUnit = detectIndentUnit(document)
+    const braceOnNewLine = ALLMAN_LANGUAGES.has(document.languageId)
     const actions: vscode.CodeAction[] = []
 
-    const braceless = findBracelessControl(lines, cursorLine)
+    const braceless = findBracelessControl(lines, localCursor)
     if (braceless) {
-      const edit = computeAddBraces(lines, braceless, indentUnit, eol)
+      const edit = computeAddBraces(lines, braceless, indentUnit, eol, braceOnNewLine)
+      edit.startLine += windowStart
+      edit.endLine += windowStart
       const action = new vscode.CodeAction('Add braces', vscode.CodeActionKind.QuickFix)
       action.edit = toWorkspaceEdit(document.uri, edit)
       actions.push(action)
     }
 
-    const braced = findBracedSingleStatementControl(lines, cursorLine)
+    const braced = findBracedSingleStatementControl(lines, localCursor)
     if (braced) {
       const edit = computeRemoveBraces(lines, braced, indentUnit, eol)
+      edit.startLine += windowStart
+      edit.endLine += windowStart
       const action = new vscode.CodeAction('Remove braces', vscode.CodeActionKind.QuickFix)
       action.edit = toWorkspaceEdit(document.uri, edit)
       actions.push(action)
