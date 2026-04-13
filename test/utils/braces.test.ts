@@ -29,11 +29,11 @@ function applyEdit(
   return before + edit.text + after
 }
 
-function addBraces(input: string, cursorLine: number, indent = '  '): string | null {
+function addBraces(input: string, cursorLine: number, indent = '  ', braceOnNewLine = false): string | null {
   const lines = input.split('\n')
   const info = findBracelessControl(lines, cursorLine)
   if (!info) return null
-  const edit = computeAddBraces(lines, info, indent, '\n')
+  const edit = computeAddBraces(lines, info, indent, '\n', braceOnNewLine)
   return applyEdit(input, edit)
 }
 
@@ -287,9 +287,15 @@ describe('findBracedSingleStatementControl', () => {
     assert.equal(findBracedSingleStatementControl(lines, 1), null)
   })
 
-  it('should return null when followed by else', () => {
+  it('should return null when followed by else on same line (K&R style)', () => {
     const lines = ['if (cond) {', '  return value', '} else {', '  other', '}']
     assert.equal(findBracedSingleStatementControl(lines, 1), null)
+  })
+
+  it('should detect if block followed by else on next line (Allman style)', () => {
+    const lines = ['if (cond)', '{', '  return value;', '}', 'else', '{', '  other;', '}']
+    const result = findBracedSingleStatementControl(lines, 1)
+    assert.notEqual(result, null)
   })
 
   it('should detect else block not followed by else', () => {
@@ -338,6 +344,10 @@ describe('addBraces', () => {
     assert.equal(addBraces('while (cond) doSomething()', 0), 'while (cond) {\n  doSomething()\n}')
   })
 
+  it('should add braces to foreach', () => {
+    assert.equal(addBraces('foreach (var x in items) DoSomething(x);', 0), 'foreach (var x in items) {\n  DoSomething(x);\n}')
+  })
+
   it('should preserve indentation', () => {
     assert.equal(addBraces('  if (cond) return value', 0), '  if (cond) {\n    return value\n  }')
   })
@@ -377,6 +387,22 @@ describe('addBraces', () => {
   })
 })
 
+// ── Add braces Allman style (end-to-end) ──────────────────────────
+
+describe('addBraces (Allman style)', () => {
+  it('should place opening brace on new line', () => {
+    assert.equal(addBraces('if (cond) return value;', 0, '    ', true), 'if (cond)\n{\n    return value;\n}')
+  })
+
+  it('should preserve indentation', () => {
+    assert.equal(addBraces('    if (cond) return value;', 0, '    ', true), '    if (cond)\n    {\n        return value;\n    }')
+  })
+
+  it('should work with foreach', () => {
+    assert.equal(addBraces('foreach (var x in items) DoSomething(x);', 0, '    ', true), 'foreach (var x in items)\n{\n    DoSomething(x);\n}')
+  })
+})
+
 // ── Remove braces (end-to-end) ─────────────────────────────────────
 
 describe('removeBraces', () => {
@@ -412,5 +438,23 @@ describe('removeBraces', () => {
     const input = 'before()\nif (cond) {\n  return value\n}\nafter()'
     const expected = 'before()\nif (cond)\n  return value\nafter()'
     assert.equal(removeBraces(input, 2), expected)
+  })
+
+  it('should remove Allman-style braces without extra blank line', () => {
+    const input = 'if (cond)\n{\n  return value;\n}'
+    const expected = 'if (cond)\n  return value;'
+    assert.equal(removeBraces(input, 1), expected)
+  })
+
+  it('should remove indented Allman-style braces', () => {
+    const input = '    if (cond)\n    {\n        return value;\n    }'
+    const expected = '    if (cond)\n      return value;'
+    assert.equal(removeBraces(input, 2), expected)
+  })
+
+  it('should remove Allman-style braces with else on next line', () => {
+    const input = 'if (cond)\n{\n  return value;\n}\nelse\n{\n  other;\n}'
+    const expected = 'if (cond)\n  return value;\nelse\n{\n  other;\n}'
+    assert.equal(removeBraces(input, 1), expected)
   })
 })
