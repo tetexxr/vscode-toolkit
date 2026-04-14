@@ -93,7 +93,16 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     // Sort recent items by recency (most recent first)
     recentItems.sort((a, b) => recentSet.get(a.uri.fsPath)! - recentSet.get(b.uri.fsPath)!)
 
-    return [...recentItems, ...rest]
+    if (recentItems.length === 0) {
+      return items
+    }
+
+    return [
+      { label: 'Recent', kind: vscode.QuickPickItemKind.Separator } as FileOrFolderItem,
+      ...recentItems,
+      { label: 'All', kind: vscode.QuickPickItemKind.Separator } as FileOrFolderItem,
+      ...rest
+    ]
   }
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/*')
