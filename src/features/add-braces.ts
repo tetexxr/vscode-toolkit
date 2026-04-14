@@ -8,11 +8,8 @@ import {
 
 const LANGUAGES = [
   'typescript', 'javascript', 'typescriptreact', 'javascriptreact',
-  'csharp', 'razor', 'aspnetcorerazor',
   'java', 'c', 'cpp'
 ]
-
-const ALLMAN_LANGUAGES = new Set(['csharp', 'razor', 'aspnetcorerazor'])
 
 export function registerAddBracesCodeActions(context: vscode.ExtensionContext) {
   const provider = new BracesCodeActionProvider()
@@ -37,12 +34,11 @@ class BracesCodeActionProvider implements vscode.CodeActionProvider {
 
     const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n'
     const indentUnit = detectIndentUnit(document)
-    const braceOnNewLine = ALLMAN_LANGUAGES.has(document.languageId)
     const actions: vscode.CodeAction[] = []
 
     const braceless = findBracelessControl(lines, localCursor)
     if (braceless) {
-      const edit = computeAddBraces(lines, braceless, indentUnit, eol, braceOnNewLine)
+      const edit = computeAddBraces(lines, braceless, indentUnit, eol, false)
       edit.startLine += windowStart
       edit.endLine += windowStart
       const action = new vscode.CodeAction('Add braces', vscode.CodeActionKind.QuickFix)
