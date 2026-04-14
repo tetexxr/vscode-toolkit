@@ -224,8 +224,11 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
           return
         }
 
-        const terms = trimmed.toLowerCase().split(/\s+/)
-        if (terms.length <= 1) {
+        const allTerms = trimmed.toLowerCase().split(/\s+/)
+        const include = allTerms.filter((t) => !t.startsWith('-'))
+        const exclude = allTerms.filter((t) => t.startsWith('-')).map((t) => t.slice(1)).filter(Boolean)
+
+        if (include.length <= 1 && exclude.length === 0) {
           if (quickPick.items !== itemsWithRecents) {
             quickPick.items = itemsWithRecents
           }
@@ -236,12 +239,12 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
         const filtered = allItems
           .filter((item) => {
             const text = getSearchText(item)
-            return terms.every((t) => text.includes(t))
+            return include.every((t) => text.includes(t)) && !exclude.some((t) => text.includes(t))
           })
-          .map((item) => ({ ...item, alwaysShow: true, _score: scoreItem(item, terms) }))
+          .map((item) => ({ ...item, alwaysShow: true, _score: scoreItem(item, include) }))
           .sort((a, b) => b._score - a._score || a.label.localeCompare(b.label))
 
-        quickPick.items = filtered
+        quickPick.items = sortWithRecents(filtered)
       })
 
       quickPick.onDidAccept(async () => {
