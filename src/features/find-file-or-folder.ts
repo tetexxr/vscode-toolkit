@@ -4,6 +4,7 @@
  */
 
 import * as vscode from 'vscode'
+import { scoreItem, matchesFilter, parseTerms } from '../utils/search'
 
 const RECENT_KEY = 'toolkit.findFileOrFolder.recent'
 const MAX_RECENT = 20
@@ -11,26 +12,6 @@ const MAX_RECENT = 20
 interface FileOrFolderItem extends vscode.QuickPickItem {
   uri: vscode.Uri
   isDirectory: boolean
-}
-
-/** Score how well an item matches the search terms. Higher = better. */
-function scoreItem(segments: string[], terms: string[]): number {
-  let score = 0
-  for (const term of terms) {
-    let best = 0
-    for (const seg of segments) {
-      if (seg.startsWith(term)) {
-        // Exact prefix match on a segment — best case
-        best = 2
-        break
-      } else if (seg.includes(term)) {
-        // Substring match — ok
-        best = Math.max(best, 1)
-      }
-    }
-    score += best
-  }
-  return score
 }
 
 export function registerFindFileOrFolderCommands(context: vscode.ExtensionContext): void {
@@ -209,9 +190,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
           return
         }
 
-        const allTerms = trimmed.toLowerCase().split(/\s+/)
-        const include = allTerms.filter((t) => !t.startsWith('-'))
-        const exclude = allTerms.filter((t) => t.startsWith('-')).map((t) => t.slice(1)).filter(Boolean)
+        const { include, exclude } = parseTerms(trimmed)
 
         if (include.length <= 1 && exclude.length === 0) {
           if (quickPick.items !== displayItems) {
@@ -222,11 +201,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
 
         // Multi-term: filter, score by prefix matches, sort by score descending
         const filtered = allItems
-          .filter((item) => {
-            const segments = (item.description ?? '').toLowerCase().split('/')
-            const text = segments.join(' ')
-            return include.every((t) => text.includes(t)) && !exclude.some((t) => text.includes(t))
-          })
+          .filter((item) => matchesFilter(item.description ?? '', include, exclude))
           .map((item) => {
             const segments = (item.description ?? '').toLowerCase().split('/')
             return { item, score: scoreItem(segments, include) }
