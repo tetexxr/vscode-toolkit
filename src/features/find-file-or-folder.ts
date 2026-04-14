@@ -67,6 +67,16 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     context.workspaceState.update(RECENT_KEY, recent)
   }
 
+  function removeRecentPath(fsPath: string): void {
+    const recent = getRecentPaths().filter((p) => p !== fsPath)
+    context.workspaceState.update(RECENT_KEY, recent)
+  }
+
+  const removeButton: vscode.QuickInputButton = {
+    iconPath: new vscode.ThemeIcon('close'),
+    tooltip: 'Remove from recent'
+  }
+
   function sortWithRecents(items: FileOrFolderItem[]): FileOrFolderItem[] {
     const recent = getRecentPaths()
     if (recent.length === 0) {
@@ -84,7 +94,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     for (const item of items) {
       const idx = recentSet.get(item.uri.fsPath)
       if (idx !== undefined) {
-        recentItems.push(item)
+        recentItems.push({ ...item, buttons: [removeButton] })
       } else {
         rest.push(item)
       }
@@ -178,9 +188,15 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
       quickPick.show()
 
       const allItems = await loadItems()
-      const itemsWithRecents = sortWithRecents(allItems)
+      let itemsWithRecents = sortWithRecents(allItems)
       quickPick.items = itemsWithRecents
       quickPick.busy = false
+
+      quickPick.onDidTriggerItemButton((e) => {
+        removeRecentPath(e.item.uri.fsPath)
+        itemsWithRecents = sortWithRecents(allItems)
+        quickPick.items = itemsWithRecents
+      })
 
       quickPick.onDidChangeValue((value) => {
         const trimmed = value.trim()
