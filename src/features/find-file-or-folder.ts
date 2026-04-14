@@ -11,6 +11,34 @@ interface FileOrFolderItem extends vscode.QuickPickItem {
   isDirectory: boolean
 }
 
+/** Get the path segments for scoring (filename + each folder in the path). */
+function getSegments(item: FileOrFolderItem): string[] {
+  const desc = item.description ?? ''
+  return desc.toLowerCase().split('/')
+}
+
+/** Score how well an item matches the search terms. Higher = better. */
+function scoreItem(item: FileOrFolderItem, terms: string[]): number {
+  const segments = getSegments(item)
+  let score = 0
+
+  for (const term of terms) {
+    let bestTermScore = 0
+    for (const seg of segments) {
+      if (seg.startsWith(term)) {
+        // Exact prefix match on a segment — best case
+        bestTermScore = Math.max(bestTermScore, 2)
+      } else if (seg.includes(term)) {
+        // Substring match — ok
+        bestTermScore = Math.max(bestTermScore, 1)
+      }
+    }
+    score += bestTermScore
+  }
+
+  return score
+}
+
 function getSearchText(item: FileOrFolderItem): string {
   const label = item.label.replace(/\$\([^)]+\)\s*/, '')
   return (label + ' ' + (item.description ?? '')).toLowerCase()
@@ -99,20 +127,21 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
 
         const terms = trimmed.toLowerCase().split(/\s+/)
         if (terms.length <= 1) {
-          // Single term: let the native QuickPick filter handle it
           if (quickPick.items !== allItems) {
             quickPick.items = allItems
           }
           return
         }
 
-        // Multi-term: manual AND filter
+        // Multi-term: filter, score by prefix matches, sort by score descending
         const filtered = allItems
           .filter((item) => {
             const text = getSearchText(item)
             return terms.every((t) => text.includes(t))
           })
-          .map((item) => ({ ...item, alwaysShow: true }))
+          .map((item) => ({ ...item, alwaysShow: true, _score: scoreItem(item, terms) }))
+          .sort((a, b) => b._score - a._score || a.label.localeCompare(b.label))
+
         quickPick.items = filtered
       })
 
