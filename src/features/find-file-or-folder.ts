@@ -179,6 +179,13 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
   }
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.findFileOrFolder.clearRecent', () => {
+      context.workspaceState.update(RECENT_KEY, [])
+      vscode.window.showInformationMessage('Find File or Folder: recent items cleared.')
+    })
+  )
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.findFileOrFolder', async () => {
       const quickPick = vscode.window.createQuickPick<FileOrFolderItem>()
       quickPick.placeholder = 'Search files and folders... (spaces = multi-term AND search)'
