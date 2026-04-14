@@ -254,11 +254,29 @@ describe('getCommitMessage', () => {
 })
 
 describe('getCommitFiles', () => {
-  const repoRoot = path.resolve(__dirname, '../..')
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'hello')
+    git('add', 'file.txt')
+    git('commit', '-m', 'initial commit')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
 
   it('should return file info for a commit', async () => {
-    const log = await getCommitLog(repoRoot, 1)
-    const files = await getCommitFiles(repoRoot, log[0].hash)
+    const log = await getCommitLog(tmpRepo, 1)
+    const files = await getCommitFiles(tmpRepo, log[0].hash)
     assert.ok(Array.isArray(files))
     for (const file of files) {
       assert.ok(file.path.length > 0, 'path should not be empty')
@@ -269,34 +287,52 @@ describe('getCommitFiles', () => {
   })
 
   it('should return at least one file for a non-empty commit', async () => {
-    const log = await getCommitLog(repoRoot, 1)
-    const files = await getCommitFiles(repoRoot, log[0].hash)
+    const log = await getCommitLog(tmpRepo, 1)
+    const files = await getCommitFiles(tmpRepo, log[0].hash)
     assert.ok(files.length > 0)
   })
 
   it('should reject for an invalid hash', async () => {
-    await assert.rejects(() => getCommitFiles(repoRoot, 'invalid-hash'))
+    await assert.rejects(() => getCommitFiles(tmpRepo, 'invalid-hash'))
   })
 })
 
 describe('getCommitDiff', () => {
-  const repoRoot = path.resolve(__dirname, '../..')
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'hello')
+    git('add', 'file.txt')
+    git('commit', '-m', 'initial commit')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
 
   it('should return diff content for a commit', async () => {
-    const log = await getCommitLog(repoRoot, 1)
-    const diff = await getCommitDiff(repoRoot, log[0].hash)
+    const log = await getCommitLog(tmpRepo, 1)
+    const diff = await getCommitDiff(tmpRepo, log[0].hash)
     assert.ok(diff.length > 0)
     assert.ok(diff.includes('diff --git'))
   })
 
   it('should include hunk headers', async () => {
-    const log = await getCommitLog(repoRoot, 1)
-    const diff = await getCommitDiff(repoRoot, log[0].hash)
+    const log = await getCommitLog(tmpRepo, 1)
+    const diff = await getCommitDiff(tmpRepo, log[0].hash)
     assert.ok(diff.includes('@@'))
   })
 
   it('should reject for an invalid hash', async () => {
-    await assert.rejects(() => getCommitDiff(repoRoot, 'invalid-hash'))
+    await assert.rejects(() => getCommitDiff(tmpRepo, 'invalid-hash'))
   })
 })
 
