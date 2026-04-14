@@ -66,7 +66,7 @@ async function resolveEndpoints(source: PackageSource, timeout: number): Promise
 
 function findEndpoint(resources: ApiResource[], preferred: string[]): string | undefined {
   for (const type of preferred) {
-    const found = resources.find((r) => r['@type'].startsWith(type))
+    const found = resources.find(r => r['@type'].startsWith(type))
     if (found) {
       return found['@id']
     }
@@ -92,7 +92,7 @@ export async function searchPackages(
 
   const results = await httpGetJson<SearchResults>({ url, headers, timeout })
   return {
-    packages: results.data.map((pkg) => searchResultToViewModel(pkg, source.url)),
+    packages: results.data.map(pkg => searchResultToViewModel(pkg, source.url)),
     totalHits: results.totalHits
   }
 }
@@ -131,7 +131,7 @@ export async function fetchInstalledPackagesMetadata(
   const headers = authHeaders(source)
 
   const results = await Promise.allSettled(
-    installedPackages.map((pkg) =>
+    installedPackages.map(pkg =>
       fetchSinglePackageMetadata(pkg.id, endpoints.registration, headers, prerelease, source.url, timeout)
     )
   )
@@ -211,11 +211,11 @@ async function fetchAllLeafs(
   timeout: number
 ): Promise<RegistrationLeaf[]> {
   const results = await Promise.allSettled(
-    index.items.map((page) => {
+    index.items.map(page => {
       if (page.items) {
         return Promise.resolve(page.items)
       }
-      return httpGetJson<RegistrationPage>({ url: page['@id'], headers, timeout }).then((p) => p.items || [])
+      return httpGetJson<RegistrationPage>({ url: page['@id'], headers, timeout }).then(p => p.items || [])
     })
   )
 
@@ -233,13 +233,13 @@ function filterAndSortEntries(leafs: RegistrationLeaf[], includePrerelease: bool
   let filtered = leafs
 
   if (!includePrerelease) {
-    filtered = filtered.filter((l) => !isSemVerPrerelease(l.catalogEntry.version))
+    filtered = filtered.filter(l => !isSemVerPrerelease(l.catalogEntry.version))
   }
 
   // Filter out unlisted (listed !== false; undefined means listed)
-  filtered = filtered.filter((l) => l.catalogEntry.listed !== false)
+  filtered = filtered.filter(l => l.catalogEntry.listed !== false)
 
-  const entries = filtered.map((l) => l.catalogEntry)
+  const entries = filtered.map(l => l.catalogEntry)
 
   // Sort descending (latest first)
   entries.sort((a, b) => compareSemVer(b.version, a.version))

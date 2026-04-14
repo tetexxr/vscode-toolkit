@@ -85,7 +85,7 @@ function isInsideScriptOrStyle(text: string, offset: number): boolean {
 export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
   let lastAutoRenameVersion: { fsPath: string; version: number } | undefined
 
-  const disposable = vscode.workspace.onDidChangeTextDocument(async (event) => {
+  const disposable = vscode.workspace.onDidChangeTextDocument(async event => {
     if (isUpdating) {
       return
     }
@@ -177,7 +177,7 @@ export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
       isUpdating = true
       try {
         const success = await editor.edit(
-          (editBuilder) => {
+          editBuilder => {
             editBuilder.replace(matchVscRange, newTagName)
           },
           { undoStopBefore: false, undoStopAfter: false }

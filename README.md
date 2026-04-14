@@ -27,6 +27,7 @@ All-in-one VS Code utility extension.
     - [C# Code Actions](#c-code-actions)
     - [Auto Rename Tag](#auto-rename-tag)
   - [Workspace & Explorer](#workspace--explorer)
+    - [Find File or Folder](#find-file-or-folder)
     - [Expand / Collapse Recursively](#expand--collapse-recursively)
     - [Format Files](#format-files)
   - [Appearance & Viewers](#appearance--viewers)
@@ -401,6 +402,30 @@ When linked editing is active, this feature automatically steps aside for those 
 | `toolkit.autoRenameTag.activationOnLanguage` | `["*"]` | Restrict to specific language IDs |
 
 ### Workspace & Explorer
+
+#### Find File or Folder
+
+A quick-open picker similar to `Cmd+P`, but that also searches **folders** — not just files. Open it with `Opt+P` or from the Command Palette.
+
+| Command | Description |
+|---|---|
+| Find File or Folder... | Open the file/folder picker |
+| Find File or Folder — Clear Recent | Clear the recently selected items |
+
+**Keybinding:** `Opt+P`
+
+**Features:**
+
+- Searches both files and folders in the workspace
+- Selecting a file opens it; selecting a folder reveals it in the Explorer
+- **Multi-term search** — separate terms with spaces for AND matching (e.g., `utils braces` finds files with both terms in the name or path, in any order)
+- **Negative terms** — prefix a term with `-` to exclude matches (e.g., `utils -test` finds items in utils excluding anything with "test")
+- **Prefix scoring** — results where a term matches the start of a filename or folder name are ranked higher
+- **Recent selections** — previously selected items appear at the top, with a visible separator
+- **Open to the Side** — each file item has a button to open in a split editor
+- **Remove from recent** — each recent item has a button to remove it from the recent list
+- Respects `files.exclude` and `search.exclude` settings
+- Results are cached for instant subsequent opens
 
 #### Expand / Collapse Recursively
 

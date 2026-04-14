@@ -54,7 +54,7 @@ export class NugetOverviewHandler implements vscode.Disposable {
     const projects: OverviewProject[] = []
     for (const uri of projectUris) {
       const project = await loadProject(uri)
-      const overviewPkgs: OverviewPackage[] = project.packages.map((p) => ({
+      const overviewPkgs: OverviewPackage[] = project.packages.map(p => ({
         id: p.id,
         installedVersion: p.version,
         latestVersion: '',
@@ -83,7 +83,7 @@ export class NugetOverviewHandler implements vscode.Disposable {
 
     const latestMap = new Map<string, string>()
     await Promise.allSettled(
-      [...uniqueIds].map(async (id) => {
+      [...uniqueIds].map(async id => {
         const metadata = await nugetApi.fetchInstalledPackagesMetadata(
           [{ id, version: '' }],
           '',
@@ -120,7 +120,7 @@ export class NugetOverviewHandler implements vscode.Disposable {
     this.post({ type: 'task-started', packageId, action: 'update' })
 
     const task = NugetTaskManager.buildAddTask(projectFsPath, packageId, version, sourceUrl)
-    this.taskManager.enqueue(task, async (exitCode) => {
+    this.taskManager.enqueue(task, async exitCode => {
       const success = exitCode === 0
       this.post({ type: 'task-finished', packageId, action: 'update', success })
       if (success) {
@@ -137,7 +137,7 @@ export class NugetOverviewHandler implements vscode.Disposable {
 
       const task = NugetTaskManager.buildAddTask(pkg.projectFsPath, pkg.packageId, pkg.version, pkg.sourceUrl)
       const isLast = pkg === packages[packages.length - 1]
-      this.taskManager.enqueue(task, async (exitCode) => {
+      this.taskManager.enqueue(task, async exitCode => {
         const success = exitCode === 0
         this.post({ type: 'task-finished', packageId: pkg.packageId, action: 'update', success })
         if (isLast) {

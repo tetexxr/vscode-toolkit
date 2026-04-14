@@ -104,7 +104,7 @@ export class NugetMessageHandler implements vscode.Disposable {
 
     // Mark installed status
     for (const pkg of packages) {
-      const installed = project.packages.find((p) => p.id === pkg.id)
+      const installed = project.packages.find(p => p.id === pkg.id)
       pkg.isInstalled = !!installed
       pkg.installedVersion = installed?.version || ''
       pkg.isOutdated = pkg.isInstalled && pkg.installedVersion !== pkg.version
@@ -112,7 +112,7 @@ export class NugetMessageHandler implements vscode.Disposable {
 
     // Filter for updates category
     if (category === 'updates') {
-      packages = packages.filter((p) => p.isOutdated)
+      packages = packages.filter(p => p.isOutdated)
     }
 
     this.post({ type: 'packages', packages, category, totalHits, append: skip > 0 })
@@ -131,10 +131,10 @@ export class NugetMessageHandler implements vscode.Disposable {
     // Fetch all versions (including prerelease) for the dropdown
     const allVersions = await nugetApi.fetchPackageVersions(packageId, true, source, timeout)
     const project = await reloadProject(this.projectFsPath)
-    const installed = project.packages.find((p) => p.id === packageId)
+    const installed = project.packages.find(p => p.id === packageId)
 
     // Use latest stable version as the "main" version for display
-    const latestStable = allVersions.find((v) => !isPrerelease(v.version))
+    const latestStable = allVersions.find(v => !isPrerelease(v.version))
     const latest = latestStable || allVersions[0]
 
     if (latest) {
@@ -168,7 +168,7 @@ export class NugetMessageHandler implements vscode.Disposable {
     this.post({ type: 'task-started', packageId, action })
 
     const task = NugetTaskManager.buildAddTask(this.projectFsPath, packageId, version, sourceUrl)
-    this.taskManager.enqueue(task, async (exitCode) => {
+    this.taskManager.enqueue(task, async exitCode => {
       const success = exitCode === 0
       if (success) {
         const project = await reloadProject(this.projectFsPath)
@@ -184,7 +184,7 @@ export class NugetMessageHandler implements vscode.Disposable {
     this.post({ type: 'task-started', packageId, action: 'uninstall' })
 
     const task = NugetTaskManager.buildRemoveTask(this.projectFsPath, packageId)
-    this.taskManager.enqueue(task, async (exitCode) => {
+    this.taskManager.enqueue(task, async exitCode => {
       const success = exitCode === 0
       if (success) {
         const project = await reloadProject(this.projectFsPath)

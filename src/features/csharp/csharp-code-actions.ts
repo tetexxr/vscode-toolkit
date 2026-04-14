@@ -88,7 +88,7 @@ function buildConstructorEdit(
   const bodyIndent = memberIndent + indent
 
   const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n'
-  const params = properties.map((p) => `${p.type} ${toCamelCase(p.name)}`).join(', ')
+  const params = properties.map(p => `${p.type} ${toCamelCase(p.name)}`).join(', ')
 
   // Insert after the last property
   const lastPropEnd = properties[properties.length - 1].end
@@ -103,15 +103,15 @@ function buildConstructorEdit(
         `${eol}${eol}${memberIndent}public ${className}(${params})` +
         `${eol}${memberIndent}${indent}=> ${target} = ${toCamelCase(p.name)};`
     } else {
-      const targets = properties.map((p) => (useThis ? `this.${p.name}` : `${prefix}${p.name}`)).join(', ')
-      const values = properties.map((p) => toCamelCase(p.name)).join(', ')
+      const targets = properties.map(p => (useThis ? `this.${p.name}` : `${prefix}${p.name}`)).join(', ')
+      const values = properties.map(p => toCamelCase(p.name)).join(', ')
       ctor =
         `${eol}${eol}${memberIndent}public ${className}(${params})` +
         `${eol}${memberIndent}${indent}=> (${targets}) = (${values});`
     }
   } else {
     const assignments = properties
-      .map((p) => {
+      .map(p => {
         const target = useThis ? `this.${p.name}` : `${prefix}${p.name}`
         return `${bodyIndent}${target} = ${toCamelCase(p.name)};`
       })

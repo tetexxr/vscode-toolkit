@@ -17,7 +17,7 @@ function isImportOrRequire(line: string, cursor: number): boolean {
 
 function isAfterFrom(line: string, cursor: number): boolean {
   const patterns = [" from '", ' from "', "}from '", '}from "']
-  return patterns.some((p) => {
+  return patterns.some(p => {
     const pos = line.lastIndexOf(p)
     return pos !== -1 && pos < cursor
   })
@@ -25,7 +25,7 @@ function isAfterFrom(line: string, cursor: number): boolean {
 
 function isDirectImportString(line: string, cursor: number): boolean {
   const patterns = [" '", "'", ' "', '"']
-  return patterns.some((p) => {
+  return patterns.some(p => {
     const pos = line.indexOf(p)
     return pos !== -1 && pos < cursor
   })

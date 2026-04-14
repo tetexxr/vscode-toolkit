@@ -26,9 +26,9 @@ describe('diagnostic-highlight', () => {
   })
 
   it('should define default colors for hint, info, and warning', () => {
-    assert.ok(source.includes("hint:"))
-    assert.ok(source.includes("info:"))
-    assert.ok(source.includes("warning:"))
+    assert.ok(source.includes('hint:'))
+    assert.ok(source.includes('info:'))
+    assert.ok(source.includes('warning:'))
   })
 
   it('should create decoration types for all three severities', () => {

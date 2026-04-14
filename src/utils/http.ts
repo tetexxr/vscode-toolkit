@@ -34,7 +34,7 @@ export function httpGetJson<T>(options: HttpRequestOptions): Promise<T> {
   const requestHeaders = { ...headers, 'Accept-Encoding': 'gzip, deflate' }
 
   return new Promise((resolve, reject) => {
-    const req = lib.get(url, { headers: requestHeaders, timeout, agent }, (res) => {
+    const req = lib.get(url, { headers: requestHeaders, timeout, agent }, res => {
       if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
         res.resume()
         reject(new Error(`HTTP ${res.statusCode} for ${url}`))
@@ -62,10 +62,10 @@ export function httpGetJson<T>(options: HttpRequestOptions): Promise<T> {
           reject(new Error(`Failed to parse JSON from ${url}: ${err}`))
         }
       })
-      stream.on('error', (err) => reject(new Error(`Decompression failed for ${url}: ${err.message}`)))
+      stream.on('error', err => reject(new Error(`Decompression failed for ${url}: ${err.message}`)))
     })
 
-    req.on('error', (err) => reject(new Error(`Request failed for ${url}: ${err.message}`)))
+    req.on('error', err => reject(new Error(`Request failed for ${url}: ${err.message}`)))
     req.on('timeout', () => {
       req.destroy()
       reject(new Error(`Request timed out after ${timeout}ms for ${url}`))

@@ -14,7 +14,7 @@ export function splitWords(input: string): string[] {
   // and before the last uppercase in a consecutive run followed by lowercase
   const result = input.replace(/([a-z\d])([A-Z])/g, '$1\0$2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1\0$2')
 
-  return result.split(/[\0\s_\-./\\]+/).filter((w) => w.length > 0)
+  return result.split(/[\0\s_\-./\\]+/).filter(w => w.length > 0)
 }
 
 // ── Case converters ──────────────────────────────────────────────
@@ -28,31 +28,31 @@ export function toCamelCase(input: string): string {
 
 export function toSnakeCase(input: string): string {
   return splitWords(input)
-    .map((w) => w.toLowerCase())
+    .map(w => w.toLowerCase())
     .join('_')
 }
 
 export function toPascalCase(input: string): string {
   return splitWords(input)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join('')
 }
 
 export function toConstantCase(input: string): string {
   return splitWords(input)
-    .map((w) => w.toUpperCase())
+    .map(w => w.toUpperCase())
     .join('_')
 }
 
 export function toKebabCase(input: string): string {
   return splitWords(input)
-    .map((w) => w.toLowerCase())
+    .map(w => w.toLowerCase())
     .join('-')
 }
 
 export function toTitleCase(input: string): string {
   return splitWords(input)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(' ')
 }
 
@@ -66,18 +66,18 @@ export function toUpperCase(input: string): string {
 
 export function toDotCase(input: string): string {
   return splitWords(input)
-    .map((w) => w.toLowerCase())
+    .map(w => w.toLowerCase())
     .join('.')
 }
 
 export function toPathCase(input: string): string {
   return splitWords(input)
-    .map((w) => w.toLowerCase())
+    .map(w => w.toLowerCase())
     .join('/')
 }
 
 export function toSentenceCase(input: string): string {
-  const words = splitWords(input).map((w) => w.toLowerCase())
+  const words = splitWords(input).map(w => w.toLowerCase())
   if (words.length === 0) {
     return ''
   }
@@ -88,13 +88,13 @@ export function toSentenceCase(input: string): string {
 export function toSwapCase(input: string): string {
   return input
     .split('')
-    .map((c) => (c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()))
+    .map(c => (c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()))
     .join('')
 }
 
 export function toNoCase(input: string): string {
   return splitWords(input)
-    .map((w) => w.toLowerCase())
+    .map(w => w.toLowerCase())
     .join(' ')
 }
 
@@ -157,7 +157,7 @@ export function toSlug(input: string, options: SlugOptions = {}): string {
   let result = input
 
   // Apply character map replacements
-  result = result.replace(/./g, (c) => CHAR_MAP[c] || c)
+  result = result.replace(/./g, c => CHAR_MAP[c] || c)
 
   // Normalize unicode and strip combining diacritical marks
   result = result.normalize('NFD').replace(/[\u0300-\u036f]/g, '')

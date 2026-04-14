@@ -14,10 +14,7 @@ async function getDocumentSymbols(document: vscode.TextDocument): Promise<vscode
  * Walk the symbol tree and return the path from root to the deepest symbol
  * that contains the given position.
  */
-function findSymbolPath(
-  symbols: vscode.DocumentSymbol[],
-  position: vscode.Position
-): vscode.DocumentSymbol[] {
+function findSymbolPath(symbols: vscode.DocumentSymbol[], position: vscode.Position): vscode.DocumentSymbol[] {
   for (const symbol of symbols) {
     if (symbol.range.contains(position)) {
       const deeper = findSymbolPath(symbol.children, position)
@@ -46,7 +43,7 @@ async function moveSymbol(direction: Direction): Promise<void> {
 
   // Sort siblings by position (should already be sorted, but just in case)
   const sorted = [...siblings].sort((a, b) => a.range.start.compareTo(b.range.start))
-  const targetIdx = sorted.findIndex((s) => s.range.isEqual(target.range))
+  const targetIdx = sorted.findIndex(s => s.range.isEqual(target.range))
   if (targetIdx === -1) return
 
   const adjacentIdx = direction === 'up' ? targetIdx - 1 : targetIdx + 1
@@ -79,7 +76,7 @@ async function moveSymbol(direction: Direction): Promise<void> {
     newCursorOffset = fullRangeStartOffset + secondText.length + gapText.length + cursorOffsetInTarget
   }
 
-  await editor.edit((editBuilder) => {
+  await editor.edit(editBuilder => {
     editBuilder.replace(fullRange, newText)
   })
 

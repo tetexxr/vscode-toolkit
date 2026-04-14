@@ -70,7 +70,7 @@ async function createCSharpFile(extensionPath: string, templateKey: string, uri?
   const input = await vscode.window.showInputBox({
     prompt: `Enter ${templateKey} name`,
     placeHolder: placeholder,
-    validateInput: (value) => {
+    validateInput: value => {
       if (!value?.trim()) return 'Name is required'
       if (!/^[A-Za-z_]\w*$/.test(value.trim())) return 'Invalid C# identifier'
       return null

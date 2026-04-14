@@ -10,7 +10,9 @@ import * as fs from 'fs'
 function gitExec(cwd: string, args: string[], timeout = 5000, env?: Record<string, string>): Promise<string> {
   return new Promise((resolve, reject) => {
     const options: { cwd: string; timeout: number; maxBuffer: number; env?: NodeJS.ProcessEnv } = {
-      cwd, timeout, maxBuffer: 10 * 1024 * 1024
+      cwd,
+      timeout,
+      maxBuffer: 10 * 1024 * 1024
     }
     if (env) {
       options.env = { ...process.env, ...env }
@@ -216,10 +218,13 @@ export interface CommitLogEntry {
 export async function getCommitLog(cwd: string, count = 200): Promise<CommitLogEntry[]> {
   const raw = await gitExec(cwd, ['log', `--max-count=${count}`, '--format=%H%x00%s%x00%an%x00%ar'], 30000)
   if (!raw) return []
-  return raw.split('\n').filter(Boolean).map(line => {
-    const [hash, subject, author, date] = line.split('\x00')
-    return { hash, subject, author, date }
-  })
+  return raw
+    .split('\n')
+    .filter(Boolean)
+    .map(line => {
+      const [hash, subject, author, date] = line.split('\x00')
+      return { hash, subject, author, date }
+    })
 }
 
 export async function getCommitMessage(cwd: string, hash: string): Promise<string> {
@@ -275,7 +280,9 @@ export async function editCommitMessage(cwd: string, hash: string, newMessage: s
   if (hash === headHash) {
     const staged = await gitExec(cwd, ['diff', '--cached', '--name-only']).catch(() => '')
     if (staged) {
-      throw new Error('There are staged changes that would be included in the amend. Please unstage or commit them first.')
+      throw new Error(
+        'There are staged changes that would be included in the amend. Please unstage or commit them first.'
+      )
     }
     await gitExec(cwd, ['commit', '--amend', '-m', newMessage], 30000)
   } else {
@@ -298,7 +305,9 @@ export async function editCommitMessage(cwd: string, hash: string, newMessage: s
         GIT_EDITOR: `cp "${msgFile}"`
       })
     } finally {
-      try { fs.unlinkSync(msgFile) } catch {}
+      try {
+        fs.unlinkSync(msgFile)
+      } catch {}
     }
   }
 }

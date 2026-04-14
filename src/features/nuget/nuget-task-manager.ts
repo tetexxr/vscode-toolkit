@@ -21,7 +21,7 @@ export class NugetTaskManager implements vscode.Disposable {
   private disposable: vscode.Disposable
 
   constructor() {
-    this.disposable = vscode.tasks.onDidEndTaskProcess((e) => {
+    this.disposable = vscode.tasks.onDidEndTaskProcess(e => {
       if (e.execution.task.name !== TASK_NAME) {
         return
       }

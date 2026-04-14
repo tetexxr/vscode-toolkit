@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.10.2",
+  "version": "1.10.3",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.110.0"
@@ -354,6 +354,14 @@
       {
         "command": "toolkit.git.stageChanges",
         "title": "Toolkit: Stage Changes"
+      },
+      {
+        "command": "toolkit.findFileOrFolder",
+        "title": "Toolkit: Find File or Folder..."
+      },
+      {
+        "command": "toolkit.findFileOrFolder.clearRecent",
+        "title": "Toolkit: Find File or Folder — Clear Recent"
       }
     ],
     "keybindings": [
@@ -366,6 +374,10 @@
         "command": "toolkit.moveSymbolDown",
         "key": "cmd+shift+down",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "toolkit.findFileOrFolder",
+        "key": "alt+p"
       }
     ],
     "submenus": [

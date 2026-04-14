@@ -8,7 +8,7 @@ import { isExcluded } from '../utils/files'
  */
 
 function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 async function getSubfolders(uri: vscode.Uri, excludePatterns: string[]): Promise<vscode.Uri[]> {
@@ -131,7 +131,7 @@ export function registerExpandRecursivelyCommands(context: vscode.ExtensionConte
           targets = [uri]
         } else {
           // Fallback: expand all workspace folders
-          targets = (vscode.workspace.workspaceFolders || []).map((f) => f.uri)
+          targets = (vscode.workspace.workspaceFolders || []).map(f => f.uri)
         }
 
         if (targets.length === 0) {
@@ -175,7 +175,7 @@ export function registerExpandRecursivelyCommands(context: vscode.ExtensionConte
         } else if (uri) {
           targets = [uri]
         } else {
-          targets = (vscode.workspace.workspaceFolders || []).map((f) => f.uri)
+          targets = (vscode.workspace.workspaceFolders || []).map(f => f.uri)
         }
 
         if (targets.length === 0) {

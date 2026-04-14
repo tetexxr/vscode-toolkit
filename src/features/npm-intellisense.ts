@@ -76,7 +76,7 @@ class NpmCompletionProvider implements vscode.CompletionItemProvider {
       packages = await resolveSubfolders(packages, line, folder.uri.fsPath)
     }
 
-    return packages.map((name) => {
+    return packages.map(name => {
       const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Module)
       item.textEdit = vscode.TextEdit.replace(importStringRange(line, position), name)
       return item
@@ -102,7 +102,7 @@ async function getNpmPackages(rootPath: string, filePath: string, config: NpmInt
       ...Object.keys(pkg.dependencies || {}),
       ...(config.scanDevDependencies ? Object.keys(pkg.devDependencies || {}) : []),
       ...(config.showBuiltinModules ? getBuiltinModules() : [])
-    ].filter((name) => !exclude.has(name))
+    ].filter(name => !exclude.has(name))
   } catch {
     return []
   }
@@ -129,7 +129,7 @@ function isFile(filePath: string): boolean {
 }
 
 function getBuiltinModules(): string[] {
-  return builtinModules.filter((m) => !m.startsWith('_'))
+  return builtinModules.filter(m => !m.startsWith('_'))
 }
 
 async function resolveSubfolders(packages: string[], line: string, rootPath: string): Promise<string[]> {
@@ -149,7 +149,7 @@ async function resolveSubfolders(packages: string[], line: string, rootPath: str
   try {
     const dir = join(rootPath, 'node_modules', ...parts.filter(Boolean))
     const files = await readdir(dir)
-    return files.map((file) => fragment + file.replace(/\.js$/, ''))
+    return files.map(file => fragment + file.replace(/\.js$/, ''))
   } catch {
     return packages
   }
@@ -184,7 +184,7 @@ async function onImportCommand(): Promise<void> {
     return
   }
 
-  const items = packages.map((name) => ({ label: name, description: 'npm module' }))
+  const items = packages.map(name => ({ label: name, description: 'npm module' }))
   const selection = await vscode.window.showQuickPick(items, { matchOnDescription: true })
   if (!selection) {
     return
@@ -196,5 +196,5 @@ async function onImportCommand(): Promise<void> {
     ? `import {} from ${q}${selection.label}${q}${lb}`
     : `${config.importDeclarationType} ${guessVariableName(selection.label)} = require(${q}${selection.label}${q})${lb}`
 
-  await editor.edit((edit) => edit.insert(editor.selection.start, statement))
+  await editor.edit(edit => edit.insert(editor.selection.start, statement))
 }

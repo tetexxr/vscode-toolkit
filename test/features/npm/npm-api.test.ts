@@ -226,7 +226,7 @@ describe('extractVersionDetails', () => {
     const meta = makeMetadata({ '1.0.0': {}, '2.0.0': {}, '1.5.0': {} })
     const result = extractVersionDetails(meta, false)
     assert.deepEqual(
-      result.map((v) => v.version),
+      result.map(v => v.version),
       ['2.0.0', '1.5.0', '1.0.0']
     )
   })
@@ -242,7 +242,7 @@ describe('extractVersionDetails', () => {
     const meta = makeMetadata({ '1.0.0': {}, '2.0.0-beta.1': {}, '1.5.0': {} })
     const result = extractVersionDetails(meta, false)
     assert.equal(result.length, 2)
-    assert.ok(result.every((v) => !v.version.includes('beta')))
+    assert.ok(result.every(v => !v.version.includes('beta')))
   })
 
   it('should include published dates from time map', () => {
@@ -326,7 +326,7 @@ describe('filterAndSortResults', () => {
     const results = [makePkg('zod'), makePkg('express'), makePkg('axios')]
     const filtered = filterAndSortResults(results, '')
     assert.deepEqual(
-      filtered.map((p) => p.name),
+      filtered.map(p => p.name),
       ['axios', 'express', 'zod']
     )
   })
@@ -335,7 +335,7 @@ describe('filterAndSortResults', () => {
     const results = [makePkg('express'), makePkg('axios'), makePkg('express-validator')]
     const filtered = filterAndSortResults(results, 'express')
     assert.equal(filtered.length, 2)
-    assert.ok(filtered.every((p) => p.name.includes('express')))
+    assert.ok(filtered.every(p => p.name.includes('express')))
   })
 
   it('should filter by description match', () => {

@@ -14,7 +14,7 @@ export function registerSlugCommands(context: vscode.ExtensionContext): void {
       const decamelize = config.get<boolean>('decamelize', true)
       const lowercase = config.get<boolean>('lowercase', true)
 
-      editor.edit((editBuilder) => {
+      editor.edit(editBuilder => {
         for (const selection of editor.selections) {
           if (selection.isEmpty) {
             continue

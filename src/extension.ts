@@ -19,6 +19,7 @@ import { registerExpandChangedFilesCommands } from './features/expand-changed'
 import { registerDiagnosticHighlightCommands } from './features/diagnostic-highlight'
 import { registerGitEditCommitCommands } from './features/git-edit-commit'
 import { registerGitStageCommands } from './features/git-stage'
+import { registerFindFileOrFolderCommands } from './features/find-file-or-folder'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -41,6 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerDiagnosticHighlightCommands(context)
   registerGitEditCommitCommands(context)
   registerGitStageCommands(context)
+  registerFindFileOrFolderCommands(context)
 }
 
 export function deactivate() {}

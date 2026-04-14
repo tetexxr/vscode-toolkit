@@ -144,7 +144,7 @@ describe('parseGitStatus', () => {
     ].join('\n')
     const result = parseGitStatus(output)
     assert.equal(result.length, 5)
-    const paths = result.map((f) => f.path)
+    const paths = result.map(f => f.path)
     assert.deepEqual(paths, ['src/a.ts', 'src/b.ts', 'src/c.ts', 'src/e.ts', 'src/g.ts'])
   })
 
@@ -360,19 +360,13 @@ describe('editCommitMessage', () => {
   it('should reject when there are staged changes and editing HEAD', async () => {
     fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'staged change')
     git('add', 'file.txt')
-    await assert.rejects(
-      () => editCommitMessage(tmpRepo, git('rev-parse', 'HEAD'), 'should fail'),
-      /staged changes/
-    )
+    await assert.rejects(() => editCommitMessage(tmpRepo, git('rev-parse', 'HEAD'), 'should fail'), /staged changes/)
   })
 
   it('should reject when working tree is dirty and editing non-HEAD', async () => {
     const secondHash = git('log', '--format=%H', '--skip=1', '-1')
     fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'dirty change')
-    await assert.rejects(
-      () => editCommitMessage(tmpRepo, secondHash, 'should fail'),
-      /uncommitted changes/
-    )
+    await assert.rejects(() => editCommitMessage(tmpRepo, secondHash, 'should fail'), /uncommitted changes/)
   })
 })
 
@@ -463,10 +457,7 @@ describe('getChangedFileDirectories', () => {
   })
 
   it('should sort from shallowest to deepest', () => {
-    const result = getChangedFileDirectories([
-      'src/features/nuget/nuget-api.ts',
-      'src/utils/git.ts'
-    ])
+    const result = getChangedFileDirectories(['src/features/nuget/nuget-api.ts', 'src/utils/git.ts'])
     assert.deepEqual(result, ['src', 'src/features', 'src/utils', 'src/features/nuget'])
   })
 
@@ -485,11 +476,7 @@ describe('getChangedFileDirectories', () => {
   })
 
   it('should handle files with mixed depths', () => {
-    const result = getChangedFileDirectories([
-      'README.md',
-      'src/extension.ts',
-      'src/features/expand-changed.ts'
-    ])
+    const result = getChangedFileDirectories(['README.md', 'src/extension.ts', 'src/features/expand-changed.ts'])
     assert.deepEqual(result, ['src', 'src/features'])
   })
 })

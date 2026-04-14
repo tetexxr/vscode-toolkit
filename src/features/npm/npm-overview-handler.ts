@@ -60,7 +60,7 @@ export class NpmOverviewHandler implements vscode.Disposable {
     const projects: NpmOverviewProject[] = []
     for (const uri of projectUris) {
       const project = await loadNpmProject(uri)
-      const overviewPkgs: NpmOverviewPackage[] = project.packages.map((p) => ({
+      const overviewPkgs: NpmOverviewPackage[] = project.packages.map(p => ({
         name: p.name,
         installedVersionRange: p.versionRange,
         latestVersion: '',
@@ -90,7 +90,7 @@ export class NpmOverviewHandler implements vscode.Disposable {
 
     const latestMap = new Map<string, string>()
     await Promise.allSettled(
-      [...uniqueNames].map(async (name) => {
+      [...uniqueNames].map(async name => {
         const metadata = await npmApi.fetchInstalledNpmPackagesMetadata(
           [{ name, versionRange: '', dependencyType: 'dependencies' }],
           '',
@@ -128,7 +128,7 @@ export class NpmOverviewHandler implements vscode.Disposable {
     this.post({ type: 'task-started', packageName, action: 'update' })
 
     const project = await loadNpmProject(vscode.Uri.file(projectFsPath))
-    const existing = project.packages.find((p) => p.name === packageName)
+    const existing = project.packages.find(p => p.name === packageName)
     const isDev = existing ? existing.dependencyType === 'devDependencies' : devDependency
     const task = NpmTaskManager.buildInstallTask(
       project.directoryPath,
@@ -138,7 +138,7 @@ export class NpmOverviewHandler implements vscode.Disposable {
       project.packageManager
     )
 
-    this.taskManager.enqueue(task, async (exitCode) => {
+    this.taskManager.enqueue(task, async exitCode => {
       const success = exitCode === 0
       this.post({ type: 'task-finished', packageName, action: 'update', success })
       if (success) {
@@ -154,7 +154,7 @@ export class NpmOverviewHandler implements vscode.Disposable {
       this.post({ type: 'task-started', packageName: pkg.packageName, action: 'update' })
 
       const project = await loadNpmProject(vscode.Uri.file(pkg.projectFsPath))
-      const existing = project.packages.find((p) => p.name === pkg.packageName)
+      const existing = project.packages.find(p => p.name === pkg.packageName)
       const isDev = existing ? existing.dependencyType === 'devDependencies' : pkg.devDependency
       const task = NpmTaskManager.buildInstallTask(
         project.directoryPath,
@@ -165,7 +165,7 @@ export class NpmOverviewHandler implements vscode.Disposable {
       )
       const isLast = pkg === packages[packages.length - 1]
 
-      this.taskManager.enqueue(task, async (exitCode) => {
+      this.taskManager.enqueue(task, async exitCode => {
         const success = exitCode === 0
         this.post({ type: 'task-finished', packageName: pkg.packageName, action: 'update', success })
         if (isLast) {
