@@ -373,7 +373,7 @@
       },
       {
         "command": "toolkit.findFileOrFolder",
-        "key": "ctrl+cmd+p"
+        "key": "alt+p"
       }
     ],
     "submenus": [
