@@ -354,6 +354,10 @@
       {
         "command": "toolkit.git.stageChanges",
         "title": "Toolkit: Stage Changes"
+      },
+      {
+        "command": "toolkit.findFileOrFolder",
+        "title": "Toolkit: Find File or Folder..."
       }
     ],
     "keybindings": [
