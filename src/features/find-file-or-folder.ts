@@ -72,6 +72,11 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     context.workspaceState.update(RECENT_KEY, recent)
   }
 
+  const openToSideButton: vscode.QuickInputButton = {
+    iconPath: new vscode.ThemeIcon('split-horizontal'),
+    tooltip: 'Open to the Side'
+  }
+
   const removeButton: vscode.QuickInputButton = {
     iconPath: new vscode.ThemeIcon('close'),
     tooltip: 'Remove from recent'
@@ -93,10 +98,11 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
 
     for (const item of items) {
       const idx = recentSet.get(item.uri.fsPath)
+      const sideBtn = item.isDirectory ? [] : [openToSideButton]
       if (idx !== undefined) {
-        recentItems.push({ ...item, buttons: [removeButton] })
+        recentItems.push({ ...item, buttons: [...sideBtn, removeButton] })
       } else {
-        rest.push(item)
+        rest.push(item.isDirectory ? item : { ...item, buttons: sideBtn })
       }
     }
 
@@ -199,10 +205,16 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
       quickPick.items = itemsWithRecents
       quickPick.busy = false
 
-      quickPick.onDidTriggerItemButton((e) => {
-        removeRecentPath(e.item.uri.fsPath)
-        itemsWithRecents = sortWithRecents(allItems)
-        quickPick.items = itemsWithRecents
+      quickPick.onDidTriggerItemButton(async (e) => {
+        if (e.button === openToSideButton) {
+          quickPick.hide()
+          addRecentPath(e.item.uri.fsPath)
+          await vscode.commands.executeCommand('vscode.open', e.item.uri, vscode.ViewColumn.Beside)
+        } else if (e.button === removeButton) {
+          removeRecentPath(e.item.uri.fsPath)
+          itemsWithRecents = sortWithRecents(allItems)
+          quickPick.items = itemsWithRecents
+        }
       })
 
       quickPick.onDidChangeValue((value) => {
