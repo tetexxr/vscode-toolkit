@@ -6,6 +6,9 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 
+const RECENT_KEY = 'toolkit.findFileOrFolder.recent'
+const MAX_RECENT = 20
+
 interface FileOrFolderItem extends vscode.QuickPickItem {
   uri: vscode.Uri
   isDirectory: boolean
@@ -49,6 +52,48 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
 
   function invalidateCache() {
     cachedItems = undefined
+  }
+
+  function getRecentPaths(): string[] {
+    return context.workspaceState.get<string[]>(RECENT_KEY, [])
+  }
+
+  function addRecentPath(fsPath: string): void {
+    const recent = getRecentPaths().filter((p) => p !== fsPath)
+    recent.unshift(fsPath)
+    if (recent.length > MAX_RECENT) {
+      recent.length = MAX_RECENT
+    }
+    context.workspaceState.update(RECENT_KEY, recent)
+  }
+
+  function sortWithRecents(items: FileOrFolderItem[]): FileOrFolderItem[] {
+    const recent = getRecentPaths()
+    if (recent.length === 0) {
+      return items
+    }
+
+    const recentSet = new Map<string, number>()
+    for (let i = 0; i < recent.length; i++) {
+      recentSet.set(recent[i], i)
+    }
+
+    const recentItems: FileOrFolderItem[] = []
+    const rest: FileOrFolderItem[] = []
+
+    for (const item of items) {
+      const idx = recentSet.get(item.uri.fsPath)
+      if (idx !== undefined) {
+        recentItems.push(item)
+      } else {
+        rest.push(item)
+      }
+    }
+
+    // Sort recent items by recency (most recent first)
+    recentItems.sort((a, b) => recentSet.get(a.uri.fsPath)! - recentSet.get(b.uri.fsPath)!)
+
+    return [...recentItems, ...rest]
   }
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/*')
@@ -124,20 +169,21 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
       quickPick.show()
 
       const allItems = await loadItems()
-      quickPick.items = allItems
+      const itemsWithRecents = sortWithRecents(allItems)
+      quickPick.items = itemsWithRecents
       quickPick.busy = false
 
       quickPick.onDidChangeValue((value) => {
         const trimmed = value.trim()
         if (!trimmed) {
-          quickPick.items = allItems
+          quickPick.items = itemsWithRecents
           return
         }
 
         const terms = trimmed.toLowerCase().split(/\s+/)
         if (terms.length <= 1) {
-          if (quickPick.items !== allItems) {
-            quickPick.items = allItems
+          if (quickPick.items !== itemsWithRecents) {
+            quickPick.items = itemsWithRecents
           }
           return
         }
@@ -160,6 +206,8 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
           return
         }
         quickPick.hide()
+
+        addRecentPath(selected.uri.fsPath)
 
         if (selected.isDirectory) {
           await vscode.commands.executeCommand('revealInExplorer', selected.uri)
