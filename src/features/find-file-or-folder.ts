@@ -11,6 +11,11 @@ interface FileOrFolderItem extends vscode.QuickPickItem {
   isDirectory: boolean
 }
 
+function getSearchText(item: FileOrFolderItem): string {
+  const label = item.label.replace(/\$\([^)]+\)\s*/, '')
+  return (label + ' ' + (item.description ?? '')).toLowerCase()
+}
+
 export function registerFindFileOrFolderCommands(context: vscode.ExtensionContext): void {
   let cachedItems: FileOrFolderItem[] | undefined
 
@@ -35,7 +40,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
       return []
     }
 
-    const found = await vscode.workspace.findFiles('**/*', '{**/node_modules/**,**/.git/**,**/__pycache__/**}', 10000)
+    const found = await vscode.workspace.findFiles('**/*', '{**/node_modules/**,**/.git/**,**/__pycache__/**,**/bin/**,**/obj/**,**/dist/**,**/build/**,**/.next/**,**/out/**}')
 
     const folderSet = new Set<string>()
     const folders: FileOrFolderItem[] = []
@@ -75,14 +80,41 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.findFileOrFolder', async () => {
       const quickPick = vscode.window.createQuickPick<FileOrFolderItem>()
-      quickPick.placeholder = 'Search files and folders...'
+      quickPick.placeholder = 'Search files and folders... (spaces = multi-term AND search)'
       quickPick.matchOnDescription = true
 
       quickPick.busy = true
       quickPick.show()
 
-      quickPick.items = await loadItems()
+      const allItems = await loadItems()
+      quickPick.items = allItems
       quickPick.busy = false
+
+      quickPick.onDidChangeValue((value) => {
+        const trimmed = value.trim()
+        if (!trimmed) {
+          quickPick.items = allItems
+          return
+        }
+
+        const terms = trimmed.toLowerCase().split(/\s+/)
+        if (terms.length <= 1) {
+          // Single term: let the native QuickPick filter handle it
+          if (quickPick.items !== allItems) {
+            quickPick.items = allItems
+          }
+          return
+        }
+
+        // Multi-term: manual AND filter
+        const filtered = allItems
+          .filter((item) => {
+            const text = getSearchText(item)
+            return terms.every((t) => text.includes(t))
+          })
+          .map((item) => ({ ...item, alwaysShow: true }))
+        quickPick.items = filtered
+      })
 
       quickPick.onDidAccept(async () => {
         const selected = quickPick.selectedItems[0]
