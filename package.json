@@ -370,6 +370,10 @@
         "command": "toolkit.moveSymbolDown",
         "key": "cmd+shift+down",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "toolkit.findFileOrFolder",
+        "key": "ctrl+cmd+p"
       }
     ],
     "submenus": [
