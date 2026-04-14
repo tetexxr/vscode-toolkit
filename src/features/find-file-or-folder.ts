@@ -68,7 +68,16 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
       return []
     }
 
-    const found = await vscode.workspace.findFiles('**/*', '{**/node_modules/**,**/.git/**,**/__pycache__/**,**/bin/**,**/obj/**,**/dist/**,**/build/**,**/.next/**,**/out/**}')
+    // Essential exclusions for performance + user's files.exclude and search.exclude
+    const excludes = new Set(['**/node_modules/**', '**/.git/**'])
+    const filesExclude = vscode.workspace.getConfiguration('files').get<Record<string, boolean>>('exclude', {})
+    const searchExclude = vscode.workspace.getConfiguration('search').get<Record<string, boolean>>('exclude', {})
+    for (const [pattern, enabled] of Object.entries({ ...filesExclude, ...searchExclude })) {
+      if (enabled) {
+        excludes.add(pattern)
+      }
+    }
+    const found = await vscode.workspace.findFiles('**/*', `{${[...excludes].join(',')}}`)
 
     const folderSet = new Set<string>()
     const folders: FileOrFolderItem[] = []
