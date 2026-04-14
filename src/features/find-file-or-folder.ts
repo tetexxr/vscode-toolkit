@@ -4,7 +4,6 @@
  */
 
 import * as vscode from 'vscode'
-import * as path from 'path'
 
 const RECENT_KEY = 'toolkit.findFileOrFolder.recent'
 const MAX_RECENT = 20
@@ -14,37 +13,24 @@ interface FileOrFolderItem extends vscode.QuickPickItem {
   isDirectory: boolean
 }
 
-/** Get the path segments for scoring (filename + each folder in the path). */
-function getSegments(item: FileOrFolderItem): string[] {
-  const desc = item.description ?? ''
-  return desc.toLowerCase().split('/')
-}
-
 /** Score how well an item matches the search terms. Higher = better. */
-function scoreItem(item: FileOrFolderItem, terms: string[]): number {
-  const segments = getSegments(item)
+function scoreItem(segments: string[], terms: string[]): number {
   let score = 0
-
   for (const term of terms) {
-    let bestTermScore = 0
+    let best = 0
     for (const seg of segments) {
       if (seg.startsWith(term)) {
         // Exact prefix match on a segment — best case
-        bestTermScore = Math.max(bestTermScore, 2)
+        best = 2
+        break
       } else if (seg.includes(term)) {
         // Substring match — ok
-        bestTermScore = Math.max(bestTermScore, 1)
+        best = Math.max(best, 1)
       }
     }
-    score += bestTermScore
+    score += best
   }
-
   return score
-}
-
-function getSearchText(item: FileOrFolderItem): string {
-  const label = item.label.replace(/\$\([^)]+\)\s*/, '')
-  return (label + ' ' + (item.description ?? '')).toLowerCase()
 }
 
 export function registerFindFileOrFolderCommands(context: vscode.ExtensionContext): void {
@@ -82,35 +68,33 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     tooltip: 'Remove from recent'
   }
 
-  function sortWithRecents(items: FileOrFolderItem[]): FileOrFolderItem[] {
+  function applyRecentsAndButtons(items: FileOrFolderItem[]): FileOrFolderItem[] {
     const recent = getRecentPaths()
     if (recent.length === 0) {
-      return items
+      return items.map((item) => (item.isDirectory ? item : { ...item, buttons: [openToSideButton] }))
     }
 
-    const recentSet = new Map<string, number>()
+    const recentIndex = new Map<string, number>()
     for (let i = 0; i < recent.length; i++) {
-      recentSet.set(recent[i], i)
+      recentIndex.set(recent[i], i)
     }
 
     const recentItems: FileOrFolderItem[] = []
     const rest: FileOrFolderItem[] = []
 
     for (const item of items) {
-      const idx = recentSet.get(item.uri.fsPath)
       const sideBtn = item.isDirectory ? [] : [openToSideButton]
-      if (idx !== undefined) {
+      if (recentIndex.has(item.uri.fsPath)) {
         recentItems.push({ ...item, buttons: [...sideBtn, removeButton] })
       } else {
         rest.push(item.isDirectory ? item : { ...item, buttons: sideBtn })
       }
     }
 
-    // Sort recent items by recency (most recent first)
-    recentItems.sort((a, b) => recentSet.get(a.uri.fsPath)! - recentSet.get(b.uri.fsPath)!)
+    recentItems.sort((a, b) => recentIndex.get(a.uri.fsPath)! - recentIndex.get(b.uri.fsPath)!)
 
     if (recentItems.length === 0) {
-      return items
+      return rest
     }
 
     return [
@@ -154,15 +138,16 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     const files: FileOrFolderItem[] = []
 
     for (const uri of found) {
+      const relPath = vscode.workspace.asRelativePath(uri, false)
+      const parts = relPath.split('/')
+
       files.push({
-        label: `$(file) ${path.basename(uri.fsPath)}`,
-        description: vscode.workspace.asRelativePath(uri, false),
+        label: `$(file) ${parts[parts.length - 1]}`,
+        description: relPath,
         uri,
         isDirectory: false
       })
 
-      const relPath = vscode.workspace.asRelativePath(uri, false)
-      const parts = relPath.split('/')
       for (let i = 1; i < parts.length; i++) {
         const folderRelPath = parts.slice(0, i).join('/')
         if (!folderSet.has(folderRelPath)) {
@@ -201,8 +186,8 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
       quickPick.show()
 
       const allItems = await loadItems()
-      let itemsWithRecents = sortWithRecents(allItems)
-      quickPick.items = itemsWithRecents
+      let displayItems = applyRecentsAndButtons(allItems)
+      quickPick.items = displayItems
       quickPick.busy = false
 
       quickPick.onDidTriggerItemButton(async (e) => {
@@ -212,15 +197,15 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
           await vscode.commands.executeCommand('vscode.open', e.item.uri, vscode.ViewColumn.Beside)
         } else if (e.button === removeButton) {
           removeRecentPath(e.item.uri.fsPath)
-          itemsWithRecents = sortWithRecents(allItems)
-          quickPick.items = itemsWithRecents
+          displayItems = applyRecentsAndButtons(allItems)
+          quickPick.items = displayItems
         }
       })
 
       quickPick.onDidChangeValue((value) => {
         const trimmed = value.trim()
         if (!trimmed) {
-          quickPick.items = itemsWithRecents
+          quickPick.items = displayItems
           return
         }
 
@@ -229,8 +214,8 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
         const exclude = allTerms.filter((t) => t.startsWith('-')).map((t) => t.slice(1)).filter(Boolean)
 
         if (include.length <= 1 && exclude.length === 0) {
-          if (quickPick.items !== itemsWithRecents) {
-            quickPick.items = itemsWithRecents
+          if (quickPick.items !== displayItems) {
+            quickPick.items = displayItems
           }
           return
         }
@@ -238,18 +223,23 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
         // Multi-term: filter, score by prefix matches, sort by score descending
         const filtered = allItems
           .filter((item) => {
-            const text = getSearchText(item)
+            const segments = (item.description ?? '').toLowerCase().split('/')
+            const text = segments.join(' ')
             return include.every((t) => text.includes(t)) && !exclude.some((t) => text.includes(t))
           })
-          .map((item) => ({ ...item, alwaysShow: true, _score: scoreItem(item, include) }))
-          .sort((a, b) => b._score - a._score || a.label.localeCompare(b.label))
+          .map((item) => {
+            const segments = (item.description ?? '').toLowerCase().split('/')
+            return { item, score: scoreItem(segments, include) }
+          })
+          .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
+          .map(({ item }) => ({ ...item, alwaysShow: true }))
 
-        quickPick.items = sortWithRecents(filtered)
+        quickPick.items = applyRecentsAndButtons(filtered)
       })
 
       quickPick.onDidAccept(async () => {
         const selected = quickPick.selectedItems[0]
-        if (!selected) {
+        if (!selected?.uri) {
           return
         }
         quickPick.hide()
