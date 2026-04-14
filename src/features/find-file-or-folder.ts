@@ -1,15 +1,14 @@
 /**
  * Find File or Folder — a QuickPick that searches both files and folders in the workspace.
  * Unlike Cmd+P, this also matches and reveals folders in the explorer.
- * Folders are derived from file paths (no filesystem walk), so it's as fast as Cmd+P.
  */
 
 import * as vscode from 'vscode'
 import * as path from 'path'
 
 interface FileOrFolderItem extends vscode.QuickPickItem {
-  uri?: vscode.Uri
-  isDirectory?: boolean
+  uri: vscode.Uri
+  isDirectory: boolean
 }
 
 export function registerFindFileOrFolderCommands(context: vscode.ExtensionContext): void {
@@ -26,7 +25,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     watcher.onDidDelete(invalidateCache)
   )
 
-  async function buildItems(): Promise<FileOrFolderItem[]> {
+  async function loadItems(): Promise<FileOrFolderItem[]> {
     if (cachedItems) {
       return cachedItems
     }
@@ -36,50 +35,41 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
       return []
     }
 
-    const files = await vscode.workspace.findFiles('**/*', '{**/node_modules/**,**/.git/**,**/__pycache__/**}', 10000)
+    const found = await vscode.workspace.findFiles('**/*', '{**/node_modules/**,**/.git/**,**/__pycache__/**}', 10000)
 
     const folderSet = new Set<string>()
-    const folderItems: FileOrFolderItem[] = []
-    const fileItems: FileOrFolderItem[] = []
+    const folders: FileOrFolderItem[] = []
+    const files: FileOrFolderItem[] = []
 
-    for (const uri of files) {
-      fileItems.push({
-        label: path.basename(uri.fsPath),
+    for (const uri of found) {
+      files.push({
+        label: `$(file) ${path.basename(uri.fsPath)}`,
         description: vscode.workspace.asRelativePath(uri, false),
         uri,
         isDirectory: false
       })
 
-      // Extract all parent folders from this file's relative path
       const relPath = vscode.workspace.asRelativePath(uri, false)
       const parts = relPath.split('/')
       for (let i = 1; i < parts.length; i++) {
         const folderRelPath = parts.slice(0, i).join('/')
         if (!folderSet.has(folderRelPath)) {
           folderSet.add(folderRelPath)
-          const folderUri = vscode.Uri.joinPath(workspaceFolders[0].uri, folderRelPath)
-          folderItems.push({
-            label: parts[i - 1],
+          folders.push({
+            label: `$(folder) ${parts[i - 1]}`,
             description: folderRelPath,
-            uri: folderUri,
+            uri: vscode.Uri.joinPath(workspaceFolders[0].uri, folderRelPath),
             isDirectory: true
           })
         }
       }
     }
 
-    folderItems.sort((a, b) => a.label.localeCompare(b.label))
-    fileItems.sort((a, b) => a.label.localeCompare(b.label))
+    folders.sort((a, b) => a.label.localeCompare(b.label))
+    files.sort((a, b) => a.label.localeCompare(b.label))
 
-    const items: FileOrFolderItem[] = [
-      { label: 'Folders', kind: vscode.QuickPickItemKind.Separator },
-      ...folderItems,
-      { label: 'Files', kind: vscode.QuickPickItemKind.Separator },
-      ...fileItems
-    ]
-
-    cachedItems = items
-    return items
+    cachedItems = [...folders, ...files]
+    return cachedItems
   }
 
   context.subscriptions.push(
@@ -91,16 +81,14 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
       quickPick.busy = true
       quickPick.show()
 
-      const items = await buildItems()
-      quickPick.items = items
+      quickPick.items = await loadItems()
       quickPick.busy = false
 
       quickPick.onDidAccept(async () => {
         const selected = quickPick.selectedItems[0]
-        if (!selected?.uri) {
+        if (!selected) {
           return
         }
-
         quickPick.hide()
 
         if (selected.isDirectory) {
