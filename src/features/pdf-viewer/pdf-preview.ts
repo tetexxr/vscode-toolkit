@@ -80,7 +80,7 @@ export class PdfPreview implements vscode.Disposable {
 
   private setupMessageListener(): void {
     this.panel.webview.onDidReceiveMessage(
-      (msg) => {
+      msg => {
         if (msg.type === 'zoomChanged' && this.zoomCallback) {
           this.zoomCallback(msg.scale, msg.mode)
         }

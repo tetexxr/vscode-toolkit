@@ -26,7 +26,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
   }
 
   function addRecentPath(fsPath: string): void {
-    const recent = getRecentPaths().filter((p) => p !== fsPath)
+    const recent = getRecentPaths().filter(p => p !== fsPath)
     recent.unshift(fsPath)
     if (recent.length > MAX_RECENT) {
       recent.length = MAX_RECENT
@@ -35,7 +35,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
   }
 
   function removeRecentPath(fsPath: string): void {
-    const recent = getRecentPaths().filter((p) => p !== fsPath)
+    const recent = getRecentPaths().filter(p => p !== fsPath)
     context.workspaceState.update(RECENT_KEY, recent)
   }
 
@@ -52,7 +52,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
   function applyRecentsAndButtons(items: FileOrFolderItem[]): FileOrFolderItem[] {
     const recent = getRecentPaths()
     if (recent.length === 0) {
-      return items.map((item) => (item.isDirectory ? item : { ...item, buttons: [openToSideButton] }))
+      return items.map(item => (item.isDirectory ? item : { ...item, buttons: [openToSideButton] }))
     }
 
     const recentIndex = new Map<string, number>()
@@ -87,11 +87,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
   }
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/*')
-  context.subscriptions.push(
-    watcher,
-    watcher.onDidCreate(invalidateCache),
-    watcher.onDidDelete(invalidateCache)
-  )
+  context.subscriptions.push(watcher, watcher.onDidCreate(invalidateCache), watcher.onDidDelete(invalidateCache))
 
   async function loadItems(): Promise<FileOrFolderItem[]> {
     if (cachedItems) {
@@ -171,7 +167,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
       quickPick.items = displayItems
       quickPick.busy = false
 
-      quickPick.onDidTriggerItemButton(async (e) => {
+      quickPick.onDidTriggerItemButton(async e => {
         if (e.button === openToSideButton) {
           quickPick.hide()
           addRecentPath(e.item.uri.fsPath)
@@ -183,7 +179,7 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
         }
       })
 
-      quickPick.onDidChangeValue((value) => {
+      quickPick.onDidChangeValue(value => {
         const trimmed = value.trim()
         if (!trimmed) {
           quickPick.items = displayItems
@@ -201,8 +197,8 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
 
         // Multi-term: filter, score by prefix matches, sort by score descending
         const filtered = allItems
-          .filter((item) => matchesFilter(item.description ?? '', include, exclude))
-          .map((item) => {
+          .filter(item => matchesFilter(item.description ?? '', include, exclude))
+          .map(item => {
             const segments = (item.description ?? '').toLowerCase().split('/')
             return { item, score: scoreItem(segments, include) }
           })

@@ -36,7 +36,7 @@ export function registerRelativeImportsCommands(context: vscode.ExtensionContext
         return
       }
 
-      await editor.edit((eb) => {
+      await editor.edit(eb => {
         for (const m of matches) {
           eb.replace(
             new vscode.Range(
@@ -78,7 +78,7 @@ export function registerRelativeImportsCommands(context: vscode.ExtensionContext
         return
       }
 
-      await editor.edit((eb) => {
+      await editor.edit(eb => {
         for (const m of matches) {
           eb.replace(
             new vscode.Range(

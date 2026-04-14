@@ -23,7 +23,7 @@ export function registerGitBlameCommands(context: vscode.ExtensionContext): void
         applyBlame(vscode.window.activeTextEditor)
       }
     }),
-    vscode.workspace.onDidSaveTextDocument((doc) => {
+    vscode.workspace.onDidSaveTextDocument(doc => {
       if (enabled) {
         const editor = vscode.window.activeTextEditor
         if (editor && editor.document === doc) {
@@ -123,9 +123,7 @@ function renderAnnotations(editor: vscode.TextEditor, blameData: BlameInfo[]): v
       if (isFirstInGroup) {
         const date = formatDate(info.authorTime)
         const maxAuthor = ANNOTATION_WIDTH - date.length - 2
-        const author = info.author.length > maxAuthor
-          ? info.author.substring(0, maxAuthor - 1) + '…'
-          : info.author
+        const author = info.author.length > maxAuthor ? info.author.substring(0, maxAuthor - 1) + '…' : info.author
         text = `${date}  ${author}`
       } else {
         text = ''

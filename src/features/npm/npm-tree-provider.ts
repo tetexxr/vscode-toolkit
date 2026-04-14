@@ -37,6 +37,6 @@ export class NpmTreeProvider implements vscode.TreeDataProvider<NpmProjectTreeIt
     const files = await discoverPackageJsonFiles()
     return files
       .sort((a, b) => path.basename(path.dirname(a.fsPath)).localeCompare(path.basename(path.dirname(b.fsPath))))
-      .map((uri) => new NpmProjectTreeItem(uri))
+      .map(uri => new NpmProjectTreeItem(uri))
   }
 }

@@ -393,7 +393,10 @@ describe('addBraces', () => {
   })
 
   it('should add braces to foreach', () => {
-    assert.equal(addBraces('foreach (var x in items) DoSomething(x);', 0), 'foreach (var x in items) {\n  DoSomething(x);\n}')
+    assert.equal(
+      addBraces('foreach (var x in items) DoSomething(x);', 0),
+      'foreach (var x in items) {\n  DoSomething(x);\n}'
+    )
   })
 
   it('should preserve indentation', () => {
@@ -443,11 +446,17 @@ describe('addBraces (Allman style)', () => {
   })
 
   it('should preserve indentation', () => {
-    assert.equal(addBraces('    if (cond) return value;', 0, '    ', true), '    if (cond)\n    {\n        return value;\n    }')
+    assert.equal(
+      addBraces('    if (cond) return value;', 0, '    ', true),
+      '    if (cond)\n    {\n        return value;\n    }'
+    )
   })
 
   it('should work with foreach', () => {
-    assert.equal(addBraces('foreach (var x in items) DoSomething(x);', 0, '    ', true), 'foreach (var x in items)\n{\n    DoSomething(x);\n}')
+    assert.equal(
+      addBraces('foreach (var x in items) DoSomething(x);', 0, '    ', true),
+      'foreach (var x in items)\n{\n    DoSomething(x);\n}'
+    )
   })
 })
 

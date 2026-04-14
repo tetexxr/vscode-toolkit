@@ -104,7 +104,7 @@ export class NpmMessageHandler implements vscode.Disposable {
 
     // Mark installed status
     for (const pkg of packages) {
-      const installed = project.packages.find((p) => p.name === pkg.name)
+      const installed = project.packages.find(p => p.name === pkg.name)
       pkg.isInstalled = !!installed
       pkg.installedVersionRange = installed?.versionRange || ''
       pkg.dependencyType = installed?.dependencyType || ''
@@ -116,7 +116,7 @@ export class NpmMessageHandler implements vscode.Disposable {
 
     // Filter for updates category
     if (category === 'updates') {
-      packages = packages.filter((p) => p.isOutdated)
+      packages = packages.filter(p => p.isOutdated)
     }
 
     this.post({ type: 'packages', packages, category, totalHits, append: skip > 0 })
@@ -135,10 +135,10 @@ export class NpmMessageHandler implements vscode.Disposable {
     // Fetch full metadata + all versions
     const { pkg, versions } = await npmApi.fetchNpmPackageFullDetails(packageName, true, source, timeout)
     const project = await reloadNpmProject(this.projectFsPath)
-    const installed = project.packages.find((p) => p.name === packageName)
+    const installed = project.packages.find(p => p.name === packageName)
 
     // Use latest stable version as the "main" display version
-    const latestStable = versions.find((v) => !isPrerelease(v.version))
+    const latestStable = versions.find(v => !isPrerelease(v.version))
     if (latestStable) {
       pkg.version = latestStable.version
       pkg.deprecated = latestStable.deprecated
@@ -166,7 +166,7 @@ export class NpmMessageHandler implements vscode.Disposable {
     this.post({ type: 'task-started', packageName, action })
 
     const project = await reloadNpmProject(this.projectFsPath)
-    const existing = project.packages.find((p) => p.name === packageName)
+    const existing = project.packages.find(p => p.name === packageName)
     const isDev = existing ? existing.dependencyType === 'devDependencies' : devDependency
     const task = NpmTaskManager.buildInstallTask(
       project.directoryPath,
@@ -176,7 +176,7 @@ export class NpmMessageHandler implements vscode.Disposable {
       project.packageManager
     )
 
-    this.taskManager.enqueue(task, async (exitCode) => {
+    this.taskManager.enqueue(task, async exitCode => {
       const success = exitCode === 0
       if (success) {
         const updatedProject = await reloadNpmProject(this.projectFsPath)
@@ -194,7 +194,7 @@ export class NpmMessageHandler implements vscode.Disposable {
     const project = await reloadNpmProject(this.projectFsPath)
     const task = NpmTaskManager.buildUninstallTask(project.directoryPath, packageName, project.packageManager)
 
-    this.taskManager.enqueue(task, async (exitCode) => {
+    this.taskManager.enqueue(task, async exitCode => {
       const success = exitCode === 0
       if (success) {
         const updatedProject = await reloadNpmProject(this.projectFsPath)

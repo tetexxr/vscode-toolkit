@@ -1,7 +1,13 @@
 import * as vscode from 'vscode'
 import {
-  getRepoRoot, getCommitLog, getCommitMessage, getCommitFiles, getCommitDiff,
-  editCommitMessage, CommitLogEntry, CommitFileInfo
+  getRepoRoot,
+  getCommitLog,
+  getCommitMessage,
+  getCommitFiles,
+  getCommitDiff,
+  editCommitMessage,
+  CommitLogEntry,
+  CommitFileInfo
 } from '../utils/git'
 
 function escapeHtml(text: string): string {
@@ -29,10 +35,10 @@ function renderFileList(files: CommitFileInfo[]): string {
 
     html.push(
       `<div class="file-entry" data-path="${escapeHtml(file.path)}">` +
-      `<span class="file-status ${statusClass}">${escapeHtml(file.status)}</span>` +
-      `<span class="file-path"><span class="file-dir">${escapeHtml(dir)}</span>${escapeHtml(name)}</span>` +
-      `<span class="file-stats">${additions}${deletions}</span>` +
-      `</div>`
+        `<span class="file-status ${statusClass}">${escapeHtml(file.status)}</span>` +
+        `<span class="file-path"><span class="file-dir">${escapeHtml(dir)}</span>${escapeHtml(name)}</span>` +
+        `<span class="file-stats">${additions}${deletions}</span>` +
+        `</div>`
     )
   }
   return html.join('\n')
@@ -63,9 +69,13 @@ function renderDiff(raw: string): string {
     } else if (line.startsWith('-')) {
       html.push(`<div class="line-del">${escapeHtml(line)}</div>`)
     } else if (
-      line.startsWith('index ') || line.startsWith('---') || line.startsWith('+++') ||
-      line.startsWith('new file') || line.startsWith('deleted file') ||
-      line.startsWith('similarity') || line.startsWith('rename') ||
+      line.startsWith('index ') ||
+      line.startsWith('---') ||
+      line.startsWith('+++') ||
+      line.startsWith('new file') ||
+      line.startsWith('deleted file') ||
+      line.startsWith('similarity') ||
+      line.startsWith('rename') ||
       line.startsWith('Binary')
     ) {
       html.push(`<div class="diff-meta">${escapeHtml(line)}</div>`)
@@ -487,7 +497,7 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       const nonce = getNonce()
       panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, diffRaw, nonce)
 
-      panel.webview.onDidReceiveMessage(async (msg) => {
+      panel.webview.onDidReceiveMessage(async msg => {
         if (msg.command === 'discard') {
           panel.dispose()
           return
@@ -507,13 +517,16 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
           }
 
           try {
-            await vscode.window.withProgress({
-              location: vscode.ProgressLocation.Notification,
-              title: 'Updating commit message...',
-              cancellable: false
-            }, async () => {
-              await editCommitMessage(repoRoot, item.commit.hash, newMessage)
-            })
+            await vscode.window.withProgress(
+              {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Updating commit message...',
+                cancellable: false
+              },
+              async () => {
+                await editCommitMessage(repoRoot, item.commit.hash, newMessage)
+              }
+            )
 
             panel.dispose()
             provider.refresh()

@@ -40,7 +40,7 @@ export function buildUsings(options: BuildTemplateOptions): string {
   const allUsings = [...options.requiredUsings, ...options.optionalUsings]
 
   // Remove implicit usings and project-level removes
-  const filtered = allUsings.filter((u) => !options.implicitUsings.includes(u) && !options.usingsRemove.includes(u))
+  const filtered = allUsings.filter(u => !options.implicitUsings.includes(u) && !options.usingsRemove.includes(u))
 
   // Deduplicate
   const unique = [...new Set(filtered)]
@@ -55,7 +55,7 @@ export function buildUsings(options: BuildTemplateOptions): string {
     return a.localeCompare(b)
   })
 
-  return unique.map((u) => `using ${u};`).join('\n') + '\n\n'
+  return unique.map(u => `using ${u};`).join('\n') + '\n\n'
 }
 
 export function toFileScopedNamespace(content: string, tabSize: number): string {

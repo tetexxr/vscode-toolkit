@@ -34,10 +34,10 @@ export async function searchNpmPackages(
 
   const results = await httpGetJson<NpmSearchResponse>({ url, headers, timeout })
 
-  let packages = results.objects.map((obj) => searchResultToViewModel(obj, source.url))
+  let packages = results.objects.map(obj => searchResultToViewModel(obj, source.url))
 
   if (!prerelease) {
-    packages = packages.filter((pkg) => !isSemVerPrerelease(pkg.version))
+    packages = packages.filter(pkg => !isSemVerPrerelease(pkg.version))
   }
 
   return { packages, totalHits: results.total }
@@ -80,7 +80,7 @@ export async function fetchInstalledNpmPackagesMetadata(
   const headers = authHeaders(source)
 
   const results = await Promise.allSettled(
-    installedPackages.map((pkg) =>
+    installedPackages.map(pkg =>
       fetchSinglePackageMetadata(pkg.name, baseUrl, headers, prerelease, source.url, timeout)
     )
   )
@@ -208,7 +208,7 @@ async function fetchSinglePackageMetadata(
   let latestVersion = latestTag
   if (!prerelease && isSemVerPrerelease(latestTag)) {
     const versions = Object.keys(metadata.versions || {})
-      .filter((v) => !isSemVerPrerelease(v))
+      .filter(v => !isSemVerPrerelease(v))
       .sort((a, b) => compareSemVer(b, a))
     latestVersion = versions[0] || latestTag
   }
@@ -240,13 +240,13 @@ export function extractVersionDetails(metadata: NpmPackageMetadata, prerelease: 
 
   let filtered = versions
   if (!prerelease) {
-    filtered = filtered.filter((v) => !isSemVerPrerelease(v))
+    filtered = filtered.filter(v => !isSemVerPrerelease(v))
   }
 
   // Sort descending (latest first)
   filtered.sort((a, b) => compareSemVer(b, a))
 
-  return filtered.map((v) => {
+  return filtered.map(v => {
     const meta = metadata.versions[v]
     return {
       version: v,
@@ -262,7 +262,7 @@ export function extractVersionDetails(metadata: NpmPackageMetadata, prerelease: 
 export function filterAndSortResults(results: NpmPackageViewModel[], query: string): NpmPackageViewModel[] {
   const trimmed = query.trim().toLowerCase()
 
-  const filtered = results.filter((r) => {
+  const filtered = results.filter(r => {
     if (!trimmed) {
       return true
     }

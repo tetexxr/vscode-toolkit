@@ -24,7 +24,7 @@ export async function pickProjectFile(): Promise<vscode.Uri | undefined> {
     return undefined
   }
 
-  const items = files.map((uri) => ({
+  const items = files.map(uri => ({
     label: path.basename(uri.fsPath),
     description: vscode.workspace.asRelativePath(uri),
     uri

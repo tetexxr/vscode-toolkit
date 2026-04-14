@@ -514,9 +514,6 @@ describe('findAliasMatches', () => {
     const source = `import { foo } from './store'`
     const matches = findAliasMatches(source, filePath, config)
     assert.equal(matches.length, 1)
-    assert.equal(
-      source.slice(matches[0].pathStart, matches[0].pathStart + matches[0].importPath.length),
-      './store'
-    )
+    assert.equal(source.slice(matches[0].pathStart, matches[0].pathStart + matches[0].importPath.length), './store')
   })
 })

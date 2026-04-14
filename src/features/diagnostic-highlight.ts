@@ -35,9 +35,7 @@ export function registerDiagnosticHighlightCommands(context: vscode.ExtensionCon
       } else {
         clearAllDecorations()
       }
-      vscode.window.showInformationMessage(
-        `Diagnostic Highlight: ${enabled ? 'ON' : 'OFF'}`
-      )
+      vscode.window.showInformationMessage(`Diagnostic Highlight: ${enabled ? 'ON' : 'OFF'}`)
     }),
 
     vscode.languages.onDidChangeDiagnostics(() => {
@@ -58,7 +56,7 @@ export function registerDiagnosticHighlightCommands(context: vscode.ExtensionCon
       }
     }),
 
-    vscode.workspace.onDidChangeConfiguration((e) => {
+    vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration('toolkit.diagnosticHighlight')) {
         enabled = getConfig().get<boolean>('enabled', true)
         disposeDecorationTypes()
@@ -97,13 +95,16 @@ function createDecorationTypes(): void {
     const defaults = DEFAULT_COLORS[severity]
     const color = config.get<string>(`${severity}Color`, defaults.border)
 
-    decorationTypes.set(severity, vscode.window.createTextEditorDecorationType({
-      borderWidth: '0 0 2px 0',
-      borderStyle: `none none ${styles[severity]} none`,
-      borderColor: color,
-      overviewRulerColor: color,
-      overviewRulerLane: vscode.OverviewRulerLane.Right
-    }))
+    decorationTypes.set(
+      severity,
+      vscode.window.createTextEditorDecorationType({
+        borderWidth: '0 0 2px 0',
+        borderStyle: `none none ${styles[severity]} none`,
+        borderColor: color,
+        overviewRulerColor: color,
+        overviewRulerLane: vscode.OverviewRulerLane.Right
+      })
+    )
   }
 }
 

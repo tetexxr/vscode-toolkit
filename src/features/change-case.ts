@@ -111,7 +111,7 @@ function applyTransformation(fn: (input: string) => string): void {
     // For multi-line selections, transform each line individually
     const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n'
     const lines = text.split(eol)
-    const transformed = lines.map((line) => fn(line)).join(eol)
+    const transformed = lines.map(line => fn(line)).join(eol)
 
     edits.push({ range, replacement: transformed })
   }
@@ -120,7 +120,7 @@ function applyTransformation(fn: (input: string) => string): void {
     return
   }
 
-  editor.edit((editBuilder) => {
+  editor.edit(editBuilder => {
     for (const edit of edits) {
       editBuilder.replace(edit.range, edit.replacement)
     }
@@ -159,7 +159,7 @@ export function registerChangeCaseCommands(context: vscode.ExtensionContext): vo
         }
       }
 
-      const items = CASE_DEFINITIONS.map((def) => ({
+      const items = CASE_DEFINITIONS.map(def => ({
         label: def.label,
         description: previewText ? `→ ${def.fn(previewText)}` : def.description,
         fn: def.fn

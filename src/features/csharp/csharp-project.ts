@@ -7,7 +7,7 @@ export function findProjectFile(dir: string): string | null {
   for (;;) {
     try {
       const entries = fs.readdirSync(current)
-      const csproj = entries.find((e) => e.endsWith('.csproj'))
+      const csproj = entries.find(e => e.endsWith('.csproj'))
       if (csproj) return path.join(current, csproj)
     } catch {
       return null
@@ -102,7 +102,7 @@ function readImplicitUsings(projectDir: string, targetFramework: string): string
     if (!fs.existsSync(dir)) continue
     try {
       const files = fs.readdirSync(dir)
-      const globalUsingsFile = files.find((f) => f.endsWith('GlobalUsings.g.cs'))
+      const globalUsingsFile = files.find(f => f.endsWith('GlobalUsings.g.cs'))
       if (globalUsingsFile) {
         const content = fs.readFileSync(path.join(dir, globalUsingsFile), 'utf-8')
         return parseGlobalUsings(content)

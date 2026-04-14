@@ -37,6 +37,6 @@ export class NugetTreeProvider implements vscode.TreeDataProvider<NugetProjectTr
     const files = await discoverProjectFiles()
     return files
       .sort((a, b) => path.basename(a.fsPath).localeCompare(path.basename(b.fsPath)))
-      .map((uri) => new NugetProjectTreeItem(uri))
+      .map(uri => new NugetProjectTreeItem(uri))
   }
 }
