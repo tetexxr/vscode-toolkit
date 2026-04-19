@@ -117,7 +117,7 @@ export function registerFormatFilesCommands(context: vscode.ExtensionContext): v
       const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
       const includeGlob = config.get<string>(
         'includeGlob',
-        '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml}'
+        '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml,cs,razor,cshtml}'
       )
       await findAndFormat(includeGlob)
     })
@@ -148,7 +148,7 @@ export function registerFormatFilesCommands(context: vscode.ExtensionContext): v
       const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
       const includeGlob = config.get<string>(
         'includeGlob',
-        '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml}'
+        '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml,cs,razor,cshtml}'
       )
       await findAndFormat(includeGlob, uri)
     })

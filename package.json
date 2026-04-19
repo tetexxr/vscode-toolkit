@@ -618,7 +618,7 @@
         },
         "toolkit.formatFiles.includeGlob": {
           "type": "string",
-          "default": "**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml}",
+          "default": "**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml,cs,razor,cshtml}",
           "description": "Glob pattern for files to format."
         },
         "toolkit.formatFiles.excludedFolders": {
