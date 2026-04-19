@@ -1,4 +1,10 @@
 import * as vscode from 'vscode'
+import {
+  DEFAULT_EXCLUDED_FOLDERS,
+  DEFAULT_INCLUDE_GLOB,
+  buildExcludeGlob as buildExcludeGlobPure,
+  type ExcludeMap
+} from './format-files-utils'
 
 /**
  * Format Files — bulk format all files in workspace or a specific folder.
@@ -7,21 +13,12 @@ import * as vscode from 'vscode'
  *   open → show → organizeImports? → format → save → close
  */
 
-function buildExcludeGlob(): string {
+function buildExcludeGlob(): string | undefined {
   const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
-  const excludedFolders = config.get<string[]>('excludedFolders', [
-    'node_modules',
-    '.vscode',
-    '.git',
-    'dist',
-    'build',
-    '.chrome'
-  ])
-  // Build a glob pattern like: {node_modules,dist,.git}/**
-  if (excludedFolders.length === 0) {
-    return ''
-  }
-  return `{${excludedFolders.join(',')}}/**`
+  const excludedFolders = config.get<string[]>('excludedFolders', DEFAULT_EXCLUDED_FOLDERS)
+  const filesExclude = vscode.workspace.getConfiguration('files').get<ExcludeMap>('exclude', {})
+  const searchExclude = vscode.workspace.getConfiguration('search').get<ExcludeMap>('exclude', {})
+  return buildExcludeGlobPure(excludedFolders, filesExclude, searchExclude)
 }
 
 async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Promise<void> {
@@ -35,7 +32,7 @@ async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Prom
     relativePattern = includeGlob
   }
 
-  const files = await vscode.workspace.findFiles(relativePattern, excludeGlob || undefined)
+  const files = await vscode.workspace.findFiles(relativePattern, excludeGlob)
 
   if (files.length === 0) {
     vscode.window.showInformationMessage('No files found matching the pattern.')
@@ -115,10 +112,7 @@ export function registerFormatFilesCommands(context: vscode.ExtensionContext): v
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.formatFiles.workspace', async () => {
       const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
-      const includeGlob = config.get<string>(
-        'includeGlob',
-        '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml}'
-      )
+      const includeGlob = config.get<string>('includeGlob', DEFAULT_INCLUDE_GLOB)
       await findAndFormat(includeGlob)
     })
   )
@@ -146,10 +140,7 @@ export function registerFormatFilesCommands(context: vscode.ExtensionContext): v
         return
       }
       const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
-      const includeGlob = config.get<string>(
-        'includeGlob',
-        '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml}'
-      )
+      const includeGlob = config.get<string>('includeGlob', DEFAULT_INCLUDE_GLOB)
       await findAndFormat(includeGlob, uri)
     })
   )
