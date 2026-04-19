@@ -7,7 +7,22 @@ import * as vscode from 'vscode'
  *   open → show → organizeImports? → format → save → close
  */
 
-function buildExcludeGlob(): string {
+function collectNativeExcludes(): string[] {
+  // Merge VS Code's files.exclude and search.exclude (only entries explicitly enabled).
+  // Entries with complex { when: ... } conditions are skipped because we can't evaluate them here.
+  const filesExclude = vscode.workspace.getConfiguration('files').get<Record<string, unknown>>('exclude', {})
+  const searchExclude = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude', {})
+
+  const patterns: string[] = []
+  for (const [glob, enabled] of [...Object.entries(filesExclude), ...Object.entries(searchExclude)]) {
+    if (enabled === true) {
+      patterns.push(glob)
+    }
+  }
+  return patterns
+}
+
+function buildExcludeGlob(): string | undefined {
   const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
   const excludedFolders = config.get<string[]>('excludedFolders', [
     'node_modules',
@@ -17,11 +32,15 @@ function buildExcludeGlob(): string {
     'build',
     '.chrome'
   ])
-  // Build a glob pattern like: {node_modules,dist,.git}/**
-  if (excludedFolders.length === 0) {
-    return ''
+
+  const customPatterns = excludedFolders.map((folder) => `**/${folder}/**`)
+  const nativePatterns = collectNativeExcludes()
+  const all = Array.from(new Set([...customPatterns, ...nativePatterns]))
+
+  if (all.length === 0) {
+    return undefined
   }
-  return `{${excludedFolders.join(',')}}/**`
+  return `{${all.join(',')}}`
 }
 
 async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Promise<void> {
@@ -35,7 +54,7 @@ async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Prom
     relativePattern = includeGlob
   }
 
-  const files = await vscode.workspace.findFiles(relativePattern, excludeGlob || undefined)
+  const files = await vscode.workspace.findFiles(relativePattern, excludeGlob)
 
   if (files.length === 0) {
     vscode.window.showInformationMessage('No files found matching the pattern.')
