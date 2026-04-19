@@ -30,7 +30,10 @@ function buildExcludeGlob(): string | undefined {
     '.git',
     'dist',
     'build',
-    '.chrome'
+    '.chrome',
+    'bin',
+    'obj',
+    '.vs'
   ])
 
   const customPatterns = excludedFolders.map((folder) => `**/${folder}/**`)
