@@ -629,7 +629,10 @@
             ".git",
             "dist",
             "build",
-            ".chrome"
+            ".chrome",
+            "bin",
+            "obj",
+            ".vs"
           ],
           "description": "Folders to exclude from formatting.",
           "items": {
