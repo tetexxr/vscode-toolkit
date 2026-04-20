@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.10.4",
+  "version": "1.10.5",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.110.0"
@@ -362,6 +362,10 @@
       {
         "command": "toolkit.findFileOrFolder.clearRecent",
         "title": "Toolkit: Find File or Folder — Clear Recent"
+      },
+      {
+        "command": "toolkit.findFileOrFolder.removeActiveFromRecent",
+        "title": "Toolkit: Find File or Folder — Remove Active From Recent"
       }
     ],
     "keybindings": [
@@ -378,6 +382,12 @@
       {
         "command": "toolkit.findFileOrFolder",
         "key": "alt+p"
+      },
+      {
+        "command": "toolkit.findFileOrFolder.removeActiveFromRecent",
+        "key": "delete",
+        "mac": "cmd+backspace",
+        "when": "toolkit.findFileOrFolder.focused && toolkit.findFileOrFolder.emptyInput"
       }
     ],
     "submenus": [
