@@ -411,8 +411,14 @@ A quick-open picker similar to `Cmd+P`, but that also searches **folders** — n
 |---|---|
 | Find File or Folder... | Open the file/folder picker |
 | Find File or Folder — Clear Recent | Clear the recently selected items |
+| Find File or Folder — Remove Active From Recent | Remove the currently highlighted item from the recent list |
 
-**Keybinding:** `Opt+P`
+**Keybindings:**
+
+| Key | Action |
+|---|---|
+| `Opt+P` | Open the picker |
+| `Delete` (Win/Linux) / `Cmd+Backspace` (Mac) | Remove the currently highlighted item from the recent list — only active while the picker is open and the search input is empty, so it never interferes with editing your query |
 
 **Features:**
 
@@ -423,7 +429,7 @@ A quick-open picker similar to `Cmd+P`, but that also searches **folders** — n
 - **Prefix scoring** — results where a term matches the start of a filename or folder name are ranked higher
 - **Recent selections** — previously selected items appear at the top, with a visible separator
 - **Open to the Side** — each file item has a button to open in a split editor
-- **Remove from recent** — each recent item has a button to remove it from the recent list
+- **Remove from recent** — each recent item has a button (or keyboard shortcut above) to remove it from the recent list
 - Respects `files.exclude` and `search.exclude` settings
 - Results are cached for instant subsequent opens
 
