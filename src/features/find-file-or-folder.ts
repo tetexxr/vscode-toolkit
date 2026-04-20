@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode'
 import { scoreItem, matchesFilter, parseTerms } from '../utils/search'
+import { removeFromRecent } from './find-file-or-folder-utils'
 
 const RECENT_KEY = 'toolkit.findFileOrFolder.recent'
 const MAX_RECENT = 20
@@ -34,9 +35,13 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     context.workspaceState.update(RECENT_KEY, recent)
   }
 
-  function removeRecentPath(fsPath: string): void {
-    const recent = getRecentPaths().filter(p => p !== fsPath)
-    context.workspaceState.update(RECENT_KEY, recent)
+  function removeRecentPath(fsPath: string): boolean {
+    const updated = removeFromRecent(getRecentPaths(), fsPath)
+    if (updated === null) {
+      return false
+    }
+    context.workspaceState.update(RECENT_KEY, updated)
+    return true
   }
 
   const openToSideButton: vscode.QuickInputButton = {
@@ -166,10 +171,9 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
       if (!active?.uri) {
         return
       }
-      if (!getRecentPaths().includes(active.uri.fsPath)) {
+      if (!removeRecentPath(active.uri.fsPath)) {
         return
       }
-      removeRecentPath(active.uri.fsPath)
       qp.items = applyRecentsAndButtons(currentAllItems)
     })
   )

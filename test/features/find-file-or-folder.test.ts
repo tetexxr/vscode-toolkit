@@ -1,5 +1,6 @@
 import { strict as assert } from 'assert'
 import { scoreItem, matchesFilter, parseTerms } from '../../src/utils/search'
+import { removeFromRecent } from '../../src/features/find-file-or-folder-utils'
 
 describe('find-file-or-folder', () => {
   describe('scoreItem', () => {
@@ -115,6 +116,39 @@ describe('find-file-or-folder', () => {
       const { include, exclude } = parseTerms('Utils -Test')
       assert.deepEqual(include, ['utils'])
       assert.deepEqual(exclude, ['test'])
+    })
+  })
+
+  describe('removeFromRecent', () => {
+    it('should return a new array without the given path', () => {
+      const recent = ['/a/x.ts', '/a/y.ts', '/a/z.ts']
+      assert.deepEqual(removeFromRecent(recent, '/a/y.ts'), ['/a/x.ts', '/a/z.ts'])
+    })
+
+    it('should return null when the path is not in the list', () => {
+      const recent = ['/a/x.ts', '/a/y.ts']
+      assert.equal(removeFromRecent(recent, '/a/missing.ts'), null)
+    })
+
+    it('should return null for an empty list', () => {
+      assert.equal(removeFromRecent([], '/a/x.ts'), null)
+    })
+
+    it('should not mutate the input array', () => {
+      const recent = ['/a/x.ts', '/a/y.ts']
+      removeFromRecent(recent, '/a/x.ts')
+      assert.deepEqual(recent, ['/a/x.ts', '/a/y.ts'])
+    })
+
+    it('should match the exact fsPath, not a substring', () => {
+      const recent = ['/a/y.ts']
+      assert.equal(removeFromRecent(recent, '/a/y'), null)
+      assert.equal(removeFromRecent(recent, 'y.ts'), null)
+    })
+
+    it('should remove every occurrence if duplicates exist', () => {
+      const recent = ['/a/x.ts', '/a/y.ts', '/a/x.ts']
+      assert.deepEqual(removeFromRecent(recent, '/a/x.ts'), ['/a/y.ts'])
     })
   })
 })
