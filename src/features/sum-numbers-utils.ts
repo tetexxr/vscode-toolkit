@@ -1,11 +1,13 @@
-const NUMBER_PATTERN = /-?\d+(?:[.,]\d+)?/g
+const LEADING_NUMBER_PATTERN = /^\s*(-?\d+(?:[.,]\d+)?)/
 
-export function extractNumbers(text: string): number[] {
-  const matches = text.match(NUMBER_PATTERN) ?? []
+export function extractLeadingNumbers(text: string): number[] {
   const numbers: number[] = []
-  for (const match of matches) {
-    const normalized = match.replace(',', '.')
-    const value = parseFloat(normalized)
+  for (const line of text.split(/\r?\n/)) {
+    const match = line.match(LEADING_NUMBER_PATTERN)
+    if (!match) {
+      continue
+    }
+    const value = parseFloat(match[1].replace(',', '.'))
     if (!isNaN(value)) {
       numbers.push(value)
     }
