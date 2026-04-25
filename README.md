@@ -22,6 +22,7 @@ All-in-one VS Code utility extension.
     - [Move Symbol Up / Down](#move-symbol-up--down)
     - [Add / Remove Braces](#add--remove-braces)
     - [Convert Import Paths](#convert-import-paths)
+    - [Sum Numbers in Selection](#sum-numbers-in-selection)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
     - [C# Code Actions](#c-code-actions)
@@ -337,6 +338,27 @@ import { search } from '../catalog/helpers'
 When the cursor is on an import line, a code action (lightbulb / `Ctrl+.`) offers the conversion in the appropriate direction — alias to relative or relative to alias.
 
 Works with `import ... from`, `export ... from`, `require()`, and dynamic `import()`. Supported languages: TypeScript, JavaScript, TSX, JSX, Vue, Svelte.
+
+#### Sum Numbers in Selection
+
+Sum the leading number of each line in the selected text. Useful for tallying time estimates, budget items, or any list where each row begins with a number.
+
+Run **Toolkit: Sum Numbers in Selection** from the Command Palette or the editor right-click menu. The total appears in a notification with a **Copy** button — the selection is never modified.
+
+- Both `,` and `.` are accepted as the decimal separator.
+- Only the first number on each line is used; numbers inside the line description are ignored.
+- Lines that don't start with a number are skipped.
+
+**Example selection:**
+
+```
+3 h Sprint planning
+1,5 h Architecture review
+0,75 h Daily standups for the week
+2 h QA pass on release candidate 2
+```
+
+→ notification: `sum of 4 numbers = 7,25`.
 
 ### Code Generation & Refactoring
 

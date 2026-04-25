@@ -20,6 +20,7 @@ import { registerDiagnosticHighlightCommands } from './features/diagnostic-highl
 import { registerGitEditCommitCommands } from './features/git-edit-commit'
 import { registerGitStageCommands } from './features/git-stage'
 import { registerFindFileOrFolderCommands } from './features/find-file-or-folder'
+import { registerSumNumbersCommands } from './features/sum-numbers'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -43,6 +44,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerGitEditCommitCommands(context)
   registerGitStageCommands(context)
   registerFindFileOrFolderCommands(context)
+  registerSumNumbersCommands(context)
 }
 
 export function deactivate() {}
