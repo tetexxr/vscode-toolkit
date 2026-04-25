@@ -369,7 +369,7 @@
       },
       {
         "command": "toolkit.sumNumbers",
-        "title": "Toolkit: Sum numbers in selection"
+        "title": "Toolkit: Sum Numbers in Selection"
       }
     ],
     "keybindings": [
