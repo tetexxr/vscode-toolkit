@@ -366,6 +366,10 @@
       {
         "command": "toolkit.findFileOrFolder.removeActiveFromRecent",
         "title": "Toolkit: Find File or Folder — Remove Active From Recent"
+      },
+      {
+        "command": "toolkit.sumNumbers",
+        "title": "Toolkit: Sum numbers in selection"
       }
     ],
     "keybindings": [
@@ -580,6 +584,11 @@
         {
           "command": "toolkit.toggleGitBlame",
           "group": "0_toolkit@5"
+        },
+        {
+          "command": "toolkit.sumNumbers",
+          "group": "0_toolkit@6",
+          "when": "editorHasSelection"
         }
       ]
     },
