@@ -74,7 +74,7 @@ describe('defaults', () => {
   })
 
   it('should include .NET and common web extensions in DEFAULT_INCLUDE_GLOB', () => {
-    for (const ext of ['ts', 'js', 'json', 'cs', 'razor', 'cshtml']) {
+    for (const ext of ['ts', 'js', 'json', 'cs', 'razor', 'cshtml', 'resx', 'xml', 'csproj', 'xaml', 'slnx']) {
       assert.ok(DEFAULT_INCLUDE_GLOB.includes(ext), `Expected DEFAULT_INCLUDE_GLOB to include ${ext}`)
     }
   })

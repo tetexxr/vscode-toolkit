@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.10.6",
+  "version": "1.10.7",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.110.0"
@@ -637,7 +637,7 @@
         },
         "toolkit.formatFiles.includeGlob": {
           "type": "string",
-          "default": "**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml,cs,razor,cshtml}",
+          "default": "**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml,cs,razor,cshtml,resx,xml,csproj,xaml,slnx}",
           "description": "Glob pattern for files to format."
         },
         "toolkit.formatFiles.excludedFolders": {
