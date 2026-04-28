@@ -10,7 +10,7 @@ export const DEFAULT_EXCLUDED_FOLDERS = [
   '.vs'
 ]
 
-export const DEFAULT_INCLUDE_GLOB = '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml,cs,razor,cshtml}'
+export const DEFAULT_INCLUDE_GLOB = '**/*.{ts,js,json,html,css,md,tsx,jsx,vue,scss,less,yaml,yml,cs,razor,cshtml,resx,xml,csproj,xaml,slnx}'
 
 export type ExcludeMap = Record<string, unknown>
 
