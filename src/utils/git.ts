@@ -278,6 +278,16 @@ export async function resetToCommit(cwd: string, hash: string, mode: 'soft' | 'h
   await gitExec(cwd, ['reset', `--${mode}`, hash], 30000)
 }
 
+export async function countCommitsBetween(cwd: string, fromHash: string, toHash: string): Promise<number> {
+  const raw = await gitExec(cwd, ['rev-list', '--count', `${fromHash}..${toHash}`])
+  return parseInt(raw, 10)
+}
+
+export async function hasUncommittedChanges(cwd: string): Promise<boolean> {
+  const status = await gitExec(cwd, ['status', '--porcelain'])
+  return status.length > 0
+}
+
 export async function editCommitMessage(cwd: string, hash: string, newMessage: string): Promise<void> {
   const headHash = await gitExec(cwd, ['rev-parse', 'HEAD'])
 
