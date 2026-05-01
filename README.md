@@ -9,7 +9,7 @@ All-in-one VS Code utility extension.
     - [Open in GitHub](#open-in-github)
     - [Git File History](#git-file-history)
     - [Git Blame (Inline Annotations)](#git-blame-inline-annotations)
-    - [Edit Commit Message](#edit-commit-message)
+    - [Edit Commit Message & Reset HEAD](#edit-commit-message--reset-head)
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
   - [Package Management](#package-management)
@@ -92,9 +92,9 @@ Toggle with **Toolkit: Toggle Git Blame** from the Command Palette.
 - Annotations update automatically when switching files or saving
 - Toggle on/off with the same command
 
-#### Edit Commit Message
+#### Edit Commit Message & Reset HEAD
 
-Edit the message of any commit in the repository history, similar to JetBrains IDEs. Provides a **Commit History** tree view in the Source Control sidebar listing the most recent commits.
+Edit the message of any commit in the repository history, or move HEAD to a previous commit, similar to JetBrains IDEs. Provides a **Commit History** tree view in the Source Control sidebar listing the most recent commits.
 
 **Access:**
 
@@ -104,27 +104,38 @@ Edit the message of any commit in the repository history, similar to JetBrains I
 **Workflow:**
 
 1. Select a commit in the tree view and click the pencil icon.
-2. A panel opens showing the commit info and a text area with the full message.
-3. Edit the message, then click **Apply** (or press `Ctrl+Enter`) to save, or **Discard** to cancel.
-4. The commit history refreshes automatically after a successful edit.
+2. A panel opens showing the commit info, a text area with the full message, the changed files, and the full diff.
+3. From here you can either:
+   - Edit the message, then click **Apply** (or press `Ctrl+Enter`) to save, or **Discard** to cancel.
+   - Move HEAD to that commit using **Reset HEAD here: Soft / Hard** (see below).
+4. The commit history refreshes automatically after a successful edit or reset.
 
 **Panel contents:**
 
 - **Commit info** — hash, author, and date.
 - **Commit message** — editable text area (supports multi-line).
+- **Reset HEAD here** — Soft / Hard buttons (hidden when the selected commit is already HEAD).
 - **Changed Files** — list of files affected by the commit with status (M/A/D), directory and file name, and per-file addition/deletion counts. Click a file to scroll to its diff.
 - **Changes** — full diff with syntax-highlighted patches (additions in green, deletions in red, hunk headers in blue).
 
-**How it works:**
+**How edit message works:**
 
 - **HEAD commit** — uses `git commit --amend`.
 - **Older commits** — uses an automated `git rebase -i` that rewords only the selected commit.
 
+**How reset works:**
+
+- **Soft** — runs `git reset --soft <hash>`. Moves HEAD to the selected commit; all changes from the discarded commits remain in the index (staged), so you can recommit them as a single commit. Working tree is untouched.
+- **Hard** — runs `git reset --hard <hash>`. Moves HEAD to the selected commit and **discards** all later commits **and** any uncommitted changes in the working tree.
+
+Both actions show a modal confirmation before running. The Hard button is rendered in red as a visual reminder that it is destructive.
+
 **Safeguards:**
 
-- If there are **staged changes** when editing HEAD, the operation is rejected to prevent accidentally including them in the amend.
-- If the **working tree is dirty** when editing an older commit, the operation is rejected (rebase requires a clean tree). Commit or stash your changes first.
-- Editing commit messages **rewrites git history**. If the commits have already been pushed, a force push will be required.
+- If there are **staged changes** when editing HEAD's message, the operation is rejected to prevent accidentally including them in the amend.
+- If the **working tree is dirty** when editing an older commit's message, the operation is rejected (rebase requires a clean tree). Commit or stash your changes first.
+- Both **edit message** and **reset** rewrite git history. If the commits have already been pushed, a force push will be required.
+- **Reset --hard cannot be easily undone** — the modal confirmation is the only check. If in doubt, use Soft instead and decide what to do with the staged changes afterwards.
 
 #### Expand Changed Files
 
