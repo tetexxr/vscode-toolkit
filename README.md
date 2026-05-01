@@ -33,6 +33,7 @@ All-in-one VS Code utility extension.
     - [Format Files](#format-files)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
+    - [CSV Rainbow](#csv-rainbow)
     - [PDF Viewer](#pdf-viewer)
     - [Generic Dark Theme](#generic-dark-theme)
     - [JetBrains Dark Icons](#jetbrains-dark-icons)
@@ -517,6 +518,31 @@ Multi-line diagnostics are split into per-line decorations that cover only the t
 | `toolkit.diagnosticHighlight.hintColor` | `#4EC9B0` | Color for Hint diagnostics |
 | `toolkit.diagnosticHighlight.infoColor` | `#3794FF` | Color for Information diagnostics |
 | `toolkit.diagnosticHighlight.warningColor` | `#CCA700` | Color for Warning diagnostics |
+
+#### CSV Rainbow
+
+Colorize the columns of `.csv` and `.tsv` files in rotation so each field is easier to follow at a glance.
+
+The delimiter is auto-detected from the first lines of the file (`,`, `;`, `\t`, `|`). `.tsv` files always use tab. The parser is quote-aware: delimiters inside `"..."` are ignored and `""` is treated as an escaped quote.
+
+**Features:**
+
+- 10 colors applied to columns in rotation, configurable
+- Hover over any field to see its column number and the corresponding header from row 1
+- Auto-detection of `,`, `;`, tab, and pipe as separators
+- Quote-aware parsing — `"a,b",c` is two columns, not three
+- Configurable line cap (default 5000) to keep huge files responsive
+
+Toggle with **Toolkit: Toggle CSV Rainbow** from the Command Palette.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.csvRainbow.enabled` | `true` | Enable rainbow column colors in `.csv` and `.tsv` files |
+| `toolkit.csvRainbow.colors` | 10-color palette | Colors used to colorize columns in rotation |
+| `toolkit.csvRainbow.delimiters` | `[",", ";", "\t", "\|"]` | Candidate delimiters for auto-detection |
+| `toolkit.csvRainbow.maxLines` | `5000` | Maximum number of lines to colorize |
 
 #### PDF Viewer
 
