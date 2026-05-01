@@ -24,7 +24,10 @@ describe('extension entry point', () => {
     'registerExpandChangedFilesCommands',
     'registerDiagnosticHighlightCommands',
     'registerGitEditCommitCommands',
-    'registerGitStageCommands'
+    'registerGitStageCommands',
+    'registerFindFileOrFolderCommands',
+    'registerSumNumbersCommands',
+    'registerCsvRainbowCommands'
   ]
 
   for (const fn of expectedRegistrations) {
@@ -40,4 +43,28 @@ describe('extension entry point', () => {
   it('should export deactivate function', () => {
     assert.ok(source.includes('export function deactivate'))
   })
+})
+
+describe('package.json contributions', () => {
+  const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'))
+  const commands: Array<{ command: string }> = pkg.contributes?.commands ?? []
+  const settings = pkg.contributes?.configuration?.properties ?? {}
+
+  it('should declare toolkit.toggleCsvRainbow command', () => {
+    assert.ok(
+      commands.some(c => c.command === 'toolkit.toggleCsvRainbow'),
+      'toolkit.toggleCsvRainbow command not declared in package.json'
+    )
+  })
+
+  for (const key of [
+    'toolkit.csvRainbow.enabled',
+    'toolkit.csvRainbow.colors',
+    'toolkit.csvRainbow.delimiters',
+    'toolkit.csvRainbow.maxLines'
+  ]) {
+    it(`should declare ${key} setting`, () => {
+      assert.ok(settings[key], `${key} not declared in package.json configuration`)
+    })
+  }
 })
