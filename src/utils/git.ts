@@ -274,6 +274,10 @@ export async function stageFile(cwd: string, ...filePaths: string[]): Promise<vo
   await gitExec(cwd, ['add', ...filePaths])
 }
 
+export async function resetToCommit(cwd: string, hash: string, mode: 'soft' | 'hard' | 'mixed'): Promise<void> {
+  await gitExec(cwd, ['reset', `--${mode}`, hash], 30000)
+}
+
 export async function editCommitMessage(cwd: string, hash: string, newMessage: string): Promise<void> {
   const headHash = await gitExec(cwd, ['rev-parse', 'HEAD'])
 

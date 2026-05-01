@@ -1,11 +1,13 @@
 import * as vscode from 'vscode'
 import {
   getRepoRoot,
+  getCommitHash,
   getCommitLog,
   getCommitMessage,
   getCommitFiles,
   getCommitDiff,
   editCommitMessage,
+  resetToCommit,
   CommitLogEntry,
   CommitFileInfo
 } from '../utils/git'
@@ -93,6 +95,7 @@ function buildEditWebviewHtml(
   message: string,
   files: CommitFileInfo[],
   diffRaw: string,
+  isHead: boolean,
   nonce: string
 ): string {
   const fileListHtml = renderFileList(files)
@@ -193,11 +196,26 @@ function buildEditWebviewHtml(
     button.primary:hover { background: var(--vscode-button-hoverBackground); }
     button.secondary { color: var(--vscode-button-secondaryForeground); background: var(--vscode-button-secondaryBackground); }
     button.secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
+    button.danger { color: var(--vscode-button-foreground); background: var(--vscode-errorForeground, #c74e39); }
+    button.danger:hover { opacity: 0.85; }
 
     .shortcut-hint {
       color: var(--vscode-descriptionForeground);
       font-size: 0.85em;
       margin-left: 4px;
+    }
+
+    .reset-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .reset-label {
+      color: var(--vscode-descriptionForeground);
+      font-size: 0.85em;
+      margin-right: 2px;
     }
 
     /* --- Files section --- */
@@ -340,6 +358,15 @@ function buildEditWebviewHtml(
       <button class="primary" id="apply">Apply</button>
       <button class="secondary" id="discard">Discard</button>
       <span class="shortcut-hint">Ctrl+Enter to apply</span>
+      ${
+        isHead
+          ? ''
+          : `<div class="reset-actions">
+        <span class="reset-label">Reset HEAD here:</span>
+        <button class="secondary" id="reset-soft" title="Move HEAD to this commit, keep changes staged">Soft</button>
+        <button class="danger" id="reset-hard" title="Move HEAD to this commit and discard all later changes">Hard</button>
+      </div>`
+      }
     </div>
   </div>
 
@@ -375,6 +402,13 @@ function buildEditWebviewHtml(
         e.preventDefault();
         vscode.postMessage({ command: 'apply', message: textarea.value });
       }
+    });
+
+    document.getElementById('reset-soft')?.addEventListener('click', () => {
+      vscode.postMessage({ command: 'reset', mode: 'soft' });
+    });
+    document.getElementById('reset-hard')?.addEventListener('click', () => {
+      vscode.postMessage({ command: 'reset', mode: 'hard' });
     });
 
     const diffBlocks = document.querySelectorAll('.diff-block');
@@ -471,16 +505,20 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       let fullMessage: string
       let files: CommitFileInfo[]
       let diffRaw: string
+      let headHash: string
       try {
-        ;[fullMessage, files, diffRaw] = await Promise.all([
+        ;[fullMessage, files, diffRaw, headHash] = await Promise.all([
           getCommitMessage(repoRoot, item.commit.hash),
           getCommitFiles(repoRoot, item.commit.hash),
-          getCommitDiff(repoRoot, item.commit.hash)
+          getCommitDiff(repoRoot, item.commit.hash),
+          getCommitHash(repoRoot)
         ])
       } catch (err: any) {
         vscode.window.showErrorMessage(`Failed to load commit details: ${err.message}`)
         return
       }
+
+      const isHead = item.commit.hash === headHash
 
       const panel = vscode.window.createWebviewPanel(
         'toolkitEditCommitMessage',
@@ -495,11 +533,44 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       })
 
       const nonce = getNonce()
-      panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, diffRaw, nonce)
+      panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, diffRaw, isHead, nonce)
 
       panel.webview.onDidReceiveMessage(async msg => {
         if (msg.command === 'discard') {
           panel.dispose()
+          return
+        }
+
+        if (msg.command === 'reset') {
+          const mode = msg.mode === 'hard' ? 'hard' : 'soft'
+          const shortHash = item.commit.hash.substring(0, 8)
+          const confirmText =
+            mode === 'hard'
+              ? `Reset --hard to ${shortHash}?\n\nThis will move HEAD to this commit and DISCARD all later commits and any uncommitted changes in the working tree. This cannot be easily undone.`
+              : `Reset --soft to ${shortHash}?\n\nHEAD will move to this commit. Changes from later commits will remain in the index (staged).`
+          const confirmLabel = mode === 'hard' ? 'Discard and reset' : 'Reset'
+
+          const choice = await vscode.window.showWarningMessage(confirmText, { modal: true }, confirmLabel)
+          if (choice !== confirmLabel) return
+
+          try {
+            await vscode.window.withProgress(
+              {
+                location: vscode.ProgressLocation.Notification,
+                title: `Resetting --${mode} to ${shortHash}...`,
+                cancellable: false
+              },
+              async () => {
+                await resetToCommit(repoRoot, item.commit.hash, mode)
+              }
+            )
+
+            panel.dispose()
+            provider.refresh()
+            vscode.window.showInformationMessage(`Reset --${mode} to ${shortHash}.`)
+          } catch (err: any) {
+            vscode.window.showErrorMessage(`Reset failed: ${err.message}`)
+          }
           return
         }
 
