@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as crypto from 'crypto'
 import {
   getRepoRoot,
   getCommitHash,
@@ -8,6 +9,8 @@ import {
   getCommitDiff,
   editCommitMessage,
   resetToCommit,
+  countCommitsBetween,
+  hasUncommittedChanges,
   CommitLogEntry,
   CommitFileInfo
 } from '../utils/git'
@@ -17,12 +20,7 @@ function escapeHtml(text: string): string {
 }
 
 function getNonce(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let nonce = ''
-  for (let i = 0; i < 32; i++) {
-    nonce += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return nonce
+  return crypto.randomBytes(16).toString('hex')
 }
 
 function renderFileList(files: CommitFileInfo[]): string {
@@ -542,12 +540,33 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
         }
 
         if (msg.command === 'reset') {
-          const mode = msg.mode === 'hard' ? 'hard' : 'soft'
+          const mode = msg.mode
+          if (mode !== 'soft' && mode !== 'hard') {
+            vscode.window.showErrorMessage(`Invalid reset mode: ${mode}`)
+            return
+          }
           const shortHash = item.commit.hash.substring(0, 8)
+
+          let dirtyWarning = ''
+          try {
+            const hasDirty = await hasUncommittedChanges(repoRoot)
+            if (hasDirty && mode === 'hard') {
+              dirtyWarning = '\n\n⚠ WARNING: You have uncommitted changes that will be LOST.'
+            }
+          } catch {}
+
+          let commitCount = 0
+          try {
+            const headHash = await getCommitHash(repoRoot)
+            commitCount = await countCommitsBetween(repoRoot, item.commit.hash, headHash)
+          } catch {}
+
+          const commitsInfo = commitCount > 0 ? `\n\n${commitCount} commit(s) will be discarded.` : ''
+
           const confirmText =
             mode === 'hard'
-              ? `Reset --hard to ${shortHash}?\n\nThis will move HEAD to this commit and DISCARD all later commits and any uncommitted changes in the working tree. This cannot be easily undone.`
-              : `Reset --soft to ${shortHash}?\n\nHEAD will move to this commit. Changes from later commits will remain in the index (staged).`
+              ? `Reset --hard to ${shortHash}?${commitsInfo}\n\nThis will move HEAD to this commit and DISCARD all later commits and any uncommitted changes in the working tree. This cannot be easily undone.${dirtyWarning}`
+              : `Reset --soft to ${shortHash}?${commitsInfo}\n\nHEAD will move to this commit. Changes from later commits will remain in the index (staged).`
           const confirmLabel = mode === 'hard' ? 'Discard and reset' : 'Reset'
 
           const choice = await vscode.window.showWarningMessage(confirmText, { modal: true }, confirmLabel)
@@ -565,8 +584,8 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
               }
             )
 
-            panel.dispose()
             provider.refresh()
+            panel.dispose()
             vscode.window.showInformationMessage(`Reset --${mode} to ${shortHash}.`)
           } catch (err: any) {
             vscode.window.showErrorMessage(`Reset failed: ${err.message}`)
@@ -583,6 +602,7 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
           }
 
           if (newMessage === fullMessage.trim()) {
+            provider.refresh()
             panel.dispose()
             return
           }
@@ -599,8 +619,8 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
               }
             )
 
-            panel.dispose()
             provider.refresh()
+            panel.dispose()
             vscode.window.showInformationMessage('Commit message updated.')
           } catch (err: any) {
             vscode.window.showErrorMessage(`Failed to update commit message: ${err.message}`)
