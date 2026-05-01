@@ -13,6 +13,7 @@ import {
   getCommitFiles,
   getCommitDiff,
   editCommitMessage,
+  resetToCommit,
   stageFile,
   getChangedFileDirectories
 } from '../../src/utils/git'
@@ -403,6 +404,79 @@ describe('editCommitMessage', () => {
     const secondHash = git('log', '--format=%H', '--skip=1', '-1')
     fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'dirty change')
     await assert.rejects(() => editCommitMessage(tmpRepo, secondHash, 'should fail'), /uncommitted changes/)
+  })
+})
+
+describe('resetToCommit', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-reset-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'one')
+    git('add', 'file.txt')
+    git('commit', '-m', 'first')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'two')
+    git('add', 'file.txt')
+    git('commit', '-m', 'second')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'three')
+    git('add', 'file.txt')
+    git('commit', '-m', 'third')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should move HEAD with --soft and keep changes staged', async () => {
+    const firstHash = git('log', '--format=%H', '--reverse').split('\n')[0]
+    await resetToCommit(tmpRepo, firstHash, 'soft')
+    assert.equal(git('rev-parse', 'HEAD'), firstHash)
+    const staged = git('diff', '--cached', '--name-only')
+    assert.ok(staged.includes('file.txt'), 'file.txt should be staged')
+    assert.equal(fs.readFileSync(path.join(tmpRepo, 'file.txt'), 'utf-8'), 'three')
+  })
+
+  it('should move HEAD with --hard and discard working tree changes', async () => {
+    const firstHash = git('log', '--format=%H', '--reverse').split('\n')[0]
+    await resetToCommit(tmpRepo, firstHash, 'hard')
+    assert.equal(git('rev-parse', 'HEAD'), firstHash)
+    assert.equal(git('diff', '--cached', '--name-only'), '')
+    assert.equal(git('status', '--porcelain'), '')
+    assert.equal(fs.readFileSync(path.join(tmpRepo, 'file.txt'), 'utf-8'), 'one')
+  })
+
+  it('should move HEAD with --mixed and unstage changes', async () => {
+    const firstHash = git('log', '--format=%H', '--reverse').split('\n')[0]
+    await resetToCommit(tmpRepo, firstHash, 'mixed')
+    assert.equal(git('rev-parse', 'HEAD'), firstHash)
+    assert.equal(git('diff', '--cached', '--name-only'), '')
+    assert.ok(git('status', '--porcelain').includes('file.txt'))
+    assert.equal(fs.readFileSync(path.join(tmpRepo, 'file.txt'), 'utf-8'), 'three')
+  })
+
+  it('should be a no-op when resetting to current HEAD with --soft', async () => {
+    const headHash = git('rev-parse', 'HEAD')
+    await resetToCommit(tmpRepo, headHash, 'soft')
+    assert.equal(git('rev-parse', 'HEAD'), headHash)
+  })
+
+  it('should reject for an invalid hash', async () => {
+    await assert.rejects(() => resetToCommit(tmpRepo, 'invalid-hash', 'soft'))
+  })
+
+  it('should reject for an invalid cwd', async () => {
+    const headHash = git('rev-parse', 'HEAD')
+    await assert.rejects(() => resetToCommit('/nonexistent-dir', headHash, 'soft'))
   })
 })
 
