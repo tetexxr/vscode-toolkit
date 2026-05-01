@@ -21,6 +21,7 @@ import { registerGitEditCommitCommands } from './features/git-edit-commit'
 import { registerGitStageCommands } from './features/git-stage'
 import { registerFindFileOrFolderCommands } from './features/find-file-or-folder'
 import { registerSumNumbersCommands } from './features/sum-numbers'
+import { registerCsvRainbowCommands } from './features/csv-rainbow'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -45,6 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerGitStageCommands(context)
   registerFindFileOrFolderCommands(context)
   registerSumNumbersCommands(context)
+  registerCsvRainbowCommands(context)
 }
 
 export function deactivate() {}
