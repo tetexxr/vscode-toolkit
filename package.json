@@ -370,6 +370,10 @@
       {
         "command": "toolkit.sumNumbers",
         "title": "Toolkit: Sum Numbers in Selection"
+      },
+      {
+        "command": "toolkit.toggleCsvRainbow",
+        "title": "Toolkit: Toggle CSV Rainbow"
       }
     ],
     "keybindings": [
@@ -923,6 +927,48 @@
           "type": "string",
           "default": "#CCA700",
           "description": "Color for Warning diagnostics (underline + background tint)."
+        },
+        "toolkit.csvRainbow.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable rainbow column colors in .csv and .tsv files."
+        },
+        "toolkit.csvRainbow.colors": {
+          "type": "array",
+          "default": [
+            "#E06C75",
+            "#E5C07B",
+            "#98C379",
+            "#56B6C2",
+            "#61AFEF",
+            "#C678DD",
+            "#D19A66",
+            "#ABB2BF",
+            "#BE5046",
+            "#3E82C0"
+          ],
+          "description": "Color palette used to colorize CSV columns in rotation.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.csvRainbow.delimiters": {
+          "type": "array",
+          "default": [
+            ",",
+            ";",
+            "\t",
+            "|"
+          ],
+          "description": "Candidate delimiters used to auto-detect the CSV separator. TSV files always use tab.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.csvRainbow.maxLines": {
+          "type": "number",
+          "default": 5000,
+          "description": "Maximum number of lines to colorize. Lines beyond this limit are skipped to keep performance predictable on huge files."
         }
       }
     }
