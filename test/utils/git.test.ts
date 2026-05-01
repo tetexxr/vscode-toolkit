@@ -15,7 +15,9 @@ import {
   editCommitMessage,
   resetToCommit,
   stageFile,
-  getChangedFileDirectories
+  getChangedFileDirectories,
+  countCommitsBetween,
+  hasUncommittedChanges
 } from '../../src/utils/git'
 
 describe('getFileLogPatch', () => {
@@ -477,6 +479,115 @@ describe('resetToCommit', () => {
   it('should reject for an invalid cwd', async () => {
     const headHash = git('rev-parse', 'HEAD')
     await assert.rejects(() => resetToCommit('/nonexistent-dir', headHash, 'soft'))
+  })
+})
+
+describe('countCommitsBetween', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-count-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'one')
+    git('add', 'file.txt')
+    git('commit', '-m', 'first')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'two')
+    git('add', 'file.txt')
+    git('commit', '-m', 'second')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'three')
+    git('add', 'file.txt')
+    git('commit', '-m', 'third')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should count commits between first and HEAD', async () => {
+    const firstHash = git('log', '--format=%H', '--reverse').split('\n')[0]
+    const headHash = git('rev-parse', 'HEAD')
+    const count = await countCommitsBetween(tmpRepo, firstHash, headHash)
+    assert.equal(count, 2)
+  })
+
+  it('should return 0 when from and to are the same', async () => {
+    const headHash = git('rev-parse', 'HEAD')
+    const count = await countCommitsBetween(tmpRepo, headHash, headHash)
+    assert.equal(count, 0)
+  })
+
+  it('should count 1 commit between adjacent commits', async () => {
+    const [firstHash, secondHash] = git('log', '--format=%H', '--reverse').split('\n').slice(0, 2)
+    const count = await countCommitsBetween(tmpRepo, firstHash, secondHash)
+    assert.equal(count, 1)
+  })
+
+  it('should reject for an invalid hash', async () => {
+    await assert.rejects(() => countCommitsBetween(tmpRepo, 'invalid-hash', 'HEAD'))
+  })
+
+  it('should reject for an invalid cwd', async () => {
+    await assert.rejects(() => countCommitsBetween('/nonexistent-dir', 'HEAD', 'HEAD'))
+  })
+})
+
+describe('hasUncommittedChanges', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-dirty-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'initial')
+    git('add', 'file.txt')
+    git('commit', '-m', 'initial commit')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should return false for a clean working tree', async () => {
+    const result = await hasUncommittedChanges(tmpRepo)
+    assert.equal(result, false)
+  })
+
+  it('should return true for modified unstaged file', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'modified')
+    const result = await hasUncommittedChanges(tmpRepo)
+    assert.equal(result, true)
+  })
+
+  it('should return true for modified staged file', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'modified')
+    git('add', 'file.txt')
+    const result = await hasUncommittedChanges(tmpRepo)
+    assert.equal(result, true)
+  })
+
+  it('should return true for untracked file', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'new.txt'), 'new')
+    const result = await hasUncommittedChanges(tmpRepo)
+    assert.equal(result, true)
+  })
+
+  it('should reject for an invalid cwd', async () => {
+    await assert.rejects(() => hasUncommittedChanges('/nonexistent-dir'))
   })
 })
 
