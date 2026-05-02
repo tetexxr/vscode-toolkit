@@ -483,6 +483,12 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
     showCollapseAll: false
   })
 
+  treeView.onDidChangeVisibility(({ visible }) => {
+    if (visible) {
+      provider.refresh()
+    }
+  })
+
   context.subscriptions.push(
     treeView,
 
