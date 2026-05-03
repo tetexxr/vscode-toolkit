@@ -12,6 +12,7 @@ import {
   getCommitMessage,
   getCommitFiles,
   getCommitDiff,
+  getCommitDateIso,
   editCommitMessage,
   resetToCommit,
   stageFile,
@@ -406,6 +407,51 @@ describe('editCommitMessage', () => {
     const secondHash = git('log', '--format=%H', '--skip=1', '-1')
     fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'dirty change')
     await assert.rejects(() => editCommitMessage(tmpRepo, secondHash, 'should fail'), /uncommitted changes/)
+  })
+
+  it('should amend HEAD commit with a new date', async () => {
+    await editCommitMessage(tmpRepo, git('rev-parse', 'HEAD'), 'third commit', '2020-01-15 10:30:00')
+    const newDate = git('log', '-1', '--format=%ai')
+    assert.ok(newDate.includes('2020-01-15'))
+  })
+
+  it('should reword a non-HEAD commit with a new date via rebase', async () => {
+    const secondHash = git('log', '--format=%H', '--skip=1', '-1')
+    await editCommitMessage(tmpRepo, secondHash, 'second commit', '2019-06-20 14:00:00')
+    const logOutput = git('log', '--format=%ai', '--all')
+    assert.ok(logOutput.includes('2019-06-20'))
+  })
+})
+
+describe('getCommitDateIso', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-date-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'hello')
+    git('add', 'file.txt')
+    git('commit', '-m', 'initial commit')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should return ISO date for a commit', async () => {
+    const log = await getCommitLog(tmpRepo, 1)
+    const date = await getCommitDateIso(tmpRepo, log[0].hash)
+    assert.ok(date.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/), `expected ISO format, got: ${date}`)
+  })
+
+  it('should reject for an invalid hash', async () => {
+    await assert.rejects(() => getCommitDateIso(tmpRepo, 'invalid-hash'))
   })
 })
 
