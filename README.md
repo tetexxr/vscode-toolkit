@@ -106,7 +106,7 @@ Edit the message of any commit in the repository history, or move HEAD to a prev
 1. Select a commit in the tree view and click the pencil icon.
 2. A panel opens showing the commit info, a text area with the full message, the changed files, and the full diff.
 3. From here you can either:
-   - Edit the message, then click **Apply** (or press `Ctrl+Enter`) to save, or **Discard** to cancel.
+   - Edit the message, optionally change the date (see below), then click **Apply** (or press `Ctrl+Enter`) to save, or **Discard** to cancel.
    - Move HEAD to that commit using **Reset HEAD here: Soft / Hard** (see below).
 4. The commit history refreshes automatically after a successful edit or reset.
 
@@ -114,9 +114,17 @@ Edit the message of any commit in the repository history, or move HEAD to a prev
 
 - **Commit info** — hash, author, and date.
 - **Commit message** — editable text area (supports multi-line).
+- **Change date** — optional checkbox with a date picker to modify the commit timestamp.
 - **Reset HEAD here** — Soft / Hard buttons (hidden when the selected commit is already HEAD).
 - **Changed Files** — list of files affected by the commit with status (M/A/D), directory and file name, and per-file addition/deletion counts. Click a file to scroll to its diff.
 - **Changes** — full diff with syntax-highlighted patches (additions in green, deletions in red, hunk headers in blue).
+
+**Changing the commit date:**
+
+Check the **Change date** box to enable the date picker. The date is pre-filled with the current commit timestamp. When you apply, the commit will be amended (or rebased for older commits) with the new date.
+
+- **HEAD commit** — uses `git commit --amend --date`.
+- **Older commits** — uses an automated `git rebase -i` that stops at the commit, amends it with the new date, then continues.
 
 **How edit message works:**
 
