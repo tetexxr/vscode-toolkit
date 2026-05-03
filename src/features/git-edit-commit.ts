@@ -7,6 +7,7 @@ import {
   getCommitMessage,
   getCommitFiles,
   getCommitDiff,
+  getCommitDateIso,
   editCommitMessage,
   resetToCommit,
   countCommitsBetween,
@@ -94,7 +95,8 @@ function buildEditWebviewHtml(
   files: CommitFileInfo[],
   diffRaw: string,
   isHead: boolean,
-  nonce: string
+  nonce: string,
+  commitDateIso: string
 ): string {
   const fileListHtml = renderFileList(files)
   const diffHtml = renderDiff(diffRaw)
@@ -201,6 +203,42 @@ function buildEditWebviewHtml(
       color: var(--vscode-descriptionForeground);
       font-size: 0.85em;
       margin-left: 4px;
+    }
+
+    .date-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .date-section label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: normal;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .date-section input[type="datetime-local"] {
+      padding: 4px 8px;
+      font-family: var(--vscode-editor-font-family, monospace);
+      font-size: var(--vscode-editor-font-size, 13px);
+      color: var(--vscode-input-foreground);
+      background: var(--vscode-input-background);
+      border: 1px solid var(--vscode-input-border, var(--vscode-panel-border, rgba(128,128,128,0.3)));
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .date-section input[type="datetime-local"]:focus {
+      border-color: var(--vscode-focusBorder);
+    }
+
+    .date-section input[type="datetime-local"]:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .reset-actions {
@@ -352,6 +390,13 @@ function buildEditWebviewHtml(
     </div>
     <label for="message">Commit message</label>
     <textarea id="message">${escapeHtml(message)}</textarea>
+    <div class="date-section">
+      <label>
+        <input type="checkbox" id="change-date">
+        <span>Change date</span>
+      </label>
+      <input type="datetime-local" id="date-picker" value="${commitDateIso.slice(0, 16)}" disabled>
+    </div>
     <div class="actions">
       <button class="primary" id="apply">Apply</button>
       <button class="secondary" id="discard">Discard</button>
@@ -386,11 +431,19 @@ function buildEditWebviewHtml(
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
     const textarea = document.getElementById('message');
+    const changeDateCheckbox = document.getElementById('change-date');
+    const datePicker = document.getElementById('date-picker');
     textarea.focus();
     textarea.setSelectionRange(0, 0);
 
+    changeDateCheckbox.addEventListener('change', () => {
+      datePicker.disabled = !changeDateCheckbox.checked;
+    });
+
     document.getElementById('apply').addEventListener('click', () => {
-      vscode.postMessage({ command: 'apply', message: textarea.value });
+      const rawDate = changeDateCheckbox.checked ? datePicker.value : undefined;
+      const date = rawDate ? rawDate.replace('T', ' ') + ':00' : undefined;
+      vscode.postMessage({ command: 'apply', message: textarea.value, date: date || null });
     });
     document.getElementById('discard').addEventListener('click', () => {
       vscode.postMessage({ command: 'discard' });
@@ -398,7 +451,9 @@ function buildEditWebviewHtml(
     textarea.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        vscode.postMessage({ command: 'apply', message: textarea.value });
+        const rawDate = changeDateCheckbox.checked ? datePicker.value : undefined;
+        const date = rawDate ? rawDate.replace('T', ' ') + ':00' : undefined;
+        vscode.postMessage({ command: 'apply', message: textarea.value, date: date || null });
       }
     });
 
@@ -510,12 +565,14 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       let files: CommitFileInfo[]
       let diffRaw: string
       let headHash: string
+      let commitDateIso: string
       try {
-        ;[fullMessage, files, diffRaw, headHash] = await Promise.all([
+        ;[fullMessage, files, diffRaw, headHash, commitDateIso] = await Promise.all([
           getCommitMessage(repoRoot, item.commit.hash),
           getCommitFiles(repoRoot, item.commit.hash),
           getCommitDiff(repoRoot, item.commit.hash),
-          getCommitHash(repoRoot)
+          getCommitHash(repoRoot),
+          getCommitDateIso(repoRoot, item.commit.hash)
         ])
       } catch (err: any) {
         vscode.window.showErrorMessage(`Failed to load commit details: ${err.message}`)
@@ -537,7 +594,7 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       })
 
       const nonce = getNonce()
-      panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, diffRaw, isHead, nonce)
+      panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, diffRaw, isHead, nonce, commitDateIso)
 
       panel.webview.onDidReceiveMessage(async msg => {
         if (msg.command === 'discard') {
@@ -601,13 +658,17 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
 
         if (msg.command === 'apply') {
           const newMessage = (msg.message as string).trim()
+          const newDate = msg.date as string | null
 
           if (!newMessage) {
             vscode.window.showErrorMessage('Commit message cannot be empty.')
             return
           }
 
-          if (newMessage === fullMessage.trim()) {
+          const messageUnchanged = newMessage === fullMessage.trim()
+          const dateSet = newDate !== null
+
+          if (messageUnchanged && !dateSet) {
             provider.refresh()
             panel.dispose()
             return
@@ -617,11 +678,11 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
             await vscode.window.withProgress(
               {
                 location: vscode.ProgressLocation.Notification,
-                title: 'Updating commit message...',
+                title: 'Updating commit...',
                 cancellable: false
               },
               async () => {
-                await editCommitMessage(repoRoot, item.commit.hash, newMessage)
+                await editCommitMessage(repoRoot, item.commit.hash, newMessage, newDate || undefined)
               }
             )
 
