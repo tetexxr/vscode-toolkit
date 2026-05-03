@@ -231,6 +231,10 @@ export async function getCommitMessage(cwd: string, hash: string): Promise<strin
   return gitExec(cwd, ['log', '-1', '--format=%B', hash])
 }
 
+export async function getCommitDateIso(cwd: string, hash: string): Promise<string> {
+  return gitExec(cwd, ['log', '-1', '--format=%aI', hash])
+}
+
 export interface CommitFileInfo {
   status: string
   path: string
@@ -288,7 +292,7 @@ export async function hasUncommittedChanges(cwd: string): Promise<boolean> {
   return status.length > 0
 }
 
-export async function editCommitMessage(cwd: string, hash: string, newMessage: string): Promise<void> {
+export async function editCommitMessage(cwd: string, hash: string, newMessage: string, newDate?: string): Promise<void> {
   const headHash = await gitExec(cwd, ['rev-parse', 'HEAD'])
 
   if (hash === headHash) {
@@ -298,30 +302,40 @@ export async function editCommitMessage(cwd: string, hash: string, newMessage: s
         'There are staged changes that would be included in the amend. Please unstage or commit them first.'
       )
     }
-    await gitExec(cwd, ['commit', '--amend', '-m', newMessage], 30000)
+    const args = ['commit', '--amend', '-m', newMessage]
+    if (newDate) {
+      args.push('--date', newDate)
+    }
+    await gitExec(cwd, args, 30000)
   } else {
     const status = await gitExec(cwd, ['status', '--porcelain']).catch(() => '')
     if (status) {
       throw new Error('Working tree has uncommitted changes. Please commit or stash them before editing older commits.')
     }
 
-    const shortHash = hash.substring(0, 7)
-    const msgFile = path.join(os.tmpdir(), `toolkit-reword-${Date.now()}.txt`)
-    fs.writeFileSync(msgFile, newMessage)
+    await gitExec(cwd, ['rebase', '--abort']).catch(() => {})
 
-    const sedInPlace = process.platform === 'darwin'
-      ? `sed -i '' 's/^pick ${shortHash}/reword ${shortHash}/'`
-      : `sed -i 's/^pick ${shortHash}/reword ${shortHash}/'`
+    const shortHash = hash.substring(0, 7)
+    const parentHash = await gitExec(cwd, ['rev-parse', `${hash}^`])
 
     try {
-      await gitExec(cwd, ['rebase', '-i', `${hash}^`], 60000, {
-        GIT_SEQUENCE_EDITOR: sedInPlace,
-        GIT_EDITOR: `cp "${msgFile}"`
+      const env: Record<string, string> = {}
+      if (newDate) {
+        env.GIT_AUTHOR_DATE = newDate
+        env.GIT_COMMITTER_DATE = newDate
+      }
+
+      await gitExec(cwd, ['rebase', '-i', parentHash], 60000, {
+        GIT_SEQUENCE_EDITOR: `sed -i '' 's/^pick ${shortHash}/edit ${shortHash}/'`,
+        ...env
       })
-    } finally {
-      try {
-        fs.unlinkSync(msgFile)
-      } catch {}
-    }
+
+      const amendArgs = ['commit', '--amend', '-m', newMessage]
+      if (newDate) {
+        amendArgs.push('--date', newDate)
+      }
+      await gitExec(cwd, amendArgs, 30000, env)
+      await gitExec(cwd, ['rebase', '--continue'], 30000)
+    } finally {}
   }
 }
