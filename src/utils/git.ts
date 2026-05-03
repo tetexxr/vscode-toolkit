@@ -318,24 +318,20 @@ export async function editCommitMessage(cwd: string, hash: string, newMessage: s
     const shortHash = hash.substring(0, 7)
     const parentHash = await gitExec(cwd, ['rev-parse', `${hash}^`])
 
-    try {
-      const env: Record<string, string> = {}
-      if (newDate) {
-        env.GIT_AUTHOR_DATE = newDate
-        env.GIT_COMMITTER_DATE = newDate
-      }
+    const amendArgs = ['commit', '--amend', '-m', newMessage]
+    if (newDate) {
+      amendArgs.push('--date', newDate)
+    }
 
-      await gitExec(cwd, ['rebase', '-i', parentHash], 60000, {
-        GIT_SEQUENCE_EDITOR: `sed -i '' 's/^pick ${shortHash}/edit ${shortHash}/'`,
-        ...env
-      })
+    const env: Record<string, string> = newDate
+      ? { GIT_AUTHOR_DATE: newDate, GIT_COMMITTER_DATE: newDate }
+      : {}
 
-      const amendArgs = ['commit', '--amend', '-m', newMessage]
-      if (newDate) {
-        amendArgs.push('--date', newDate)
-      }
-      await gitExec(cwd, amendArgs, 30000, env)
-      await gitExec(cwd, ['rebase', '--continue'], 30000)
-    } finally {}
+    await gitExec(cwd, ['rebase', '-i', parentHash], 60000, {
+      GIT_SEQUENCE_EDITOR: `sed -i '' 's/^pick ${shortHash}/edit ${shortHash}/'`
+    })
+
+    await gitExec(cwd, amendArgs, 30000, env)
+    await gitExec(cwd, ['rebase', '--continue'], 30000)
   }
 }
