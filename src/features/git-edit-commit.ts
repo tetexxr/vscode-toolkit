@@ -362,12 +362,20 @@ function buildEditWebviewHtml(
     /* --- Diff section --- */
 
     .diff-block {
-      margin: 8px 0;
+      margin: 24px 0;
       border-radius: 4px;
       overflow: hidden;
       border: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
       font-family: var(--vscode-editor-font-family, monospace);
       font-size: var(--vscode-editor-font-size, 13px);
+    }
+
+    .diff-block + .diff-block {
+      margin-top: 28px;
+    }
+
+    .diff-block:first-of-type {
+      margin-top: 8px;
     }
 
     .diff-header, .diff-meta {
