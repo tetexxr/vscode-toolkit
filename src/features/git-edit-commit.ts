@@ -604,6 +604,53 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
 
 let editPanel: vscode.WebviewPanel | undefined
 
+interface GitRepository {
+  readonly state: { readonly onDidChange: vscode.Event<void> }
+}
+
+interface GitApi {
+  readonly repositories: ReadonlyArray<GitRepository>
+  readonly onDidOpenRepository: vscode.Event<GitRepository>
+}
+
+interface GitExtension {
+  getAPI(version: 1): GitApi
+}
+
+function watchHeadChanges(context: vscode.ExtensionContext, provider: CommitListProvider): void {
+  const gitExt = vscode.extensions.getExtension<GitExtension>('vscode.git')
+  if (!gitExt) return
+
+  let lastHeadHash: string | undefined
+
+  const onRepoChange = async () => {
+    const root = await provider.getRepoRoot()
+    if (!root) return
+    try {
+      const headHash = await getCommitHash(root)
+      if (headHash !== lastHeadHash) {
+        lastHeadHash = headHash
+        provider.refresh()
+      }
+    } catch {}
+  }
+
+  const subscribe = (repo: GitRepository) => {
+    context.subscriptions.push(repo.state.onDidChange(onRepoChange))
+  }
+
+  const setup = (api: GitApi) => {
+    for (const repo of api.repositories) subscribe(repo)
+    context.subscriptions.push(api.onDidOpenRepository(subscribe))
+  }
+
+  if (gitExt.isActive) {
+    setup(gitExt.exports.getAPI(1))
+  } else {
+    gitExt.activate().then(ext => setup(ext.getAPI(1)))
+  }
+}
+
 export function registerGitEditCommitCommands(context: vscode.ExtensionContext): void {
   const provider = new CommitListProvider()
 
@@ -617,6 +664,8 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       provider.refresh()
     }
   })
+
+  watchHeadChanges(context, provider)
 
   context.subscriptions.push(
     treeView,
@@ -760,7 +809,7 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
         {
           label: '$(edit) Mixed',
           description: 'Move HEAD and unstage — keep changes in working tree',
-          detail: "Default git reset behavior. Later commits become unstaged working-tree changes.",
+          detail: 'Default git reset behavior. Later commits become unstaged working-tree changes.',
           mode: 'mixed'
         },
         {
