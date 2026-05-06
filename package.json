@@ -347,6 +347,11 @@
         "icon": "$(edit)"
       },
       {
+        "command": "toolkit.gitCommitList.resetTo",
+        "title": "Toolkit: Reset HEAD to Commit...",
+        "icon": "$(discard)"
+      },
+      {
         "command": "toolkit.gitCommitList.refresh",
         "title": "Toolkit: Refresh Commit List",
         "icon": "$(refresh)"
@@ -426,7 +431,12 @@
         {
           "command": "toolkit.gitCommitList.editMessage",
           "when": "view == toolkitCommitList && viewItem == commit",
-          "group": "inline"
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.gitCommitList.resetTo",
+          "when": "view == toolkitCommitList && viewItem == commit",
+          "group": "inline@2"
         }
       ],
       "toolkit.csharp.new": [

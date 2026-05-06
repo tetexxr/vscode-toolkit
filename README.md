@@ -98,16 +98,18 @@ Edit the message of any commit in the repository history, or move HEAD to a prev
 
 **Access:**
 
-- **Source Control sidebar** — expand the **Commit History** section, select a commit, and click the pencil icon.
-- **Command Palette** — run **Toolkit: Edit Commit Message** when a commit is selected.
+- **Source Control sidebar** — expand the **Commit History** section. Each commit has two inline icons:
+  - **Pencil** — opens the edit panel (message, date, and per-file diff).
+  - **Reset arrow** — opens a quick picker to reset HEAD to that commit (Soft / Mixed / Hard).
+- **Command Palette** — run **Toolkit: Edit Commit Message** or **Toolkit: Reset HEAD to Commit...** when a commit is selected.
 
 **Workflow:**
 
 1. Select a commit in the tree view and click the pencil icon.
-2. A panel opens showing the commit info, a text area with the full message, the changed files, and the full diff.
+2. A panel opens showing the commit info, a text area with the full message, the changed files, and the per-file diff.
 3. From here you can either:
    - Edit the message, optionally change the date (see below), then click **Apply** (or press `Ctrl+Enter`) to save, or **Discard** to cancel.
-   - Move HEAD to that commit using **Reset HEAD here: Soft / Hard** (see below).
+   - Move HEAD to that commit using **Reset HEAD here: Soft / Hard** (see below). For all three modes including `--mixed`, use the inline reset icon in the tree view instead.
 4. The commit history refreshes automatically after a successful edit or reset.
 
 **Panel contents:**
@@ -115,9 +117,9 @@ Edit the message of any commit in the repository history, or move HEAD to a prev
 - **Commit info** — hash, author, and date.
 - **Commit message** — editable text area (supports multi-line).
 - **Change date** — optional checkbox with a date picker to modify the commit timestamp.
-- **Reset HEAD here** — Soft / Hard buttons (hidden when the selected commit is already HEAD).
+- **Reset HEAD here** — Soft / Hard buttons (hidden when the selected commit is already HEAD). For `--mixed`, use the inline reset icon in the tree view.
 - **Changed Files** — list of files affected by the commit with status (M/A/D), directory and file name, and per-file addition/deletion counts. Click a file to scroll to its diff.
-- **Changes** — full diff with syntax-highlighted patches (additions in green, deletions in red, hunk headers in blue).
+- **Changes** — diffs rendered per file with syntax-highlighted patches (additions in green, deletions in red, hunk headers in blue). Diffs are loaded lazily as you scroll into view, so the panel opens instantly even for commits with hundreds of changed files. Files with more than 5,000 modified lines and binary files are not auto-loaded — they show a "Load diff" button or a "Binary file" placeholder.
 
 **Changing the commit date:**
 
@@ -134,9 +136,10 @@ Check the **Change date** box to enable the date picker. The date is pre-filled 
 **How reset works:**
 
 - **Soft** — runs `git reset --soft <hash>`. Moves HEAD to the selected commit; all changes from the discarded commits remain in the index (staged), so you can recommit them as a single commit. Working tree is untouched.
+- **Mixed** — runs `git reset --mixed <hash>` (git's default reset). Moves HEAD to the selected commit; later changes are kept in the working tree but unstaged. Available from the inline reset icon in the tree view.
 - **Hard** — runs `git reset --hard <hash>`. Moves HEAD to the selected commit and **discards** all later commits **and** any uncommitted changes in the working tree.
 
-Both actions show a modal confirmation before running. The Hard button is rendered in red as a visual reminder that it is destructive.
+All three actions show a modal confirmation before running. The Hard button in the panel is rendered in red as a visual reminder that it is destructive, and the inline reset picker marks the Hard option with a warning icon.
 
 **Safeguards:**
 

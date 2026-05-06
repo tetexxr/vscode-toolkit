@@ -489,6 +489,62 @@ function buildEditWebviewHtml(
 </html>`
 }
 
+type ResetMode = 'soft' | 'mixed' | 'hard'
+
+async function performResetWithConfirm(
+  repoRoot: string,
+  commitHash: string,
+  mode: ResetMode,
+  onSuccess?: () => void
+): Promise<void> {
+  const shortHash = commitHash.substring(0, 8)
+
+  let dirtyWarning = ''
+  try {
+    const hasDirty = await hasUncommittedChanges(repoRoot)
+    if (hasDirty && mode === 'hard') {
+      dirtyWarning = '\n\n⚠ WARNING: You have uncommitted changes that will be LOST.'
+    }
+  } catch {}
+
+  let commitCount = 0
+  try {
+    const headHash = await getCommitHash(repoRoot)
+    commitCount = await countCommitsBetween(repoRoot, commitHash, headHash)
+  } catch {}
+
+  const commitsInfo = commitCount > 0 ? `\n\n${commitCount} commit(s) will be discarded.` : ''
+
+  const confirmText =
+    mode === 'hard'
+      ? `Reset --hard to ${shortHash}?${commitsInfo}\n\nThis will move HEAD to this commit and DISCARD all later commits and any uncommitted changes in the working tree. This cannot be easily undone.${dirtyWarning}`
+      : mode === 'mixed'
+        ? `Reset --mixed to ${shortHash}?${commitsInfo}\n\nHEAD will move to this commit. Changes from later commits will be kept in the working tree but unstaged.`
+        : `Reset --soft to ${shortHash}?${commitsInfo}\n\nHEAD will move to this commit. Changes from later commits will remain in the index (staged).`
+  const confirmLabel = mode === 'hard' ? 'Discard and reset' : 'Reset'
+
+  const choice = await vscode.window.showWarningMessage(confirmText, { modal: true }, confirmLabel)
+  if (choice !== confirmLabel) return
+
+  try {
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Resetting --${mode} to ${shortHash}...`,
+        cancellable: false
+      },
+      async () => {
+        await resetToCommit(repoRoot, commitHash, mode)
+      }
+    )
+
+    onSuccess?.()
+    vscode.window.showInformationMessage(`Reset --${mode} to ${shortHash}.`)
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`Reset failed: ${err.message}`)
+  }
+}
+
 class CommitTreeItem extends vscode.TreeItem {
   constructor(public readonly commit: CommitLogEntry) {
     super(commit.subject, vscode.TreeItemCollapsibleState.None)
@@ -635,51 +691,10 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
             vscode.window.showErrorMessage(`Invalid reset mode: ${mode}`)
             return
           }
-          const shortHash = item.commit.hash.substring(0, 8)
-
-          let dirtyWarning = ''
-          try {
-            const hasDirty = await hasUncommittedChanges(repoRoot)
-            if (hasDirty && mode === 'hard') {
-              dirtyWarning = '\n\n⚠ WARNING: You have uncommitted changes that will be LOST.'
-            }
-          } catch {}
-
-          let commitCount = 0
-          try {
-            const headHash = await getCommitHash(repoRoot)
-            commitCount = await countCommitsBetween(repoRoot, item.commit.hash, headHash)
-          } catch {}
-
-          const commitsInfo = commitCount > 0 ? `\n\n${commitCount} commit(s) will be discarded.` : ''
-
-          const confirmText =
-            mode === 'hard'
-              ? `Reset --hard to ${shortHash}?${commitsInfo}\n\nThis will move HEAD to this commit and DISCARD all later commits and any uncommitted changes in the working tree. This cannot be easily undone.${dirtyWarning}`
-              : `Reset --soft to ${shortHash}?${commitsInfo}\n\nHEAD will move to this commit. Changes from later commits will remain in the index (staged).`
-          const confirmLabel = mode === 'hard' ? 'Discard and reset' : 'Reset'
-
-          const choice = await vscode.window.showWarningMessage(confirmText, { modal: true }, confirmLabel)
-          if (choice !== confirmLabel) return
-
-          try {
-            await vscode.window.withProgress(
-              {
-                location: vscode.ProgressLocation.Notification,
-                title: `Resetting --${mode} to ${shortHash}...`,
-                cancellable: false
-              },
-              async () => {
-                await resetToCommit(repoRoot, item.commit.hash, mode)
-              }
-            )
-
+          await performResetWithConfirm(repoRoot, item.commit.hash, mode, () => {
             provider.refresh()
             panel.dispose()
-            vscode.window.showInformationMessage(`Reset --${mode} to ${shortHash}.`)
-          } catch (err: any) {
-            vscode.window.showErrorMessage(`Reset failed: ${err.message}`)
-          }
+          })
           return
         }
 
@@ -720,6 +735,49 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
             vscode.window.showErrorMessage(`Failed to update commit message: ${err.message}`)
           }
         }
+      })
+    }),
+
+    vscode.commands.registerCommand('toolkit.gitCommitList.resetTo', async (item?: CommitTreeItem) => {
+      if (!item) return
+
+      const repoRoot = await provider.getRepoRoot()
+      if (!repoRoot) return
+
+      const items: (vscode.QuickPickItem & { mode: ResetMode })[] = [
+        {
+          label: '$(diff-added) Soft',
+          description: 'Move HEAD only — keep later changes staged',
+          detail: 'Safest. Later commits become staged changes in the index.',
+          mode: 'soft'
+        },
+        {
+          label: '$(edit) Mixed',
+          description: 'Move HEAD and unstage — keep changes in working tree',
+          detail: "Default git reset behavior. Later commits become unstaged working-tree changes.",
+          mode: 'mixed'
+        },
+        {
+          label: '$(warning) Hard',
+          description: 'Discard everything — destructive',
+          detail: 'Drops later commits AND any uncommitted working-tree changes. Cannot be undone.',
+          mode: 'hard'
+        }
+      ]
+
+      const shortHash = item.commit.hash.substring(0, 8)
+      const picked = await vscode.window.showQuickPick(items, {
+        title: `Reset HEAD to ${shortHash} — ${item.commit.subject.substring(0, 60)}`,
+        placeHolder: 'Choose reset mode',
+        matchOnDescription: true,
+        matchOnDetail: true
+      })
+
+      if (!picked) return
+
+      await performResetWithConfirm(repoRoot, item.commit.hash, picked.mode, () => {
+        provider.refresh()
+        if (editPanel) editPanel.dispose()
       })
     })
   )
