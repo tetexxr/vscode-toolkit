@@ -546,7 +546,10 @@ async function performResetWithConfirm(
 }
 
 class CommitTreeItem extends vscode.TreeItem {
-  constructor(public readonly commit: CommitLogEntry) {
+  constructor(
+    public readonly commit: CommitLogEntry,
+    isHead: boolean
+  ) {
     super(commit.subject, vscode.TreeItemCollapsibleState.None)
     this.description = `${commit.author}, ${commit.date}`
     const md = new vscode.MarkdownString()
@@ -554,7 +557,7 @@ class CommitTreeItem extends vscode.TreeItem {
     md.appendMarkdown(`**${commit.subject}**\n\n`)
     md.appendMarkdown(`$(git-commit) \`${commit.hash.substring(0, 8)}\` · ${commit.author} · ${commit.date}`)
     this.tooltip = md
-    this.contextValue = 'commit'
+    this.contextValue = isHead ? 'commitHead' : 'commit'
     this.iconPath = new vscode.ThemeIcon('git-commit')
   }
 }
@@ -588,8 +591,11 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
     const root = await this.getRepoRoot()
     if (!root) return []
     try {
-      const commits = await getCommitLog(root)
-      return commits.map(c => new CommitTreeItem(c))
+      const [commits, headHash] = await Promise.all([
+        getCommitLog(root),
+        getCommitHash(root).catch(() => '')
+      ])
+      return commits.map(c => new CommitTreeItem(c, c.hash === headHash))
     } catch {
       return []
     }

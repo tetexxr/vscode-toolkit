@@ -430,7 +430,7 @@
       "view/item/context": [
         {
           "command": "toolkit.gitCommitList.editMessage",
-          "when": "view == toolkitCommitList && viewItem == commit",
+          "when": "view == toolkitCommitList && (viewItem == commit || viewItem == commitHead)",
           "group": "inline@1"
         },
         {

@@ -98,9 +98,9 @@ Edit the message of any commit in the repository history, or move HEAD to a prev
 
 **Access:**
 
-- **Source Control sidebar** — expand the **Commit History** section. Each commit has two inline icons:
-  - **Pencil** — opens the edit panel (message, date, and per-file diff).
-  - **Reset arrow** — opens a quick picker to reset HEAD to that commit (Soft / Mixed / Hard).
+- **Source Control sidebar** — expand the **Commit History** section. Each commit shows inline icons:
+  - **Pencil** — opens the edit panel (message, date, and per-file diff). Available on every commit.
+  - **Reset arrow** — opens a quick picker to reset HEAD to that commit (Soft / Mixed / Hard). Hidden on the HEAD commit, since resetting HEAD to itself is a no-op.
 - **Command Palette** — run **Toolkit: Edit Commit Message** or **Toolkit: Reset HEAD to Commit...** when a commit is selected.
 
 **Workflow:**
