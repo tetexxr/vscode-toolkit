@@ -45,23 +45,21 @@ function renderFileList(files: CommitFileInfo[]): string {
   return html.join('\n')
 }
 
-function renderDiff(raw: string): string {
+const LARGE_DIFF_LINE_THRESHOLD = 5000
+
+function renderDiffContent(raw: string): string {
   const lines = raw.split('\n')
   const html: string[] = []
-  let inDiff = false
+  let started = false
 
   for (const line of lines) {
     if (line.startsWith('diff --git')) {
-      if (inDiff) html.push('</div>')
-      const match = line.match(/ b\/(.+)$/)
-      const filePath = match ? match[1] : ''
-      html.push(`<div class="diff-block" data-diff-path="${escapeHtml(filePath)}">`)
       html.push(`<div class="diff-header">${escapeHtml(line)}</div>`)
-      inDiff = true
+      started = true
       continue
     }
 
-    if (!inDiff) continue
+    if (!started) continue
 
     if (line.startsWith('@@')) {
       html.push(`<div class="hunk-header">${escapeHtml(line)}</div>`)
@@ -85,7 +83,33 @@ function renderDiff(raw: string): string {
     }
   }
 
-  if (inDiff) html.push('</div>')
+  return html.join('\n')
+}
+
+function renderDiffPlaceholders(files: CommitFileInfo[]): string {
+  const html: string[] = []
+  for (const file of files) {
+    const totalLines = file.additions + file.deletions
+    let status: 'idle' | 'large' | 'binary'
+    let inner: string
+    if (file.isBinary) {
+      status = 'binary'
+      inner = '<div class="diff-placeholder">Binary file (no diff available)</div>'
+    } else if (totalLines > LARGE_DIFF_LINE_THRESHOLD) {
+      status = 'large'
+      inner =
+        `<div class="diff-placeholder large">` +
+        `<span>Diff grande (${totalLines} líneas modificadas)</span>` +
+        `<button class="secondary load-large">Cargar diff</button>` +
+        `</div>`
+    } else {
+      status = 'idle'
+      inner = '<div class="diff-placeholder">Cargando diff…</div>'
+    }
+    html.push(
+      `<div class="diff-block" data-diff-path="${escapeHtml(file.path)}" data-diff-status="${status}">${inner}</div>`
+    )
+  }
   return html.join('\n')
 }
 
@@ -93,13 +117,12 @@ function buildEditWebviewHtml(
   commit: CommitLogEntry,
   message: string,
   files: CommitFileInfo[],
-  diffRaw: string,
   isHead: boolean,
   nonce: string,
   commitDateIso: string
 ): string {
   const fileListHtml = renderFileList(files)
-  const diffHtml = renderDiff(diffRaw)
+  const diffHtml = renderDiffPlaceholders(files)
   const totalAdditions = files.reduce((s, f) => s + f.additions, 0)
   const totalDeletions = files.reduce((s, f) => s + f.deletions, 0)
 
@@ -380,6 +403,29 @@ function buildEditWebviewHtml(
       white-space: pre-wrap;
       word-break: break-all;
     }
+
+    .diff-placeholder {
+      padding: 10px 12px;
+      color: var(--vscode-descriptionForeground);
+      font-style: italic;
+      font-family: var(--vscode-font-family, sans-serif);
+      font-size: 0.9em;
+    }
+
+    .diff-placeholder.large {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-style: normal;
+    }
+
+    .diff-error {
+      padding: 10px 12px;
+      color: var(--vscode-errorForeground, #c74e39);
+      font-family: var(--vscode-font-family, sans-serif);
+      font-size: 0.9em;
+    }
   </style>
 </head>
 <body>
@@ -472,6 +518,56 @@ function buildEditWebviewHtml(
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
+
+    function findBlock(path) {
+      return [...diffBlocks].find(el => el.dataset.diffPath === path);
+    }
+
+    function requestDiff(el) {
+      el.dataset.diffStatus = 'loading';
+      el.innerHTML = '<div class="diff-placeholder">Cargando diff…</div>';
+      vscode.postMessage({ command: 'loadDiff', path: el.dataset.diffPath });
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const el = entry.target;
+        if (el.dataset.diffStatus === 'idle') {
+          requestDiff(el);
+          observer.unobserve(el);
+        }
+      }
+    }, { rootMargin: '200px' });
+
+    diffBlocks.forEach(el => {
+      if (el.dataset.diffStatus === 'idle') {
+        observer.observe(el);
+      } else if (el.dataset.diffStatus === 'large') {
+        const btn = el.querySelector('.load-large');
+        if (btn) btn.addEventListener('click', () => requestDiff(el));
+      }
+    });
+
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      if (msg.command === 'diffLoaded') {
+        const el = findBlock(msg.path);
+        if (el) {
+          el.dataset.diffStatus = 'loaded';
+          el.innerHTML = msg.html || '<div class="diff-placeholder">(sin cambios)</div>';
+        }
+      } else if (msg.command === 'diffError') {
+        const el = findBlock(msg.path);
+        if (el) {
+          el.dataset.diffStatus = 'error';
+          const retry = '<button class="secondary load-large" style="margin-left:8px">Reintentar</button>';
+          el.innerHTML = '<div class="diff-error">Error cargando diff: ' + (msg.error || 'desconocido') + retry + '</div>';
+          const btn = el.querySelector('.load-large');
+          if (btn) btn.addEventListener('click', () => requestDiff(el));
+        }
+      }
+    });
   </script>
 </body>
 </html>`
@@ -563,14 +659,12 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
 
       let fullMessage: string
       let files: CommitFileInfo[]
-      let diffRaw: string
       let headHash: string
       let commitDateIso: string
       try {
-        ;[fullMessage, files, diffRaw, headHash, commitDateIso] = await Promise.all([
+        ;[fullMessage, files, headHash, commitDateIso] = await Promise.all([
           getCommitMessage(repoRoot, item.commit.hash),
           getCommitFiles(repoRoot, item.commit.hash),
-          getCommitDiff(repoRoot, item.commit.hash),
           getCommitHash(repoRoot),
           getCommitDateIso(repoRoot, item.commit.hash)
         ])
@@ -594,11 +688,28 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       })
 
       const nonce = getNonce()
-      panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, diffRaw, isHead, nonce, commitDateIso)
+      panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, isHead, nonce, commitDateIso)
 
       panel.webview.onDidReceiveMessage(async msg => {
         if (msg.command === 'discard') {
           panel.dispose()
+          return
+        }
+
+        if (msg.command === 'loadDiff') {
+          const filePath = msg.path as string
+          if (!filePath) return
+          try {
+            const raw = await getCommitDiff(repoRoot, item.commit.hash, filePath)
+            const html = renderDiffContent(raw)
+            panel.webview.postMessage({ command: 'diffLoaded', path: filePath, html })
+          } catch (err: any) {
+            panel.webview.postMessage({
+              command: 'diffError',
+              path: filePath,
+              error: err?.message || String(err)
+            })
+          }
           return
         }
 
