@@ -296,6 +296,42 @@ describe('getCommitFiles', () => {
     assert.ok(files.length > 0)
   })
 
+  it('should mark text files as not binary', async () => {
+    const log = await getCommitLog(tmpRepo, 1)
+    const files = await getCommitFiles(tmpRepo, log[0].hash)
+    const txt = files.find(f => f.path === 'file.txt')
+    assert.ok(txt, 'expected file.txt in commit files')
+    assert.equal(txt!.isBinary, false)
+  })
+
+  it('should report real additions/deletions counts for text files', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'lines.txt'), 'a\nb\nc\n')
+    git('add', 'lines.txt')
+    git('commit', '-m', 'add lines')
+    const headHash = git('rev-parse', 'HEAD')
+    const files = await getCommitFiles(tmpRepo, headHash)
+    const lines = files.find(f => f.path === 'lines.txt')
+    assert.ok(lines)
+    assert.equal(lines!.additions, 3)
+    assert.equal(lines!.deletions, 0)
+    assert.equal(lines!.isBinary, false)
+  })
+
+  it('should mark binary files as binary with zero additions/deletions', async () => {
+    // PNG header bytes — git detects this as binary content
+    const binaryContent = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05])
+    fs.writeFileSync(path.join(tmpRepo, 'image.png'), binaryContent)
+    git('add', 'image.png')
+    git('commit', '-m', 'add binary')
+    const headHash = git('rev-parse', 'HEAD')
+    const files = await getCommitFiles(tmpRepo, headHash)
+    const png = files.find(f => f.path === 'image.png')
+    assert.ok(png, 'expected image.png in commit files')
+    assert.equal(png!.isBinary, true)
+    assert.equal(png!.additions, 0)
+    assert.equal(png!.deletions, 0)
+  })
+
   it('should reject for an invalid hash', async () => {
     await assert.rejects(() => getCommitFiles(tmpRepo, 'invalid-hash'))
   })
@@ -333,6 +369,45 @@ describe('getCommitDiff', () => {
     const log = await getCommitLog(tmpRepo, 1)
     const diff = await getCommitDiff(tmpRepo, log[0].hash)
     assert.ok(diff.includes('@@'))
+  })
+
+  it('should include all files when no path filter is given', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'a.txt'), 'a')
+    fs.writeFileSync(path.join(tmpRepo, 'b.txt'), 'b')
+    git('add', 'a.txt', 'b.txt')
+    git('commit', '-m', 'two files')
+    const headHash = git('rev-parse', 'HEAD')
+    const diff = await getCommitDiff(tmpRepo, headHash)
+    assert.ok(diff.includes('a.txt'))
+    assert.ok(diff.includes('b.txt'))
+  })
+
+  it('should return only the diff for the given file path', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'a.txt'), 'a')
+    fs.writeFileSync(path.join(tmpRepo, 'b.txt'), 'b')
+    git('add', 'a.txt', 'b.txt')
+    git('commit', '-m', 'two files')
+    const headHash = git('rev-parse', 'HEAD')
+    const diff = await getCommitDiff(tmpRepo, headHash, 'a.txt')
+    assert.ok(diff.includes('diff --git a/a.txt b/a.txt'))
+    assert.ok(!diff.includes('b/b.txt'))
+  })
+
+  it('should return diff for files inside subdirectories when path is given', async () => {
+    fs.mkdirSync(path.join(tmpRepo, 'src'))
+    fs.writeFileSync(path.join(tmpRepo, 'src', 'nested.txt'), 'nested')
+    git('add', 'src/nested.txt')
+    git('commit', '-m', 'add nested file')
+    const headHash = git('rev-parse', 'HEAD')
+    const diff = await getCommitDiff(tmpRepo, headHash, 'src/nested.txt')
+    assert.ok(diff.includes('src/nested.txt'))
+    assert.ok(diff.includes('+nested'))
+  })
+
+  it('should return empty diff when path filter does not match any file in the commit', async () => {
+    const log = await getCommitLog(tmpRepo, 1)
+    const diff = await getCommitDiff(tmpRepo, log[0].hash, 'nonexistent.txt')
+    assert.equal(diff, '')
   })
 
   it('should reject for an invalid hash', async () => {

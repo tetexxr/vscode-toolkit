@@ -240,6 +240,7 @@ export interface CommitFileInfo {
   path: string
   additions: number
   deletions: number
+  isBinary: boolean
 }
 
 export async function getCommitFiles(cwd: string, hash: string): Promise<CommitFileInfo[]> {
@@ -248,13 +249,15 @@ export async function getCommitFiles(cwd: string, hash: string): Promise<CommitF
     gitExec(cwd, ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', hash], 30000)
   ])
 
-  const stats = new Map<string, { additions: number; deletions: number }>()
+  const stats = new Map<string, { additions: number; deletions: number; isBinary: boolean }>()
   for (const line of numstatRaw.split('\n').filter(Boolean)) {
     const [add, del, ...rest] = line.split('\t')
     const filePath = rest.join('\t')
+    const isBinary = add === '-' && del === '-'
     stats.set(filePath, {
-      additions: add === '-' ? 0 : parseInt(add, 10),
-      deletions: del === '-' ? 0 : parseInt(del, 10)
+      additions: isBinary ? 0 : parseInt(add, 10),
+      deletions: isBinary ? 0 : parseInt(del, 10),
+      isBinary
     })
   }
 
@@ -263,15 +266,17 @@ export async function getCommitFiles(cwd: string, hash: string): Promise<CommitF
     const [statusCode, ...pathParts] = line.split('\t')
     const filePath = pathParts[pathParts.length - 1]
     const status = statusCode.charAt(0)
-    const stat = stats.get(filePath) || { additions: 0, deletions: 0 }
+    const stat = stats.get(filePath) || { additions: 0, deletions: 0, isBinary: false }
     files.push({ status, path: filePath, ...stat })
   }
 
   return files
 }
 
-export async function getCommitDiff(cwd: string, hash: string): Promise<string> {
-  return gitExec(cwd, ['diff-tree', '--root', '--no-commit-id', '-p', hash], 30000)
+export async function getCommitDiff(cwd: string, hash: string, filePath?: string): Promise<string> {
+  const args = ['diff-tree', '--root', '--no-commit-id', '-p', hash]
+  if (filePath) args.push('--', filePath)
+  return gitExec(cwd, args, 30000)
 }
 
 export async function stageFile(cwd: string, ...filePaths: string[]): Promise<void> {

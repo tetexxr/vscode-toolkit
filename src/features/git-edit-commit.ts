@@ -15,91 +15,22 @@ import {
   CommitLogEntry,
   CommitFileInfo
 } from '../utils/git'
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
+import { escapeHtml, renderFileList, renderDiffContent, renderDiffPlaceholders } from './git-edit-commit-utils'
 
 function getNonce(): string {
   return crypto.randomBytes(16).toString('hex')
-}
-
-function renderFileList(files: CommitFileInfo[]): string {
-  const html: string[] = []
-  for (const file of files) {
-    const statusClass = file.status === 'A' ? 'added' : file.status === 'D' ? 'deleted' : 'modified'
-    const lastSlash = file.path.lastIndexOf('/')
-    const dir = lastSlash >= 0 ? file.path.substring(0, lastSlash + 1) : ''
-    const name = lastSlash >= 0 ? file.path.substring(lastSlash + 1) : file.path
-    const additions = file.additions > 0 ? `<span class="stat-add">+${file.additions}</span>` : ''
-    const deletions = file.deletions > 0 ? `<span class="stat-del">-${file.deletions}</span>` : ''
-
-    html.push(
-      `<div class="file-entry" data-path="${escapeHtml(file.path)}">` +
-        `<span class="file-status ${statusClass}">${escapeHtml(file.status)}</span>` +
-        `<span class="file-path"><span class="file-dir">${escapeHtml(dir)}</span>${escapeHtml(name)}</span>` +
-        `<span class="file-stats">${additions}${deletions}</span>` +
-        `</div>`
-    )
-  }
-  return html.join('\n')
-}
-
-function renderDiff(raw: string): string {
-  const lines = raw.split('\n')
-  const html: string[] = []
-  let inDiff = false
-
-  for (const line of lines) {
-    if (line.startsWith('diff --git')) {
-      if (inDiff) html.push('</div>')
-      const match = line.match(/ b\/(.+)$/)
-      const filePath = match ? match[1] : ''
-      html.push(`<div class="diff-block" data-diff-path="${escapeHtml(filePath)}">`)
-      html.push(`<div class="diff-header">${escapeHtml(line)}</div>`)
-      inDiff = true
-      continue
-    }
-
-    if (!inDiff) continue
-
-    if (line.startsWith('@@')) {
-      html.push(`<div class="hunk-header">${escapeHtml(line)}</div>`)
-    } else if (line.startsWith('+')) {
-      html.push(`<div class="line-add">${escapeHtml(line)}</div>`)
-    } else if (line.startsWith('-')) {
-      html.push(`<div class="line-del">${escapeHtml(line)}</div>`)
-    } else if (
-      line.startsWith('index ') ||
-      line.startsWith('---') ||
-      line.startsWith('+++') ||
-      line.startsWith('new file') ||
-      line.startsWith('deleted file') ||
-      line.startsWith('similarity') ||
-      line.startsWith('rename') ||
-      line.startsWith('Binary')
-    ) {
-      html.push(`<div class="diff-meta">${escapeHtml(line)}</div>`)
-    } else {
-      html.push(`<div class="line-ctx">${escapeHtml(line)}</div>`)
-    }
-  }
-
-  if (inDiff) html.push('</div>')
-  return html.join('\n')
 }
 
 function buildEditWebviewHtml(
   commit: CommitLogEntry,
   message: string,
   files: CommitFileInfo[],
-  diffRaw: string,
   isHead: boolean,
   nonce: string,
   commitDateIso: string
 ): string {
   const fileListHtml = renderFileList(files)
-  const diffHtml = renderDiff(diffRaw)
+  const diffHtml = renderDiffPlaceholders(files)
   const totalAdditions = files.reduce((s, f) => s + f.additions, 0)
   const totalDeletions = files.reduce((s, f) => s + f.deletions, 0)
 
@@ -339,12 +270,20 @@ function buildEditWebviewHtml(
     /* --- Diff section --- */
 
     .diff-block {
-      margin: 8px 0;
+      margin: 24px 0;
       border-radius: 4px;
       overflow: hidden;
       border: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
       font-family: var(--vscode-editor-font-family, monospace);
       font-size: var(--vscode-editor-font-size, 13px);
+    }
+
+    .diff-block + .diff-block {
+      margin-top: 28px;
+    }
+
+    .diff-block:first-of-type {
+      margin-top: 8px;
     }
 
     .diff-header, .diff-meta {
@@ -379,6 +318,29 @@ function buildEditWebviewHtml(
       padding: 0 8px;
       white-space: pre-wrap;
       word-break: break-all;
+    }
+
+    .diff-placeholder {
+      padding: 10px 12px;
+      color: var(--vscode-descriptionForeground);
+      font-style: italic;
+      font-family: var(--vscode-font-family, sans-serif);
+      font-size: 0.9em;
+    }
+
+    .diff-placeholder.large {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-style: normal;
+    }
+
+    .diff-error {
+      padding: 10px 12px;
+      color: var(--vscode-errorForeground, #c74e39);
+      font-family: var(--vscode-font-family, sans-serif);
+      font-size: 0.9em;
     }
   </style>
 </head>
@@ -472,13 +434,122 @@ function buildEditWebviewHtml(
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
+
+    function findBlock(path) {
+      return [...diffBlocks].find(el => el.dataset.diffPath === path);
+    }
+
+    function requestDiff(el) {
+      el.dataset.diffStatus = 'loading';
+      el.innerHTML = '<div class="diff-placeholder">Cargando diff…</div>';
+      vscode.postMessage({ command: 'loadDiff', path: el.dataset.diffPath });
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const el = entry.target;
+        if (el.dataset.diffStatus === 'idle') {
+          requestDiff(el);
+          observer.unobserve(el);
+        }
+      }
+    }, { rootMargin: '200px' });
+
+    diffBlocks.forEach(el => {
+      if (el.dataset.diffStatus === 'idle') {
+        observer.observe(el);
+      } else if (el.dataset.diffStatus === 'large') {
+        const btn = el.querySelector('.load-large');
+        if (btn) btn.addEventListener('click', () => requestDiff(el));
+      }
+    });
+
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      if (msg.command === 'diffLoaded') {
+        const el = findBlock(msg.path);
+        if (el) {
+          el.dataset.diffStatus = 'loaded';
+          el.innerHTML = msg.html || '<div class="diff-placeholder">(sin cambios)</div>';
+        }
+      } else if (msg.command === 'diffError') {
+        const el = findBlock(msg.path);
+        if (el) {
+          el.dataset.diffStatus = 'error';
+          const retry = '<button class="secondary load-large" style="margin-left:8px">Reintentar</button>';
+          el.innerHTML = '<div class="diff-error">Error cargando diff: ' + (msg.error || 'desconocido') + retry + '</div>';
+          const btn = el.querySelector('.load-large');
+          if (btn) btn.addEventListener('click', () => requestDiff(el));
+        }
+      }
+    });
   </script>
 </body>
 </html>`
 }
 
+type ResetMode = 'soft' | 'mixed' | 'hard'
+
+async function performResetWithConfirm(
+  repoRoot: string,
+  commitHash: string,
+  mode: ResetMode,
+  onSuccess?: () => void
+): Promise<void> {
+  const shortHash = commitHash.substring(0, 8)
+
+  let dirtyWarning = ''
+  try {
+    const hasDirty = await hasUncommittedChanges(repoRoot)
+    if (hasDirty && mode === 'hard') {
+      dirtyWarning = '\n\n⚠ WARNING: You have uncommitted changes that will be LOST.'
+    }
+  } catch {}
+
+  let commitCount = 0
+  try {
+    const headHash = await getCommitHash(repoRoot)
+    commitCount = await countCommitsBetween(repoRoot, commitHash, headHash)
+  } catch {}
+
+  const commitsInfo = commitCount > 0 ? `\n\n${commitCount} commit(s) will be discarded.` : ''
+
+  const confirmText =
+    mode === 'hard'
+      ? `Reset --hard to ${shortHash}?${commitsInfo}\n\nThis will move HEAD to this commit and DISCARD all later commits and any uncommitted changes in the working tree. This cannot be easily undone.${dirtyWarning}`
+      : mode === 'mixed'
+        ? `Reset --mixed to ${shortHash}?${commitsInfo}\n\nHEAD will move to this commit. Changes from later commits will be kept in the working tree but unstaged.`
+        : `Reset --soft to ${shortHash}?${commitsInfo}\n\nHEAD will move to this commit. Changes from later commits will remain in the index (staged).`
+  const confirmLabel = mode === 'hard' ? 'Discard and reset' : 'Reset'
+
+  const choice = await vscode.window.showWarningMessage(confirmText, { modal: true }, confirmLabel)
+  if (choice !== confirmLabel) return
+
+  try {
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Resetting --${mode} to ${shortHash}...`,
+        cancellable: false
+      },
+      async () => {
+        await resetToCommit(repoRoot, commitHash, mode)
+      }
+    )
+
+    onSuccess?.()
+    vscode.window.showInformationMessage(`Reset --${mode} to ${shortHash}.`)
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`Reset failed: ${err.message}`)
+  }
+}
+
 class CommitTreeItem extends vscode.TreeItem {
-  constructor(public readonly commit: CommitLogEntry) {
+  constructor(
+    public readonly commit: CommitLogEntry,
+    isHead: boolean
+  ) {
     super(commit.subject, vscode.TreeItemCollapsibleState.None)
     this.description = `${commit.author}, ${commit.date}`
     const md = new vscode.MarkdownString()
@@ -486,7 +557,7 @@ class CommitTreeItem extends vscode.TreeItem {
     md.appendMarkdown(`**${commit.subject}**\n\n`)
     md.appendMarkdown(`$(git-commit) \`${commit.hash.substring(0, 8)}\` · ${commit.author} · ${commit.date}`)
     this.tooltip = md
-    this.contextValue = 'commit'
+    this.contextValue = isHead ? 'commitHead' : 'commit'
     this.iconPath = new vscode.ThemeIcon('git-commit')
   }
 }
@@ -520,8 +591,11 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
     const root = await this.getRepoRoot()
     if (!root) return []
     try {
-      const commits = await getCommitLog(root)
-      return commits.map(c => new CommitTreeItem(c))
+      const [commits, headHash] = await Promise.all([
+        getCommitLog(root),
+        getCommitHash(root).catch(() => '')
+      ])
+      return commits.map(c => new CommitTreeItem(c, c.hash === headHash))
     } catch {
       return []
     }
@@ -529,6 +603,53 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
 }
 
 let editPanel: vscode.WebviewPanel | undefined
+
+interface GitRepository {
+  readonly state: { readonly onDidChange: vscode.Event<void> }
+}
+
+interface GitApi {
+  readonly repositories: ReadonlyArray<GitRepository>
+  readonly onDidOpenRepository: vscode.Event<GitRepository>
+}
+
+interface GitExtension {
+  getAPI(version: 1): GitApi
+}
+
+function watchHeadChanges(context: vscode.ExtensionContext, provider: CommitListProvider): void {
+  const gitExt = vscode.extensions.getExtension<GitExtension>('vscode.git')
+  if (!gitExt) return
+
+  let lastHeadHash: string | undefined
+
+  const onRepoChange = async () => {
+    const root = await provider.getRepoRoot()
+    if (!root) return
+    try {
+      const headHash = await getCommitHash(root)
+      if (headHash !== lastHeadHash) {
+        lastHeadHash = headHash
+        provider.refresh()
+      }
+    } catch {}
+  }
+
+  const subscribe = (repo: GitRepository) => {
+    context.subscriptions.push(repo.state.onDidChange(onRepoChange))
+  }
+
+  const setup = (api: GitApi) => {
+    for (const repo of api.repositories) subscribe(repo)
+    context.subscriptions.push(api.onDidOpenRepository(subscribe))
+  }
+
+  if (gitExt.isActive) {
+    setup(gitExt.exports.getAPI(1))
+  } else {
+    gitExt.activate().then(ext => setup(ext.getAPI(1)))
+  }
+}
 
 export function registerGitEditCommitCommands(context: vscode.ExtensionContext): void {
   const provider = new CommitListProvider()
@@ -543,6 +664,8 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       provider.refresh()
     }
   })
+
+  watchHeadChanges(context, provider)
 
   context.subscriptions.push(
     treeView,
@@ -563,14 +686,12 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
 
       let fullMessage: string
       let files: CommitFileInfo[]
-      let diffRaw: string
       let headHash: string
       let commitDateIso: string
       try {
-        ;[fullMessage, files, diffRaw, headHash, commitDateIso] = await Promise.all([
+        ;[fullMessage, files, headHash, commitDateIso] = await Promise.all([
           getCommitMessage(repoRoot, item.commit.hash),
           getCommitFiles(repoRoot, item.commit.hash),
-          getCommitDiff(repoRoot, item.commit.hash),
           getCommitHash(repoRoot),
           getCommitDateIso(repoRoot, item.commit.hash)
         ])
@@ -594,11 +715,28 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       })
 
       const nonce = getNonce()
-      panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, diffRaw, isHead, nonce, commitDateIso)
+      panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, isHead, nonce, commitDateIso)
 
       panel.webview.onDidReceiveMessage(async msg => {
         if (msg.command === 'discard') {
           panel.dispose()
+          return
+        }
+
+        if (msg.command === 'loadDiff') {
+          const filePath = msg.path as string
+          if (!filePath) return
+          try {
+            const raw = await getCommitDiff(repoRoot, item.commit.hash, filePath)
+            const html = renderDiffContent(raw)
+            panel.webview.postMessage({ command: 'diffLoaded', path: filePath, html })
+          } catch (err: any) {
+            panel.webview.postMessage({
+              command: 'diffError',
+              path: filePath,
+              error: err?.message || String(err)
+            })
+          }
           return
         }
 
@@ -608,51 +746,10 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
             vscode.window.showErrorMessage(`Invalid reset mode: ${mode}`)
             return
           }
-          const shortHash = item.commit.hash.substring(0, 8)
-
-          let dirtyWarning = ''
-          try {
-            const hasDirty = await hasUncommittedChanges(repoRoot)
-            if (hasDirty && mode === 'hard') {
-              dirtyWarning = '\n\n⚠ WARNING: You have uncommitted changes that will be LOST.'
-            }
-          } catch {}
-
-          let commitCount = 0
-          try {
-            const headHash = await getCommitHash(repoRoot)
-            commitCount = await countCommitsBetween(repoRoot, item.commit.hash, headHash)
-          } catch {}
-
-          const commitsInfo = commitCount > 0 ? `\n\n${commitCount} commit(s) will be discarded.` : ''
-
-          const confirmText =
-            mode === 'hard'
-              ? `Reset --hard to ${shortHash}?${commitsInfo}\n\nThis will move HEAD to this commit and DISCARD all later commits and any uncommitted changes in the working tree. This cannot be easily undone.${dirtyWarning}`
-              : `Reset --soft to ${shortHash}?${commitsInfo}\n\nHEAD will move to this commit. Changes from later commits will remain in the index (staged).`
-          const confirmLabel = mode === 'hard' ? 'Discard and reset' : 'Reset'
-
-          const choice = await vscode.window.showWarningMessage(confirmText, { modal: true }, confirmLabel)
-          if (choice !== confirmLabel) return
-
-          try {
-            await vscode.window.withProgress(
-              {
-                location: vscode.ProgressLocation.Notification,
-                title: `Resetting --${mode} to ${shortHash}...`,
-                cancellable: false
-              },
-              async () => {
-                await resetToCommit(repoRoot, item.commit.hash, mode)
-              }
-            )
-
+          await performResetWithConfirm(repoRoot, item.commit.hash, mode, () => {
             provider.refresh()
             panel.dispose()
-            vscode.window.showInformationMessage(`Reset --${mode} to ${shortHash}.`)
-          } catch (err: any) {
-            vscode.window.showErrorMessage(`Reset failed: ${err.message}`)
-          }
+          })
           return
         }
 
@@ -693,6 +790,49 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
             vscode.window.showErrorMessage(`Failed to update commit message: ${err.message}`)
           }
         }
+      })
+    }),
+
+    vscode.commands.registerCommand('toolkit.gitCommitList.resetTo', async (item?: CommitTreeItem) => {
+      if (!item) return
+
+      const repoRoot = await provider.getRepoRoot()
+      if (!repoRoot) return
+
+      const items: (vscode.QuickPickItem & { mode: ResetMode })[] = [
+        {
+          label: '$(diff-added) Soft',
+          description: 'Move HEAD only — keep later changes staged',
+          detail: 'Safest. Later commits become staged changes in the index.',
+          mode: 'soft'
+        },
+        {
+          label: '$(edit) Mixed',
+          description: 'Move HEAD and unstage — keep changes in working tree',
+          detail: 'Default git reset behavior. Later commits become unstaged working-tree changes.',
+          mode: 'mixed'
+        },
+        {
+          label: '$(warning) Hard',
+          description: 'Discard everything — destructive',
+          detail: 'Drops later commits AND any uncommitted working-tree changes. Cannot be undone.',
+          mode: 'hard'
+        }
+      ]
+
+      const shortHash = item.commit.hash.substring(0, 8)
+      const picked = await vscode.window.showQuickPick(items, {
+        title: `Reset HEAD to ${shortHash} — ${item.commit.subject.substring(0, 60)}`,
+        placeHolder: 'Choose reset mode',
+        matchOnDescription: true,
+        matchOnDetail: true
+      })
+
+      if (!picked) return
+
+      await performResetWithConfirm(repoRoot, item.commit.hash, picked.mode, () => {
+        provider.refresh()
+        if (editPanel) editPanel.dispose()
       })
     })
   )
