@@ -243,10 +243,22 @@ export interface CommitFileInfo {
   isBinary: boolean
 }
 
+export async function getCommitParents(cwd: string, hash: string): Promise<string[]> {
+  const raw = await gitExec(cwd, ['rev-list', '--parents', '-n', '1', hash])
+  return raw.split(/\s+/).filter(Boolean).slice(1)
+}
+
 export async function getCommitFiles(cwd: string, hash: string): Promise<CommitFileInfo[]> {
+  const parents = await getCommitParents(cwd, hash)
+  const nameStatusArgs = parents.length === 0
+    ? ['diff-tree', '--no-commit-id', '--root', '-r', '--name-status', hash]
+    : ['diff', '--name-status', parents[0], hash]
+  const numstatArgs = parents.length === 0
+    ? ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', hash]
+    : ['diff', '--numstat', parents[0], hash]
   const [statusRaw, numstatRaw] = await Promise.all([
-    gitExec(cwd, ['diff-tree', '--no-commit-id', '--root', '-r', '--name-status', hash], 30000),
-    gitExec(cwd, ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', hash], 30000)
+    gitExec(cwd, nameStatusArgs, 30000),
+    gitExec(cwd, numstatArgs, 30000)
   ])
 
   const stats = new Map<string, { additions: number; deletions: number; isBinary: boolean }>()
@@ -274,7 +286,10 @@ export async function getCommitFiles(cwd: string, hash: string): Promise<CommitF
 }
 
 export async function getCommitDiff(cwd: string, hash: string, filePath?: string): Promise<string> {
-  const args = ['diff-tree', '--root', '--no-commit-id', '-p', hash]
+  const parents = await getCommitParents(cwd, hash)
+  const args = parents.length === 0
+    ? ['diff-tree', '--root', '--no-commit-id', '-p', hash]
+    : ['diff', parents[0], hash]
   if (filePath) args.push('--', filePath)
   return gitExec(cwd, args, 30000)
 }

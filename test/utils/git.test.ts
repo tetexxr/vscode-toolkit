@@ -335,6 +335,22 @@ describe('getCommitFiles', () => {
   it('should reject for an invalid hash', async () => {
     await assert.rejects(() => getCommitFiles(tmpRepo, 'invalid-hash'))
   })
+
+  it('should return files brought in by a merge commit relative to the target branch', async () => {
+    const targetBranch = git('rev-parse', '--abbrev-ref', 'HEAD')
+    git('checkout', '-b', 'feature')
+    fs.writeFileSync(path.join(tmpRepo, 'feature-only.txt'), 'feature content\n')
+    git('add', 'feature-only.txt')
+    git('commit', '-m', 'add feature file')
+    git('checkout', targetBranch)
+    git('merge', '--no-ff', 'feature', '-m', 'Merge feature')
+    const mergeHash = git('rev-parse', 'HEAD')
+    const files = await getCommitFiles(tmpRepo, mergeHash)
+    const featureFile = files.find(f => f.path === 'feature-only.txt')
+    assert.ok(featureFile, 'expected feature-only.txt in merge commit files')
+    assert.equal(featureFile!.status, 'A')
+    assert.equal(featureFile!.additions, 1)
+  })
 })
 
 describe('getCommitDiff', () => {
@@ -412,6 +428,21 @@ describe('getCommitDiff', () => {
 
   it('should reject for an invalid hash', async () => {
     await assert.rejects(() => getCommitDiff(tmpRepo, 'invalid-hash'))
+  })
+
+  it('should return diff content for a merge commit relative to the target branch', async () => {
+    const targetBranch = git('rev-parse', '--abbrev-ref', 'HEAD')
+    git('checkout', '-b', 'feature')
+    fs.writeFileSync(path.join(tmpRepo, 'feature-only.txt'), 'feature content\n')
+    git('add', 'feature-only.txt')
+    git('commit', '-m', 'add feature file')
+    git('checkout', targetBranch)
+    git('merge', '--no-ff', 'feature', '-m', 'Merge feature')
+    const mergeHash = git('rev-parse', 'HEAD')
+    const diff = await getCommitDiff(tmpRepo, mergeHash)
+    assert.ok(diff.includes('diff --git'), 'merge diff should contain diff headers')
+    assert.ok(diff.includes('feature-only.txt'), 'merge diff should mention the merged file')
+    assert.ok(diff.includes('+feature content'), 'merge diff should include the added line')
   })
 })
 
