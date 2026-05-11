@@ -527,6 +527,47 @@ describe('editCommitMessage', () => {
     const logOutput = git('log', '--format=%ai', '--all')
     assert.ok(logOutput.includes('2019-06-20'))
   })
+
+  it('should set both author AND committer date when amending HEAD with a new date', async () => {
+    await editCommitMessage(tmpRepo, git('rev-parse', 'HEAD'), 'third commit', '2020-01-15 10:30:00')
+    const authorDate = git('log', '-1', '--format=%ai')
+    const committerDate = git('log', '-1', '--format=%ci')
+    assert.ok(authorDate.includes('2020-01-15 10:30:00'), `expected author date 2020-01-15 10:30:00, got: ${authorDate}`)
+    assert.ok(committerDate.includes('2020-01-15 10:30:00'), `expected committer date 2020-01-15 10:30:00, got: ${committerDate}`)
+  })
+
+  it('should set both author AND committer date when rewording a non-HEAD commit', async () => {
+    const secondHash = git('log', '--format=%H', '--skip=1', '-1')
+    await editCommitMessage(tmpRepo, secondHash, 'second commit', '2019-06-20 14:00:00')
+    const newSecondAuthor = git('log', '--format=%ai', '--skip=1', '-1')
+    const newSecondCommitter = git('log', '--format=%ci', '--skip=1', '-1')
+    assert.ok(newSecondAuthor.includes('2019-06-20 14:00:00'), `author: ${newSecondAuthor}`)
+    assert.ok(newSecondCommitter.includes('2019-06-20 14:00:00'), `committer: ${newSecondCommitter}`)
+  })
+
+  it('should preserve committer date of later commits when editing an older commit', async () => {
+    // Pin the third (HEAD) commit to a known past date for both author and committer.
+    const pastDate = '2020-03-10T12:00:00+00:00'
+    execFileSync('git', ['commit', '--amend', '--no-edit', '--date', pastDate], {
+      cwd: tmpRepo,
+      env: { ...process.env, GIT_COMMITTER_DATE: pastDate }
+    })
+    const thirdAuthorBefore = git('log', '-1', '--format=%aI')
+    const thirdCommitterBefore = git('log', '-1', '--format=%cI')
+
+    const secondHash = git('log', '--format=%H', '--skip=1', '-1')
+    await editCommitMessage(tmpRepo, secondHash, 'reworded second', '2019-06-20 14:00:00')
+
+    const thirdAuthorAfter = git('log', '-1', '--format=%aI')
+    const thirdCommitterAfter = git('log', '-1', '--format=%cI')
+
+    assert.equal(thirdAuthorAfter, thirdAuthorBefore, 'third commit author date should be preserved')
+    assert.equal(
+      thirdCommitterAfter,
+      thirdCommitterBefore,
+      'third commit committer date should be preserved (not reset to rebase time)'
+    )
+  })
 })
 
 describe('getCommitDateIso', () => {
