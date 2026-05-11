@@ -314,6 +314,11 @@ export async function hasUncommittedChanges(cwd: string): Promise<boolean> {
 
 export async function editCommitMessage(cwd: string, hash: string, newMessage: string, newDate?: string): Promise<void> {
   const headHash = await gitExec(cwd, ['rev-parse', 'HEAD'])
+  // `git commit --amend --date` only sets the author date; without GIT_COMMITTER_DATE
+  // the committer date defaults to "now", which is what GitHub uses for push timestamps.
+  const dateEnv: Record<string, string> = newDate
+    ? { GIT_AUTHOR_DATE: newDate, GIT_COMMITTER_DATE: newDate }
+    : {}
 
   if (hash === headHash) {
     const staged = await gitExec(cwd, ['diff', '--cached', '--name-only']).catch(() => '')
@@ -326,7 +331,7 @@ export async function editCommitMessage(cwd: string, hash: string, newMessage: s
     if (newDate) {
       args.push('--date', newDate)
     }
-    await gitExec(cwd, args, 30000)
+    await gitExec(cwd, args, 30000, dateEnv)
   } else {
     const status = await gitExec(cwd, ['status', '--porcelain']).catch(() => '')
     if (status) {
@@ -343,15 +348,13 @@ export async function editCommitMessage(cwd: string, hash: string, newMessage: s
       amendArgs.push('--date', newDate)
     }
 
-    const env: Record<string, string> = newDate
-      ? { GIT_AUTHOR_DATE: newDate, GIT_COMMITTER_DATE: newDate }
-      : {}
-
-    await gitExec(cwd, ['rebase', '-i', parentHash], 60000, {
+    // --committer-date-is-author-date keeps later commits' committer date equal to
+    // their original author date instead of being reset to "now" by rebase --continue.
+    await gitExec(cwd, ['rebase', '-i', '--committer-date-is-author-date', parentHash], 60000, {
       GIT_SEQUENCE_EDITOR: `sed -i '' 's/^pick ${shortHash}/edit ${shortHash}/'`
     })
 
-    await gitExec(cwd, amendArgs, 30000, env)
+    await gitExec(cwd, amendArgs, 30000, dateEnv)
     await gitExec(cwd, ['rebase', '--continue'], 30000)
   }
 }
