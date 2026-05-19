@@ -962,16 +962,6 @@
           "default": "hint",
           "description": "Severity of the diagnostic surfaced when an import can be converted to `import type`."
         },
-        "toolkit.typeOnlyImports.ignoredModules": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "vscode"
-          ],
-          "description": "Module specifiers to skip. Supports exact match (`'vscode'`) and a trailing `/*` prefix glob (`'@types/*'`). Useful for namespaces whose import is conventionally kept as a value even when used only as a type in some files (e.g. `vscode` in VS Code extensions)."
-        },
         "toolkit.csvRainbow.enabled": {
           "type": "boolean",
           "default": true,

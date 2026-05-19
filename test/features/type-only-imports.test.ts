@@ -1,8 +1,5 @@
 import { strict as assert } from 'assert'
-import {
-  findTypeOnlyImports,
-  isIgnoredModule
-} from '../../src/features/type-only-imports-utils'
+import { findTypeOnlyImports } from '../../src/features/type-only-imports-utils'
 
 function run(source: string, fileName = 'test.ts') {
   return findTypeOnlyImports(source, fileName)
@@ -372,75 +369,4 @@ describe('findTypeOnlyImports', () => {
     })
   })
 
-  describe('ignoredModules option', () => {
-    it('should skip declarations whose specifier matches exactly', () => {
-      const source = [
-        `import * as vscode from 'vscode'`,
-        `let ctx: vscode.ExtensionContext`
-      ].join('\n')
-
-      assert.equal(findTypeOnlyImports(source, 'a.ts').length, 1)
-      assert.equal(
-        findTypeOnlyImports(source, 'a.ts', { ignoredModules: ['vscode'] }).length,
-        0
-      )
-    })
-
-    it('should skip declarations matched by a trailing /* prefix glob', () => {
-      const source = [
-        `import { Foo } from '@types/node'`,
-        `let x: Foo`
-      ].join('\n')
-
-      assert.equal(
-        findTypeOnlyImports(source, 'a.ts', { ignoredModules: ['@types/*'] }).length,
-        0
-      )
-    })
-
-    it('should still flag specifiers not in the ignore list', () => {
-      const source = [
-        `import * as vscode from 'vscode'`,
-        `import { Bar } from './bar'`,
-        `let ctx: vscode.ExtensionContext`,
-        `let b: Bar`
-      ].join('\n')
-
-      const findings = findTypeOnlyImports(source, 'a.ts', { ignoredModules: ['vscode'] })
-      assert.equal(findings.length, 1)
-      assert.equal(findings[0].moduleSpecifier, './bar')
-    })
-
-    it('should treat an empty ignore list as no exclusions', () => {
-      const source = [
-        `import * as vscode from 'vscode'`,
-        `let ctx: vscode.ExtensionContext`
-      ].join('\n')
-
-      assert.equal(findTypeOnlyImports(source, 'a.ts', { ignoredModules: [] }).length, 1)
-    })
-  })
-})
-
-describe('isIgnoredModule', () => {
-  it('should match exact specifiers', () => {
-    assert.equal(isIgnoredModule('vscode', ['vscode']), true)
-    assert.equal(isIgnoredModule('react', ['vscode']), false)
-  })
-
-  it('should match trailing /* prefix globs', () => {
-    assert.equal(isIgnoredModule('@types/node', ['@types/*']), true)
-    assert.equal(isIgnoredModule('@types/node/path', ['@types/*']), true)
-    assert.equal(isIgnoredModule('@typesnode', ['@types/*']), false)
-    assert.equal(isIgnoredModule('@types', ['@types/*']), false)
-  })
-
-  it('should support multiple patterns', () => {
-    assert.equal(isIgnoredModule('vscode', ['react', 'vscode']), true)
-    assert.equal(isIgnoredModule('lodash', ['react', '@types/*']), false)
-  })
-
-  it('should return false for an empty pattern list', () => {
-    assert.equal(isIgnoredModule('vscode', []), false)
-  })
 })
