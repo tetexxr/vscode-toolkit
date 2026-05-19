@@ -78,7 +78,8 @@ class NpmCompletionProvider implements vscode.CompletionItemProvider {
 
     return packages.map(name => {
       const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Module)
-      item.textEdit = vscode.TextEdit.replace(importStringRange(line, position), name)
+      item.insertText = name
+      item.range = importStringRange(line, position)
       return item
     })
   }

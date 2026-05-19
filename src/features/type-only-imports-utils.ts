@@ -66,7 +66,7 @@ export function findTypeOnlyImports(sourceText: string, fileName: string): TypeO
     if (!ts.isImportDeclaration(statement)) continue
     const clause = statement.importClause
     if (!clause) continue // `import 'side-effect'`
-    if (clause.isTypeOnly) continue // already `import type ...`
+    if (clause.phaseModifier === ts.SyntaxKind.TypeKeyword) continue // already `import type ...`
 
     const moduleSpecifier = ts.isStringLiteral(statement.moduleSpecifier) ? statement.moduleSpecifier.text : ''
 
