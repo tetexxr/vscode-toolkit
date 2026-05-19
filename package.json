@@ -1021,15 +1021,15 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^25.8.0",
+    "@types/node": "^25.9.0",
     "@types/vscode": "^1.120.0",
     "@vscode/vsce": "^3.9.1",
     "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
-    "mocha": "^11.7.5",
+    "mocha": "^11.3.0",
     "pdfjs-dist": "^5.7.284",
     "prettier": "^3.8.3",
-    "tsx": "^4.22.0",
+    "tsx": "^4.22.3",
     "typescript-eslint": "^8.59.4"
   }
 }
