@@ -113,6 +113,12 @@ function getSeverity(): vscode.DiagnosticSeverity {
   }
 }
 
+function getIgnoredModules(): string[] {
+  const value = getConfig().get<unknown>('ignoredModules', ['vscode'])
+  if (!Array.isArray(value)) return ['vscode']
+  return value.filter((entry): entry is string => typeof entry === 'string')
+}
+
 function analyzeAllOpen(): void {
   diagnostics.clear()
   if (!isEnabled()) return
@@ -153,7 +159,9 @@ function analyzeDocument(doc: vscode.TextDocument, verbose = false): number {
 
   let findings: TypeOnlyImportFinding[]
   try {
-    findings = findTypeOnlyImports(doc.getText(), doc.uri.fsPath)
+    findings = findTypeOnlyImports(doc.getText(), doc.uri.fsPath, {
+      ignoredModules: getIgnoredModules()
+    })
   } catch (err) {
     log(`error analyzing ${doc.uri.fsPath}: ${(err as Error).message}`)
     diagnostics.delete(doc.uri)
@@ -202,7 +210,9 @@ class TypeOnlyImportsCodeActionProvider implements vscode.CodeActionProvider {
     // Re-analyze to recover the rewrites. Cheap enough for a single file on demand.
     let findings: TypeOnlyImportFinding[]
     try {
-      findings = findTypeOnlyImports(document.getText(), document.uri.fsPath)
+      findings = findTypeOnlyImports(document.getText(), document.uri.fsPath, {
+        ignoredModules: getIgnoredModules()
+      })
     } catch {
       return []
     }

@@ -399,8 +399,13 @@ Supported languages: TypeScript and TSX.
 |---|---|---|
 | `toolkit.typeOnlyImports.enabled` | `true` | Enable detection of imports usable as `import type` |
 | `toolkit.typeOnlyImports.severity` | `hint` | Diagnostic severity: `error`, `warning`, `information`, or `hint` |
+| `toolkit.typeOnlyImports.ignoredModules` | `["vscode"]` | Module specifiers to skip. Exact match or trailing `/*` prefix glob (`"@types/*"`) |
 
 > Tip: `hint` shows as the same near-invisible three dots that VS Code uses for unused-variable hints — pair it with the [Diagnostic Highlight](#diagnostic-highlight) feature above to make hints visible, or set `severity` to `warning` for a standard squiggly underline.
+
+**`ignoredModules` use cases:**
+
+By default `vscode` is excluded because in VS Code extensions you typically want to keep `import * as vscode` as a value import even in files that only use it as a type today — otherwise adding the first runtime call later would force you to switch back. Same reasoning applies to other ambient namespaces (e.g. `react` if you use namespace imports). Add `"@types/*"` if you want to skip everything under `@types/`.
 
 #### Sum Numbers in Selection
 

@@ -39,8 +39,22 @@ export interface TypeOnlyImportFinding {
   moduleSpecifier: string
 }
 
+export interface FindTypeOnlyImportsOptions {
+  /**
+   * Module specifiers to skip (never flag for conversion).
+   *
+   * Supports exact match (`'vscode'`) and a trailing-`/*` prefix glob
+   * (`'@types/*'` matches `@types/node`, `@types/foo/bar`, etc).
+   */
+  ignoredModules?: string[]
+}
+
 /** Public entry point. */
-export function findTypeOnlyImports(sourceText: string, fileName: string): TypeOnlyImportFinding[] {
+export function findTypeOnlyImports(
+  sourceText: string,
+  fileName: string,
+  options: FindTypeOnlyImportsOptions = {}
+): TypeOnlyImportFinding[] {
   const sourceFile = ts.createSourceFile(
     fileName,
     sourceText,
@@ -49,6 +63,7 @@ export function findTypeOnlyImports(sourceText: string, fileName: string): TypeO
     getScriptKind(fileName)
   )
 
+  const ignored = options.ignoredModules ?? []
   const findings: TypeOnlyImportFinding[] = []
 
   for (const statement of sourceFile.statements) {
@@ -56,6 +71,11 @@ export function findTypeOnlyImports(sourceText: string, fileName: string): TypeO
     const clause = statement.importClause
     if (!clause) continue // `import 'side-effect'`
     if (clause.isTypeOnly) continue // already `import type ...`
+
+    const moduleSpecifier = ts.isStringLiteral(statement.moduleSpecifier)
+      ? statement.moduleSpecifier.text
+      : ''
+    if (moduleSpecifier && isIgnoredModule(moduleSpecifier, ignored)) continue
 
     const bindings = collectBindingNames(clause)
     if (bindings.length === 0) continue
@@ -74,13 +94,29 @@ export function findTypeOnlyImports(sourceText: string, fileName: string): TypeO
       keywordStart: start,
       keywordEnd: start + 'import'.length,
       fixedText: 'import type' + declText.slice('import'.length),
-      moduleSpecifier: ts.isStringLiteral(statement.moduleSpecifier)
-        ? statement.moduleSpecifier.text
-        : ''
+      moduleSpecifier
     })
   }
 
   return findings
+}
+
+/**
+ * Match a module specifier against an ignore-pattern list.
+ *
+ * Supports exact match and a trailing `/*` prefix glob — same shape
+ * tsconfig `paths` uses, intentionally minimal.
+ */
+export function isIgnoredModule(specifier: string, patterns: string[]): boolean {
+  for (const pattern of patterns) {
+    if (pattern.endsWith('/*')) {
+      const prefix = pattern.slice(0, -1) // keep the trailing slash
+      if (specifier.startsWith(prefix)) return true
+    } else if (specifier === pattern) {
+      return true
+    }
+  }
+  return false
 }
 
 /** Map .ts/.tsx/.cts/.mts to the right ScriptKind. */
