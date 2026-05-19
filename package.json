@@ -342,6 +342,14 @@
         "title": "Toolkit: Toggle Diagnostic Highlight"
       },
       {
+        "command": "toolkit.convertToTypeOnlyImport",
+        "title": "Toolkit: Convert to Type-Only Import"
+      },
+      {
+        "command": "toolkit.typeOnlyImports.analyzeCurrentFile",
+        "title": "Toolkit: Analyze Type-Only Imports in Current File"
+      },
+      {
         "command": "toolkit.gitCommitList.editMessage",
         "title": "Toolkit: Edit Commit Message",
         "icon": "$(edit)"
@@ -938,6 +946,17 @@
           "default": "#CCA700",
           "description": "Color for Warning diagnostics (underline + background tint)."
         },
+        "toolkit.typeOnlyImports.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable detection of imports that are only used as types (`import` → `import type`)."
+        },
+        "toolkit.typeOnlyImports.severity": {
+          "type": "string",
+          "enum": ["error", "warning", "information", "hint"],
+          "default": "hint",
+          "description": "Severity of the diagnostic surfaced when an import can be converted to `import type`."
+        },
         "toolkit.csvRainbow.enabled": {
           "type": "boolean",
           "default": true,
@@ -991,6 +1010,9 @@
     "package": "vsce package",
     "test": "mocha --require tsx 'test/**/*.test.ts'"
   },
+  "dependencies": {
+    "typescript": "^6.0.3"
+  },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.8.0",
@@ -999,7 +1021,6 @@
     "mocha": "^11.7.5",
     "pdfjs-dist": "^5.7.284",
     "prettier": "^3.8.3",
-    "tsx": "^4.22.0",
-    "typescript": "^6.0.3"
+    "tsx": "^4.22.0"
   }
 }
