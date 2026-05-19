@@ -162,14 +162,7 @@ export function registerRelativeImportsCommands(context: vscode.ExtensionContext
     }
   }
 
-  const languages = [
-    'typescript',
-    'typescriptreact',
-    'javascript',
-    'javascriptreact',
-    'vue',
-    'svelte'
-  ]
+  const languages = ['typescript', 'typescriptreact', 'javascript', 'javascriptreact', 'vue', 'svelte']
   for (const lang of languages) {
     context.subscriptions.push(
       vscode.languages.registerCodeActionsProvider(lang, codeActionProvider, {

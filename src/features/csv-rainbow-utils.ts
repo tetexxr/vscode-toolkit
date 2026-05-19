@@ -54,7 +54,10 @@ export function parseCsvLine(line: string, delimiter: string): CsvField[] {
 }
 
 export function detectDelimiter(text: string, candidates: string[] = DEFAULT_DELIMITERS): string {
-  const lines = text.split(/\r?\n/).filter(l => l.length > 0).slice(0, 10)
+  const lines = text
+    .split(/\r?\n/)
+    .filter(l => l.length > 0)
+    .slice(0, 10)
   if (lines.length === 0) {
     return candidates[0] ?? ','
   }

@@ -76,9 +76,7 @@ function getConfig(): vscode.WorkspaceConfiguration {
 function createDecorationTypes(): void {
   const colors = getConfig().get<string[]>('colors', DEFAULT_COLORS)
   const palette = colors.length > 0 ? colors : DEFAULT_COLORS
-  decorationTypes = palette.map(color =>
-    vscode.window.createTextEditorDecorationType({ color })
-  )
+  decorationTypes = palette.map(color => vscode.window.createTextEditorDecorationType({ color }))
 }
 
 function disposeDecorationTypes(): void {
@@ -132,9 +130,7 @@ function updateEditor(editor: vscode.TextEditor): void {
   for (let i = 0; i < sampleEnd; i++) {
     sample.push(doc.lineAt(i).text)
   }
-  const delimiter = doc.uri.path.toLowerCase().endsWith('.tsv')
-    ? '\t'
-    : detectDelimiter(sample.join('\n'), delimiters)
+  const delimiter = doc.uri.path.toLowerCase().endsWith('.tsv') ? '\t' : detectDelimiter(sample.join('\n'), delimiters)
 
   const headers = parseHeaders(doc, delimiter)
 

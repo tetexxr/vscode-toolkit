@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode'
-import { PackageSource, NugetConfig } from './nuget-types'
+import type { PackageSource, NugetConfig } from './nuget-types'
 
 const DEFAULT_SOURCES: PackageSource[] = [{ name: 'nuget.org', url: 'https://api.nuget.org/v3/index.json' }]
 

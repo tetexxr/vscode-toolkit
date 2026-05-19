@@ -19,7 +19,7 @@ const DEFAULT_COLORS: Record<string, { background: string; border: string; ruler
 }
 
 let enabled = true
-let decorationTypes: Map<string, vscode.TextEditorDecorationType> = new Map()
+const decorationTypes: Map<string, vscode.TextEditorDecorationType> = new Map()
 let debounceTimer: ReturnType<typeof setTimeout> | undefined
 
 export function registerDiagnosticHighlightCommands(context: vscode.ExtensionContext): void {
@@ -200,12 +200,9 @@ function splitRangePerLine(
     const textLine = doc.lineAt(line)
     if (textLine.isEmptyOrWhitespace) continue
 
-    const lineStart = line === startLine
-      ? range.start
-      : new vscode.Position(line, textLine.firstNonWhitespaceCharacterIndex)
-    const lineEnd = line === endLine
-      ? range.end
-      : textLine.range.end
+    const lineStart =
+      line === startLine ? range.start : new vscode.Position(line, textLine.firstNonWhitespaceCharacterIndex)
+    const lineEnd = line === endLine ? range.end : textLine.range.end
 
     decorations.push({
       range: new vscode.Range(lineStart, lineEnd),
@@ -221,11 +218,7 @@ function buildHover(diag: vscode.Diagnostic): vscode.MarkdownString {
 
   const severityLabel = getSeverityLabel(diag.severity)
   const source = diag.source ? ` [${diag.source}]` : ''
-  const code = diag.code
-    ? typeof diag.code === 'object'
-      ? ` (${diag.code.value})`
-      : ` (${diag.code})`
-    : ''
+  const code = diag.code ? (typeof diag.code === 'object' ? ` (${diag.code.value})` : ` (${diag.code})`) : ''
 
   md.appendMarkdown(`**${severityLabel}**${source}${code}\n\n`)
   md.appendMarkdown(diag.message)
@@ -235,9 +228,13 @@ function buildHover(diag: vscode.Diagnostic): vscode.MarkdownString {
 
 function getSeverityLabel(severity: vscode.DiagnosticSeverity): string {
   switch (severity) {
-    case vscode.DiagnosticSeverity.Hint: return 'Hint'
-    case vscode.DiagnosticSeverity.Information: return 'Information'
-    case vscode.DiagnosticSeverity.Warning: return 'Warning'
-    case vscode.DiagnosticSeverity.Error: return 'Error'
+    case vscode.DiagnosticSeverity.Hint:
+      return 'Hint'
+    case vscode.DiagnosticSeverity.Information:
+      return 'Information'
+    case vscode.DiagnosticSeverity.Warning:
+      return 'Warning'
+    case vscode.DiagnosticSeverity.Error:
+      return 'Error'
   }
 }

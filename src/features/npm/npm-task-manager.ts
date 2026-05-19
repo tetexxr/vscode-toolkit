@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode'
-import { PackageManager } from './npm-types'
+import type { PackageManager } from './npm-types'
 import { buildInstallArgs, buildUninstallArgs } from './npm-commands'
 
 const TASK_NAME = 'toolkit-npm'

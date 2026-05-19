@@ -6,10 +6,7 @@ import {
   computeRemoveBraces
 } from '../utils/braces'
 
-const LANGUAGES = [
-  'typescript', 'javascript', 'typescriptreact', 'javascriptreact',
-  'java', 'c', 'cpp'
-]
+const LANGUAGES = ['typescript', 'javascript', 'typescriptreact', 'javascriptreact', 'java', 'c', 'cpp']
 
 export function registerAddBracesCodeActions(context: vscode.ExtensionContext) {
   const provider = new BracesCodeActionProvider()

@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { BuildTemplateOptions, BuildTemplateResult } from './csharp-types'
+import type { BuildTemplateOptions, BuildTemplateResult } from './csharp-types'
 
 export function buildTemplate(options: BuildTemplateOptions): BuildTemplateResult {
   const templatePath = path.join(options.extensionPath, 'templates', 'csharp', options.templateFile)

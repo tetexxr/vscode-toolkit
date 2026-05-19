@@ -2,7 +2,8 @@ import * as vscode from 'vscode'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as crypto from 'crypto'
-import { parseScale, buildTemplateHtml, TemplateValues } from './pdf-types'
+import type { TemplateValues } from './pdf-types'
+import { parseScale, buildTemplateHtml } from './pdf-types'
 
 export class PdfPreview implements vscode.Disposable {
   private readonly libUri: vscode.Uri

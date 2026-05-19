@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode'
-import { NpmPackageSource, NpmConfig } from './npm-types'
+import type { NpmPackageSource, NpmConfig } from './npm-types'
 
 const DEFAULT_SOURCES: NpmPackageSource[] = [{ name: 'npmjs.org', url: 'https://registry.npmjs.org' }]
 

@@ -8,7 +8,7 @@
 import * as https from 'https'
 import * as http from 'http'
 import * as zlib from 'zlib'
-import { Readable } from 'stream'
+import type { Readable } from 'stream'
 
 /** Shared agents with keep-alive for connection reuse across requests. */
 const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 16 })

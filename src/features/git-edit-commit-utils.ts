@@ -1,4 +1,4 @@
-import { CommitFileInfo } from '../utils/git'
+import type { CommitFileInfo } from '../utils/git'
 
 export const LARGE_DIFF_LINE_THRESHOLD = 5000
 

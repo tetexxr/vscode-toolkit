@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import * as crypto from 'crypto'
+import type { CommitLogEntry, CommitFileInfo } from '../utils/git'
 import {
   getRepoRoot,
   getCommitHash,
@@ -11,9 +12,7 @@ import {
   editCommitMessage,
   resetToCommit,
   countCommitsBetween,
-  hasUncommittedChanges,
-  CommitLogEntry,
-  CommitFileInfo
+  hasUncommittedChanges
 } from '../utils/git'
 import { escapeHtml, renderFileList, renderDiffContent, renderDiffPlaceholders } from './git-edit-commit-utils'
 
@@ -591,10 +590,7 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
     const root = await this.getRepoRoot()
     if (!root) return []
     try {
-      const [commits, headHash] = await Promise.all([
-        getCommitLog(root),
-        getCommitHash(root).catch(() => '')
-      ])
+      const [commits, headHash] = await Promise.all([getCommitLog(root), getCommitHash(root).catch(() => '')])
       return commits.map(c => new CommitTreeItem(c, c.hash === headHash))
     } catch {
       return []

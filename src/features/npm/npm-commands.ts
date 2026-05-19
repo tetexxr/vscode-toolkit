@@ -5,7 +5,7 @@
 
 import { existsSync, readFileSync } from 'fs'
 import { join, dirname, parse } from 'path'
-import { PackageManager } from './npm-types'
+import type { PackageManager } from './npm-types'
 
 /**
  * Detect the package manager by searching up the directory tree.

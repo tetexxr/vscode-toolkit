@@ -5,7 +5,7 @@
  */
 
 import * as vscode from 'vscode'
-import { WebviewMessage, ExtensionMessage, PackageViewModel, Category } from './nuget-types'
+import type { WebviewMessage, ExtensionMessage, PackageViewModel, Category } from './nuget-types'
 import { getNugetSources, getNugetConfig } from './nuget-config'
 import { isPrerelease } from '../../utils/semver'
 import * as nugetApi from './nuget-api'

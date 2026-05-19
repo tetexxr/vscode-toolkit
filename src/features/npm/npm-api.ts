@@ -8,7 +8,7 @@
 
 import { httpGetJson } from '../../utils/http'
 import { compareSemVer, isPrerelease as isSemVerPrerelease } from '../../utils/semver'
-import {
+import type {
   NpmSearchResponse,
   NpmSearchObject,
   NpmPackageMetadata,

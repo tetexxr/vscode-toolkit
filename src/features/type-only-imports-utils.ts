@@ -83,19 +83,10 @@ export function findTypeOnlyImports(
     if (!clause) continue // `import 'side-effect'`
     if (clause.isTypeOnly) continue // already `import type ...`
 
-    const moduleSpecifier = ts.isStringLiteral(statement.moduleSpecifier)
-      ? statement.moduleSpecifier.text
-      : ''
+    const moduleSpecifier = ts.isStringLiteral(statement.moduleSpecifier) ? statement.moduleSpecifier.text : ''
     if (moduleSpecifier && isIgnoredModule(moduleSpecifier, ignored)) continue
 
-    collectFindingsForDeclaration(
-      statement,
-      clause,
-      sourceFile,
-      sourceText,
-      moduleSpecifier,
-      findings
-    )
+    collectFindingsForDeclaration(statement, clause, sourceFile, sourceText, moduleSpecifier, findings)
   }
 
   return findings
@@ -110,38 +101,26 @@ function collectFindingsForDeclaration(
   findings: TypeOnlyImportFinding[]
 ): void {
   const namedSpecifiers =
-    clause.namedBindings && ts.isNamedImports(clause.namedBindings)
-      ? clause.namedBindings.elements
-      : undefined
+    clause.namedBindings && ts.isNamedImports(clause.namedBindings) ? clause.namedBindings.elements : undefined
 
   const defaultName = clause.name?.text
   const namespaceName =
-    clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)
-      ? clause.namedBindings.name.text
-      : undefined
+    clause.namedBindings && ts.isNamespaceImport(clause.namedBindings) ? clause.namedBindings.name.text : undefined
 
-  const hasAnyBinding =
-    !!defaultName || !!namespaceName || (namedSpecifiers?.length ?? 0) > 0
+  const hasAnyBinding = !!defaultName || !!namespaceName || (namedSpecifiers?.length ?? 0) > 0
   if (!hasAnyBinding) return
 
-  const defaultTypeOnly = defaultName
-    ? isOnlyUsedAsType(sourceFile, defaultName, statement)
-    : true
-  const namespaceTypeOnly = namespaceName
-    ? isOnlyUsedAsType(sourceFile, namespaceName, statement)
-    : true
+  const defaultTypeOnly = defaultName ? isOnlyUsedAsType(sourceFile, defaultName, statement) : true
+  const namespaceTypeOnly = namespaceName ? isOnlyUsedAsType(sourceFile, namespaceName, statement) : true
 
   const namedClassifications = (namedSpecifiers ?? []).map(specifier => ({
     specifier,
     alreadyType: !!specifier.isTypeOnly,
-    typeOnly:
-      !!specifier.isTypeOnly ||
-      isOnlyUsedAsType(sourceFile, specifier.name.text, statement)
+    typeOnly: !!specifier.isTypeOnly || isOnlyUsedAsType(sourceFile, specifier.name.text, statement)
   }))
 
   const hasInnerType = namedClassifications.some(c => c.alreadyType)
-  const allTypeOnly =
-    defaultTypeOnly && namespaceTypeOnly && namedClassifications.every(c => c.typeOnly)
+  const allTypeOnly = defaultTypeOnly && namespaceTypeOnly && namedClassifications.every(c => c.typeOnly)
 
   if (allTypeOnly && !hasInnerType) {
     const start = statement.getStart(sourceFile)
@@ -206,20 +185,20 @@ export function isIgnoredModule(specifier: string, patterns: string[]): boolean 
 export function getScriptKind(fileName: string): ts.ScriptKind {
   const ext = path.extname(fileName).toLowerCase()
   switch (ext) {
-    case '.tsx': return ts.ScriptKind.TSX
-    case '.jsx': return ts.ScriptKind.JSX
+    case '.tsx':
+      return ts.ScriptKind.TSX
+    case '.jsx':
+      return ts.ScriptKind.JSX
     case '.js':
     case '.mjs':
-    case '.cjs': return ts.ScriptKind.JS
-    default: return ts.ScriptKind.TS
+    case '.cjs':
+      return ts.ScriptKind.JS
+    default:
+      return ts.ScriptKind.TS
   }
 }
 
-function isOnlyUsedAsType(
-  sourceFile: ts.SourceFile,
-  bindingName: string,
-  declaration: ts.ImportDeclaration
-): boolean {
+function isOnlyUsedAsType(sourceFile: ts.SourceFile, bindingName: string, declaration: ts.ImportDeclaration): boolean {
   let referenceCount = 0
   let allTypeOnly = true
 

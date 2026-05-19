@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode'
-import { OverviewWebviewMessage, OverviewExtensionMessage, OverviewProject, OverviewPackage } from './nuget-types'
+import type { OverviewWebviewMessage, OverviewExtensionMessage, OverviewProject, OverviewPackage } from './nuget-types'
 import { getNugetSources, getNugetConfig } from './nuget-config'
 import * as nugetApi from './nuget-api'
 import { discoverProjectFiles, loadProject } from './nuget-project-loader'

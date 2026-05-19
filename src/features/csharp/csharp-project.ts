@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { ProjectInfo } from './csharp-types'
+import type { ProjectInfo } from './csharp-types'
 
 export function findProjectFile(dir: string): string | null {
   let current = dir

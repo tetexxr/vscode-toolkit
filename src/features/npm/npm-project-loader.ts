@@ -7,7 +7,7 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { parsePackageJsonDependencies, parsePackageJsonName } from '../../utils/json'
 import { detectPackageManager } from './npm-commands'
-import { NpmProject } from './npm-types'
+import type { NpmProject } from './npm-types'
 
 const PROJECT_GLOB = '**/package.json'
 const EXCLUDE_GLOB = '**/node_modules/**'

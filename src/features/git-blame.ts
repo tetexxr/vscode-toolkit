@@ -1,19 +1,17 @@
 import * as vscode from 'vscode'
-import { getRepoRoot, getFileBlame, BlameInfo } from '../utils/git'
+import type { BlameInfo } from '../utils/git'
+import { getRepoRoot, getFileBlame } from '../utils/git'
 import * as path from 'path'
 
 /** Palette of subtle background colors to distinguish consecutive commit groups. */
-const GROUP_COLORS = [
-  'rgba(255, 255, 255, 0.04)',
-  'rgba(255, 255, 255, 0.08)'
-]
+const GROUP_COLORS = ['rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.08)']
 
 /** How many characters the annotation column occupies (date + author). */
 const ANNOTATION_WIDTH = 30
 
 let enabled = false
 let blameDecorationTypes: vscode.TextEditorDecorationType[] = []
-let activeBlame: Map<string, BlameInfo[]> = new Map()
+const activeBlame: Map<string, BlameInfo[]> = new Map()
 
 export function registerGitBlameCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(

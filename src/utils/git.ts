@@ -250,12 +250,14 @@ export async function getCommitParents(cwd: string, hash: string): Promise<strin
 
 export async function getCommitFiles(cwd: string, hash: string): Promise<CommitFileInfo[]> {
   const parents = await getCommitParents(cwd, hash)
-  const nameStatusArgs = parents.length === 0
-    ? ['diff-tree', '--no-commit-id', '--root', '-r', '--name-status', hash]
-    : ['diff', '--name-status', parents[0], hash]
-  const numstatArgs = parents.length === 0
-    ? ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', hash]
-    : ['diff', '--numstat', parents[0], hash]
+  const nameStatusArgs =
+    parents.length === 0
+      ? ['diff-tree', '--no-commit-id', '--root', '-r', '--name-status', hash]
+      : ['diff', '--name-status', parents[0], hash]
+  const numstatArgs =
+    parents.length === 0
+      ? ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', hash]
+      : ['diff', '--numstat', parents[0], hash]
   const [statusRaw, numstatRaw] = await Promise.all([
     gitExec(cwd, nameStatusArgs, 30000),
     gitExec(cwd, numstatArgs, 30000)
@@ -287,9 +289,7 @@ export async function getCommitFiles(cwd: string, hash: string): Promise<CommitF
 
 export async function getCommitDiff(cwd: string, hash: string, filePath?: string): Promise<string> {
   const parents = await getCommitParents(cwd, hash)
-  const args = parents.length === 0
-    ? ['diff-tree', '--root', '--no-commit-id', '-p', hash]
-    : ['diff', parents[0], hash]
+  const args = parents.length === 0 ? ['diff-tree', '--root', '--no-commit-id', '-p', hash] : ['diff', parents[0], hash]
   if (filePath) args.push('--', filePath)
   return gitExec(cwd, args, 30000)
 }
@@ -312,13 +312,16 @@ export async function hasUncommittedChanges(cwd: string): Promise<boolean> {
   return status.length > 0
 }
 
-export async function editCommitMessage(cwd: string, hash: string, newMessage: string, newDate?: string): Promise<void> {
+export async function editCommitMessage(
+  cwd: string,
+  hash: string,
+  newMessage: string,
+  newDate?: string
+): Promise<void> {
   const headHash = await gitExec(cwd, ['rev-parse', 'HEAD'])
   // `git commit --amend --date` only sets the author date; without GIT_COMMITTER_DATE
   // the committer date defaults to "now", which is what GitHub uses for push timestamps.
-  const dateEnv: Record<string, string> = newDate
-    ? { GIT_AUTHOR_DATE: newDate, GIT_COMMITTER_DATE: newDate }
-    : {}
+  const dateEnv: Record<string, string> = newDate ? { GIT_AUTHOR_DATE: newDate, GIT_COMMITTER_DATE: newDate } : {}
 
   if (hash === headHash) {
     const staged = await gitExec(cwd, ['diff', '--cached', '--name-only']).catch(() => '')

@@ -6,7 +6,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { parsePackageReferences } from '../../utils/xml'
-import { Project } from './nuget-types'
+import type { Project } from './nuget-types'
 
 const PROJECT_GLOB = '**/*.{csproj,fsproj,vbproj}'
 

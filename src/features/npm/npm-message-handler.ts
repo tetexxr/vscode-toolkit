@@ -5,7 +5,7 @@
  */
 
 import * as vscode from 'vscode'
-import { NpmWebviewMessage, NpmExtensionMessage, NpmPackageViewModel, NpmCategory } from './npm-types'
+import type { NpmWebviewMessage, NpmExtensionMessage, NpmPackageViewModel, NpmCategory } from './npm-types'
 import { getNpmSources, getNpmConfig } from './npm-config'
 import { stripVersionRange } from './npm-api'
 import { isPrerelease } from '../../utils/semver'

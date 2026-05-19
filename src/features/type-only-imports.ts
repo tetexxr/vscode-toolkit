@@ -38,13 +38,16 @@ export function registerTypeOnlyImportsCommands(context: vscode.ExtensionContext
     vscode.languages.registerCodeActionsProvider(SUPPORTED_LANGS, new TypeOnlyImportsCodeActionProvider(), {
       providedCodeActionKinds: TypeOnlyImportsCodeActionProvider.providedCodeActionKinds
     }),
-    vscode.commands.registerCommand('toolkit.convertToTypeOnlyImport', async (uri: vscode.Uri, edit: { start: number; end: number; text: string }) => {
-      const doc = await vscode.workspace.openTextDocument(uri)
-      const wsEdit = new vscode.WorkspaceEdit()
-      const range = new vscode.Range(doc.positionAt(edit.start), doc.positionAt(edit.end))
-      wsEdit.replace(uri, range, edit.text)
-      await vscode.workspace.applyEdit(wsEdit)
-    }),
+    vscode.commands.registerCommand(
+      'toolkit.convertToTypeOnlyImport',
+      async (uri: vscode.Uri, edit: { start: number; end: number; text: string }) => {
+        const doc = await vscode.workspace.openTextDocument(uri)
+        const wsEdit = new vscode.WorkspaceEdit()
+        const range = new vscode.Range(doc.positionAt(edit.start), doc.positionAt(edit.end))
+        wsEdit.replace(uri, range, edit.text)
+        await vscode.workspace.applyEdit(wsEdit)
+      }
+    ),
     vscode.commands.registerCommand('toolkit.typeOnlyImports.analyzeCurrentFile', () => {
       const editor = vscode.window.activeTextEditor
       if (!editor) {
@@ -106,10 +109,14 @@ function isEnabled(): boolean {
 function getSeverity(): vscode.DiagnosticSeverity {
   const raw = getConfig().get<string>('severity', 'hint')
   switch (raw) {
-    case 'error': return vscode.DiagnosticSeverity.Error
-    case 'warning': return vscode.DiagnosticSeverity.Warning
-    case 'information': return vscode.DiagnosticSeverity.Information
-    default: return vscode.DiagnosticSeverity.Hint
+    case 'error':
+      return vscode.DiagnosticSeverity.Error
+    case 'warning':
+      return vscode.DiagnosticSeverity.Warning
+    case 'information':
+      return vscode.DiagnosticSeverity.Information
+    default:
+      return vscode.DiagnosticSeverity.Hint
   }
 }
 
@@ -205,9 +212,7 @@ class TypeOnlyImportsCodeActionProvider implements vscode.CodeActionProvider {
     range: vscode.Range | vscode.Selection,
     context: vscode.CodeActionContext
   ): vscode.CodeAction[] {
-    const ourDiagnostics = context.diagnostics.filter(
-      d => d.source === DIAGNOSTIC_SOURCE && d.code === DIAGNOSTIC_CODE
-    )
+    const ourDiagnostics = context.diagnostics.filter(d => d.source === DIAGNOSTIC_SOURCE && d.code === DIAGNOSTIC_CODE)
     if (ourDiagnostics.length === 0) return []
 
     // Re-analyze to recover the rewrites. Cheap enough for a single file on demand.
@@ -228,10 +233,7 @@ class TypeOnlyImportsCodeActionProvider implements vscode.CodeActionProvider {
       const finding = findings.find(f => f.keywordStart === keywordOffset)
       if (!finding) continue
 
-      const action = new vscode.CodeAction(
-        buildCodeActionTitle(finding),
-        vscode.CodeActionKind.QuickFix
-      )
+      const action = new vscode.CodeAction(buildCodeActionTitle(finding), vscode.CodeActionKind.QuickFix)
       action.edit = new vscode.WorkspaceEdit()
       action.edit.replace(
         document.uri,
