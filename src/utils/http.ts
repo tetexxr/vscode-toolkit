@@ -59,7 +59,7 @@ export function httpGetJson<T>(options: HttpRequestOptions): Promise<T> {
           const body = Buffer.concat(chunks).toString('utf-8')
           resolve(JSON.parse(body) as T)
         } catch (err) {
-          reject(new Error(`Failed to parse JSON from ${url}: ${err}`))
+          reject(new Error(`Failed to parse JSON from ${url}: ${err instanceof Error ? err.message : String(err)}`))
         }
       })
       stream.on('error', err => reject(new Error(`Decompression failed for ${url}: ${err.message}`)))

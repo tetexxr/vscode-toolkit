@@ -209,7 +209,7 @@ function isOnlyUsedAsType(sourceFile: ts.SourceFile, bindingName: string, declar
     // Skip the import declaration itself
     if (node.pos >= declStart && node.end <= declEnd) return
 
-    if (ts.isIdentifier(node) && node.escapedText === bindingName) {
+    if (ts.isIdentifier(node) && node.text === bindingName) {
       // Skip binding-declaration identifiers (parameters, type params, etc.)
       // where this identifier is the declared name, not a reference.
       if (isDeclarationName(node)) {

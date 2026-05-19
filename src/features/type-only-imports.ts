@@ -209,7 +209,7 @@ class TypeOnlyImportsCodeActionProvider implements vscode.CodeActionProvider {
 
   provideCodeActions(
     document: vscode.TextDocument,
-    range: vscode.Range | vscode.Selection,
+    _range: vscode.Range | vscode.Selection,
     context: vscode.CodeActionContext
   ): vscode.CodeAction[] {
     const ourDiagnostics = context.diagnostics.filter(d => d.source === DIAGNOSTIC_SOURCE && d.code === DIAGNOSTIC_CODE)

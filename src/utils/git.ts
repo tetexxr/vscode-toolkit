@@ -3,9 +3,6 @@
  */
 
 import { execFile } from 'child_process'
-import * as path from 'path'
-import * as os from 'os'
-import * as fs from 'fs'
 
 function gitExec(cwd: string, args: string[], timeout = 5000, env?: Record<string, string>): Promise<string> {
   return new Promise((resolve, reject) => {
