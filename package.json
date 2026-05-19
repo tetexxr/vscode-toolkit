@@ -953,14 +953,23 @@
         },
         "toolkit.typeOnlyImports.severity": {
           "type": "string",
-          "enum": ["error", "warning", "information", "hint"],
+          "enum": [
+            "error",
+            "warning",
+            "information",
+            "hint"
+          ],
           "default": "hint",
           "description": "Severity of the diagnostic surfaced when an import can be converted to `import type`."
         },
         "toolkit.typeOnlyImports.ignoredModules": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["vscode"],
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "vscode"
+          ],
           "description": "Module specifiers to skip. Supports exact match (`'vscode'`) and a trailing `/*` prefix glob (`'@types/*'`). Useful for namespaces whose import is conventionally kept as a value even when used only as a type in some files (e.g. `vscode` in VS Code extensions)."
         },
         "toolkit.csvRainbow.enabled": {
@@ -1013,6 +1022,7 @@
     "copy-pdfjs": "mkdir -p lib/pdf-viewer && cp node_modules/pdfjs-dist/legacy/build/pdf.min.mjs node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs lib/pdf-viewer/",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "lint": "eslint src",
     "package": "vsce package",
     "test": "mocha --require tsx 'test/**/*.test.ts'"
   },
@@ -1024,9 +1034,12 @@
     "@types/node": "^25.8.0",
     "@types/vscode": "^1.120.0",
     "@vscode/vsce": "^3.9.1",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
     "mocha": "^11.7.5",
     "pdfjs-dist": "^5.7.284",
     "prettier": "^3.8.3",
-    "tsx": "^4.22.0"
+    "tsx": "^4.22.0",
+    "typescript-eslint": "^8.59.4"
   }
 }

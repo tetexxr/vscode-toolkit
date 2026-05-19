@@ -709,6 +709,24 @@ npm test
 
 Tests cover the pure logic in `src/utils/` and `src/features/`.
 
+### Lint
+
+Static analysis is split between two tools, each catching what the other misses:
+
+- **TypeScript compiler** — runs on `npm run compile` (or `npm run watch`). The following strict flags are enabled in `tsconfig.json` and surface most unused-code issues for free:
+  - `noUnusedLocals` — unused local variables
+  - `noUnusedParameters` — unused function parameters
+  - `noImplicitReturns` — code paths that don't return a value
+  - `noFallthroughCasesInSwitch` — missing `break` in `switch` cases
+- **ESLint** — runs on `npm run lint`. Configured in `eslint.config.mjs` with the `typescript-eslint` `recommended-type-checked` preset plus a few opinionated rules (`consistent-type-imports`, `no-unused-vars` with `_`-prefix escape hatch). Catches deprecated API usage (`@deprecated`), unsafe `any` access, redundant type assertions, and many other code-quality issues that the TypeScript compiler doesn't flag.
+
+```bash
+npm run lint            # report issues in src/
+npm run lint -- --fix   # auto-fix what can be fixed
+```
+
+Only `src/` is linted. The `test/` folder runs through `tsx` and is intentionally excluded.
+
 ### Package & Install
 
 Build, package, and install the extension into VS Code:
