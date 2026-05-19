@@ -22,6 +22,7 @@ All-in-one VS Code utility extension.
     - [Move Symbol Up / Down](#move-symbol-up--down)
     - [Add / Remove Braces](#add--remove-braces)
     - [Convert Import Paths](#convert-import-paths)
+    - [Type-Only Imports](#type-only-imports)
     - [Sum Numbers in Selection](#sum-numbers-in-selection)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
@@ -361,6 +362,45 @@ import { search } from '../catalog/helpers'
 When the cursor is on an import line, a code action (lightbulb / `Ctrl+.`) offers the conversion in the appropriate direction — alias to relative or relative to alias.
 
 Works with `import ... from`, `export ... from`, `require()`, and dynamic `import()`. Supported languages: TypeScript, JavaScript, TSX, JSX, Vue, Svelte.
+
+#### Type-Only Imports
+
+Surface imports whose bindings are used only as types and offer a one-click fix to convert them to `import type ...`. Similar to JetBrains' "Import can be type-only" inspection — runs automatically as you edit, no command needed.
+
+Catches the runtime error you get under ESM when a type-only binding is imported as a value (`SyntaxError: The requested module '...' does not provide an export named 'X'`).
+
+**Example:**
+
+```typescript
+import { Foo } from './foo'
+//     ^^^ flagged — only used in `: Foo` below
+
+function bar(x: Foo): void {}
+```
+
+A code action (lightbulb / `Ctrl+.`) on the underlined `import` keyword offers:
+
+| Action | Effect |
+|---|---|
+| Convert to type-only import | Rewrites a single declaration to `import type ...` |
+| Convert all N type-only imports in file | Bulk fix when the file has more than one |
+
+**Detection rules (conservative — false negatives over false positives):**
+
+The whole declaration is flagged only when **every** imported binding (default, namespace, and named) is used **only** in unambiguous type positions: type annotations, generics, `as Type` / `satisfies`, `interface X extends Y`, `class X implements Y`, `typeof X` inside a type, qualified type references (`Foo.Bar`).
+
+It will **not** flag — even if part of the import looks type-only — when any binding appears as a value: `Foo()`, `new Foo()`, `class extends Foo`, `@Foo`, `<Foo />`, `typeof Foo === '...'` in an expression, property/element access. Already-`import type` declarations and side-effect imports (`import './setup'`) are ignored.
+
+Supported languages: TypeScript and TSX.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.typeOnlyImports.enabled` | `true` | Enable detection of imports usable as `import type` |
+| `toolkit.typeOnlyImports.severity` | `hint` | Diagnostic severity: `error`, `warning`, `information`, or `hint` |
+
+> Tip: `hint` shows as the same near-invisible three dots that VS Code uses for unused-variable hints — pair it with the [Diagnostic Highlight](#diagnostic-highlight) feature above to make hints visible, or set `severity` to `warning` for a standard squiggly underline.
 
 #### Sum Numbers in Selection
 
