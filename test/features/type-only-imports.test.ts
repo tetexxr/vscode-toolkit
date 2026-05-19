@@ -269,6 +269,109 @@ describe('findTypeOnlyImports', () => {
     assert.equal(findings[0].fixedText, `import type { Foo } from './foo';`)
   })
 
+  describe('named-specifier (per-binding) findings', () => {
+    it('should flag a single type-only binding in a mixed declaration', () => {
+      const source = [
+        `import { foo, Bar } from './mod'`,
+        `foo()`,
+        `let x: Bar = null as any`
+      ].join('\n')
+
+      const findings = run(source)
+      assert.equal(findings.length, 1)
+      assert.equal(findings[0].kind, 'named-specifier')
+      assert.equal(findings[0].bindingName, 'Bar')
+      assert.equal(findings[0].fixedText, 'type Bar')
+    })
+
+    it('should flag multiple type-only bindings in a mixed declaration', () => {
+      const source = [
+        `import { foo, Bar, Baz } from './mod'`,
+        `foo()`,
+        `let x: Bar = null as any`,
+        `let y: Baz = null as any`
+      ].join('\n')
+
+      const findings = run(source)
+      assert.equal(findings.length, 2)
+      assert.deepEqual(
+        findings.map(f => f.bindingName).sort(),
+        ['Bar', 'Baz']
+      )
+      assert.ok(findings.every(f => f.kind === 'named-specifier'))
+    })
+
+    it('should preserve the `as Alias` form when fixing', () => {
+      const source = [
+        `import { foo, Bar as Renamed } from './mod'`,
+        `foo()`,
+        `let x: Renamed = null as any`
+      ].join('\n')
+
+      const findings = run(source)
+      assert.equal(findings.length, 1)
+      assert.equal(findings[0].bindingName, 'Renamed')
+      assert.equal(findings[0].fixedText, 'type Bar as Renamed')
+    })
+
+    it('should flag named bindings when only the default is a value', () => {
+      const source = [
+        `import Foo, { Bar } from './mod'`,
+        `Foo()`,
+        `let x: Bar = null as any`
+      ].join('\n')
+
+      const findings = run(source)
+      assert.equal(findings.length, 1)
+      assert.equal(findings[0].kind, 'named-specifier')
+      assert.equal(findings[0].bindingName, 'Bar')
+    })
+
+    it('should not flag bindings already marked with `type`', () => {
+      const source = [
+        `import { foo, type Bar } from './mod'`,
+        `foo()`,
+        `let x: Bar = null as any`
+      ].join('\n')
+
+      assert.equal(run(source).length, 0)
+    })
+
+    it('should flag unmarked bindings even when others are already marked', () => {
+      const source = [
+        `import { foo, type Bar, Baz } from './mod'`,
+        `foo()`,
+        `let x: Bar = null as any`,
+        `let y: Baz = null as any`
+      ].join('\n')
+
+      const findings = run(source)
+      assert.equal(findings.length, 1)
+      assert.equal(findings[0].kind, 'named-specifier')
+      assert.equal(findings[0].bindingName, 'Baz')
+      assert.equal(findings[0].fixedText, 'type Baz')
+    })
+
+    it('should keep using whole-declaration when the whole import is type-only', () => {
+      const source = [
+        `import { Bar, Baz } from './mod'`,
+        `let x: Bar = null as any`,
+        `let y: Baz = null as any`
+      ].join('\n')
+
+      const findings = run(source)
+      assert.equal(findings.length, 1)
+      assert.equal(findings[0].kind, 'whole-declaration')
+    })
+
+    it('should report the binding name range for the diagnostic underline', () => {
+      const source = `import { foo, Bar } from './mod'\nfoo()\nlet x: Bar`
+      const findings = run(source)
+      assert.equal(findings.length, 1)
+      assert.equal(source.slice(findings[0].keywordStart, findings[0].keywordEnd), 'Bar')
+    })
+  })
+
   describe('ignoredModules option', () => {
     it('should skip declarations whose specifier matches exactly', () => {
       const source = [

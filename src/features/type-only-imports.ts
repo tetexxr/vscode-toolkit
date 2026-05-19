@@ -178,13 +178,7 @@ function analyzeDocument(doc: vscode.TextDocument, verbose = false): number {
   const severity = getSeverity()
   const out: vscode.Diagnostic[] = findings.map(f => {
     const range = new vscode.Range(doc.positionAt(f.keywordStart), doc.positionAt(f.keywordEnd))
-    const diag = new vscode.Diagnostic(
-      range,
-      f.moduleSpecifier
-        ? `Import from '${f.moduleSpecifier}' is only used as a type. Convert to \`import type\`.`
-        : 'Import is only used as a type. Convert to `import type`.',
-      severity
-    )
+    const diag = new vscode.Diagnostic(range, buildDiagnosticMessage(f), severity)
     diag.source = DIAGNOSTIC_SOURCE
     diag.code = DIAGNOSTIC_CODE
     return diag
@@ -192,6 +186,15 @@ function analyzeDocument(doc: vscode.TextDocument, verbose = false): number {
 
   diagnostics.set(doc.uri, out)
   return findings.length
+}
+
+function buildDiagnosticMessage(f: TypeOnlyImportFinding): string {
+  if (f.kind === 'named-specifier' && f.bindingName) {
+    return `\`${f.bindingName}\` is only used as a type. Mark this import with \`type\`.`
+  }
+  return f.moduleSpecifier
+    ? `Import from '${f.moduleSpecifier}' is only used as a type. Convert to \`import type\`.`
+    : 'Import is only used as a type. Convert to `import type`.'
 }
 
 class TypeOnlyImportsCodeActionProvider implements vscode.CodeActionProvider {
@@ -226,7 +229,7 @@ class TypeOnlyImportsCodeActionProvider implements vscode.CodeActionProvider {
       if (!finding) continue
 
       const action = new vscode.CodeAction(
-        'Convert to type-only import',
+        buildCodeActionTitle(finding),
         vscode.CodeActionKind.QuickFix
       )
       action.edit = new vscode.WorkspaceEdit()
@@ -261,4 +264,11 @@ class TypeOnlyImportsCodeActionProvider implements vscode.CodeActionProvider {
 
     return actions
   }
+}
+
+function buildCodeActionTitle(f: TypeOnlyImportFinding): string {
+  if (f.kind === 'named-specifier' && f.bindingName) {
+    return `Mark \`${f.bindingName}\` as type-only import`
+  }
+  return 'Convert to type-only import'
 }

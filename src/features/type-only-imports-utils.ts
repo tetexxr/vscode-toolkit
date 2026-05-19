@@ -24,19 +24,30 @@
 import * as ts from 'typescript'
 import * as path from 'path'
 
+export type TypeOnlyImportFindingKind = 'whole-declaration' | 'named-specifier'
+
 export interface TypeOnlyImportFinding {
-  /** Absolute start offset of the import declaration in the source. */
+  /**
+   * - `whole-declaration`: every binding in the import is type-only, the whole
+   *   declaration can become `import type ...`.
+   * - `named-specifier`: only some named bindings are type-only; the per-binding
+   *   `type` modifier should be added to those specifiers.
+   */
+  kind: TypeOnlyImportFindingKind
+  /** Absolute start offset of the replaced region. */
   start: number
-  /** Absolute end offset (exclusive) of the import declaration in the source. */
+  /** Absolute end offset (exclusive) of the replaced region. */
   end: number
-  /** Offset of the `import` keyword (for diagnostic underline). */
+  /** Range start for the diagnostic underline. */
   keywordStart: number
-  /** End offset of the `import` keyword. */
+  /** Range end for the diagnostic underline. */
   keywordEnd: number
-  /** Rewritten declaration text (replaces [start, end)). */
+  /** Replacement text for `[start, end)`. */
   fixedText: string
   /** The original module specifier, useful for messages. */
   moduleSpecifier: string
+  /** Local name of the specific binding, for `named-specifier` findings. */
+  bindingName?: string
 }
 
 export interface FindTypeOnlyImportsOptions {
@@ -77,18 +88,68 @@ export function findTypeOnlyImports(
       : ''
     if (moduleSpecifier && isIgnoredModule(moduleSpecifier, ignored)) continue
 
-    const bindings = collectBindingNames(clause)
-    if (bindings.length === 0) continue
+    collectFindingsForDeclaration(
+      statement,
+      clause,
+      sourceFile,
+      sourceText,
+      moduleSpecifier,
+      findings
+    )
+  }
 
-    const allTypeOnly = bindings.every(name => isOnlyUsedAsType(sourceFile, name, statement))
-    if (!allTypeOnly) continue
+  return findings
+}
 
+function collectFindingsForDeclaration(
+  statement: ts.ImportDeclaration,
+  clause: ts.ImportClause,
+  sourceFile: ts.SourceFile,
+  sourceText: string,
+  moduleSpecifier: string,
+  findings: TypeOnlyImportFinding[]
+): void {
+  const namedSpecifiers =
+    clause.namedBindings && ts.isNamedImports(clause.namedBindings)
+      ? clause.namedBindings.elements
+      : undefined
+
+  const defaultName = clause.name?.text
+  const namespaceName =
+    clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)
+      ? clause.namedBindings.name.text
+      : undefined
+
+  const hasAnyBinding =
+    !!defaultName || !!namespaceName || (namedSpecifiers?.length ?? 0) > 0
+  if (!hasAnyBinding) return
+
+  const defaultTypeOnly = defaultName
+    ? isOnlyUsedAsType(sourceFile, defaultName, statement)
+    : true
+  const namespaceTypeOnly = namespaceName
+    ? isOnlyUsedAsType(sourceFile, namespaceName, statement)
+    : true
+
+  const namedClassifications = (namedSpecifiers ?? []).map(specifier => ({
+    specifier,
+    alreadyType: !!specifier.isTypeOnly,
+    typeOnly:
+      !!specifier.isTypeOnly ||
+      isOnlyUsedAsType(sourceFile, specifier.name.text, statement)
+  }))
+
+  const hasInnerType = namedClassifications.some(c => c.alreadyType)
+  const allTypeOnly =
+    defaultTypeOnly && namespaceTypeOnly && namedClassifications.every(c => c.typeOnly)
+
+  if (allTypeOnly && !hasInnerType) {
     const start = statement.getStart(sourceFile)
     const end = statement.getEnd()
     const declText = sourceText.slice(start, end)
-    if (!declText.startsWith('import')) continue // safety: parser quirk
-
+    if (!declText.startsWith('import')) return
     findings.push({
+      kind: 'whole-declaration',
       start,
       end,
       keywordStart: start,
@@ -96,9 +157,31 @@ export function findTypeOnlyImports(
       fixedText: 'import type' + declText.slice('import'.length),
       moduleSpecifier
     })
+    return
   }
 
-  return findings
+  // Mixed (or already partially type-marked) declaration: emit a per-binding
+  // finding for each named specifier that is type-only but not yet marked.
+  // Default and namespace bindings can't be marked per-binding, so they are
+  // left alone here.
+  for (const c of namedClassifications) {
+    if (!c.typeOnly || c.alreadyType) continue
+    const specStart = c.specifier.getStart(sourceFile)
+    const specEnd = c.specifier.getEnd()
+    const specText = sourceText.slice(specStart, specEnd)
+    const nameStart = c.specifier.name.getStart(sourceFile)
+    const nameEnd = c.specifier.name.getEnd()
+    findings.push({
+      kind: 'named-specifier',
+      start: specStart,
+      end: specEnd,
+      keywordStart: nameStart,
+      keywordEnd: nameEnd,
+      fixedText: 'type ' + specText,
+      moduleSpecifier,
+      bindingName: c.specifier.name.text
+    })
+  }
 }
 
 /**
@@ -130,30 +213,6 @@ export function getScriptKind(fileName: string): ts.ScriptKind {
     case '.cjs': return ts.ScriptKind.JS
     default: return ts.ScriptKind.TS
   }
-}
-
-function collectBindingNames(clause: ts.ImportClause): string[] {
-  const names: string[] = []
-  if (clause.name) {
-    names.push(clause.name.text)
-  }
-  if (clause.namedBindings) {
-    if (ts.isNamespaceImport(clause.namedBindings)) {
-      names.push(clause.namedBindings.name.text)
-    } else {
-      for (const element of clause.namedBindings.elements) {
-        // `import { Foo as Bar }` → local name is Bar
-        if (element.isTypeOnly) {
-          // Per-binding type-only; treat as already-handled (type-only usage)
-          // We still need to track that the local name should not influence
-          // the "all are type-only" check.
-          continue
-        }
-        names.push(element.name.text)
-      }
-    }
-  }
-  return names
 }
 
 function isOnlyUsedAsType(
