@@ -36,8 +36,8 @@ async function getGitInfo(filePath?: string) {
       branch: branch || defaultBranch,
       cwd
     }
-  } catch (err: any) {
-    vscode.window.showErrorMessage(`Git error: ${err.message}`)
+  } catch (err) {
+    vscode.window.showErrorMessage(`Git error: ${err instanceof Error ? err.message : String(err)}`)
     return undefined
   }
 }
@@ -97,8 +97,8 @@ async function buildFileUrl(
   if (options?.useCommitHash) {
     try {
       ref = await getCommitHash(info.cwd)
-    } catch (err: any) {
-      vscode.window.showErrorMessage(`Git error: ${err.message}`)
+    } catch (err) {
+      vscode.window.showErrorMessage(`Git error: ${err instanceof Error ? err.message : String(err)}`)
       return undefined
     }
   } else {

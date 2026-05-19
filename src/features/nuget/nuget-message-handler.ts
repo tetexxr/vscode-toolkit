@@ -29,7 +29,7 @@ export class NugetMessageHandler implements vscode.Disposable {
       this.taskManager,
       vscode.workspace.onDidChangeConfiguration(() => {
         nugetApi.clearEndpointCache()
-        this.sendInit()
+        void this.sendInit()
       })
     )
   }
@@ -44,13 +44,13 @@ export class NugetMessageHandler implements vscode.Disposable {
         case 'select-package':
           return await this.handleSelectPackage(msg.packageId)
         case 'install':
-          return await this.handleInstallOrUpdate(msg.packageId, msg.version, msg.sourceUrl, 'install')
+          return this.handleInstallOrUpdate(msg.packageId, msg.version, msg.sourceUrl, 'install')
         case 'update':
-          return await this.handleInstallOrUpdate(msg.packageId, msg.version, msg.sourceUrl, 'update')
+          return this.handleInstallOrUpdate(msg.packageId, msg.version, msg.sourceUrl, 'update')
         case 'uninstall':
-          return await this.handleUninstall(msg.packageId)
+          return this.handleUninstall(msg.packageId)
         case 'update-all':
-          return await this.handleUpdateAll(msg.packages)
+          return this.handleUpdateAll(msg.packages)
         case 'open-settings':
           return void vscode.commands.executeCommand(
             'workbench.action.openSettings',
@@ -59,8 +59,8 @@ export class NugetMessageHandler implements vscode.Disposable {
         case 'open-url':
           return void vscode.env.openExternal(vscode.Uri.parse(msg.url))
       }
-    } catch (err: any) {
-      this.post({ type: 'error', message: err.message || String(err) })
+    } catch (err) {
+      this.post({ type: 'error', message: err instanceof Error ? err.message : String(err) })
       this.post({ type: 'loading', loading: false })
     }
   }
@@ -159,12 +159,7 @@ export class NugetMessageHandler implements vscode.Disposable {
 
   // ── Install / Update ───────────────────────────────────
 
-  private async handleInstallOrUpdate(
-    packageId: string,
-    version: string,
-    sourceUrl: string,
-    action: string
-  ): Promise<void> {
+  private handleInstallOrUpdate(packageId: string, version: string, sourceUrl: string, action: string): void {
     this.post({ type: 'task-started', packageId, action })
 
     const task = NugetTaskManager.buildAddTask(this.projectFsPath, packageId, version, sourceUrl)
@@ -180,7 +175,7 @@ export class NugetMessageHandler implements vscode.Disposable {
 
   // ── Uninstall ──────────────────────────────────────────
 
-  private async handleUninstall(packageId: string): Promise<void> {
+  private handleUninstall(packageId: string): void {
     this.post({ type: 'task-started', packageId, action: 'uninstall' })
 
     const task = NugetTaskManager.buildRemoveTask(this.projectFsPath, packageId)
@@ -196,9 +191,9 @@ export class NugetMessageHandler implements vscode.Disposable {
 
   // ── Update all ─────────────────────────────────────────
 
-  private async handleUpdateAll(packages: Array<{ id: string; version: string; sourceUrl: string }>): Promise<void> {
+  private handleUpdateAll(packages: Array<{ id: string; version: string; sourceUrl: string }>): void {
     for (const pkg of packages) {
-      await this.handleInstallOrUpdate(pkg.id, pkg.version, pkg.sourceUrl, 'update')
+      this.handleInstallOrUpdate(pkg.id, pkg.version, pkg.sourceUrl, 'update')
     }
   }
 

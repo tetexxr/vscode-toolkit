@@ -46,8 +46,8 @@ export class NpmOverviewHandler implements vscode.Disposable {
             '@ext:tete.vscode-toolkit toolkit.npm'
           )
       }
-    } catch (err: any) {
-      this.post({ type: 'overview-error', message: err.message || String(err) })
+    } catch (err) {
+      this.post({ type: 'overview-error', message: err instanceof Error ? err.message : String(err) })
     }
   }
 

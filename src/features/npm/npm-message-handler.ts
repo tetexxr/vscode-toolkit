@@ -57,8 +57,8 @@ export class NpmMessageHandler implements vscode.Disposable {
         case 'open-url':
           return void vscode.env.openExternal(vscode.Uri.parse(msg.url))
       }
-    } catch (err: any) {
-      this.post({ type: 'error', message: err.message || String(err) })
+    } catch (err) {
+      this.post({ type: 'error', message: err instanceof Error ? err.message : String(err) })
       this.post({ type: 'loading', loading: false })
     }
   }

@@ -22,8 +22,20 @@ export interface TemplateValues {
 
 export function buildTemplateHtml(template: string, values: TemplateValues): string {
   let result = template
-  for (const [key, value] of Object.entries(values)) {
-    result = result.replaceAll('${' + key + '}', value)
+  for (const key of Object.keys(values) as (keyof TemplateValues)[]) {
+    result = result.replaceAll('${' + key + '}', values[key])
   }
   return result
+}
+
+export interface ZoomChangedMessage {
+  type: 'zoomChanged'
+  scale: string
+  mode: string
+}
+
+export function isZoomChangedMessage(value: unknown): value is ZoomChangedMessage {
+  if (typeof value !== 'object' || value === null) return false
+  const msg = value as Record<string, unknown>
+  return msg.type === 'zoomChanged' && typeof msg.scale === 'string' && typeof msg.mode === 'string'
 }

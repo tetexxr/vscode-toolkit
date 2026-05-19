@@ -16,7 +16,7 @@ function gitExec(cwd: string, args: string[], timeout = 5000, env?: Record<strin
     }
     execFile('git', args, options, (err, stdout) => {
       if (err) {
-        reject(err)
+        reject(err instanceof Error ? err : new Error('git command failed'))
       } else {
         resolve(stdout.trim())
       }

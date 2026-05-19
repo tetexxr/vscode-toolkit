@@ -95,12 +95,15 @@ async function getNpmPackages(rootPath: string, filePath: string, config: NpmInt
       : join(rootPath, 'package.json')
 
     const content = await readFile(packageJsonPath, 'utf-8')
-    const pkg = JSON.parse(content)
+    const pkg = JSON.parse(content) as {
+      dependencies?: Record<string, string>
+      devDependencies?: Record<string, string>
+    }
 
     const exclude = new Set(config.excludePackages)
     return [
-      ...Object.keys(pkg.dependencies || {}),
-      ...(config.scanDevDependencies ? Object.keys(pkg.devDependencies || {}) : []),
+      ...Object.keys(pkg.dependencies ?? {}),
+      ...(config.scanDevDependencies ? Object.keys(pkg.devDependencies ?? {}) : []),
       ...(config.showBuiltinModules ? getBuiltinModules() : [])
     ].filter(name => !exclude.has(name))
   } catch {

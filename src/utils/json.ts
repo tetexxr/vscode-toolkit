@@ -15,24 +15,20 @@ export interface PackageJsonDependency {
  * Returns empty array if JSON is invalid or has no dependencies.
  */
 export function parsePackageJsonDependencies(json: string): PackageJsonDependency[] {
-  let pkg: Record<string, unknown>
-  try {
-    pkg = JSON.parse(json)
-  } catch {
-    return []
-  }
-
-  if (!pkg || typeof pkg !== 'object') {
-    return []
-  }
+  const pkg = tryParseJson(json)
+  if (!isObject(pkg)) return []
 
   const results: PackageJsonDependency[] = []
 
   for (const depType of ['dependencies', 'devDependencies'] as const) {
     const deps = pkg[depType]
-    if (deps && typeof deps === 'object') {
-      for (const [name, range] of Object.entries(deps as Record<string, string>)) {
-        results.push({ name, versionRange: range || '', dependencyType: depType })
+    if (isObject(deps)) {
+      for (const [name, range] of Object.entries(deps)) {
+        results.push({
+          name,
+          versionRange: typeof range === 'string' ? range : '',
+          dependencyType: depType
+        })
       }
     }
   }
@@ -45,10 +41,19 @@ export function parsePackageJsonDependencies(json: string): PackageJsonDependenc
  * Returns empty string if missing or invalid JSON.
  */
 export function parsePackageJsonName(json: string): string {
+  const pkg = tryParseJson(json)
+  if (!isObject(pkg)) return ''
+  return typeof pkg.name === 'string' ? pkg.name : ''
+}
+
+function tryParseJson(json: string): unknown {
   try {
-    const pkg = JSON.parse(json)
-    return typeof pkg?.name === 'string' ? pkg.name : ''
+    return JSON.parse(json)
   } catch {
-    return ''
+    return undefined
   }
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
 }

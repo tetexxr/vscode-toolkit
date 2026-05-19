@@ -16,8 +16,8 @@ export function registerGitStageCommands(context: vscode.ExtensionContext) {
         await stageFile(repoRoot, ...relativePaths)
         const label = relativePaths.length === 1 ? relativePaths[0] : `${relativePaths.length} items`
         vscode.window.showInformationMessage(`Staged: ${label}`)
-      } catch (err: any) {
-        vscode.window.showErrorMessage(`Failed to stage: ${err.message}`)
+      } catch (err) {
+        vscode.window.showErrorMessage(`Failed to stage: ${err instanceof Error ? err.message : String(err)}`)
       }
     })
   )

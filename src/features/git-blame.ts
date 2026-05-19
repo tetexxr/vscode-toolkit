@@ -18,7 +18,7 @@ export function registerGitBlameCommands(context: vscode.ExtensionContext): void
     vscode.commands.registerCommand('toolkit.toggleGitBlame', () => toggleBlame()),
     vscode.window.onDidChangeActiveTextEditor(() => {
       if (enabled) {
-        applyBlame(vscode.window.activeTextEditor)
+        void applyBlame(vscode.window.activeTextEditor)
       }
     }),
     vscode.workspace.onDidSaveTextDocument(doc => {
@@ -26,7 +26,7 @@ export function registerGitBlameCommands(context: vscode.ExtensionContext): void
         const editor = vscode.window.activeTextEditor
         if (editor && editor.document === doc) {
           activeBlame.delete(doc.uri.toString())
-          applyBlame(editor)
+          void applyBlame(editor)
         }
       }
     })

@@ -45,7 +45,7 @@ export function detectPackageManager(directoryPath: string): PackageManager {
 export function readPackageManagerField(packageJsonPath: string): PackageManager | null {
   try {
     const content = readFileSync(packageJsonPath, 'utf-8')
-    const pkg = JSON.parse(content)
+    const pkg = JSON.parse(content) as { packageManager?: unknown }
     const field = pkg.packageManager
     if (typeof field !== 'string') {
       return null

@@ -539,8 +539,8 @@ async function performResetWithConfirm(
 
     onSuccess?.()
     vscode.window.showInformationMessage(`Reset --${mode} to ${shortHash}.`)
-  } catch (err: any) {
-    vscode.window.showErrorMessage(`Reset failed: ${err.message}`)
+  } catch (err) {
+    vscode.window.showErrorMessage(`Reset failed: ${err instanceof Error ? err.message : String(err)}`)
   }
 }
 
@@ -691,8 +691,10 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
           getCommitHash(repoRoot),
           getCommitDateIso(repoRoot, item.commit.hash)
         ])
-      } catch (err: any) {
-        vscode.window.showErrorMessage(`Failed to load commit details: ${err.message}`)
+      } catch (err) {
+        vscode.window.showErrorMessage(
+          `Failed to load commit details: ${err instanceof Error ? err.message : String(err)}`
+        )
         return
       }
 
@@ -713,78 +715,30 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       const nonce = getNonce()
       panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, isHead, nonce, commitDateIso)
 
-      panel.webview.onDidReceiveMessage(async msg => {
-        if (msg.command === 'discard') {
+      panel.webview.onDidReceiveMessage((msg: unknown) => {
+        const parsed = parseEditCommitMessage(msg)
+        if (!parsed) return
+
+        if (parsed.command === 'discard') {
           panel.dispose()
           return
         }
 
-        if (msg.command === 'loadDiff') {
-          const filePath = msg.path as string
-          if (!filePath) return
-          try {
-            const raw = await getCommitDiff(repoRoot, item.commit.hash, filePath)
-            const html = renderDiffContent(raw)
-            panel.webview.postMessage({ command: 'diffLoaded', path: filePath, html })
-          } catch (err: any) {
-            panel.webview.postMessage({
-              command: 'diffError',
-              path: filePath,
-              error: err?.message || String(err)
-            })
-          }
+        if (parsed.command === 'loadDiff') {
+          void handleLoadDiff(panel, repoRoot, item.commit.hash, parsed.path)
           return
         }
 
-        if (msg.command === 'reset') {
-          const mode = msg.mode
-          if (mode !== 'soft' && mode !== 'hard') {
-            vscode.window.showErrorMessage(`Invalid reset mode: ${mode}`)
-            return
-          }
-          await performResetWithConfirm(repoRoot, item.commit.hash, mode, () => {
+        if (parsed.command === 'reset') {
+          void performResetWithConfirm(repoRoot, item.commit.hash, parsed.mode, () => {
             provider.refresh()
             panel.dispose()
           })
           return
         }
 
-        if (msg.command === 'apply') {
-          const newMessage = (msg.message as string).trim()
-          const newDate = msg.date as string | null
-
-          if (!newMessage) {
-            vscode.window.showErrorMessage('Commit message cannot be empty.')
-            return
-          }
-
-          const messageUnchanged = newMessage === fullMessage.trim()
-          const dateSet = newDate !== null
-
-          if (messageUnchanged && !dateSet) {
-            provider.refresh()
-            panel.dispose()
-            return
-          }
-
-          try {
-            await vscode.window.withProgress(
-              {
-                location: vscode.ProgressLocation.Notification,
-                title: 'Updating commit...',
-                cancellable: false
-              },
-              async () => {
-                await editCommitMessage(repoRoot, item.commit.hash, newMessage, newDate || undefined)
-              }
-            )
-
-            provider.refresh()
-            panel.dispose()
-            vscode.window.showInformationMessage('Commit message updated.')
-          } catch (err: any) {
-            vscode.window.showErrorMessage(`Failed to update commit message: ${err.message}`)
-          }
+        if (parsed.command === 'apply') {
+          void handleApply(panel, provider, repoRoot, item.commit.hash, fullMessage, parsed.message, parsed.date)
         }
       })
     }),
@@ -832,4 +786,95 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
       })
     })
   )
+}
+
+type EditCommitMessage =
+  | { command: 'discard' }
+  | { command: 'loadDiff'; path: string }
+  | { command: 'reset'; mode: 'soft' | 'hard' }
+  | { command: 'apply'; message: string; date: string | null }
+
+function parseEditCommitMessage(value: unknown): EditCommitMessage | undefined {
+  if (typeof value !== 'object' || value === null) return undefined
+  const msg = value as Record<string, unknown>
+  switch (msg.command) {
+    case 'discard':
+      return { command: 'discard' }
+    case 'loadDiff':
+      return typeof msg.path === 'string' ? { command: 'loadDiff', path: msg.path } : undefined
+    case 'reset':
+      return msg.mode === 'soft' || msg.mode === 'hard' ? { command: 'reset', mode: msg.mode } : undefined
+    case 'apply':
+      if (typeof msg.message !== 'string') return undefined
+      if (msg.date !== null && typeof msg.date !== 'string') return undefined
+      return { command: 'apply', message: msg.message, date: msg.date }
+    default:
+      return undefined
+  }
+}
+
+async function handleLoadDiff(
+  panel: vscode.WebviewPanel,
+  repoRoot: string,
+  commitHash: string,
+  filePath: string
+): Promise<void> {
+  try {
+    const raw = await getCommitDiff(repoRoot, commitHash, filePath)
+    const html = renderDiffContent(raw)
+    void panel.webview.postMessage({ command: 'diffLoaded', path: filePath, html })
+  } catch (err) {
+    void panel.webview.postMessage({
+      command: 'diffError',
+      path: filePath,
+      error: err instanceof Error ? err.message : String(err)
+    })
+  }
+}
+
+async function handleApply(
+  panel: vscode.WebviewPanel,
+  provider: CommitListProvider,
+  repoRoot: string,
+  commitHash: string,
+  originalMessage: string,
+  newMessageRaw: string,
+  newDate: string | null
+): Promise<void> {
+  const newMessage = newMessageRaw.trim()
+
+  if (!newMessage) {
+    vscode.window.showErrorMessage('Commit message cannot be empty.')
+    return
+  }
+
+  const messageUnchanged = newMessage === originalMessage.trim()
+  const dateSet = newDate !== null
+
+  if (messageUnchanged && !dateSet) {
+    provider.refresh()
+    panel.dispose()
+    return
+  }
+
+  try {
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Updating commit...',
+        cancellable: false
+      },
+      async () => {
+        await editCommitMessage(repoRoot, commitHash, newMessage, newDate || undefined)
+      }
+    )
+
+    provider.refresh()
+    panel.dispose()
+    vscode.window.showInformationMessage('Commit message updated.')
+  } catch (err) {
+    vscode.window.showErrorMessage(
+      `Failed to update commit message: ${err instanceof Error ? err.message : String(err)}`
+    )
+  }
 }

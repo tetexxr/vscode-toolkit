@@ -17,6 +17,14 @@ export interface ResolvedPaths {
   mappings: PathMapping[]
 }
 
+interface TsConfigShape {
+  compilerOptions?: {
+    baseUrl?: string
+    paths?: Record<string, string[]>
+  }
+  extends?: string | string[]
+}
+
 export interface ImportMatch {
   /** Byte offset in the source where the module path string starts (inside the quotes) */
   pathStart: number
@@ -117,13 +125,13 @@ export function loadPathsFromConfig(configPath: string, depth = 0): ResolvedPath
   if (depth > 5) return undefined
   try {
     const raw = fs.readFileSync(configPath, 'utf-8')
-    const config = JSON.parse(stripJsonComments(raw))
+    const config = JSON.parse(stripJsonComments(raw)) as TsConfigShape
     const configDir = path.dirname(configPath)
-    const opts = config.compilerOptions || {}
+    const opts = config.compilerOptions ?? {}
 
     if (opts.paths && Object.keys(opts.paths).length > 0) {
       return {
-        baseUrl: path.resolve(configDir, opts.baseUrl || '.'),
+        baseUrl: path.resolve(configDir, opts.baseUrl ?? '.'),
         mappings: buildMappings(opts.paths)
       }
     }

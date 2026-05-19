@@ -9,7 +9,7 @@ import { buildInstallArgs, buildUninstallArgs } from './npm-commands'
 
 const TASK_NAME = 'toolkit-npm'
 
-export type TaskFinishedCallback = (exitCode: number | undefined) => void
+export type TaskFinishedCallback = (exitCode: number | undefined) => void | Promise<void>
 
 interface QueueEntry {
   task: vscode.Task
@@ -31,7 +31,7 @@ export class NpmTaskManager implements vscode.Disposable {
       this.running = false
 
       if (entry) {
-        entry.callback(e.exitCode)
+        void entry.callback(e.exitCode)
       }
 
       this.runNext()

@@ -1,4 +1,4 @@
-import * as vscode from 'vscode'
+import type * as vscode from 'vscode'
 import { registerChangeCaseCommands } from './features/change-case'
 import { registerSlugCommands } from './features/slug'
 // import { registerAutoRenameTag } from './features/auto-rename-tag';

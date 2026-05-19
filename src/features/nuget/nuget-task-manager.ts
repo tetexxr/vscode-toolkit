@@ -8,7 +8,7 @@ import * as path from 'path'
 
 const TASK_NAME = 'toolkit-nuget'
 
-export type TaskFinishedCallback = (exitCode: number | undefined) => void
+export type TaskFinishedCallback = (exitCode: number | undefined) => void | Promise<void>
 
 interface QueueEntry {
   task: vscode.Task
@@ -30,7 +30,7 @@ export class NugetTaskManager implements vscode.Disposable {
       this.running = false
 
       if (entry) {
-        entry.callback(e.exitCode)
+        void entry.callback(e.exitCode)
       }
 
       this.runNext()

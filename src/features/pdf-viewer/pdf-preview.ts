@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as crypto from 'crypto'
 import type { TemplateValues } from './pdf-types'
-import { parseScale, buildTemplateHtml } from './pdf-types'
+import { parseScale, buildTemplateHtml, isZoomChangedMessage } from './pdf-types'
 
 export class PdfPreview implements vscode.Disposable {
   private readonly libUri: vscode.Uri
@@ -81,8 +81,8 @@ export class PdfPreview implements vscode.Disposable {
 
   private setupMessageListener(): void {
     this.panel.webview.onDidReceiveMessage(
-      msg => {
-        if (msg.type === 'zoomChanged' && this.zoomCallback) {
+      (msg: unknown) => {
+        if (isZoomChangedMessage(msg) && this.zoomCallback) {
           this.zoomCallback(msg.scale, msg.mode)
         }
       },

@@ -31,17 +31,17 @@ export class NugetOverviewHandler implements vscode.Disposable {
         case 'load-versions':
           return await this.sendOverview(true)
         case 'update':
-          return await this.handleUpdate(msg.projectFsPath, msg.packageId, msg.version, msg.sourceUrl)
+          return this.handleUpdate(msg.projectFsPath, msg.packageId, msg.version, msg.sourceUrl)
         case 'update-all':
-          return await this.handleUpdateAll(msg.packages)
+          return this.handleUpdateAll(msg.packages)
         case 'open-settings':
           return void vscode.commands.executeCommand(
             'workbench.action.openSettings',
             '@ext:tete.vscode-toolkit toolkit.nuget'
           )
       }
-    } catch (err: any) {
-      this.post({ type: 'overview-error', message: err.message || String(err) })
+    } catch (err) {
+      this.post({ type: 'overview-error', message: err instanceof Error ? err.message : String(err) })
     }
   }
 
@@ -111,12 +111,7 @@ export class NugetOverviewHandler implements vscode.Disposable {
     this.post({ type: 'overview-data', projects, loading: false })
   }
 
-  private async handleUpdate(
-    projectFsPath: string,
-    packageId: string,
-    version: string,
-    sourceUrl: string
-  ): Promise<void> {
+  private handleUpdate(projectFsPath: string, packageId: string, version: string, sourceUrl: string): void {
     this.post({ type: 'task-started', packageId, action: 'update' })
 
     const task = NugetTaskManager.buildAddTask(projectFsPath, packageId, version, sourceUrl)
@@ -129,9 +124,9 @@ export class NugetOverviewHandler implements vscode.Disposable {
     })
   }
 
-  private async handleUpdateAll(
+  private handleUpdateAll(
     packages: Array<{ projectFsPath: string; packageId: string; version: string; sourceUrl: string }>
-  ): Promise<void> {
+  ): void {
     for (const pkg of packages) {
       this.post({ type: 'task-started', packageId: pkg.packageId, action: 'update' })
 
