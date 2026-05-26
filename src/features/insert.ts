@@ -16,7 +16,7 @@ interface InsertDefinition {
   command: string
   label: string
   description: string
-  prepare: () => Promise<Generator | null>
+  prepare: () => Generator | null | Promise<Generator | null>
 }
 
 function uuidCasingTransform(value: string): string {
@@ -53,37 +53,37 @@ const DEFINITIONS: InsertDefinition[] = [
     command: 'toolkit.insert.uuidV4',
     label: 'UUID v4',
     description: 'Random UUID, e.g. f47ac10b-58cc-4372-a567-0e02b2c3d479',
-    prepare: async () => () => uuidCasingTransform(uuidV4())
+    prepare: () => () => uuidCasingTransform(uuidV4())
   },
   {
     command: 'toolkit.insert.uuidV7',
     label: 'UUID v7',
     description: 'Time-ordered UUID (RFC 9562)',
-    prepare: async () => () => uuidCasingTransform(uuidV7())
+    prepare: () => () => uuidCasingTransform(uuidV7())
   },
   {
     command: 'toolkit.insert.ulid',
     label: 'ULID',
     description: 'Crockford Base32, time-ordered',
-    prepare: async () => () => ulid()
+    prepare: () => () => ulid()
   },
   {
     command: 'toolkit.insert.isoTimestamp',
     label: 'ISO Timestamp',
     description: 'Current time in ISO 8601 (UTC, with milliseconds)',
-    prepare: async () => () => isoTimestamp()
+    prepare: () => () => isoTimestamp()
   },
   {
     command: 'toolkit.insert.unixSeconds',
     label: 'Unix Epoch (seconds)',
     description: 'Current time in seconds since 1970',
-    prepare: async () => () => unixSeconds()
+    prepare: () => () => unixSeconds()
   },
   {
     command: 'toolkit.insert.unixMillis',
     label: 'Unix Epoch (milliseconds)',
     description: 'Current time in ms since 1970',
-    prepare: async () => () => unixMillis()
+    prepare: () => () => unixMillis()
   },
   {
     command: 'toolkit.insert.randomHex',

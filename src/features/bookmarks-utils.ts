@@ -39,7 +39,7 @@ export class BookmarkStore {
   }
 
   serialize(): BookmarkData {
-    return JSON.parse(JSON.stringify(this.data))
+    return JSON.parse(JSON.stringify(this.data)) as BookmarkData
   }
 
   getAll(): Array<{ uri: string; bookmark: Bookmark }> {

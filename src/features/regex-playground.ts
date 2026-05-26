@@ -393,21 +393,21 @@ function createPanel(context: vscode.ExtensionContext, override?: Partial<Playgr
     }
   })
 
-  panel.webview.onDidReceiveMessage(async msg => {
-    if (msg?.type === 'ready') {
+  type IncomingMessage = { type: 'ready' } | UpdateMessage
+  panel.webview.onDidReceiveMessage(async (msg: IncomingMessage) => {
+    if (msg.type === 'ready') {
       const state = { ...readState(context), ...(override ?? {}) }
-      panel.webview.postMessage({ type: 'init', state })
+      void panel.webview.postMessage({ type: 'init', state })
       return
     }
-    if (msg?.type === 'update') {
-      const update = msg as UpdateMessage
+    if (msg.type === 'update') {
       await writeState(context, {
-        pattern: update.pattern,
-        flags: update.flags,
-        input: update.input,
-        replace: update.replace
+        pattern: msg.pattern,
+        flags: msg.flags,
+        input: msg.input,
+        replace: msg.replace
       })
-      handleUpdate(panel, update)
+      handleUpdate(panel, msg)
     }
   })
 

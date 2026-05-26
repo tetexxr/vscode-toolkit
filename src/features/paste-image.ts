@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import * as path from 'node:path'
-import { existsSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs'
 import {
   detectFormat,
   formatTimestamp,
@@ -121,11 +121,8 @@ async function pasteImage(forcedFormat: ForcedFormat): Promise<void> {
 
 function tryCleanupEmpty(targetPath: string): void {
   try {
-    if (existsSync(targetPath)) {
-      const fs = require('node:fs') as typeof import('node:fs')
-      if (fs.statSync(targetPath).size === 0) {
-        unlinkSync(targetPath)
-      }
+    if (existsSync(targetPath) && statSync(targetPath).size === 0) {
+      unlinkSync(targetPath)
     }
   } catch {
     // best-effort cleanup

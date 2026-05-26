@@ -253,9 +253,10 @@ export const DEFAULT_TS_OPTIONS: TypeScriptOptions = {
 
 export function generateTypeScript(schema: Schema, rootName: string, opts: TypeScriptOptions = DEFAULT_TS_OPTIONS): string {
   const safeRoot = isValidIdentifier(rootName) ? rootName : pascalCase(rootName) || 'Root'
-  const { names, ordered } = opts.extractNestedTypes
-    ? assignNames(schema, safeRoot)
-    : { names: new Map(), ordered: [] as Array<Extract<Schema, { kind: 'object' }>> }
+  const { names, ordered }: { names: NameMap; ordered: Array<Extract<Schema, { kind: 'object' }>> } =
+    opts.extractNestedTypes
+      ? assignNames(schema, safeRoot)
+      : { names: new Map(), ordered: [] }
 
   if (schema.kind !== 'object') {
     const ref = tsRef(schema, safeRoot, names, opts)
@@ -382,9 +383,10 @@ export const DEFAULT_CS_OPTIONS: CSharpOptions = {
 
 export function generateCSharp(schema: Schema, rootName: string, opts: CSharpOptions = DEFAULT_CS_OPTIONS): string {
   const safeRoot = isValidIdentifier(rootName) ? rootName : pascalCase(rootName) || 'Root'
-  const { names, ordered } = opts.extractNestedTypes
-    ? assignNames(schema, safeRoot)
-    : { names: new Map<Extract<Schema, { kind: 'object' }>, string>(), ordered: [] as Array<Extract<Schema, { kind: 'object' }>> }
+  const { names, ordered }: { names: NameMap; ordered: Array<Extract<Schema, { kind: 'object' }>> } =
+    opts.extractNestedTypes
+      ? assignNames(schema, safeRoot)
+      : { names: new Map(), ordered: [] }
 
   if (schema.kind !== 'object') {
     return `// JSON root is not an object. Use the TypeScript output for primitive roots.\npublic record ${safeRoot}(${csRef(schema, safeRoot, names, opts)} Value);\n`

@@ -39,7 +39,7 @@ export function findAllStrings(line: string): StringRange[] {
     const c = line[i]
     if (c === "'" || c === '"' || c === '`') {
       const start = i
-      const quote = c as QuoteChar
+      const quote: QuoteChar = c
       let j = i + 1
       let closed = false
       while (j < line.length) {

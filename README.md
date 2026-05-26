@@ -333,6 +333,12 @@ Open the picker with **Toolkit: Change Case...** from the Command Palette — it
 
 Also available from the editor right-click menu when text is selected.
 
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.changeCase.includeDotInCurrentWord` | `false` | Include dots when expanding the current word under the cursor (no selection). Useful when working with dotted identifiers like `foo.bar.baz` |
+
 #### Slugify
 
 Generate clean URL slugs from selected text. Handles unicode normalization, diacritics removal, and special character mapping.

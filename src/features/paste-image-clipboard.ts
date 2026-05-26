@@ -1,5 +1,5 @@
 import { execFile, spawn } from 'node:child_process'
-import { existsSync, statSync } from 'node:fs'
+import { createWriteStream, existsSync, statSync } from 'node:fs'
 import { platform } from 'node:process'
 
 export class ClipboardImageError extends Error {
@@ -156,8 +156,7 @@ function runCommand(cmd: string, args: string[]): Promise<CommandResult> {
 function runCommandToFile(cmd: string, args: string[], targetPath: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args)
-    const fs = require('node:fs') as typeof import('node:fs')
-    const out = fs.createWriteStream(targetPath)
+    const out = createWriteStream(targetPath)
     child.stdout.pipe(out)
     let stderr = ''
     child.stderr.on('data', chunk => (stderr += String(chunk)))

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import * as path from 'node:path'
+import { readFile } from 'node:fs/promises'
 import {
   formatItemLabel,
   groupByFile,
@@ -197,10 +198,9 @@ async function scanWorkspace(provider: TodoTreeProvider): Promise<void> {
   }
   const items: TodoItem[] = []
   // Read sequentially to keep memory predictable on large repos. Could be parallelized.
-  const fs = require('node:fs/promises') as typeof import('node:fs/promises')
   for (const uri of found) {
     try {
-      const text = await fs.readFile(uri.fsPath, 'utf8')
+      const text = await readFile(uri.fsPath, 'utf8')
       const parsed = parseTodos(text, uri.toString(), {
         tags: cfg.tags,
         caseSensitive: cfg.caseSensitive
@@ -213,7 +213,7 @@ async function scanWorkspace(provider: TodoTreeProvider): Promise<void> {
   provider.setItems(items)
 }
 
-async function rescanSingleFile(provider: TodoTreeProvider, document: vscode.TextDocument): Promise<void> {
+function rescanSingleFile(provider: TodoTreeProvider, document: vscode.TextDocument): void {
   const cfg = readConfig()
   if (cfg.tags.length === 0) {
     return
@@ -265,7 +265,7 @@ export function registerTodoTreeCommands(context: vscode.ExtensionContext): void
 
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(doc => {
-      void rescanSingleFile(provider, doc)
+      rescanSingleFile(provider, doc)
     }),
     vscode.workspace.onDidChangeConfiguration(event => {
       if (event.affectsConfiguration('toolkit.todoTree')) {
