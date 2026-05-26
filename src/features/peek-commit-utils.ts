@@ -87,9 +87,6 @@ export interface FormatHoverOptions {
 }
 
 export function formatHover(blame: BlameInfo, options: FormatHoverOptions = {}): string {
-  // Non-breaking space at the start gives a small visual gap so the popup doesn't sit
-  // flush against the previous hover provider's content. Regular spaces are trimmed
-  // by the markdown renderer at the start of a paragraph.
   const PREFIX = '\n'
 
   if (blame.uncommitted) {
