@@ -483,6 +483,70 @@
       {
         "command": "toolkit.quoteAsBacktick",
         "title": "Toolkit: Quote as Backtick"
+      },
+      {
+        "command": "toolkit.transform",
+        "title": "Toolkit: Transform Selection..."
+      },
+      {
+        "command": "toolkit.transform.base64Encode",
+        "title": "Toolkit: Transform - Base64 Encode"
+      },
+      {
+        "command": "toolkit.transform.base64Decode",
+        "title": "Toolkit: Transform - Base64 Decode"
+      },
+      {
+        "command": "toolkit.transform.base64UrlEncode",
+        "title": "Toolkit: Transform - Base64 URL Encode"
+      },
+      {
+        "command": "toolkit.transform.base64UrlDecode",
+        "title": "Toolkit: Transform - Base64 URL Decode"
+      },
+      {
+        "command": "toolkit.transform.urlEncode",
+        "title": "Toolkit: Transform - URL Encode"
+      },
+      {
+        "command": "toolkit.transform.urlDecode",
+        "title": "Toolkit: Transform - URL Decode"
+      },
+      {
+        "command": "toolkit.transform.htmlEncode",
+        "title": "Toolkit: Transform - HTML Encode"
+      },
+      {
+        "command": "toolkit.transform.htmlDecode",
+        "title": "Toolkit: Transform - HTML Decode"
+      },
+      {
+        "command": "toolkit.transform.hexEncode",
+        "title": "Toolkit: Transform - Hex Encode"
+      },
+      {
+        "command": "toolkit.transform.hexDecode",
+        "title": "Toolkit: Transform - Hex Decode"
+      },
+      {
+        "command": "toolkit.transform.md5",
+        "title": "Toolkit: Transform - MD5"
+      },
+      {
+        "command": "toolkit.transform.sha1",
+        "title": "Toolkit: Transform - SHA-1"
+      },
+      {
+        "command": "toolkit.transform.sha256",
+        "title": "Toolkit: Transform - SHA-256"
+      },
+      {
+        "command": "toolkit.transform.sha512",
+        "title": "Toolkit: Transform - SHA-512"
+      },
+      {
+        "command": "toolkit.transform.jwtDecode",
+        "title": "Toolkit: Transform - JWT Decode"
       }
     ],
     "keybindings": [
@@ -721,6 +785,11 @@
         {
           "command": "toolkit.toggleQuotes",
           "group": "0_toolkit@9"
+        },
+        {
+          "command": "toolkit.transform",
+          "group": "0_toolkit@10",
+          "when": "editorHasSelection"
         }
       ]
     },

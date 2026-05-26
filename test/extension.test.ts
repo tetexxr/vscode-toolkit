@@ -31,7 +31,8 @@ describe('extension entry point', () => {
     'registerTypeOnlyImportsCommands',
     'registerLinesCommands',
     'registerAlignCommands',
-    'registerToggleQuotesCommands'
+    'registerToggleQuotesCommands',
+    'registerTransformCommands'
   ]
 
   for (const fn of expectedRegistrations) {

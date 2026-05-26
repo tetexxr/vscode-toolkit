@@ -27,6 +27,7 @@ All-in-one VS Code utility extension.
     - [Sort, Dedupe & Transform Lines](#sort-dedupe--transform-lines)
     - [Align by Character](#align-by-character)
     - [Toggle Quotes](#toggle-quotes)
+    - [Transform Selection](#transform-selection)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
     - [C# Code Actions](#c-code-actions)
@@ -597,6 +598,34 @@ Override via the `toolkit.toggleQuotes.languageQuotes` setting. Example — to e
 ```
 
 The `default` key applies to language ids not explicitly listed. If a force command (e.g. `Quote as Backtick`) targets a quote that is not in the language's allowed list, a confirmation prompt is shown before proceeding.
+
+#### Transform Selection
+
+A toolbox of encode/decode and hash operations over the current selection. Available as individual commands and through a unified **Toolkit: Transform Selection...** quick pick.
+
+**Operations:**
+
+| Operation | Description |
+|---|---|
+| Base64 Encode / Decode | UTF-8 ↔ Base64 |
+| Base64 URL Encode / Decode | UTF-8 ↔ URL-safe Base64 (no padding) |
+| URL Encode / Decode | `encodeURIComponent` / `decodeURIComponent` |
+| HTML Encode / Decode | Escape `& < > " '`; decode named (`&amp;`) and numeric (`&#65;`, `&#x41;`) entities |
+| Hex Encode / Decode | UTF-8 ↔ hex string (case-insensitive on decode, accepts whitespace) |
+| MD5 / SHA-1 / SHA-256 / SHA-512 | Hex digest of the selection |
+| JWT Decode | Decode header + payload, open the result in a new editor |
+
+Available from:
+
+- **Editor context menu** — with a selection, right-click and pick **Toolkit: Transform Selection...**
+- **Command Palette** — any of the individual commands or the dispatcher
+
+**Behavior:**
+
+- All operations require a non-empty selection. Multi-selection is supported for string-to-string operations.
+- Invalid input (malformed Base64, non-hex characters, broken percent encoding, malformed JWT) triggers a warning and leaves the selection untouched.
+- Hashes always output lowercase hex.
+- JWT Decode opens a new untitled `jsonc` editor with the formatted header, payload and signature. The signature is **not** verified.
 
 ### Code Generation & Refactoring
 

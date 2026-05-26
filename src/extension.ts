@@ -26,6 +26,7 @@ import { registerTypeOnlyImportsCommands } from './features/type-only-imports'
 import { registerLinesCommands } from './features/lines'
 import { registerAlignCommands } from './features/align'
 import { registerToggleQuotesCommands } from './features/toggle-quotes'
+import { registerTransformCommands } from './features/transform'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -55,6 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerLinesCommands(context)
   registerAlignCommands(context)
   registerToggleQuotesCommands(context)
+  registerTransformCommands(context)
 }
 
 export function deactivate() {}
