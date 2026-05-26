@@ -5,7 +5,9 @@ import {
   nextQuote,
   convertQuote,
   hasUnescapedInterpolation,
-  TemplateInterpolationError
+  TemplateInterpolationError,
+  getNextAllowedQuote,
+  normalizeAllowedQuotes
 } from '../../src/features/toggle-quotes-utils'
 
 describe('findStringAt', () => {
@@ -156,6 +158,47 @@ describe('convertQuote', () => {
 
   it('handles content that is only the new quote character', () => {
     assert.equal(convertQuote('"', "'", '"'), '\\"')
+  })
+})
+
+describe('getNextAllowedQuote', () => {
+  it('cycles within the allowed list', () => {
+    assert.equal(getNextAllowedQuote("'", ["'", '"', '`']), '"')
+    assert.equal(getNextAllowedQuote('"', ["'", '"', '`']), '`')
+    assert.equal(getNextAllowedQuote('`', ["'", '"', '`']), "'")
+  })
+
+  it('wraps around for a two-element list (binary toggle)', () => {
+    assert.equal(getNextAllowedQuote("'", ["'", '"']), '"')
+    assert.equal(getNextAllowedQuote('"', ["'", '"']), "'")
+  })
+
+  it('returns null when the list has fewer than two quotes', () => {
+    assert.equal(getNextAllowedQuote('"', ['"']), null)
+    assert.equal(getNextAllowedQuote('"', []), null)
+  })
+
+  it('returns null when the current quote is not in the allowed list', () => {
+    // A backtick string in a language whose list is ["'", "\""]
+    assert.equal(getNextAllowedQuote('`', ["'", '"']), null)
+  })
+})
+
+describe('normalizeAllowedQuotes', () => {
+  it('filters out unknown characters', () => {
+    assert.deepEqual(normalizeAllowedQuotes(['"', 'x', "'"]), ['"', "'"])
+  })
+
+  it('drops duplicates while preserving order', () => {
+    assert.deepEqual(normalizeAllowedQuotes(['"', "'", '"', '`', "'"]), ['"', "'", '`'])
+  })
+
+  it('returns empty array for undefined input', () => {
+    assert.deepEqual(normalizeAllowedQuotes(undefined), [])
+  })
+
+  it('returns empty array for empty input', () => {
+    assert.deepEqual(normalizeAllowedQuotes([]), [])
   })
 })
 

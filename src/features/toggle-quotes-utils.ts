@@ -64,11 +64,44 @@ export function findAllStrings(line: string): StringRange[] {
 }
 
 /**
- * Returns the next quote in the cycle ' → " → ` → '.
+ * Returns the next quote in the global cycle ' → " → ` → '.
  */
 export function nextQuote(current: QuoteChar): QuoteChar {
   const idx = QUOTE_CHARS.indexOf(current)
   return QUOTE_CHARS[(idx + 1) % QUOTE_CHARS.length]
+}
+
+/**
+ * Returns the next quote in `allowed` after `current`, or null if cycling is not possible.
+ * - null when `allowed` has fewer than 2 quotes.
+ * - null when `current` is not in `allowed` (i.e. would be no-op or unsafe to "cycle").
+ */
+export function getNextAllowedQuote(current: QuoteChar, allowed: readonly QuoteChar[]): QuoteChar | null {
+  if (allowed.length < 2) {
+    return null
+  }
+  const idx = allowed.indexOf(current)
+  if (idx < 0) {
+    return null
+  }
+  return allowed[(idx + 1) % allowed.length]
+}
+
+/**
+ * Returns the list of `allowed` filtered + validated to known quote chars,
+ * preserving order. Duplicates are removed.
+ */
+export function normalizeAllowedQuotes(allowed: readonly string[] | undefined): QuoteChar[] {
+  if (!allowed) {
+    return []
+  }
+  const out: QuoteChar[] = []
+  for (const c of allowed) {
+    if ((c === "'" || c === '"' || c === '`') && !out.includes(c)) {
+      out.push(c)
+    }
+  }
+  return out
 }
 
 /**

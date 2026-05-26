@@ -576,6 +576,28 @@ Available from:
 - Other escape sequences (`\n`, `\t`, `\\`, `\uXXXX`, etc.) are preserved as-is.
 - String detection is single-line and language-agnostic. Multi-line template literals or exotic forms (Python triple-quoted, C# verbatim `@"..."`, raw strings, etc.) are not detected — select the string manually if needed.
 
+**Per-language quote sets:**
+
+The toggle cycles only through the quotes that are valid for the current language. Defaults:
+
+| Language id | Cycle |
+|---|---|
+| `typescript`, `typescriptreact`, `javascript`, `javascriptreact` | `'` → `"` → `` ` `` |
+| `csharp`, `java`, `c`, `cpp`, `rust`, `go` | `"` only (toggle is a no-op) |
+| `python`, `yaml`, `shellscript` | `'` ↔ `"` |
+| `json`, `jsonc` | `"` only |
+| _anything else_ | `'` ↔ `"` |
+
+Override via the `toolkit.toggleQuotes.languageQuotes` setting. Example — to enable single + double + backtick in PHP:
+
+```json
+"toolkit.toggleQuotes.languageQuotes": {
+  "php": ["'", "\"", "`"]
+}
+```
+
+The `default` key applies to language ids not explicitly listed. If a force command (e.g. `Quote as Backtick`) targets a quote that is not in the language's allowed list, a confirmation prompt is shown before proceeding.
+
 ### Code Generation & Refactoring
 
 #### New C# File

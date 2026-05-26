@@ -1147,6 +1147,35 @@
             "type": "number",
             "minimum": 0
           }
+        },
+        "toolkit.toggleQuotes.languageQuotes": {
+          "type": "object",
+          "default": {
+            "default": ["'", "\""],
+            "typescript": ["'", "\"", "`"],
+            "typescriptreact": ["'", "\"", "`"],
+            "javascript": ["'", "\"", "`"],
+            "javascriptreact": ["'", "\"", "`"],
+            "csharp": ["\""],
+            "java": ["\""],
+            "c": ["\""],
+            "cpp": ["\""],
+            "rust": ["\""],
+            "python": ["'", "\""],
+            "go": ["\""],
+            "json": ["\""],
+            "jsonc": ["\""],
+            "yaml": ["'", "\""],
+            "shellscript": ["'", "\""]
+          },
+          "description": "Allowed quote characters per language id. Used to cycle 'Toolkit: Toggle Quotes' through only the quotes that are valid for the current language. The 'default' key is used when the current language id is not listed.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["'", "\"", "`"]
+            }
+          }
         }
       }
     }
