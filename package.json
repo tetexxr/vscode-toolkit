@@ -583,6 +583,30 @@
       {
         "command": "toolkit.insert.randomBase64",
         "title": "Toolkit: Insert Random Base64..."
+      },
+      {
+        "command": "toolkit.timestamp.convert",
+        "title": "Toolkit: Convert Timestamp..."
+      },
+      {
+        "command": "toolkit.timestamp.toIsoUtc",
+        "title": "Toolkit: Timestamp to ISO (UTC)"
+      },
+      {
+        "command": "toolkit.timestamp.toIsoLocal",
+        "title": "Toolkit: Timestamp to ISO (Local)"
+      },
+      {
+        "command": "toolkit.timestamp.toUnixSeconds",
+        "title": "Toolkit: Timestamp to Unix Seconds"
+      },
+      {
+        "command": "toolkit.timestamp.toUnixMillis",
+        "title": "Toolkit: Timestamp to Unix Milliseconds"
+      },
+      {
+        "command": "toolkit.timestamp.showInfo",
+        "title": "Toolkit: Show Timestamp Info"
       }
     ],
     "keybindings": [
@@ -792,43 +816,48 @@
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.gitHistory",
-          "group": "0_toolkit@3"
+          "command": "toolkit.timestamp.convert",
+          "group": "0_toolkit@3",
+          "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.insert",
+          "command": "toolkit.gitHistory",
           "group": "0_toolkit@4"
         },
         {
+          "command": "toolkit.insert",
+          "group": "0_toolkit@5"
+        },
+        {
           "command": "toolkit.lines",
-          "group": "0_toolkit@5",
+          "group": "0_toolkit@6",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@6"
+          "group": "0_toolkit@7"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@7",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.sumNumbers",
           "group": "0_toolkit@8",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@9"
+          "command": "toolkit.sumNumbers",
+          "group": "0_toolkit@9",
+          "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleQuotes",
+          "command": "toolkit.toggleGitBlame",
           "group": "0_toolkit@10"
         },
         {
+          "command": "toolkit.toggleQuotes",
+          "group": "0_toolkit@11"
+        },
+        {
           "command": "toolkit.transform",
-          "group": "0_toolkit@11",
+          "group": "0_toolkit@12",
           "when": "editorHasSelection"
         }
       ]
@@ -1271,6 +1300,29 @@
           "type": "boolean",
           "default": false,
           "description": "Output UUIDs (v4 and v7) in uppercase. ULID is always uppercase per its specification."
+        },
+        "toolkit.timestamp.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover with the decoded date when hovering 10/13/16-digit numbers that look like Unix timestamps."
+        },
+        "toolkit.timestamp.hover.languages": {
+          "type": "array",
+          "default": ["*"],
+          "description": "Languages for which the timestamp hover is active. Requires reload after change. Use [\"*\"] for all languages.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.timestamp.hover.minYear": {
+          "type": "number",
+          "default": 1990,
+          "description": "Lower bound (inclusive) for considering a number to be a timestamp."
+        },
+        "toolkit.timestamp.hover.maxYear": {
+          "type": "number",
+          "default": 2100,
+          "description": "Upper bound (inclusive) for considering a number to be a timestamp."
         },
         "toolkit.toggleQuotes.languageQuotes": {
           "type": "object",

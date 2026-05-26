@@ -29,6 +29,7 @@ All-in-one VS Code utility extension.
     - [Toggle Quotes](#toggle-quotes)
     - [Transform Selection](#transform-selection)
     - [Insert UUID / Timestamp / Random](#insert-uuid--timestamp--random)
+    - [Timestamp Converter & Hover](#timestamp-converter--hover)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
     - [C# Code Actions](#c-code-actions)
@@ -658,6 +659,49 @@ Available from:
 | `toolkit.insert.randomHexBytes` | `16` | Default byte count for Random Hex (output is `2 ×` this many chars) |
 | `toolkit.insert.randomBase64Bytes` | `16` | Default byte count for Random Base64 (URL-safe, no padding) |
 | `toolkit.insert.uuidUppercase` | `false` | Emit UUID v4 / v7 in uppercase. ULID is always uppercase per its spec |
+
+#### Timestamp Converter & Hover
+
+Convert timestamps in the selection between formats (Unix seconds / ms / µs ↔ ISO 8601), and hover any plausible epoch number anywhere in the workspace to see what date it represents.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Convert Timestamp... | Auto-detects the input format and shows a quick pick with each target format (with a live preview) |
+| Timestamp to ISO (UTC) | → ISO 8601 in UTC, e.g. `2024-03-15T12:34:56.789Z` |
+| Timestamp to ISO (Local) | → ISO 8601 with local offset, e.g. `2024-03-15T13:34:56.789+01:00` |
+| Timestamp to Unix Seconds | → integer seconds |
+| Timestamp to Unix Milliseconds | → integer milliseconds |
+| Show Timestamp Info | Quick pick of every format + a relative description (`3 days ago`). Picking copies to the clipboard; the document is not modified |
+
+Available from:
+
+- **Editor context menu** — with a selection, right-click and pick **Toolkit: Convert Timestamp...**
+- **Command Palette** — any of the individual commands
+
+**Input format detection:**
+
+| Input | Treated as |
+|---|---|
+| 10 digits (optionally signed) | Unix seconds |
+| 13 digits | Unix milliseconds |
+| 16 digits | Unix microseconds (rounded to ms) |
+| Other digit-only lengths | Unix milliseconds (best-effort) |
+| ISO 8601-like (date with optional time / offset) | ISO |
+
+**Hover:**
+
+Place the cursor over a 10-, 13- or 16-digit number anywhere in any file. If the value falls within the configured year range, a hover appears with the decoded UTC and local ISO timestamps and a relative description.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.timestamp.hover.enabled` | `true` | Toggle the timestamp hover |
+| `toolkit.timestamp.hover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
+| `toolkit.timestamp.hover.minYear` | `1990` | Lower bound for considering a number to be a timestamp |
+| `toolkit.timestamp.hover.maxYear` | `2100` | Upper bound for considering a number to be a timestamp |
 
 ### Code Generation & Refactoring
 

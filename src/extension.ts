@@ -28,6 +28,7 @@ import { registerAlignCommands } from './features/align'
 import { registerToggleQuotesCommands } from './features/toggle-quotes'
 import { registerTransformCommands } from './features/transform'
 import { registerInsertCommands } from './features/insert'
+import { registerTimestampCommands } from './features/timestamp'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -59,6 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerToggleQuotesCommands(context)
   registerTransformCommands(context)
   registerInsertCommands(context)
+  registerTimestampCommands(context)
 }
 
 export function deactivate() {}
