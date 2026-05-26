@@ -42,6 +42,7 @@ All-in-one VS Code utility extension.
     - [Paste Image](#paste-image)
     - [Clipboard History](#clipboard-history)
     - [Bookmarks](#bookmarks)
+    - [TODO Tree](#todo-tree)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -1021,6 +1022,50 @@ Pin specific lines in your code with an optional label and jump between them fro
 | `toolkit.bookmarks.gutterIcon` | `true` | Show the bookmark icon in the gutter |
 | `toolkit.bookmarks.highlightLine` | `false` | Highlight the full line with a subtle background |
 | `toolkit.bookmarks.highlightColor` | `rgba(255,200,0,0.15)` | CSS color used when `highlightLine` is enabled |
+
+#### TODO Tree
+
+Scans the workspace for `TODO`, `FIXME`, `HACK`, etc. comments and lists them in a dedicated activity bar panel. Click an entry to jump to the file at that line.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| TODO Tree - Refresh | Re-scan the whole workspace |
+| TODO Tree - Group by Tag | Group entries by tag (default) |
+| TODO Tree - Group by File | Group entries by file |
+
+All three are also available as title-bar icons on the **TODOs** view in the activity bar.
+
+**Recognized comment styles:**
+
+| Syntax | Languages |
+|---|---|
+| `// TAG: ...` | C-family, JS/TS, C#, Go, Rust, Java… |
+| `# TAG: ...` | Python, Ruby, Shell, YAML |
+| `/* TAG: ... */` and ` * TAG: ... ` (block continuations) | C-family |
+| `<!-- TAG: ... -->` | HTML, Razor, cshtml, XML |
+| `-- TAG: ...` | SQL |
+
+Tags must match a whole word — `// TODOLIST: foo` is not picked up.
+
+**Behavior:**
+
+- Initial scan runs in the background when the extension activates.
+- Saving a document re-scans only that file (fast).
+- Changes to any `toolkit.todoTree.*` setting trigger a full re-scan.
+- The view shows a badge with the total number of detected TODOs.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.todoTree.tags` | `["TODO","FIXME","HACK","XXX","NOTE","BUG","REVIEW"]` | Tags to look for |
+| `toolkit.todoTree.caseSensitive` | `false` | Match tags case-sensitively |
+| `toolkit.todoTree.includeGlob` | `**/*.{ts,js,tsx,...}` | Files to scan |
+| `toolkit.todoTree.excludedFolders` | `["node_modules", ".git", ...]` | Folders to skip |
+| `toolkit.todoTree.groupBy` | `tag` | `tag` or `file` |
+| `toolkit.todoTree.maxFiles` | `5000` | Hard cap on files scanned |
 
 ### Appearance & Viewers
 

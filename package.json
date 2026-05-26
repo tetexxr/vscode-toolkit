@@ -42,6 +42,11 @@
           "id": "npm-explorer",
           "title": "npm",
           "icon": "themes/icons/npm-simple.svg"
+        },
+        {
+          "id": "toolkit-todo",
+          "title": "TODOs",
+          "icon": "themes/icons/todo-tree.svg"
         }
       ]
     },
@@ -66,6 +71,12 @@
           "id": "npmProjects",
           "name": "Projects",
           "icon": "themes/icons/npm.svg"
+        }
+      ],
+      "toolkit-todo": [
+        {
+          "id": "toolkitTodoTree",
+          "name": "TODOs"
         }
       ]
     },
@@ -671,6 +682,21 @@
       {
         "command": "toolkit.bookmarks.clearAll",
         "title": "Toolkit: Clear All Bookmarks"
+      },
+      {
+        "command": "toolkit.todoTree.refresh",
+        "title": "Toolkit: TODO Tree - Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.todoTree.groupByTag",
+        "title": "Toolkit: TODO Tree - Group by Tag",
+        "icon": "$(symbol-keyword)"
+      },
+      {
+        "command": "toolkit.todoTree.groupByFile",
+        "title": "Toolkit: TODO Tree - Group by File",
+        "icon": "$(file)"
       }
     ],
     "keybindings": [
@@ -732,6 +758,21 @@
           "command": "toolkit.npm.workspaceOverview",
           "when": "view == npmProjects",
           "group": "navigation"
+        },
+        {
+          "command": "toolkit.todoTree.groupByTag",
+          "when": "view == toolkitTodoTree && config.toolkit.todoTree.groupBy != tag",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.todoTree.groupByFile",
+          "when": "view == toolkitTodoTree && config.toolkit.todoTree.groupBy != file",
+          "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.todoTree.refresh",
+          "when": "view == toolkitTodoTree",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
@@ -1510,6 +1551,43 @@
           "type": "string",
           "default": "rgba(255,200,0,0.15)",
           "description": "Background color used when 'highlightLine' is enabled. Accepts any CSS color."
+        },
+        "toolkit.todoTree.tags": {
+          "type": "array",
+          "default": ["TODO", "FIXME", "HACK", "XXX", "NOTE", "BUG", "REVIEW"],
+          "description": "Comment tags collected by the TODO Tree.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.todoTree.caseSensitive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Match tags case-sensitively."
+        },
+        "toolkit.todoTree.includeGlob": {
+          "type": "string",
+          "default": "**/*.{ts,js,tsx,jsx,cs,razor,cshtml,py,rb,go,rs,java,c,cpp,h,hpp,vue,svelte,html,md,sh,yml,yaml,sql}",
+          "description": "Glob pattern for files to scan."
+        },
+        "toolkit.todoTree.excludedFolders": {
+          "type": "array",
+          "default": ["node_modules", ".git", "dist", "build", "bin", "obj", ".vs", "out"],
+          "description": "Folders to skip when scanning.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.todoTree.groupBy": {
+          "type": "string",
+          "enum": ["tag", "file"],
+          "default": "tag",
+          "description": "Initial grouping of the TODO Tree view."
+        },
+        "toolkit.todoTree.maxFiles": {
+          "type": "number",
+          "default": 5000,
+          "description": "Hard cap on the number of files scanned."
         },
         "toolkit.toggleQuotes.languageQuotes": {
           "type": "object",

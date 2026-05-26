@@ -33,6 +33,7 @@ import { registerJsonToTypeCommands } from './features/json-to-type'
 import { registerPasteImageCommands } from './features/paste-image'
 import { registerClipboardHistoryCommands } from './features/clipboard-history'
 import { registerBookmarkCommands } from './features/bookmarks'
+import { registerTodoTreeCommands } from './features/todo-tree'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -69,6 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerPasteImageCommands(context)
   registerClipboardHistoryCommands(context)
   registerBookmarkCommands(context)
+  registerTodoTreeCommands(context)
 }
 
 export function deactivate() {}
