@@ -39,7 +39,7 @@ const UNCOMMITTED_PORCELAIN = [
 ].join('\n')
 
 describe('parseBlamePorcelain', () => {
-  it('parses a typical entry', () => {
+  it('should parse a typical entry', () => {
     const info = parseBlamePorcelain(SAMPLE_PORCELAIN)
     assert.ok(info)
     assert.equal(info!.sha, 'abc1234567890abcdef1234567890abcdef123456')
@@ -50,19 +50,19 @@ describe('parseBlamePorcelain', () => {
     assert.equal(info!.uncommitted, false)
   })
 
-  it('detects the uncommitted sha sentinel', () => {
+  it('should detect the uncommitted sha sentinel', () => {
     const info = parseBlamePorcelain(UNCOMMITTED_PORCELAIN)
     assert.ok(info)
     assert.equal(info!.uncommitted, true)
     assert.equal(info!.author, 'Not Committed Yet')
   })
 
-  it('returns null on empty or malformed input', () => {
+  it('should return null on empty or malformed input', () => {
     assert.equal(parseBlamePorcelain(''), null)
     assert.equal(parseBlamePorcelain('not a porcelain header'), null)
   })
 
-  it('handles a header with no group size', () => {
+  it('should handle a header with no group size', () => {
     const text = 'abc1234567890abcdef1234567890abcdef123456 1 1\nauthor X\nauthor-time 0\nsummary x\n\tline'
     const info = parseBlamePorcelain(text)
     assert.ok(info)
@@ -71,40 +71,40 @@ describe('parseBlamePorcelain', () => {
 })
 
 describe('isUncommittedSha', () => {
-  it('returns true for the all-zero sha', () => {
+  it('should return true for the all-zero sha', () => {
     assert.equal(isUncommittedSha('0000000000000000000000000000000000000000'), true)
   })
 
-  it('returns false for any other sha', () => {
+  it('should return false for any other sha', () => {
     assert.equal(isUncommittedSha('abc1234567890abcdef1234567890abcdef123456'), false)
   })
 
-  it('returns false for too-short strings', () => {
+  it('should return false for too-short strings', () => {
     assert.equal(isUncommittedSha('000'), false)
   })
 })
 
 describe('extractSubject / extractBody', () => {
-  it('returns the first line as the subject', () => {
+  it('should return the first line as the subject', () => {
     assert.equal(extractSubject('fix bug\n\nlong body'), 'fix bug')
   })
 
-  it('returns the rest as the body, with blank-line separators trimmed', () => {
+  it('should return the rest as the body, with blank-line separators trimmed', () => {
     assert.equal(extractBody('fix bug\n\nlong body'), 'long body')
   })
 
-  it('returns an empty body for single-line messages', () => {
+  it('should return an empty body for single-line messages', () => {
     assert.equal(extractBody('subject only'), '')
   })
 
-  it('handles empty input', () => {
+  it('should handle empty input', () => {
     assert.equal(extractSubject(''), '')
     assert.equal(extractBody(''), '')
   })
 })
 
 describe('formatHover', () => {
-  it('renders subject, hash, author and relative date', () => {
+  it('should render subject, hash, author and relative date', () => {
     const blame = parseBlamePorcelain(SAMPLE_PORCELAIN)!
     const md = formatHover(blame, { fullMessage: 'Add aliasing support', now: 1700000000_000 + 60_000 })
     assert.match(md, /\*\*Add aliasing support\*\*/)
@@ -113,7 +113,7 @@ describe('formatHover', () => {
     assert.match(md, /1 minute ago/)
   })
 
-  it('includes the commit body when present', () => {
+  it('should include the commit body when present', () => {
     const blame = parseBlamePorcelain(SAMPLE_PORCELAIN)!
     const md = formatHover(blame, {
       fullMessage: 'subject\n\nbody line one\nbody line two',
@@ -123,14 +123,14 @@ describe('formatHover', () => {
     assert.match(md, /body line two/)
   })
 
-  it('returns the not-committed placeholder for uncommitted lines', () => {
+  it('should return the not-committed placeholder for uncommitted lines', () => {
     const blame = parseBlamePorcelain(UNCOMMITTED_PORCELAIN)!
     const md = formatHover(blame)
     assert.match(md, /Not committed yet/)
     assert.doesNotMatch(md, /Show full commit/)
   })
 
-  it('escapes markdown special characters in the subject and author', () => {
+  it('should escape markdown special characters in the subject and author', () => {
     const blame: Parameters<typeof formatHover>[0] = {
       sha: 'abc1234',
       author: '[brackets]_user',
@@ -144,7 +144,7 @@ describe('formatHover', () => {
     assert.match(md, /\\\*bold\\\* commit/)
   })
 
-  it('includes a "Show full commit" command link', () => {
+  it('should include a "Show full commit" command link', () => {
     const blame = parseBlamePorcelain(SAMPLE_PORCELAIN)!
     const md = formatHover(blame, { fullMessage: 'subject' })
     assert.match(md, /command:toolkit\.peekCommit\.showFull/)

@@ -17,33 +17,33 @@ import {
 } from '../../src/features/transform-utils'
 
 describe('base64 encode/decode', () => {
-  it('encodes and decodes ASCII', () => {
+  it('should encode and decode ASCII', () => {
     assert.equal(base64Encode('hello world'), 'aGVsbG8gd29ybGQ=')
     assert.equal(base64Decode('aGVsbG8gd29ybGQ='), 'hello world')
   })
 
-  it('handles UTF-8 multi-byte sequences', () => {
+  it('should handle UTF-8 multi-byte sequences', () => {
     assert.equal(base64Encode('héllo 🌍'), 'aMOpbGxvIPCfjI0=')
     assert.equal(base64Decode('aMOpbGxvIPCfjI0='), 'héllo 🌍')
   })
 
-  it('handles empty string', () => {
+  it('should handle empty strings', () => {
     assert.equal(base64Encode(''), '')
     assert.equal(base64Decode(''), '')
   })
 
-  it('trims whitespace from base64 input', () => {
+  it('should trim whitespace from base64 input', () => {
     assert.equal(base64Decode('  aGVsbG8=  '), 'hello')
   })
 
-  it('throws on invalid base64', () => {
+  it('should throw on invalid base64', () => {
     assert.throws(() => base64Decode('not valid base64!'), TransformError)
     assert.throws(() => base64Decode('abc'), TransformError) // wrong length
   })
 })
 
 describe('base64 URL-safe encode/decode', () => {
-  it('uses URL-safe alphabet and strips padding', () => {
+  it('should use a URL-safe alphabet and strip padding', () => {
     // "subjects?" → standard ends with '==' and contains '/'
     const std = base64Encode('subjects?')
     assert.match(std, /[+/=]/)
@@ -51,55 +51,55 @@ describe('base64 URL-safe encode/decode', () => {
     assert.doesNotMatch(url, /[+/=]/)
   })
 
-  it('round-trips arbitrary input', () => {
+  it('should round-trip arbitrary input', () => {
     const inputs = ['', 'a', 'hello', 'héllo 🌍', 'subjects?', '???']
     for (const input of inputs) {
       assert.equal(base64UrlDecode(base64UrlEncode(input)), input, `round-trip failed for: ${input}`)
     }
   })
 
-  it('decodes inputs without padding', () => {
+  it('should decode inputs without padding', () => {
     assert.equal(base64UrlDecode('aGVsbG8'), 'hello')
   })
 
-  it('throws on invalid url-safe base64', () => {
+  it('should throw on invalid URL-safe base64', () => {
     assert.throws(() => base64UrlDecode('not valid!'), TransformError)
   })
 })
 
 describe('url encode/decode', () => {
-  it('encodes special characters', () => {
+  it('should encode special characters', () => {
     assert.equal(urlEncode('hello world?'), 'hello%20world%3F')
     assert.equal(urlEncode('a&b=c'), 'a%26b%3Dc')
   })
 
-  it('decodes percent-encoded sequences', () => {
+  it('should decode percent-encoded sequences', () => {
     assert.equal(urlDecode('hello%20world%3F'), 'hello world?')
   })
 
-  it('handles UTF-8 in encoded output', () => {
+  it('should handle UTF-8 in encoded output', () => {
     assert.equal(urlEncode('café'), 'caf%C3%A9')
     assert.equal(urlDecode('caf%C3%A9'), 'café')
   })
 
-  it('throws on malformed percent sequences', () => {
+  it('should throw on malformed percent sequences', () => {
     assert.throws(() => urlDecode('%ZZ'), TransformError)
     assert.throws(() => urlDecode('%E0%A4'), TransformError)
   })
 
-  it('handles empty string', () => {
+  it('should handle empty strings', () => {
     assert.equal(urlEncode(''), '')
     assert.equal(urlDecode(''), '')
   })
 })
 
 describe('html encode/decode', () => {
-  it('encodes the five reserved characters', () => {
+  it('should encode the five reserved characters', () => {
     assert.equal(htmlEncode('<b>"Hi & welcome"</b>'), '&lt;b&gt;&quot;Hi &amp; welcome&quot;&lt;/b&gt;')
     assert.equal(htmlEncode("don't"), 'don&#39;t')
   })
 
-  it('decodes named entities', () => {
+  it('should decode named entities', () => {
     assert.equal(htmlDecode('&lt;b&gt;hi&lt;/b&gt;'), '<b>hi</b>')
     assert.equal(htmlDecode('Tom &amp; Jerry'), 'Tom & Jerry')
     assert.equal(htmlDecode('it&apos;s'), "it's")
@@ -107,67 +107,67 @@ describe('html encode/decode', () => {
     assert.equal(htmlDecode('caf&eacute;'), 'caf&eacute;') // unknown name is preserved
   })
 
-  it('decodes numeric and hex entities', () => {
+  it('should decode numeric and hex entities', () => {
     assert.equal(htmlDecode('&#65;&#66;&#67;'), 'ABC')
     assert.equal(htmlDecode('&#x41;&#x42;&#x43;'), 'ABC')
     assert.equal(htmlDecode('&#9731;'), '☃')
   })
 
-  it('round-trips a simple string', () => {
+  it('should round-trip a simple string through encode + decode', () => {
     const input = 'Tom & Jerry: "<3"'
     assert.equal(htmlDecode(htmlEncode(input)), input)
   })
 
-  it('leaves unrelated text alone', () => {
+  it('should leave unrelated text alone', () => {
     assert.equal(htmlEncode('no entities here'), 'no entities here')
     assert.equal(htmlDecode('plain text'), 'plain text')
   })
 })
 
 describe('hex encode/decode', () => {
-  it('round-trips ASCII and UTF-8', () => {
+  it('should round-trip ASCII and UTF-8', () => {
     assert.equal(hexEncode('hello'), '68656c6c6f')
     assert.equal(hexDecode('68656c6c6f'), 'hello')
     assert.equal(hexDecode(hexEncode('héllo 🌍')), 'héllo 🌍')
   })
 
-  it('accepts whitespace in hex input', () => {
+  it('should accept whitespace in hex input', () => {
     assert.equal(hexDecode('68 65 6c 6c 6f'), 'hello')
     assert.equal(hexDecode('68\n65\n6c\n6c\n6f'), 'hello')
   })
 
-  it('is case-insensitive', () => {
+  it('should be case-insensitive on decode', () => {
     assert.equal(hexDecode('68656C6C6F'), 'hello')
   })
 
-  it('throws on odd-length input', () => {
+  it('should throw on odd-length input', () => {
     assert.throws(() => hexDecode('123'), TransformError)
   })
 
-  it('throws on non-hex characters', () => {
+  it('should throw on non-hex characters', () => {
     assert.throws(() => hexDecode('zzzz'), TransformError)
   })
 
-  it('handles empty', () => {
+  it('should handle empty strings', () => {
     assert.equal(hexEncode(''), '')
     assert.equal(hexDecode(''), '')
   })
 })
 
 describe('hash', () => {
-  it('produces known MD5 digest for "abc"', () => {
+  it('should produce the known MD5 digest for "abc"', () => {
     assert.equal(hash('abc', 'md5'), '900150983cd24fb0d6963f7d28e17f72')
   })
 
-  it('produces known SHA-1 digest for "abc"', () => {
+  it('should produce the known SHA-1 digest for "abc"', () => {
     assert.equal(hash('abc', 'sha1'), 'a9993e364706816aba3e25717850c26c9cd0d89d')
   })
 
-  it('produces known SHA-256 digest for "abc"', () => {
+  it('should produce the known SHA-256 digest for "abc"', () => {
     assert.equal(hash('abc', 'sha256'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad')
   })
 
-  it('produces known SHA-512 digest for "abc"', () => {
+  it('should produce the known SHA-512 digest for "abc"', () => {
     assert.equal(
       hash('abc', 'sha512'),
       'ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a' +
@@ -175,12 +175,12 @@ describe('hash', () => {
     )
   })
 
-  it('handles UTF-8 input', () => {
+  it('should handle UTF-8 input', () => {
     assert.equal(hash('héllo', 'md5').length, 32)
     assert.equal(hash('🌍', 'sha256').length, 64)
   })
 
-  it('handles empty input', () => {
+  it('should handle empty input with a known MD5 digest', () => {
     assert.equal(hash('', 'md5'), 'd41d8cd98f00b204e9800998ecf8427e')
   })
 })
@@ -192,28 +192,28 @@ describe('jwt decode', () => {
     'eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.' +
     'SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
 
-  it('decodes header and payload of a standard JWT', () => {
+  it('should decode the header and payload of a standard JWT', () => {
     const decoded = decodeJwt(SAMPLE_JWT)
     assert.deepEqual(decoded.header, { alg: 'HS256', typ: 'JWT' })
     assert.deepEqual(decoded.payload, { sub: '1234567890', name: 'John Doe', iat: 1516239022 })
     assert.equal(decoded.signature, 'SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c')
   })
 
-  it('tolerates surrounding whitespace', () => {
+  it('should tolerate surrounding whitespace', () => {
     const decoded = decodeJwt('  ' + SAMPLE_JWT + '  ')
     assert.deepEqual(decoded.header, { alg: 'HS256', typ: 'JWT' })
   })
 
-  it('throws when there are not exactly 3 segments', () => {
+  it('should throw when there are not exactly 3 segments', () => {
     assert.throws(() => decodeJwt('only.two'), TransformError)
     assert.throws(() => decodeJwt('a.b.c.d'), TransformError)
   })
 
-  it('throws when the header is not valid base64url JSON', () => {
+  it('should throw when the header is not valid base64url JSON', () => {
     assert.throws(() => decodeJwt('not_base64.eyJ9.x'), TransformError)
   })
 
-  it('formats decoded JWT as readable jsonc-style output', () => {
+  it('should format a decoded JWT as readable jsonc-style output', () => {
     const formatted = formatDecodedJwt(decodeJwt(SAMPLE_JWT))
     assert.ok(formatted.includes('// Header'))
     assert.ok(formatted.includes('"alg": "HS256"'))
