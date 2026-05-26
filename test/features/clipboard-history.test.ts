@@ -129,9 +129,35 @@ describe('formatItem', () => {
     assert.match(f.description, /^1 line · /)
   })
 
-  it('shows a detail preview capped at 200 chars', () => {
+  it('omits detail when the entry fits in a single short line', () => {
+    const f = formatItem({ text: 'hello', addedAt: 0 }, 0)
+    assert.equal(f.detail, undefined)
+  })
+
+  it('shows the rest of the first line as continuation when truncated', () => {
+    const text = 'a'.repeat(80) + 'rest'
+    const f = formatItem({ text, addedAt: 0 }, 0)
+    assert.equal(f.label, 'a'.repeat(80) + '…')
+    assert.equal(f.detail, '…rest')
+  })
+
+  it('prefixes other lines with the newline glyph and joins them with spaces', () => {
+    const f = formatItem({ text: 'line 1\nline 2\nline 3', addedAt: 0 }, 0)
+    assert.equal(f.label, 'line 1')
+    assert.equal(f.detail, '↵ line 2 ↵ line 3')
+  })
+
+  it('combines first-line continuation and following lines', () => {
+    const text = 'x'.repeat(80) + 'tail\nsecond line'
+    const f = formatItem({ text, addedAt: 0 }, 0)
+    assert.equal(f.label, 'x'.repeat(80) + '…')
+    assert.equal(f.detail, '…tail ↵ second line')
+  })
+
+  it('caps the detail preview at 200 chars + ellipsis', () => {
     const long = 'y'.repeat(500)
     const f = formatItem({ text: long, addedAt: 0 }, 0)
-    assert.ok(f.detail.length <= 201)
+    assert.ok(f.detail!.length <= 201)
+    assert.ok(f.detail!.endsWith('…'))
   })
 })

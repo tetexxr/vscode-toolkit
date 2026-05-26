@@ -69,20 +69,40 @@ export class ClipboardHistory {
 export interface FormattedItem {
   label: string
   description: string
-  detail: string
+  /** Optional. Only set when there is content beyond what fits in `label`. */
+  detail?: string
 }
 
 const LABEL_MAX = 80
 const DETAIL_MAX = 200
+const NEWLINE_GLYPH = '↵ '
 
 export function formatItem(item: ClipboardHistoryItem, now: number = Date.now()): FormattedItem {
-  const firstLine = item.text.split(/\r?\n/, 1)[0] ?? ''
-  const label = truncate(firstLine, LABEL_MAX)
-  const lineCount = item.text.split(/\r?\n/).length
+  const lines = item.text.split(/\r?\n/)
+  const firstLine = lines[0] ?? ''
+  const restLines = lines.slice(1)
+
+  const firstLineTruncated = firstLine.length > LABEL_MAX
+  const label = firstLineTruncated ? firstLine.slice(0, LABEL_MAX) + '…' : firstLine
+
+  const lineCount = lines.length
   const lineLabel = lineCount === 1 ? '1 line' : `${lineCount} lines`
   const description = `${lineLabel} · ${formatAge(now - item.addedAt)}`
-  const detail = truncate(item.text, DETAIL_MAX)
-  return { label, description, detail }
+
+  // Build the continuation: leftover of the first line + the remaining lines.
+  let detail = ''
+  if (firstLineTruncated) {
+    detail = '…' + firstLine.slice(LABEL_MAX)
+  }
+  if (restLines.length > 0) {
+    const rest = restLines.map(line => NEWLINE_GLYPH + line).join(' ')
+    detail = detail.length > 0 ? `${detail} ${rest}` : rest
+  }
+  if (detail.length > DETAIL_MAX) {
+    detail = detail.slice(0, DETAIL_MAX) + '…'
+  }
+
+  return detail ? { label, description, detail } : { label, description }
 }
 
 export function truncate(text: string, max: number): string {

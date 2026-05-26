@@ -142,7 +142,11 @@ export function registerClipboardHistoryCommands(context: vscode.ExtensionContex
       type Item = vscode.QuickPickItem & { text: string }
       const picks: Item[] = items.map(item => {
         const f = formatItem(item, now)
-        return { label: f.label, description: f.description, detail: f.detail, text: item.text }
+        const pick: Item = { label: f.label, description: f.description, text: item.text }
+        if (f.detail) {
+          pick.detail = f.detail
+        }
+        return pick
       })
       const picked = await vscode.window.showQuickPick(picks, {
         matchOnDescription: true,
