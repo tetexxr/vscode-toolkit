@@ -725,6 +725,14 @@
       {
         "command": "toolkit.compareWithBranch",
         "title": "Toolkit: Compare with Branch..."
+      },
+      {
+        "command": "toolkit.peekCommit.showLast",
+        "title": "Toolkit: Show Last Commit for Line"
+      },
+      {
+        "command": "toolkit.peekCommit.showFull",
+        "title": "Toolkit: Show Commit by SHA"
       }
     ],
     "keybindings": [
@@ -949,6 +957,10 @@
         },
         {
           "command": "toolkit.npm.managePackages",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.peekCommit.showFull",
           "when": "false"
         }
       ],
@@ -1637,6 +1649,19 @@
           "enum": ["auto", "raw", "json"],
           "default": "auto",
           "description": "Editor language used to render the response. 'auto' picks one from the Content-Type."
+        },
+        "toolkit.peekCommit.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover with the last commit that touched the line under the cursor."
+        },
+        "toolkit.peekCommit.hover.languages": {
+          "type": "array",
+          "default": ["*"],
+          "description": "Languages where the peek-commit hover is active. Reload required after change.",
+          "items": {
+            "type": "string"
+          }
         },
         "toolkit.toggleQuotes.languageQuotes": {
           "type": "object",

@@ -13,6 +13,7 @@ All-in-one VS Code utility extension.
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
     - [Compare with Branch](#compare-with-branch)
+    - [Peek Last Commit on Line](#peek-last-commit-on-line)
   - [Package Management](#package-management)
     - [NuGet Package Manager](#nuget-package-manager)
     - [NPM Package Manager](#npm-package-manager)
@@ -191,6 +192,29 @@ Diff the active file against the same file in any other local branch.
 Run **Toolkit: Compare with Branch...** from the Command Palette or the editor context menu. A quick pick shows every local branch (sorted by most recent commit, excluding the current one). Picking one opens a diff editor: `file (branch)` on the left (read-only) and your working-tree copy on the right.
 
 If the file doesn't exist on the chosen branch — or the file is untracked / outside a git repo — a warning explains why and the diff is not opened.
+
+#### Peek Last Commit on Line
+
+Hover any line in a tracked file to see the **full commit** that last touched it: short SHA, author, relative date, and the complete message (subject + body). A `Show full commit` link in the hover opens the entire `git show` output (message + diff) in a new editor.
+
+| Command | Description |
+|---|---|
+| (hover, automatic) | Hover any line — the hover appears alongside any other ones for that range |
+| Toolkit: Show Last Commit for Line | Opens the full commit for the line under the cursor without going through the hover |
+
+**Behavior:**
+
+- Backed by `git blame --porcelain` for the active line, with the full message read via `git log -1 --format=%B`.
+- Results are cached per file version; the cache is invalidated on every document edit.
+- Lines with uncommitted changes show a short *"Not committed yet"* message — no commit link is rendered.
+- Coexists with the inline blame annotations; both hovers stack.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.peekCommit.hover.enabled` | `true` | Toggle the peek-commit hover |
+| `toolkit.peekCommit.hover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
 
 ### Package Management
 

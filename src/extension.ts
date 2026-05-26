@@ -37,6 +37,7 @@ import { registerTodoTreeCommands } from './features/todo-tree'
 import { registerRestClientCommands } from './features/rest-client'
 import { registerRegexPlaygroundCommands } from './features/regex-playground'
 import { registerCompareCommands } from './features/compare'
+import { registerPeekCommitCommands } from './features/peek-commit'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -77,6 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerRestClientCommands(context)
   registerRegexPlaygroundCommands(context)
   registerCompareCommands(context)
+  registerPeekCommitCommands(context)
 }
 
 export function deactivate() {}

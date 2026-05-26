@@ -42,7 +42,8 @@ describe('extension entry point', () => {
     'registerTodoTreeCommands',
     'registerRestClientCommands',
     'registerRegexPlaygroundCommands',
-    'registerCompareCommands'
+    'registerCompareCommands',
+    'registerPeekCommitCommands'
   ]
 
   for (const fn of expectedRegistrations) {
