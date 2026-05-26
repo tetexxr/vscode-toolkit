@@ -946,7 +946,7 @@ Shows progress with cancellation support. Each file is opened, formatted, saved,
 | `toolkit.formatFiles.includeGlob` | `**/*.{ts,js,json,html,...}` | Glob pattern for files to include |
 | `toolkit.formatFiles.excludedFolders` | `[node_modules, .git, ...]` | Folders to skip |
 | `toolkit.formatFiles.runOrganizeImports` | `false` | Run Organize Imports before formatting |
-| `toolkit.formatFiles.useGitIgnore` | `true` | Skip git-ignored files |
+| `toolkit.formatFiles.useGitIgnore` | `true` | Skip files ignored by `.gitignore` (uses `git check-ignore`; no-op outside a git repo) |
 
 #### Paste Image
 
@@ -1101,6 +1101,7 @@ Tags must match a whole word — `// TODOLIST: foo` is not picked up.
 | `toolkit.todoTree.excludedFolders` | `["node_modules", ".git", ...]` | Folders to skip |
 | `toolkit.todoTree.groupBy` | `tag` | `tag` or `file` |
 | `toolkit.todoTree.maxFiles` | `5000` | Hard cap on files scanned |
+| `toolkit.todoTree.useGitIgnore` | `true` | Skip files ignored by `.gitignore` (uses `git check-ignore`; no-op outside a git repo) |
 
 #### REST Client
 

@@ -7,6 +7,7 @@ import {
   parseTodos,
   type TodoItem
 } from './todo-tree-utils'
+import { filterGitIgnored } from '../utils/git-ignore'
 
 const VIEW_ID = 'toolkitTodoTree'
 
@@ -24,6 +25,7 @@ interface Config {
   excludedFolders: string[]
   groupBy: GroupBy
   maxFiles: number
+  useGitIgnore: boolean
 }
 
 function readConfig(): Config {
@@ -34,7 +36,8 @@ function readConfig(): Config {
     includeGlob: config.get<string>('includeGlob', DEFAULT_INCLUDE_GLOB),
     excludedFolders: config.get<string[]>('excludedFolders', DEFAULT_EXCLUDED_FOLDERS),
     groupBy: config.get<GroupBy>('groupBy', 'tag'),
-    maxFiles: Math.max(1, config.get<number>('maxFiles', 5000))
+    maxFiles: Math.max(1, config.get<number>('maxFiles', 5000)),
+    useGitIgnore: config.get<boolean>('useGitIgnore', true)
   }
 }
 
@@ -183,7 +186,15 @@ async function scanWorkspace(provider: TodoTreeProvider): Promise<void> {
     return
   }
   const excludeGlob = buildExcludeGlob(cfg.excludedFolders)
-  const found = await vscode.workspace.findFiles(cfg.includeGlob, excludeGlob, cfg.maxFiles)
+  let found = await vscode.workspace.findFiles(cfg.includeGlob, excludeGlob, cfg.maxFiles)
+  if (cfg.useGitIgnore && found.length > 0) {
+    const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+    if (cwd) {
+      const kept = await filterGitIgnored(found.map(u => u.fsPath), cwd)
+      const keptSet = new Set(kept)
+      found = found.filter(u => keptSet.has(u.fsPath))
+    }
+  }
   const items: TodoItem[] = []
   // Read sequentially to keep memory predictable on large repos. Could be parallelized.
   const fs = require('node:fs/promises') as typeof import('node:fs/promises')

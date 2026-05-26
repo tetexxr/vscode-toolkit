@@ -1109,7 +1109,7 @@
         "toolkit.formatFiles.useGitIgnore": {
           "type": "boolean",
           "default": true,
-          "description": "Skip files that are ignored by git."
+          "description": "Skip files that are ignored by .gitignore (uses `git check-ignore` under the hood). Falls back gracefully when the workspace is not a git repository."
         },
         "toolkit.expandRecursively.excludePatterns": {
           "type": "array",
@@ -1633,6 +1633,11 @@
           "type": "number",
           "default": 5000,
           "description": "Hard cap on the number of files scanned."
+        },
+        "toolkit.todoTree.useGitIgnore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Skip files that are ignored by .gitignore (uses `git check-ignore` under the hood). Falls back gracefully when the workspace is not a git repository."
         },
         "toolkit.restClient.timeout": {
           "type": "number",
