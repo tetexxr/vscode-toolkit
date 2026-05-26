@@ -30,6 +30,7 @@ All-in-one VS Code utility extension.
     - [Transform Selection](#transform-selection)
     - [Insert UUID / Timestamp / Random](#insert-uuid--timestamp--random)
     - [Timestamp Converter & Hover](#timestamp-converter--hover)
+    - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
     - [C# Code Actions](#c-code-actions)
@@ -702,6 +703,83 @@ Place the cursor over a 10-, 13- or 16-digit number anywhere in any file. If the
 | `toolkit.timestamp.hover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
 | `toolkit.timestamp.hover.minYear` | `1990` | Lower bound for considering a number to be a timestamp |
 | `toolkit.timestamp.hover.maxYear` | `2100` | Upper bound for considering a number to be a timestamp |
+
+#### JSON to TypeScript / C# Types
+
+Generate type definitions from a JSON sample. The source is the current selection if non-empty, otherwise the clipboard.
+
+**Commands:**
+
+| Command | Output |
+|---|---|
+| JSON to Type... | Dispatcher: pick the target language + style |
+| JSON to TypeScript Interface | `interface Root { ... }` |
+| JSON to TypeScript Type | `type Root = { ... }` |
+| JSON to C# Record | `public record Root(int Id, string Name)` |
+| JSON to C# Class | `public class Root { public int Id { get; set; } }` |
+
+Available from:
+
+- **Editor context menu** — right-click and pick **Toolkit: JSON to Type...** (also works without a selection — reads from the clipboard)
+- **Command Palette** — any of the individual commands
+
+**Behavior:**
+
+- Nested objects become their own named types, derived from the property key (singularized for array items).
+- Arrays of objects merge field shapes; fields missing in some samples are emitted as `?` (TS) or nullable (C#).
+- Numbers are inferred as integer or float; integers beyond `Int32.MaxValue` become `long` in C#.
+- The output replaces the JSON selection in place, or opens in a new editor when the JSON comes from the clipboard.
+
+**Example input:**
+
+```json
+{
+  "id": 1,
+  "name": "Alice",
+  "tags": ["admin", "user"],
+  "address": { "street": "Main", "zip": 12345 }
+}
+```
+
+**TypeScript interface (default):**
+
+```ts
+interface User {
+  id: number;
+  name: string;
+  tags: string[];
+  address: Address;
+}
+
+interface Address {
+  street: string;
+  zip: number;
+}
+```
+
+**C# record (positional, default):**
+
+```csharp
+public record User(int Id, string Name, IReadOnlyList<string> Tags, Address Address);
+
+public record Address(string Street, int Zip);
+```
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.jsonToType.extractNestedTypes` | `true` | Emit a named type for each nested object instead of inlining |
+| `toolkit.jsonToType.typescript.semicolons` | `true` | Terminate TypeScript fields with `;` |
+| `toolkit.jsonToType.csharp.collectionType` | `IReadOnlyList` | One of `IReadOnlyList`, `List`, `IEnumerable`, `array` |
+| `toolkit.jsonToType.csharp.recordStyle` | `positional` | `positional` (`record X(int Y)`) or `withProperties` |
+| `toolkit.jsonToType.csharp.useNullable` | `true` | Mark optional/nullable fields with `?` |
+
+**Limitations:**
+
+- Only strict JSON is accepted (no JSON5, comments, trailing commas).
+- All strings are inferred as `string` — no format inference (no auto-detection of dates, UUIDs, etc.).
+- Mixed-type arrays (e.g. `[1, "a"]`) degrade to `unknown[]` / `IReadOnlyList<object>`.
 
 ### Code Generation & Refactoring
 

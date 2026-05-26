@@ -607,6 +607,26 @@
       {
         "command": "toolkit.timestamp.showInfo",
         "title": "Toolkit: Show Timestamp Info"
+      },
+      {
+        "command": "toolkit.jsonToType",
+        "title": "Toolkit: JSON to Type..."
+      },
+      {
+        "command": "toolkit.jsonToType.typescriptInterface",
+        "title": "Toolkit: JSON to TypeScript Interface"
+      },
+      {
+        "command": "toolkit.jsonToType.typescriptType",
+        "title": "Toolkit: JSON to TypeScript Type"
+      },
+      {
+        "command": "toolkit.jsonToType.csharpRecord",
+        "title": "Toolkit: JSON to C# Record"
+      },
+      {
+        "command": "toolkit.jsonToType.csharpClass",
+        "title": "Toolkit: JSON to C# Class"
       }
     ],
     "keybindings": [
@@ -829,35 +849,39 @@
           "group": "0_toolkit@5"
         },
         {
+          "command": "toolkit.jsonToType",
+          "group": "0_toolkit@6"
+        },
+        {
           "command": "toolkit.lines",
-          "group": "0_toolkit@6",
+          "group": "0_toolkit@7",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@7"
+          "group": "0_toolkit@8"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@8",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.sumNumbers",
           "group": "0_toolkit@9",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@10"
+          "command": "toolkit.sumNumbers",
+          "group": "0_toolkit@10",
+          "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleQuotes",
+          "command": "toolkit.toggleGitBlame",
           "group": "0_toolkit@11"
         },
         {
+          "command": "toolkit.toggleQuotes",
+          "group": "0_toolkit@12"
+        },
+        {
           "command": "toolkit.transform",
-          "group": "0_toolkit@12",
+          "group": "0_toolkit@13",
           "when": "editorHasSelection"
         }
       ]
@@ -1323,6 +1347,33 @@
           "type": "number",
           "default": 2100,
           "description": "Upper bound (inclusive) for considering a number to be a timestamp."
+        },
+        "toolkit.jsonToType.extractNestedTypes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Emit a named type for each nested object instead of inlining anonymous shapes."
+        },
+        "toolkit.jsonToType.typescript.semicolons": {
+          "type": "boolean",
+          "default": true,
+          "description": "Terminate each TypeScript field with a semicolon."
+        },
+        "toolkit.jsonToType.csharp.collectionType": {
+          "type": "string",
+          "enum": ["IReadOnlyList", "List", "IEnumerable", "array"],
+          "default": "IReadOnlyList",
+          "description": "Collection wrapper used for JSON arrays in C# output."
+        },
+        "toolkit.jsonToType.csharp.recordStyle": {
+          "type": "string",
+          "enum": ["positional", "withProperties"],
+          "default": "positional",
+          "description": "Generated C# record style. Positional: 'public record X(int Id, string Name)'. With properties: declared bodies with init-only properties."
+        },
+        "toolkit.jsonToType.csharp.useNullable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mark optional or nullable fields with '?' (assumes a nullable context for reference types)."
         },
         "toolkit.toggleQuotes.languageQuotes": {
           "type": "object",

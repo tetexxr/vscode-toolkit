@@ -29,6 +29,7 @@ import { registerToggleQuotesCommands } from './features/toggle-quotes'
 import { registerTransformCommands } from './features/transform'
 import { registerInsertCommands } from './features/insert'
 import { registerTimestampCommands } from './features/timestamp'
+import { registerJsonToTypeCommands } from './features/json-to-type'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -61,6 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerTransformCommands(context)
   registerInsertCommands(context)
   registerTimestampCommands(context)
+  registerJsonToTypeCommands(context)
 }
 
 export function deactivate() {}
