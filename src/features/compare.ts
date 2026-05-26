@@ -3,6 +3,33 @@ import * as path from 'node:path'
 import { execFile } from 'node:child_process'
 import { buildDiffTitle, parseGitBranchList, relativizeToRepo } from './compare-utils'
 
+const BRANCH_SCHEME = 'toolkit-branch'
+
+/** Serves file content read from a git ref as a virtual document, so the diff editor
+ * doesn't materialize a standalone tab for the left-hand side. */
+class BranchContentProvider implements vscode.TextDocumentContentProvider {
+  private cache = new Map<string, string>()
+  private emitter = new vscode.EventEmitter<vscode.Uri>()
+  readonly onDidChange = this.emitter.event
+
+  set(uri: vscode.Uri, content: string): void {
+    this.cache.set(uri.toString(), content)
+    this.emitter.fire(uri)
+  }
+
+  provideTextDocumentContent(uri: vscode.Uri): string {
+    return this.cache.get(uri.toString()) ?? ''
+  }
+}
+
+function buildBranchUri(branch: string, relPath: string): vscode.Uri {
+  // Path → /<branch>/<relPath>, so VS Code can derive the language from the file extension.
+  return vscode.Uri.from({
+    scheme: BRANCH_SCHEME,
+    path: '/' + branch + '/' + relPath
+  })
+}
+
 interface CommandResult {
   stdout: string
   stderr: string
@@ -61,7 +88,7 @@ async function isTrackedInBranch(repoRoot: string, branch: string, relPath: stri
   return code === 0
 }
 
-async function compareWithBranch(): Promise<void> {
+async function compareWithBranch(provider: BranchContentProvider): Promise<void> {
   const editor = vscode.window.activeTextEditor
   if (!editor || editor.document.isUntitled) {
     vscode.window.showInformationMessage('Toolkit: open a saved file first.')
@@ -123,16 +150,16 @@ async function compareWithBranch(): Promise<void> {
     return
   }
 
-  const leftDoc = await vscode.workspace.openTextDocument({
-    content,
-    language: editor.document.languageId
-  })
+  const leftUri = buildBranchUri(picked.branch, relPath)
+  provider.set(leftUri, content)
   const title = buildDiffTitle(path.basename(fileFsPath), picked.branch)
-  await vscode.commands.executeCommand('vscode.diff', leftDoc.uri, editor.document.uri, title)
+  await vscode.commands.executeCommand('vscode.diff', leftUri, editor.document.uri, title)
 }
 
 export function registerCompareCommands(context: vscode.ExtensionContext): void {
+  const provider = new BranchContentProvider()
   context.subscriptions.push(
-    vscode.commands.registerCommand('toolkit.compareWithBranch', () => compareWithBranch())
+    vscode.workspace.registerTextDocumentContentProvider(BRANCH_SCHEME, provider),
+    vscode.commands.registerCommand('toolkit.compareWithBranch', () => compareWithBranch(provider))
   )
 }
