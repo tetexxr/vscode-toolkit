@@ -43,6 +43,7 @@ All-in-one VS Code utility extension.
     - [Clipboard History](#clipboard-history)
     - [Bookmarks](#bookmarks)
     - [TODO Tree](#todo-tree)
+    - [REST Client](#rest-client)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -1066,6 +1067,83 @@ Tags must match a whole word — `// TODOLIST: foo` is not picked up.
 | `toolkit.todoTree.excludedFolders` | `["node_modules", ".git", ...]` | Folders to skip |
 | `toolkit.todoTree.groupBy` | `tag` | `tag` or `file` |
 | `toolkit.todoTree.maxFiles` | `5000` | Hard cap on files scanned |
+
+#### REST Client
+
+Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send Request** code lens; the response opens in a new tab with the right syntax highlighting and a pretty-printed body when it's JSON.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Send Request | Run the request under the cursor (also exposed as a CodeLens above each request) |
+| Send All Requests | Run every request in the active file |
+| Cancel Pending Requests | Abort any requests currently in flight |
+
+**File format:**
+
+```http
+### Get users
+GET https://api.example.com/users
+Accept: application/json
+
+### Create user
+@baseUrl = https://api.example.com
+
+POST {{baseUrl}}/users
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Alice",
+  "email": "alice@example.com"
+}
+```
+
+- `### name` separates request blocks (name optional).
+- `@name = value` defines a variable scoped to the file.
+- `{{name}}` interpolates a variable in the URL, headers or body.
+- Lines starting with a single `#` are comments.
+
+**Built-in variables:**
+
+| Placeholder | Value |
+|---|---|
+| `{{$timestamp}}` | Current Unix epoch in seconds |
+| `{{$randomUUID}}` | Fresh UUID v4 |
+| `{{$datetime iso8601}}` | Current time in ISO 8601 |
+
+**Response format:**
+
+The response opens in a new editor with the language inferred from `Content-Type` (JSON, XML, HTML, JavaScript, CSS, CSV — otherwise plaintext). The header block at the top looks like:
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 1234
+X-Toolkit-Time: 234ms
+
+{
+  ...
+}
+```
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.restClient.timeout` | `30000` | Request timeout in ms (0 disables) |
+| `toolkit.restClient.followRedirects` | `true` | Follow 3xx redirects |
+| `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` |
+
+**Limitations (v1):**
+
+- No environments / `.env` files — the variables live in the `.http` file.
+- No syntax highlighting contributed — relies on whatever language is set (plaintext if none).
+- No request history, no diff between responses, no response → file forwarding.
+- No multipart uploads, file bodies (`< body.json`), WebSockets or gRPC.
+- No built-in auth helpers (Basic, OAuth, AWS Sig) — set the headers manually.
+- No request chaining (`> name`) or cookie persistence between requests.
 
 ### Appearance & Viewers
 

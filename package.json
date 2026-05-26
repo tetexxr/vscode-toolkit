@@ -697,6 +697,18 @@
         "command": "toolkit.todoTree.groupByFile",
         "title": "Toolkit: TODO Tree - Group by File",
         "icon": "$(file)"
+      },
+      {
+        "command": "toolkit.restClient.send",
+        "title": "Toolkit: Send Request"
+      },
+      {
+        "command": "toolkit.restClient.sendAll",
+        "title": "Toolkit: Send All Requests"
+      },
+      {
+        "command": "toolkit.restClient.cancelAll",
+        "title": "Toolkit: Cancel Pending Requests"
       }
     ],
     "keybindings": [
@@ -1588,6 +1600,22 @@
           "type": "number",
           "default": 5000,
           "description": "Hard cap on the number of files scanned."
+        },
+        "toolkit.restClient.timeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Request timeout in milliseconds. 0 disables the timeout."
+        },
+        "toolkit.restClient.followRedirects": {
+          "type": "boolean",
+          "default": true,
+          "description": "Follow HTTP redirects (3xx)."
+        },
+        "toolkit.restClient.previewResponseAs": {
+          "type": "string",
+          "enum": ["auto", "raw", "json"],
+          "default": "auto",
+          "description": "Editor language used to render the response. 'auto' picks one from the Content-Type."
         },
         "toolkit.toggleQuotes.languageQuotes": {
           "type": "object",

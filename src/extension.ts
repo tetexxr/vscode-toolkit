@@ -34,6 +34,7 @@ import { registerPasteImageCommands } from './features/paste-image'
 import { registerClipboardHistoryCommands } from './features/clipboard-history'
 import { registerBookmarkCommands } from './features/bookmarks'
 import { registerTodoTreeCommands } from './features/todo-tree'
+import { registerRestClientCommands } from './features/rest-client'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -71,6 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerClipboardHistoryCommands(context)
   registerBookmarkCommands(context)
   registerTodoTreeCommands(context)
+  registerRestClientCommands(context)
 }
 
 export function deactivate() {}

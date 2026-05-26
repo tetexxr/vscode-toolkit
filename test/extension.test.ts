@@ -39,7 +39,8 @@ describe('extension entry point', () => {
     'registerPasteImageCommands',
     'registerClipboardHistoryCommands',
     'registerBookmarkCommands',
-    'registerTodoTreeCommands'
+    'registerTodoTreeCommands',
+    'registerRestClientCommands'
   ]
 
   for (const fn of expectedRegistrations) {
