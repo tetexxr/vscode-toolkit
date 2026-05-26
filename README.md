@@ -12,6 +12,7 @@ All-in-one VS Code utility extension.
     - [Edit Commit Message & Reset HEAD](#edit-commit-message--reset-head)
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
+    - [Compare with Branch](#compare-with-branch)
   - [Package Management](#package-management)
     - [NuGet Package Manager](#nuget-package-manager)
     - [NPM Package Manager](#npm-package-manager)
@@ -182,6 +183,14 @@ Stage files or folders directly from the file explorer context menu. Works with 
 - **Explorer context menu** — right-click a file, folder, or multi-selection and select **Toolkit: Stage Changes**.
 
 Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once.
+
+#### Compare with Branch
+
+Diff the active file against the same file in any other local branch.
+
+Run **Toolkit: Compare with Branch...** from the Command Palette or the editor context menu. A quick pick shows every local branch (sorted by most recent commit, excluding the current one). Picking one opens a diff editor: `file (branch)` on the left (read-only) and your working-tree copy on the right.
+
+If the file doesn't exist on the chosen branch — or the file is untracked / outside a git repo — a warning explains why and the diff is not opened.
 
 ### Package Management
 

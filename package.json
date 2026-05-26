@@ -721,6 +721,10 @@
       {
         "command": "toolkit.regexPlayground.testSelectionAsInput",
         "title": "Toolkit: Regex Playground - Test Selection as Input"
+      },
+      {
+        "command": "toolkit.compareWithBranch",
+        "title": "Toolkit: Compare with Branch..."
       }
     ],
     "keybindings": [
@@ -960,56 +964,61 @@
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.timestamp.convert",
+          "command": "toolkit.compareWithBranch",
           "group": "0_toolkit@3",
+          "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "toolkit.timestamp.convert",
+          "group": "0_toolkit@4",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.gitHistory",
-          "group": "0_toolkit@4"
-        },
-        {
-          "command": "toolkit.insert",
           "group": "0_toolkit@5"
         },
         {
-          "command": "toolkit.jsonToType",
+          "command": "toolkit.insert",
           "group": "0_toolkit@6"
         },
         {
+          "command": "toolkit.jsonToType",
+          "group": "0_toolkit@7"
+        },
+        {
           "command": "toolkit.lines",
-          "group": "0_toolkit@7",
+          "group": "0_toolkit@8",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@8"
-        },
-        {
-          "command": "toolkit.pasteImage",
           "group": "0_toolkit@9"
         },
         {
-          "command": "toolkit.slugify",
-          "group": "0_toolkit@10",
-          "when": "editorHasSelection"
+          "command": "toolkit.pasteImage",
+          "group": "0_toolkit@10"
         },
         {
-          "command": "toolkit.sumNumbers",
+          "command": "toolkit.slugify",
           "group": "0_toolkit@11",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@12"
+          "command": "toolkit.sumNumbers",
+          "group": "0_toolkit@12",
+          "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleQuotes",
+          "command": "toolkit.toggleGitBlame",
           "group": "0_toolkit@13"
         },
         {
+          "command": "toolkit.toggleQuotes",
+          "group": "0_toolkit@14"
+        },
+        {
           "command": "toolkit.transform",
-          "group": "0_toolkit@14",
+          "group": "0_toolkit@15",
           "when": "editorHasSelection"
         }
       ]

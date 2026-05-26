@@ -36,6 +36,7 @@ import { registerBookmarkCommands } from './features/bookmarks'
 import { registerTodoTreeCommands } from './features/todo-tree'
 import { registerRestClientCommands } from './features/rest-client'
 import { registerRegexPlaygroundCommands } from './features/regex-playground'
+import { registerCompareCommands } from './features/compare'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -75,6 +76,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerTodoTreeCommands(context)
   registerRestClientCommands(context)
   registerRegexPlaygroundCommands(context)
+  registerCompareCommands(context)
 }
 
 export function deactivate() {}
