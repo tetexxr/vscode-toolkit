@@ -428,6 +428,11 @@ Run **Toolkit: Sum Numbers in Selection** from the Command Palette or the editor
 
 Operate on the lines under the current selection (or the whole document if nothing is selected). Each operation is available as a dedicated command, and a unified **Toolkit: Lines...** quick pick lists them all when you don't remember the exact name.
 
+Available from:
+
+- **Editor context menu** — when there is an active selection, right-click and pick **Toolkit: Lines...**
+- **Command Palette** — run any of the individual commands or **Toolkit: Lines...** for the picker
+
 **Operations:**
 
 | Command | Description |

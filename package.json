@@ -651,22 +651,27 @@
           "group": "0_toolkit@2"
         },
         {
-          "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@3"
-        },
-        {
-          "command": "toolkit.slugify",
-          "group": "0_toolkit@4",
+          "command": "toolkit.lines",
+          "group": "0_toolkit@3",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@5"
+          "command": "toolkit.openInGitHub.file",
+          "group": "0_toolkit@4"
+        },
+        {
+          "command": "toolkit.slugify",
+          "group": "0_toolkit@5",
+          "when": "editorHasSelection"
         },
         {
           "command": "toolkit.sumNumbers",
           "group": "0_toolkit@6",
           "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.toggleGitBlame",
+          "group": "0_toolkit@7"
         }
       ]
     },
