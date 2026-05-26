@@ -25,6 +25,7 @@ import { registerCsvRainbowCommands } from './features/csv-rainbow'
 import { registerTypeOnlyImportsCommands } from './features/type-only-imports'
 import { registerLinesCommands } from './features/lines'
 import { registerAlignCommands } from './features/align'
+import { registerToggleQuotesCommands } from './features/toggle-quotes'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -53,6 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerTypeOnlyImportsCommands(context)
   registerLinesCommands(context)
   registerAlignCommands(context)
+  registerToggleQuotesCommands(context)
 }
 
 export function deactivate() {}

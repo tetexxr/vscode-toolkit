@@ -26,6 +26,7 @@ All-in-one VS Code utility extension.
     - [Sum Numbers in Selection](#sum-numbers-in-selection)
     - [Sort, Dedupe & Transform Lines](#sort-dedupe--transform-lines)
     - [Align by Character](#align-by-character)
+    - [Toggle Quotes](#toggle-quotes)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
     - [C# Code Actions](#c-code-actions)
@@ -529,6 +530,51 @@ Example — to enforce zero spaces before `=>`:
   "=>": 0
 }
 ```
+
+#### Toggle Quotes
+
+Cycle the quotes around the string literal under the cursor: `'` → `"` → `` ` `` → `'`. Escapes and unescapes the relevant quote characters automatically.
+
+**Example:**
+
+```ts
+const s = 'It\'s "great"'
+```
+
+→ Toggle (now `"`):
+
+```ts
+const s = "It's \"great\""
+```
+
+→ Toggle (now `` ` ``):
+
+```ts
+const s = `It's "great"`
+```
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Toggle Quotes | Cycles `'` → `"` → `` ` `` → `'` |
+| Quote as Single | Force `'…'` |
+| Quote as Double | Force `"…"` |
+| Quote as Backtick | Force `` `…` `` |
+
+Available from:
+
+- **Editor context menu** — right-click and pick **Toolkit: Toggle Quotes**
+- **Command Palette** — any of the four commands
+
+**Behavior:**
+
+- Works on the string that encloses the cursor on the current line. Multi-cursor supported (each cursor processed independently).
+- Detects escaped quotes (`\'`, `\"`, `` \` ``) so they don't end the literal prematurely.
+- When converting **to** backtick, any literal `${` in the content is escaped to `\${` so it does not become a template interpolation.
+- When converting **from** a backtick literal that contains an unescaped `${...}`, the command is aborted with a warning — converting it would silently drop the interpolation expression.
+- Other escape sequences (`\n`, `\t`, `\\`, `\uXXXX`, etc.) are preserved as-is.
+- String detection is single-line and language-agnostic. Multi-line template literals or exotic forms (Python triple-quoted, C# verbatim `@"..."`, raw strings, etc.) are not detected — select the string manually if needed.
 
 ### Code Generation & Refactoring
 

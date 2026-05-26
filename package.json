@@ -467,6 +467,22 @@
       {
         "command": "toolkit.align.lineComment",
         "title": "Toolkit: Align by //"
+      },
+      {
+        "command": "toolkit.toggleQuotes",
+        "title": "Toolkit: Toggle Quotes"
+      },
+      {
+        "command": "toolkit.quoteAsSingle",
+        "title": "Toolkit: Quote as Single"
+      },
+      {
+        "command": "toolkit.quoteAsDouble",
+        "title": "Toolkit: Quote as Double"
+      },
+      {
+        "command": "toolkit.quoteAsBacktick",
+        "title": "Toolkit: Quote as Backtick"
       }
     ],
     "keybindings": [
@@ -701,6 +717,10 @@
         {
           "command": "toolkit.toggleGitBlame",
           "group": "0_toolkit@8"
+        },
+        {
+          "command": "toolkit.toggleQuotes",
+          "group": "0_toolkit@9"
         }
       ]
     },

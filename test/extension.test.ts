@@ -30,7 +30,8 @@ describe('extension entry point', () => {
     'registerCsvRainbowCommands',
     'registerTypeOnlyImportsCommands',
     'registerLinesCommands',
-    'registerAlignCommands'
+    'registerAlignCommands',
+    'registerToggleQuotesCommands'
   ]
 
   for (const fn of expectedRegistrations) {
