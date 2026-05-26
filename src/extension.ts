@@ -31,6 +31,7 @@ import { registerInsertCommands } from './features/insert'
 import { registerTimestampCommands } from './features/timestamp'
 import { registerJsonToTypeCommands } from './features/json-to-type'
 import { registerPasteImageCommands } from './features/paste-image'
+import { registerClipboardHistoryCommands } from './features/clipboard-history'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -65,6 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerTimestampCommands(context)
   registerJsonToTypeCommands(context)
   registerPasteImageCommands(context)
+  registerClipboardHistoryCommands(context)
 }
 
 export function deactivate() {}

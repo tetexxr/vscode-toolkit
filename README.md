@@ -40,6 +40,7 @@ All-in-one VS Code utility extension.
     - [Expand / Collapse Recursively](#expand--collapse-recursively)
     - [Format Files](#format-files)
     - [Paste Image](#paste-image)
+    - [Clipboard History](#clipboard-history)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -950,6 +951,40 @@ Available from:
 | `toolkit.pasteImage.format` | `auto` | `auto`, `markdown`, or `html` |
 | `toolkit.pasteImage.useForwardSlashes` | `true` | Use `/` separators in the inserted path |
 | `toolkit.pasteImage.htmlAttributes` | `""` | Extra attributes for the inserted image tag (e.g. `class="screenshot"`) |
+
+#### Clipboard History
+
+Keep a list of recently-copied text snippets while VS Code is focused. Recall any of them via a quick pick — the chosen entry is copied back to the clipboard and pasted at the cursor.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Show Clipboard History | Quick pick of recent entries; selecting one pastes it at the cursor |
+| Clear Clipboard History | Wipe the in-memory history (with confirmation) |
+
+**How it works:**
+
+- VS Code does not expose a clipboard-change event, so the extension polls the clipboard while the window is focused (default every 1 s). Polling pauses when the window loses focus.
+- The history lives **in memory only** — nothing is persisted to disk, `globalState`, or `workspaceState`. Closing the window drops everything.
+- Duplicates are deduplicated: re-copying an existing entry just moves it to the top.
+- The current clipboard is captured on activation but not added as an entry; only subsequent changes appear.
+
+**Privacy:**
+
+- No persistence between sessions.
+- Per-entry cap (default 10 000 characters) skips very large clipboard contents.
+- Per-history cap (default 50 entries) keeps memory bounded.
+- The `Clear` command is available for sensitive sessions.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.clipboardHistory.enabled` | `true` | Toggle clipboard tracking |
+| `toolkit.clipboardHistory.maxItems` | `50` | FIFO cap on the number of entries |
+| `toolkit.clipboardHistory.maxItemLength` | `10000` | Skip entries longer than this many characters |
+| `toolkit.clipboardHistory.pollInterval` | `1000` | Polling interval in milliseconds |
 
 ### Appearance & Viewers
 

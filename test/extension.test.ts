@@ -36,7 +36,8 @@ describe('extension entry point', () => {
     'registerInsertCommands',
     'registerTimestampCommands',
     'registerJsonToTypeCommands',
-    'registerPasteImageCommands'
+    'registerPasteImageCommands',
+    'registerClipboardHistoryCommands'
   ]
 
   for (const fn of expectedRegistrations) {

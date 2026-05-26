@@ -639,6 +639,14 @@
       {
         "command": "toolkit.pasteImage.html",
         "title": "Toolkit: Paste Image (HTML)"
+      },
+      {
+        "command": "toolkit.clipboardHistory.show",
+        "title": "Toolkit: Show Clipboard History"
+      },
+      {
+        "command": "toolkit.clipboardHistory.clear",
+        "title": "Toolkit: Clear Clipboard History"
       }
     ],
     "keybindings": [
@@ -1428,6 +1436,26 @@
           "type": "string",
           "default": "",
           "description": "Extra attributes appended to the inserted <img> tag (e.g. class=\"screenshot\")."
+        },
+        "toolkit.clipboardHistory.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Track changes to the clipboard while VS Code is focused so they can be recalled with 'Toolkit: Show Clipboard History'."
+        },
+        "toolkit.clipboardHistory.maxItems": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum number of entries kept in the in-memory clipboard history (FIFO when the limit is reached)."
+        },
+        "toolkit.clipboardHistory.maxItemLength": {
+          "type": "number",
+          "default": 10000,
+          "description": "Maximum character length of a single entry. Larger clipboard contents are skipped."
+        },
+        "toolkit.clipboardHistory.pollInterval": {
+          "type": "number",
+          "default": 1000,
+          "description": "How often (ms) the clipboard is polled for changes while VS Code is focused."
         },
         "toolkit.toggleQuotes.languageQuotes": {
           "type": "object",
