@@ -647,6 +647,30 @@
       {
         "command": "toolkit.clipboardHistory.clear",
         "title": "Toolkit: Clear Clipboard History"
+      },
+      {
+        "command": "toolkit.bookmarks.toggle",
+        "title": "Toolkit: Toggle Bookmark"
+      },
+      {
+        "command": "toolkit.bookmarks.toggleWithLabel",
+        "title": "Toolkit: Toggle Bookmark with Label..."
+      },
+      {
+        "command": "toolkit.bookmarks.editLabel",
+        "title": "Toolkit: Edit Bookmark Label..."
+      },
+      {
+        "command": "toolkit.bookmarks.show",
+        "title": "Toolkit: Show Bookmarks"
+      },
+      {
+        "command": "toolkit.bookmarks.clearFile",
+        "title": "Toolkit: Clear Bookmarks (Current File)"
+      },
+      {
+        "command": "toolkit.bookmarks.clearAll",
+        "title": "Toolkit: Clear All Bookmarks"
       }
     ],
     "keybindings": [
@@ -1456,6 +1480,21 @@
           "type": "number",
           "default": 1000,
           "description": "How often (ms) the clipboard is polled for changes while VS Code is focused."
+        },
+        "toolkit.bookmarks.gutterIcon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a bookmark icon in the gutter on bookmarked lines."
+        },
+        "toolkit.bookmarks.highlightLine": {
+          "type": "boolean",
+          "default": false,
+          "description": "Highlight the full line of every bookmark with a subtle background color."
+        },
+        "toolkit.bookmarks.highlightColor": {
+          "type": "string",
+          "default": "rgba(255,200,0,0.15)",
+          "description": "Background color used when 'highlightLine' is enabled. Accepts any CSS color."
         },
         "toolkit.toggleQuotes.languageQuotes": {
           "type": "object",

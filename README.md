@@ -41,6 +41,7 @@ All-in-one VS Code utility extension.
     - [Format Files](#format-files)
     - [Paste Image](#paste-image)
     - [Clipboard History](#clipboard-history)
+    - [Bookmarks](#bookmarks)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -985,6 +986,41 @@ Keep a list of recently-copied text snippets while VS Code is focused. Recall an
 | `toolkit.clipboardHistory.maxItems` | `50` | FIFO cap on the number of entries |
 | `toolkit.clipboardHistory.maxItemLength` | `10000` | Skip entries longer than this many characters |
 | `toolkit.clipboardHistory.pollInterval` | `1000` | Polling interval in milliseconds |
+
+#### Bookmarks
+
+Pin specific lines in your code with an optional label and jump between them from a unified quick pick. JetBrains-style.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Toggle Bookmark | Add / remove a bookmark on the current line |
+| Toggle Bookmark with Label... | Add a bookmark, asking for a label |
+| Edit Bookmark Label... | Change (or clear) the label of the bookmark on the current line |
+| Show Bookmarks | Quick pick of every bookmark in the workspace; selecting one navigates to it |
+| Clear Bookmarks (Current File) | Remove all bookmarks in the active file |
+| Clear All Bookmarks | Remove every bookmark in the workspace (with confirmation) |
+
+**UI:**
+
+- A bookmark icon appears in the gutter of every bookmarked line. Hovering it shows the label, when present.
+- Optionally, the whole line is highlighted with a subtle background color.
+- Multi-cursor: the toggle commands act on the active cursor's line only.
+
+**Persistence:**
+
+- Bookmarks live in the workspace state and survive across sessions.
+- Line numbers are auto-adjusted while you edit the document (insertions / deletions above a bookmark shift it accordingly).
+- Bookmarks placed inside a region that gets deleted are dropped.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.bookmarks.gutterIcon` | `true` | Show the bookmark icon in the gutter |
+| `toolkit.bookmarks.highlightLine` | `false` | Highlight the full line with a subtle background |
+| `toolkit.bookmarks.highlightColor` | `rgba(255,200,0,0.15)` | CSS color used when `highlightLine` is enabled |
 
 ### Appearance & Viewers
 
