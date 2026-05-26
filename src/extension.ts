@@ -35,6 +35,7 @@ import { registerClipboardHistoryCommands } from './features/clipboard-history'
 import { registerBookmarkCommands } from './features/bookmarks'
 import { registerTodoTreeCommands } from './features/todo-tree'
 import { registerRestClientCommands } from './features/rest-client'
+import { registerRegexPlaygroundCommands } from './features/regex-playground'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -73,6 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerBookmarkCommands(context)
   registerTodoTreeCommands(context)
   registerRestClientCommands(context)
+  registerRegexPlaygroundCommands(context)
 }
 
 export function deactivate() {}

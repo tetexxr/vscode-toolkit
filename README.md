@@ -44,6 +44,7 @@ All-in-one VS Code utility extension.
     - [Bookmarks](#bookmarks)
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
+    - [Regex Playground](#regex-playground)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -1144,6 +1145,39 @@ X-Toolkit-Time: 234ms
 - No multipart uploads, file bodies (`< body.json`), WebSockets or gRPC.
 - No built-in auth helpers (Basic, OAuth, AWS Sig) — set the headers manually.
 - No request chaining (`> name`) or cookie persistence between requests.
+
+#### Regex Playground
+
+A side panel where you can test regexes interactively. Pattern, flags, test input and replace template — matches are highlighted live and capture groups are listed below.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Open Regex Playground | Opens the panel, restoring the last pattern/input/replace |
+| Regex Playground - Test Selection as Regex | Opens the panel with the current selection as the pattern |
+| Regex Playground - Test Selection as Input | Opens the panel with the current selection as the test input |
+
+**UI:**
+
+- Pattern input with toggles for the `g`, `i`, `m`, `s`, `u`, `y` flags.
+- Test input textarea; the highlighted output renders just below it (matches alternate between two colors so consecutive ones stay readable).
+- Match list with each match's range, the matched text, and every positional and named capture group.
+- Replace template input with a live preview of the result.
+
+**Behavior:**
+
+- Matching runs in the extension host using JavaScript's `RegExp` — patterns work exactly as they do in Node.
+- Input is debounced (~120 ms) before being sent back for matching, so typing stays responsive.
+- The match cap (10 000) protects against zero-width loops; pathological patterns can still freeze the panel — close it and reopen.
+- Pattern, flags, input and replace persist across sessions in `globalState`.
+
+**Limitations (v1):**
+
+- No cheat sheet of regex tokens.
+- No save / load of named patterns (only the last state survives).
+- No protection against catastrophic backtracking — the panel stays in the UI thread.
+- No export of the pattern as a literal for other languages.
 
 ### Appearance & Viewers
 

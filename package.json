@@ -709,6 +709,18 @@
       {
         "command": "toolkit.restClient.cancelAll",
         "title": "Toolkit: Cancel Pending Requests"
+      },
+      {
+        "command": "toolkit.regexPlayground.open",
+        "title": "Toolkit: Open Regex Playground"
+      },
+      {
+        "command": "toolkit.regexPlayground.testSelectionAsRegex",
+        "title": "Toolkit: Regex Playground - Test Selection as Regex"
+      },
+      {
+        "command": "toolkit.regexPlayground.testSelectionAsInput",
+        "title": "Toolkit: Regex Playground - Test Selection as Input"
       }
     ],
     "keybindings": [

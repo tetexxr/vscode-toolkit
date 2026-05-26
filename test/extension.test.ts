@@ -40,7 +40,8 @@ describe('extension entry point', () => {
     'registerClipboardHistoryCommands',
     'registerBookmarkCommands',
     'registerTodoTreeCommands',
-    'registerRestClientCommands'
+    'registerRestClientCommands',
+    'registerRegexPlaygroundCommands'
   ]
 
   for (const fn of expectedRegistrations) {
