@@ -24,6 +24,7 @@ import { registerSumNumbersCommands } from './features/sum-numbers'
 import { registerCsvRainbowCommands } from './features/csv-rainbow'
 import { registerTypeOnlyImportsCommands } from './features/type-only-imports'
 import { registerLinesCommands } from './features/lines'
+import { registerAlignCommands } from './features/align'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -51,6 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerCsvRainbowCommands(context)
   registerTypeOnlyImportsCommands(context)
   registerLinesCommands(context)
+  registerAlignCommands(context)
 }
 
 export function deactivate() {}

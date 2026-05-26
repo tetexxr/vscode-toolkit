@@ -29,7 +29,8 @@ describe('extension entry point', () => {
     'registerSumNumbersCommands',
     'registerCsvRainbowCommands',
     'registerTypeOnlyImportsCommands',
-    'registerLinesCommands'
+    'registerLinesCommands',
+    'registerAlignCommands'
   ]
 
   for (const fn of expectedRegistrations) {

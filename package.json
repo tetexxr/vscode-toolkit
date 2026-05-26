@@ -443,6 +443,30 @@
       {
         "command": "toolkit.lines.trimTrailingWhitespace",
         "title": "Toolkit: Trim Trailing Whitespace (Selection)"
+      },
+      {
+        "command": "toolkit.align",
+        "title": "Toolkit: Align by Character..."
+      },
+      {
+        "command": "toolkit.align.equals",
+        "title": "Toolkit: Align by ="
+      },
+      {
+        "command": "toolkit.align.colon",
+        "title": "Toolkit: Align by :"
+      },
+      {
+        "command": "toolkit.align.comma",
+        "title": "Toolkit: Align by ,"
+      },
+      {
+        "command": "toolkit.align.arrow",
+        "title": "Toolkit: Align by =>"
+      },
+      {
+        "command": "toolkit.align.lineComment",
+        "title": "Toolkit: Align by //"
       }
     ],
     "keybindings": [
@@ -642,36 +666,41 @@
       ],
       "editor/context": [
         {
-          "command": "toolkit.changeCase",
+          "command": "toolkit.align",
           "group": "0_toolkit@1",
           "when": "editorHasSelection"
         },
         {
+          "command": "toolkit.changeCase",
+          "group": "0_toolkit@2",
+          "when": "editorHasSelection"
+        },
+        {
           "command": "toolkit.gitHistory",
-          "group": "0_toolkit@2"
+          "group": "0_toolkit@3"
         },
         {
           "command": "toolkit.lines",
-          "group": "0_toolkit@3",
+          "group": "0_toolkit@4",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@4"
+          "group": "0_toolkit@5"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@5",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.sumNumbers",
           "group": "0_toolkit@6",
           "when": "editorHasSelection"
         },
         {
+          "command": "toolkit.sumNumbers",
+          "group": "0_toolkit@7",
+          "when": "editorHasSelection"
+        },
+        {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@7"
+          "group": "0_toolkit@8"
         }
       ]
     },
@@ -1074,6 +1103,30 @@
           "type": "boolean",
           "default": false,
           "description": "When removing duplicate lines, keep the last occurrence instead of the first."
+        },
+        "toolkit.align.spacesBefore": {
+          "type": "object",
+          "default": {
+            "default": 1,
+            ":": 0,
+            ",": 0
+          },
+          "description": "Number of spaces inserted between the (trimmed) prefix and the alignment delimiter, with optional per-delimiter overrides. The 'default' key applies when no specific override matches.",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "toolkit.align.spacesAfter": {
+          "type": "object",
+          "default": {
+            "default": 1
+          },
+          "description": "Number of spaces inserted between the alignment delimiter and the (trimmed) suffix, with optional per-delimiter overrides. Ignored on lines where the suffix is empty.",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
         }
       }
     }

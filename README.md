@@ -25,6 +25,7 @@ All-in-one VS Code utility extension.
     - [Type-Only Imports](#type-only-imports)
     - [Sum Numbers in Selection](#sum-numbers-in-selection)
     - [Sort, Dedupe & Transform Lines](#sort-dedupe--transform-lines)
+    - [Align by Character](#align-by-character)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
     - [C# Code Actions](#c-code-actions)
@@ -463,6 +464,71 @@ Available from:
 |---|---|---|
 | `toolkit.lines.naturalSort` | `true` | Use natural sort (so `item2` comes before `item10`) when sorting alphabetically |
 | `toolkit.lines.dedupeKeepLast` | `false` | When removing duplicates, keep the last occurrence instead of the first |
+
+#### Align by Character
+
+Vertically align consecutive lines by the first occurrence of a delimiter, inserting spaces so the delimiter appears in the same column on every line.
+
+Useful for lining up assignment blocks, object keys, type annotations, trailing comments, or arrow functions.
+
+**Example — Align by `=`:**
+
+```ts
+const FOO_BAR = 1;
+const SHORT = 2;
+const LONG_NAME = 3;
+```
+
+→
+
+```ts
+const FOO_BAR   = 1;
+const SHORT     = 2;
+const LONG_NAME = 3;
+```
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Align by Character... | Quick pick with common delimiters + "Other..." (custom delimiter) |
+| Align by = | Assignment |
+| Align by : | Object key / type annotation |
+| Align by , | Comma |
+| Align by => | Arrow function |
+| Align by // | Line comment |
+
+Available from:
+
+- **Editor context menu** — with an active selection, right-click and pick **Toolkit: Align by Character...**
+- **Command Palette** — any of the individual commands or the dispatcher
+
+**Behavior:**
+
+- Operates on the lines touched by the current selection. Needs at least two selected lines.
+- Aligns by the **first** occurrence of the delimiter on each line.
+- Lines that don't contain the delimiter are left untouched.
+- Leading indentation and the suffix after the delimiter are preserved (leading whitespace on the suffix is normalized).
+
+**Settings:**
+
+Both settings accept a `default` key and optional per-delimiter overrides.
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.align.spacesBefore` | `{ "default": 1, ":": 0, ",": 0 }` | Spaces between the (trimmed) prefix and the delimiter |
+| `toolkit.align.spacesAfter` | `{ "default": 1 }` | Spaces between the delimiter and the (trimmed) suffix |
+
+Example — to enforce zero spaces before `=>`:
+
+```json
+"toolkit.align.spacesBefore": {
+  "default": 1,
+  ":": 0,
+  ",": 0,
+  "=>": 0
+}
+```
 
 ### Code Generation & Refactoring
 
