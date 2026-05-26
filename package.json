@@ -627,6 +627,18 @@
       {
         "command": "toolkit.jsonToType.csharpClass",
         "title": "Toolkit: JSON to C# Class"
+      },
+      {
+        "command": "toolkit.pasteImage",
+        "title": "Toolkit: Paste Image"
+      },
+      {
+        "command": "toolkit.pasteImage.markdown",
+        "title": "Toolkit: Paste Image (Markdown)"
+      },
+      {
+        "command": "toolkit.pasteImage.html",
+        "title": "Toolkit: Paste Image (HTML)"
       }
     ],
     "keybindings": [
@@ -862,26 +874,30 @@
           "group": "0_toolkit@8"
         },
         {
-          "command": "toolkit.slugify",
-          "group": "0_toolkit@9",
-          "when": "editorHasSelection"
+          "command": "toolkit.pasteImage",
+          "group": "0_toolkit@9"
         },
         {
-          "command": "toolkit.sumNumbers",
+          "command": "toolkit.slugify",
           "group": "0_toolkit@10",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@11"
+          "command": "toolkit.sumNumbers",
+          "group": "0_toolkit@11",
+          "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleQuotes",
+          "command": "toolkit.toggleGitBlame",
           "group": "0_toolkit@12"
         },
         {
+          "command": "toolkit.toggleQuotes",
+          "group": "0_toolkit@13"
+        },
+        {
           "command": "toolkit.transform",
-          "group": "0_toolkit@13",
+          "group": "0_toolkit@14",
           "when": "editorHasSelection"
         }
       ]
@@ -1374,6 +1390,44 @@
           "type": "boolean",
           "default": true,
           "description": "Mark optional or nullable fields with '?' (assumes a nullable context for reference types)."
+        },
+        "toolkit.pasteImage.directory": {
+          "type": "string",
+          "default": "assets/images",
+          "description": "Folder where pasted images are saved. Relative to the file or the workspace (see toolkit.pasteImage.basePath). Absolute paths are honored as-is."
+        },
+        "toolkit.pasteImage.basePath": {
+          "type": "string",
+          "enum": ["file", "workspace"],
+          "default": "file",
+          "description": "Anchor for the image directory: relative to the current file or to the workspace root."
+        },
+        "toolkit.pasteImage.naming": {
+          "type": "string",
+          "enum": ["timestamp", "prompt"],
+          "default": "timestamp",
+          "description": "How to name pasted images. 'timestamp' uses the configured timestamp format; 'prompt' asks every time."
+        },
+        "toolkit.pasteImage.timestampFormat": {
+          "type": "string",
+          "default": "YYYYMMDD-HHmmss",
+          "description": "Token-based timestamp format. Supported tokens: YYYY, MM, DD, HH, mm, ss."
+        },
+        "toolkit.pasteImage.format": {
+          "type": "string",
+          "enum": ["auto", "markdown", "html"],
+          "default": "auto",
+          "description": "Link format used when inserting the image. 'auto' picks Markdown for .md and HTML for .html/.razor/.cshtml."
+        },
+        "toolkit.pasteImage.useForwardSlashes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Force forward slashes in the inserted relative path (cleaner for cross-platform repos)."
+        },
+        "toolkit.pasteImage.htmlAttributes": {
+          "type": "string",
+          "default": "",
+          "description": "Extra attributes appended to the inserted <img> tag (e.g. class=\"screenshot\")."
         },
         "toolkit.toggleQuotes.languageQuotes": {
           "type": "object",

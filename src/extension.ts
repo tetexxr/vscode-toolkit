@@ -30,6 +30,7 @@ import { registerTransformCommands } from './features/transform'
 import { registerInsertCommands } from './features/insert'
 import { registerTimestampCommands } from './features/timestamp'
 import { registerJsonToTypeCommands } from './features/json-to-type'
+import { registerPasteImageCommands } from './features/paste-image'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -63,6 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerInsertCommands(context)
   registerTimestampCommands(context)
   registerJsonToTypeCommands(context)
+  registerPasteImageCommands(context)
 }
 
 export function deactivate() {}

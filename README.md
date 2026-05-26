@@ -39,6 +39,7 @@ All-in-one VS Code utility extension.
     - [Find File or Folder](#find-file-or-folder)
     - [Expand / Collapse Recursively](#expand--collapse-recursively)
     - [Format Files](#format-files)
+    - [Paste Image](#paste-image)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -908,6 +909,47 @@ Shows progress with cancellation support. Each file is opened, formatted, saved,
 | `toolkit.formatFiles.excludedFolders` | `[node_modules, .git, ...]` | Folders to skip |
 | `toolkit.formatFiles.runOrganizeImports` | `false` | Run Organize Imports before formatting |
 | `toolkit.formatFiles.useGitIgnore` | `true` | Skip git-ignored files |
+
+#### Paste Image
+
+Take a screenshot to the clipboard (e.g. `Cmd+Shift+Ctrl+4` on macOS, `Win+Shift+S` on Windows), then run **Toolkit: Paste Image** in any document — the image is saved to disk and an image link is inserted at the cursor.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Paste Image | Auto-format (Markdown for `.md`, HTML for `.html`/`.htm`/`.razor`/`.cshtml`) |
+| Paste Image (Markdown) | Force Markdown image syntax |
+| Paste Image (HTML) | Force HTML img tag syntax |
+
+Available from:
+
+- **Editor context menu** — right-click and pick **Toolkit: Paste Image**
+- **Command Palette** — any of the three commands
+
+**Behavior:**
+
+- The image is read from the OS clipboard:
+  - **macOS:** via AppleScript (`osascript`) — no extra tools needed.
+  - **Windows:** via PowerShell.
+  - **Linux:** via `wl-paste` (Wayland) or `xclip` (X11) — at least one must be installed.
+- Saved as PNG with a timestamp-based filename, into the configured directory.
+- If a file with the same name already exists, a numeric suffix is appended (`image-...-1.png`, `-2`, …).
+- The inserted link path is relative to the active file, with forward slashes by default.
+- Multi-cursor: the link is inserted at each cursor; the image is saved only once.
+- Cannot be used on an untitled (unsaved) document when the base path is `file`.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.pasteImage.directory` | `assets/images` | Target folder for saved images |
+| `toolkit.pasteImage.basePath` | `file` | `file` (relative to the active file) or `workspace` (relative to the workspace root) |
+| `toolkit.pasteImage.naming` | `timestamp` | `timestamp` (auto) or `prompt` (ask each time) |
+| `toolkit.pasteImage.timestampFormat` | `YYYYMMDD-HHmmss` | Tokens: `YYYY`, `MM`, `DD`, `HH`, `mm`, `ss` |
+| `toolkit.pasteImage.format` | `auto` | `auto`, `markdown`, or `html` |
+| `toolkit.pasteImage.useForwardSlashes` | `true` | Use `/` separators in the inserted path |
+| `toolkit.pasteImage.htmlAttributes` | `""` | Extra attributes for the inserted image tag (e.g. `class="screenshot"`) |
 
 ### Appearance & Viewers
 
