@@ -88,21 +88,29 @@ export interface FormatHoverOptions {
 
 export function formatHover(blame: BlameInfo, options: FormatHoverOptions = {}): string {
   if (blame.uncommitted) {
-    return '**Not committed yet**\n\n*This line has uncommitted changes.*'
+    return '**Not committed yet** — *uncommitted changes on this line.*'
   }
   const message = options.fullMessage ?? blame.summary
   const subject = extractSubject(message) || '(no message)'
   const body = extractBody(message)
   const shortSha = blame.sha.slice(0, 7)
   const date = formatRelative(new Date(blame.authorTime * 1000), options.now ? new Date(options.now) : undefined)
-
-  const lines: string[] = [`**${escapeMd(subject)}**`, '', `\`${shortSha}\` · ${escapeMd(blame.author)} · ${date}`]
-  if (body) {
-    lines.push('', escapeMd(body))
-  }
   const showArgs = encodeURIComponent(JSON.stringify([blame.sha]))
-  lines.push('', '---', '', `[Show full commit](command:toolkit.peekCommit.showFull?${showArgs})`)
-  return lines.join('\n')
+
+  // Subject, metadata and link share a single paragraph block so the markdown renderer
+  // doesn't insert visible spacing between them. The body, when present, gets a paragraph
+  // of its own for readability.
+  const header = `**${escapeMd(subject)}**  \n\`${shortSha}\` · ${escapeMd(blame.author)} · ${date}`
+  const link = `[Show full commit](command:toolkit.peekCommit.showFull?${showArgs})`
+
+  if (body) {
+    const bodyFormatted = body
+      .split(/\r?\n/)
+      .map(line => escapeMd(line))
+      .join('  \n')
+    return [header, bodyFormatted, link].join('\n\n')
+  }
+  return `${header}  \n${link}`
 }
 
 function escapeMd(text: string): string {
