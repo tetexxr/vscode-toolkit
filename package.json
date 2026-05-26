@@ -693,6 +693,21 @@
         "key": "delete",
         "mac": "cmd+backspace",
         "when": "toolkit.findFileOrFolder.focused && toolkit.findFileOrFolder.emptyInput"
+      },
+      {
+        "command": "toolkit.bookmarks.toggle",
+        "key": "f7",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "toolkit.bookmarks.toggleWithLabel",
+        "key": "shift+f7",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "toolkit.bookmarks.show",
+        "key": "ctrl+f7",
+        "when": "editorTextFocus"
       }
     ],
     "submenus": [

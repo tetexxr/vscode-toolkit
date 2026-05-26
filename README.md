@@ -993,14 +993,14 @@ Pin specific lines in your code with an optional label and jump between them fro
 
 **Commands:**
 
-| Command | Description |
-|---|---|
-| Toggle Bookmark | Add / remove a bookmark on the current line |
-| Toggle Bookmark with Label... | Add a bookmark, asking for a label |
-| Edit Bookmark Label... | Change (or clear) the label of the bookmark on the current line |
-| Show Bookmarks | Quick pick of every bookmark in the workspace; selecting one navigates to it |
-| Clear Bookmarks (Current File) | Remove all bookmarks in the active file |
-| Clear All Bookmarks | Remove every bookmark in the workspace (with confirmation) |
+| Command | Default Key | Description |
+|---|---|---|
+| Toggle Bookmark | `F7` | Add / remove a bookmark on the current line |
+| Toggle Bookmark with Label... | `Shift+F7` | Add a bookmark, asking for a label |
+| Edit Bookmark Label... | — | Change (or clear) the label of the bookmark on the current line |
+| Show Bookmarks | `Ctrl+F7` | Quick pick of every bookmark in the workspace; selecting one navigates to it |
+| Clear Bookmarks (Current File) | — | Remove all bookmarks in the active file |
+| Clear All Bookmarks | — | Remove every bookmark in the workspace (with confirmation) |
 
 **UI:**
 
