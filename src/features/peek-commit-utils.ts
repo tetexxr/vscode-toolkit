@@ -87,8 +87,13 @@ export interface FormatHoverOptions {
 }
 
 export function formatHover(blame: BlameInfo, options: FormatHoverOptions = {}): string {
+  // Non-breaking space at the start gives a small visual gap so the popup doesn't sit
+  // flush against the previous hover provider's content. Regular spaces are trimmed
+  // by the markdown renderer at the start of a paragraph.
+  const PREFIX = '\n'
+
   if (blame.uncommitted) {
-    return '**Not committed yet** — *uncommitted changes on this line.*'
+    return PREFIX + '**Not committed yet** — *uncommitted changes on this line.*'
   }
   const message = options.fullMessage ?? blame.summary
   const subject = extractSubject(message) || '(no message)'
@@ -97,7 +102,7 @@ export function formatHover(blame: BlameInfo, options: FormatHoverOptions = {}):
   const date = formatRelative(new Date(blame.authorTime * 1000), options.now ? new Date(options.now) : undefined)
   const showArgs = encodeURIComponent(JSON.stringify([blame.sha]))
 
-  // Subject, metadata and link share a single paragraph block so the markdown renderer
+  // Subject + metadata + link share a single paragraph block so the markdown renderer
   // doesn't insert visible spacing between them. The body, when present, gets a paragraph
   // of its own for readability.
   const header = `**${escapeMd(subject)}**  \n\`${shortSha}\` · ${escapeMd(blame.author)} · ${date}`
@@ -108,9 +113,9 @@ export function formatHover(blame: BlameInfo, options: FormatHoverOptions = {}):
       .split(/\r?\n/)
       .map(line => escapeMd(line))
       .join('  \n')
-    return [header, bodyFormatted, link].join('\n\n')
+    return PREFIX + [header, bodyFormatted, link].join('\n\n')
   }
-  return `${header}  \n${link}`
+  return PREFIX + `${header}  \n${link}`
 }
 
 function escapeMd(text: string): string {
