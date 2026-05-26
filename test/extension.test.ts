@@ -27,7 +27,23 @@ describe('extension entry point', () => {
     'registerGitStageCommands',
     'registerFindFileOrFolderCommands',
     'registerSumNumbersCommands',
-    'registerCsvRainbowCommands'
+    'registerCsvRainbowCommands',
+    'registerTypeOnlyImportsCommands',
+    'registerLinesCommands',
+    'registerAlignCommands',
+    'registerToggleQuotesCommands',
+    'registerTransformCommands',
+    'registerInsertCommands',
+    'registerTimestampCommands',
+    'registerJsonToTypeCommands',
+    'registerPasteImageCommands',
+    'registerClipboardHistoryCommands',
+    'registerBookmarkCommands',
+    'registerTodoTreeCommands',
+    'registerRestClientCommands',
+    'registerRegexPlaygroundCommands',
+    'registerCompareCommands',
+    'registerPeekCommitCommands'
   ]
 
   for (const fn of expectedRegistrations) {

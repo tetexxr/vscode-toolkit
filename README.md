@@ -12,6 +12,8 @@ All-in-one VS Code utility extension.
     - [Edit Commit Message & Reset HEAD](#edit-commit-message--reset-head)
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
+    - [Compare with Branch](#compare-with-branch)
+    - [Peek Last Commit on Line](#peek-last-commit-on-line)
   - [Package Management](#package-management)
     - [NuGet Package Manager](#nuget-package-manager)
     - [NPM Package Manager](#npm-package-manager)
@@ -24,6 +26,13 @@ All-in-one VS Code utility extension.
     - [Convert Import Paths](#convert-import-paths)
     - [Type-Only Imports](#type-only-imports)
     - [Sum Numbers in Selection](#sum-numbers-in-selection)
+    - [Sort, Dedupe & Transform Lines](#sort-dedupe--transform-lines)
+    - [Align by Character](#align-by-character)
+    - [Toggle Quotes](#toggle-quotes)
+    - [Transform Selection](#transform-selection)
+    - [Insert UUID / Timestamp / Random](#insert-uuid--timestamp--random)
+    - [Timestamp Converter & Hover](#timestamp-converter--hover)
+    - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
     - [C# Code Actions](#c-code-actions)
@@ -32,6 +41,12 @@ All-in-one VS Code utility extension.
     - [Find File or Folder](#find-file-or-folder)
     - [Expand / Collapse Recursively](#expand--collapse-recursively)
     - [Format Files](#format-files)
+    - [Paste Image](#paste-image)
+    - [Clipboard History](#clipboard-history)
+    - [Bookmarks](#bookmarks)
+    - [TODO Tree](#todo-tree)
+    - [REST Client](#rest-client)
+    - [Regex Playground](#regex-playground)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -170,6 +185,37 @@ Stage files or folders directly from the file explorer context menu. Works with 
 
 Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once.
 
+#### Compare with Branch
+
+Diff the active file against the same file in any other local branch.
+
+Run **Toolkit: Compare with Branch...** from the Command Palette or the editor context menu. A quick pick shows every local branch (sorted by most recent commit, excluding the current one). Picking one opens a diff editor: `file (branch)` on the left (read-only) and your working-tree copy on the right.
+
+If the file doesn't exist on the chosen branch — or the file is untracked / outside a git repo — a warning explains why and the diff is not opened.
+
+#### Peek Last Commit on Line
+
+Hover any line in a tracked file to see the **full commit** that last touched it: short SHA, author, relative date, and the complete message (subject + body). A `Show full commit` link in the hover opens the entire `git show` output (message + diff) in a new editor.
+
+| Command | Description |
+|---|---|
+| (hover, automatic) | Hover any line — the hover appears alongside any other ones for that range |
+| Toolkit: Show Last Commit for Line | Opens the full commit for the line under the cursor without going through the hover |
+
+**Behavior:**
+
+- Backed by `git blame --porcelain` for the active line, with the full message read via `git log -1 --format=%B`.
+- Results are cached per file version; the cache is invalidated on every document edit.
+- Lines with uncommitted changes show a short *"Not committed yet"* message — no commit link is rendered.
+- Coexists with the inline blame annotations; both hovers stack.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.peekCommit.hover.enabled` | `true` | Toggle the peek-commit hover |
+| `toolkit.peekCommit.hover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
+
 ### Package Management
 
 #### NuGet Package Manager
@@ -286,6 +332,12 @@ Open the picker with **Toolkit: Change Case...** from the Command Palette — it
 | no case | `myVariable` → `my variable` |
 
 Also available from the editor right-click menu when text is selected.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.changeCase.includeDotInCurrentWord` | `false` | Include dots when expanding the current word under the cursor (no selection). Useful when working with dotted identifiers like `foo.bar.baz` |
 
 #### Slugify
 
@@ -423,6 +475,357 @@ Run **Toolkit: Sum Numbers in Selection** from the Command Palette or the editor
 
 → notification: `sum of 4 numbers = 7,25`.
 
+#### Sort, Dedupe & Transform Lines
+
+Operate on the lines under the current selection (or the whole document if nothing is selected). Each operation is available as a dedicated command, and a unified **Toolkit: Lines...** quick pick lists them all when you don't remember the exact name.
+
+Available from:
+
+- **Editor context menu** — when there is an active selection, right-click and pick **Toolkit: Lines...**
+- **Command Palette** — run any of the individual commands or **Toolkit: Lines...** for the picker
+
+**Operations:**
+
+| Command | Description |
+|---|---|
+| Sort Lines - Ascending | A → Z, case-sensitive |
+| Sort Lines - Descending | Z → A, case-sensitive |
+| Sort Lines - Ascending (Case-Insensitive) | A → Z ignoring case |
+| Sort Lines - Descending (Case-Insensitive) | Z → A ignoring case |
+| Sort Lines - By Length | Shorter lines first |
+| Sort Lines - By Length (Descending) | Longer lines first |
+| Sort Lines - Numerically | Sort by the first number found on each line |
+| Reverse Lines | Flip the line order |
+| Shuffle Lines | Random order (Fisher-Yates) |
+| Remove Duplicate Lines | Drop repeated lines, keep first occurrence |
+| Remove Duplicate Lines (Case-Insensitive) | Same, ignoring case |
+| Remove Empty Lines | Drop blank and whitespace-only lines |
+| Trim Trailing Whitespace (Selection) | Trim trailing spaces and tabs on each line |
+
+**Behavior:**
+
+- If there is a non-empty selection, the operation applies to the full lines touched by the selection. Each selection block is processed independently (multi-cursor friendly).
+- If every selection is empty, the operation applies to the whole document.
+- Line endings (`\n` vs `\r\n`) are preserved.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.lines.naturalSort` | `true` | Use natural sort (so `item2` comes before `item10`) when sorting alphabetically |
+| `toolkit.lines.dedupeKeepLast` | `false` | When removing duplicates, keep the last occurrence instead of the first |
+
+#### Align by Character
+
+Vertically align consecutive lines by the first occurrence of a delimiter, inserting spaces so the delimiter appears in the same column on every line.
+
+Useful for lining up assignment blocks, object keys, type annotations, trailing comments, or arrow functions.
+
+**Example — Align by `=`:**
+
+```ts
+const FOO_BAR = 1;
+const SHORT = 2;
+const LONG_NAME = 3;
+```
+
+→
+
+```ts
+const FOO_BAR   = 1;
+const SHORT     = 2;
+const LONG_NAME = 3;
+```
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Align by Character... | Quick pick with common delimiters + "Other..." (custom delimiter) |
+| Align by = | Assignment |
+| Align by : | Object key / type annotation |
+| Align by , | Comma |
+| Align by => | Arrow function |
+| Align by // | Line comment |
+
+Available from:
+
+- **Editor context menu** — with an active selection, right-click and pick **Toolkit: Align by Character...**
+- **Command Palette** — any of the individual commands or the dispatcher
+
+**Behavior:**
+
+- Operates on the lines touched by the current selection. Needs at least two selected lines.
+- Aligns by the **first** occurrence of the delimiter on each line.
+- Lines that don't contain the delimiter are left untouched.
+- Leading indentation and the suffix after the delimiter are preserved (leading whitespace on the suffix is normalized).
+
+**Settings:**
+
+Both settings accept a `default` key and optional per-delimiter overrides.
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.align.spacesBefore` | `{ "default": 1, ":": 0, ",": 0 }` | Spaces between the (trimmed) prefix and the delimiter |
+| `toolkit.align.spacesAfter` | `{ "default": 1 }` | Spaces between the delimiter and the (trimmed) suffix |
+
+Example — to enforce zero spaces before `=>`:
+
+```json
+"toolkit.align.spacesBefore": {
+  "default": 1,
+  ":": 0,
+  ",": 0,
+  "=>": 0
+}
+```
+
+#### Toggle Quotes
+
+Cycle the quotes around the string literal under the cursor: `'` → `"` → `` ` `` → `'`. Escapes and unescapes the relevant quote characters automatically.
+
+**Example:**
+
+```ts
+const s = 'It\'s "great"'
+```
+
+→ Toggle (now `"`):
+
+```ts
+const s = "It's \"great\""
+```
+
+→ Toggle (now `` ` ``):
+
+```ts
+const s = `It's "great"`
+```
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Toggle Quotes | Cycles `'` → `"` → `` ` `` → `'` |
+| Quote as Single | Force `'…'` |
+| Quote as Double | Force `"…"` |
+| Quote as Backtick | Force `` `…` `` |
+
+Available from:
+
+- **Editor context menu** — right-click and pick **Toolkit: Toggle Quotes**
+- **Command Palette** — any of the four commands
+
+**Behavior:**
+
+- Works on the string that encloses the cursor on the current line. Multi-cursor supported (each cursor processed independently).
+- Detects escaped quotes (`\'`, `\"`, `` \` ``) so they don't end the literal prematurely.
+- When converting **to** backtick, any literal `${` in the content is escaped to `\${` so it does not become a template interpolation.
+- When converting **from** a backtick literal that contains an unescaped `${...}`, the command is aborted with a warning — converting it would silently drop the interpolation expression.
+- Other escape sequences (`\n`, `\t`, `\\`, `\uXXXX`, etc.) are preserved as-is.
+- String detection is single-line and language-agnostic. Multi-line template literals or exotic forms (Python triple-quoted, C# verbatim `@"..."`, raw strings, etc.) are not detected — select the string manually if needed.
+
+**Per-language quote sets:**
+
+The toggle cycles only through the quotes that are valid for the current language. Defaults:
+
+| Language id | Cycle |
+|---|---|
+| `typescript`, `typescriptreact`, `javascript`, `javascriptreact` | `'` → `"` → `` ` `` |
+| `csharp`, `java`, `c`, `cpp`, `rust`, `go` | `"` only (toggle is a no-op) |
+| `python`, `yaml`, `shellscript` | `'` ↔ `"` |
+| `json`, `jsonc` | `"` only |
+| _anything else_ | `'` ↔ `"` |
+
+Override via the `toolkit.toggleQuotes.languageQuotes` setting. Example — to enable single + double + backtick in PHP:
+
+```json
+"toolkit.toggleQuotes.languageQuotes": {
+  "php": ["'", "\"", "`"]
+}
+```
+
+The `default` key applies to language ids not explicitly listed. If a force command (e.g. `Quote as Backtick`) targets a quote that is not in the language's allowed list, a confirmation prompt is shown before proceeding.
+
+#### Transform Selection
+
+A toolbox of encode/decode and hash operations over the current selection. Available as individual commands and through a unified **Toolkit: Transform Selection...** quick pick.
+
+**Operations:**
+
+| Operation | Description |
+|---|---|
+| Base64 Encode / Decode | UTF-8 ↔ Base64 |
+| Base64 URL Encode / Decode | UTF-8 ↔ URL-safe Base64 (no padding) |
+| URL Encode / Decode | `encodeURIComponent` / `decodeURIComponent` |
+| HTML Encode / Decode | Escape `& < > " '`; decode named (`&amp;`) and numeric (`&#65;`, `&#x41;`) entities |
+| Hex Encode / Decode | UTF-8 ↔ hex string (case-insensitive on decode, accepts whitespace) |
+| MD5 / SHA-1 / SHA-256 / SHA-512 | Hex digest of the selection |
+| JWT Decode | Decode header + payload, open the result in a new editor |
+
+Available from:
+
+- **Editor context menu** — with a selection, right-click and pick **Toolkit: Transform Selection...**
+- **Command Palette** — any of the individual commands or the dispatcher
+
+**Behavior:**
+
+- All operations require a non-empty selection. Multi-selection is supported for string-to-string operations.
+- Invalid input (malformed Base64, non-hex characters, broken percent encoding, malformed JWT) triggers a warning and leaves the selection untouched.
+- Hashes always output lowercase hex.
+- JWT Decode opens a new untitled `jsonc` editor with the formatted header, payload and signature. The signature is **not** verified.
+
+#### Insert UUID / Timestamp / Random
+
+Insert freshly-generated values at the cursor position (or replace the selection if any). Multi-cursor: **each cursor receives its own generated value** — no duplicates.
+
+**Commands:**
+
+| Command | Output |
+|---|---|
+| Insert... | Quick pick of all generators |
+| Insert UUID v4 | Random UUID, e.g. `f47ac10b-58cc-4372-a567-0e02b2c3d479` |
+| Insert UUID v7 | Time-ordered UUID (RFC 9562), e.g. `01893f81-a3a8-7000-b2bb-7a76e84d0a5d` |
+| Insert ULID | Crockford Base32, time-ordered, e.g. `01ARYZ6S41ABCDEFGHJKMNPQRS` |
+| Insert ISO Timestamp | `2026-05-26T17:30:00.000Z` |
+| Insert Unix Epoch (seconds) | `1748278800` |
+| Insert Unix Epoch (milliseconds) | `1748278800000` |
+| Insert Random Hex... | Prompts for byte count; output is 2× hex chars |
+| Insert Random Base64... | Prompts for byte count; URL-safe Base64 without padding |
+
+Available from:
+
+- **Editor context menu** — right-click and pick **Toolkit: Insert...**
+- **Command Palette** — any of the individual commands or the dispatcher
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.insert.randomHexBytes` | `16` | Default byte count for Random Hex (output is `2 ×` this many chars) |
+| `toolkit.insert.randomBase64Bytes` | `16` | Default byte count for Random Base64 (URL-safe, no padding) |
+| `toolkit.insert.uuidUppercase` | `false` | Emit UUID v4 / v7 in uppercase. ULID is always uppercase per its spec |
+
+#### Timestamp Converter & Hover
+
+Convert timestamps in the selection between formats (Unix seconds / ms / µs ↔ ISO 8601), and hover any plausible epoch number anywhere in the workspace to see what date it represents.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Convert Timestamp... | Auto-detects the input format and shows a quick pick with each target format (with a live preview) |
+| Timestamp to ISO (UTC) | → ISO 8601 in UTC, e.g. `2024-03-15T12:34:56.789Z` |
+| Timestamp to ISO (Local) | → ISO 8601 with local offset, e.g. `2024-03-15T13:34:56.789+01:00` |
+| Timestamp to Unix Seconds | → integer seconds |
+| Timestamp to Unix Milliseconds | → integer milliseconds |
+| Show Timestamp Info | Quick pick of every format + a relative description (`3 days ago`). Picking copies to the clipboard; the document is not modified |
+
+Available from:
+
+- **Editor context menu** — with a selection, right-click and pick **Toolkit: Convert Timestamp...**
+- **Command Palette** — any of the individual commands
+
+**Input format detection:**
+
+| Input | Treated as |
+|---|---|
+| 10 digits (optionally signed) | Unix seconds |
+| 13 digits | Unix milliseconds |
+| 16 digits | Unix microseconds (rounded to ms) |
+| Other digit-only lengths | Unix milliseconds (best-effort) |
+| ISO 8601-like (date with optional time / offset) | ISO |
+
+**Hover:**
+
+Place the cursor over a 10-, 13- or 16-digit number anywhere in any file. If the value falls within the configured year range, a hover appears with the decoded UTC and local ISO timestamps and a relative description.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.timestamp.hover.enabled` | `true` | Toggle the timestamp hover |
+| `toolkit.timestamp.hover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
+| `toolkit.timestamp.hover.minYear` | `1990` | Lower bound for considering a number to be a timestamp |
+| `toolkit.timestamp.hover.maxYear` | `2100` | Upper bound for considering a number to be a timestamp |
+
+#### JSON to TypeScript / C# Types
+
+Generate type definitions from a JSON sample. The source is the current selection if non-empty, otherwise the clipboard.
+
+**Commands:**
+
+| Command | Output |
+|---|---|
+| JSON to Type... | Dispatcher: pick the target language + style |
+| JSON to TypeScript Interface | `interface Root { ... }` |
+| JSON to TypeScript Type | `type Root = { ... }` |
+| JSON to C# Record | `public record Root(int Id, string Name)` |
+| JSON to C# Class | `public class Root { public int Id { get; set; } }` |
+
+Available from:
+
+- **Editor context menu** — right-click and pick **Toolkit: JSON to Type...** (also works without a selection — reads from the clipboard)
+- **Command Palette** — any of the individual commands
+
+**Behavior:**
+
+- Nested objects become their own named types, derived from the property key (singularized for array items).
+- Arrays of objects merge field shapes; fields missing in some samples are emitted as `?` (TS) or nullable (C#).
+- Numbers are inferred as integer or float; integers beyond `Int32.MaxValue` become `long` in C#.
+- The output replaces the JSON selection in place, or opens in a new editor when the JSON comes from the clipboard.
+
+**Example input:**
+
+```json
+{
+  "id": 1,
+  "name": "Alice",
+  "tags": ["admin", "user"],
+  "address": { "street": "Main", "zip": 12345 }
+}
+```
+
+**TypeScript interface (default):**
+
+```ts
+interface User {
+  id: number;
+  name: string;
+  tags: string[];
+  address: Address;
+}
+
+interface Address {
+  street: string;
+  zip: number;
+}
+```
+
+**C# record (positional, default):**
+
+```csharp
+public record User(int Id, string Name, IReadOnlyList<string> Tags, Address Address);
+
+public record Address(string Street, int Zip);
+```
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.jsonToType.extractNestedTypes` | `true` | Emit a named type for each nested object instead of inlining |
+| `toolkit.jsonToType.typescript.semicolons` | `true` | Terminate TypeScript fields with `;` |
+| `toolkit.jsonToType.csharp.collectionType` | `IReadOnlyList` | One of `IReadOnlyList`, `List`, `IEnumerable`, `array` |
+| `toolkit.jsonToType.csharp.recordStyle` | `positional` | `positional` (`record X(int Y)`) or `withProperties` |
+| `toolkit.jsonToType.csharp.useNullable` | `true` | Mark optional/nullable fields with `?` |
+
+**Limitations:**
+
+- Only strict JSON is accepted (no JSON5, comments, trailing commas).
+- All strings are inferred as `string` — no format inference (no auto-detection of dates, UUIDs, etc.).
+- Mixed-type arrays (e.g. `[1, "a"]`) degrade to `unknown[]` / `IReadOnlyList<object>`.
+
 ### Code Generation & Refactoring
 
 #### New C# File
@@ -549,7 +952,272 @@ Shows progress with cancellation support. Each file is opened, formatted, saved,
 | `toolkit.formatFiles.includeGlob` | `**/*.{ts,js,json,html,...}` | Glob pattern for files to include |
 | `toolkit.formatFiles.excludedFolders` | `[node_modules, .git, ...]` | Folders to skip |
 | `toolkit.formatFiles.runOrganizeImports` | `false` | Run Organize Imports before formatting |
-| `toolkit.formatFiles.useGitIgnore` | `true` | Skip git-ignored files |
+| `toolkit.formatFiles.useGitIgnore` | `true` | Skip files ignored by `.gitignore` (uses `git check-ignore`; no-op outside a git repo) |
+
+#### Paste Image
+
+Take a screenshot to the clipboard (e.g. `Cmd+Shift+Ctrl+4` on macOS, `Win+Shift+S` on Windows), then run **Toolkit: Paste Image** in any document — the image is saved to disk and an image link is inserted at the cursor.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Paste Image | Auto-format (Markdown for `.md`, HTML for `.html`/`.htm`/`.razor`/`.cshtml`) |
+| Paste Image (Markdown) | Force Markdown image syntax |
+| Paste Image (HTML) | Force HTML img tag syntax |
+
+Available from:
+
+- **Editor context menu** — right-click and pick **Toolkit: Paste Image**
+- **Command Palette** — any of the three commands
+
+**Behavior:**
+
+- The image is read from the OS clipboard:
+  - **macOS:** via AppleScript (`osascript`) — no extra tools needed.
+  - **Windows:** via PowerShell.
+  - **Linux:** via `wl-paste` (Wayland) or `xclip` (X11) — at least one must be installed.
+- Saved as PNG with a timestamp-based filename, into the configured directory.
+- If a file with the same name already exists, a numeric suffix is appended (`image-...-1.png`, `-2`, …).
+- The inserted link path is relative to the active file, with forward slashes by default.
+- Multi-cursor: the link is inserted at each cursor; the image is saved only once.
+- Cannot be used on an untitled (unsaved) document when the base path is `file`.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.pasteImage.directory` | `assets/images` | Target folder for saved images |
+| `toolkit.pasteImage.basePath` | `file` | `file` (relative to the active file) or `workspace` (relative to the workspace root) |
+| `toolkit.pasteImage.naming` | `timestamp` | `timestamp` (auto) or `prompt` (ask each time) |
+| `toolkit.pasteImage.timestampFormat` | `YYYYMMDD-HHmmss` | Tokens: `YYYY`, `MM`, `DD`, `HH`, `mm`, `ss` |
+| `toolkit.pasteImage.format` | `auto` | `auto`, `markdown`, or `html` |
+| `toolkit.pasteImage.useForwardSlashes` | `true` | Use `/` separators in the inserted path |
+| `toolkit.pasteImage.htmlAttributes` | `""` | Extra attributes for the inserted image tag (e.g. `class="screenshot"`) |
+
+#### Clipboard History
+
+Keep a list of recently-copied text snippets while VS Code is focused. Recall any of them via a quick pick — the chosen entry is copied back to the clipboard and pasted at the cursor.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Show Clipboard History | Quick pick of recent entries; selecting one pastes it at the cursor |
+| Clear Clipboard History | Wipe the in-memory history (with confirmation) |
+
+**How it works:**
+
+- VS Code does not expose a clipboard-change event, so the extension polls the clipboard while the window is focused (default every 1 s). Polling pauses when the window loses focus.
+- The history lives **in memory only** — nothing is persisted to disk, `globalState`, or `workspaceState`. Closing the window drops everything.
+- Duplicates are deduplicated: re-copying an existing entry just moves it to the top.
+- The current clipboard is captured on activation but not added as an entry; only subsequent changes appear.
+
+**Privacy:**
+
+- No persistence between sessions.
+- Per-entry cap (default 10 000 characters) skips very large clipboard contents.
+- Per-history cap (default 50 entries) keeps memory bounded.
+- The `Clear` command is available for sensitive sessions.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.clipboardHistory.enabled` | `true` | Toggle clipboard tracking |
+| `toolkit.clipboardHistory.maxItems` | `50` | FIFO cap on the number of entries |
+| `toolkit.clipboardHistory.maxItemLength` | `10000` | Skip entries longer than this many characters |
+| `toolkit.clipboardHistory.pollInterval` | `1000` | Polling interval in milliseconds |
+
+#### Bookmarks
+
+Pin specific lines in your code with an optional label and jump between them from a unified quick pick. JetBrains-style.
+
+**Commands:**
+
+| Command | Default Key | Description |
+|---|---|---|
+| Toggle Bookmark | `F7` | Add / remove a bookmark on the current line |
+| Toggle Bookmark with Label... | `Shift+F7` | Add a bookmark, asking for a label |
+| Edit Bookmark Label... | — | Change (or clear) the label of the bookmark on the current line |
+| Show Bookmarks | `Ctrl+F7` | Quick pick of every bookmark in the workspace; selecting one navigates to it |
+| Clear Bookmarks (Current File) | — | Remove all bookmarks in the active file |
+| Clear All Bookmarks | — | Remove every bookmark in the workspace (with confirmation) |
+
+**UI:**
+
+- A bookmark icon appears in the gutter of every bookmarked line. Hovering it shows the label, when present.
+- Optionally, the whole line is highlighted with a subtle background color.
+- Multi-cursor: the toggle commands act on the active cursor's line only.
+
+**Persistence:**
+
+- Bookmarks live in the workspace state and survive across sessions.
+- Line numbers are auto-adjusted while you edit the document (insertions / deletions above a bookmark shift it accordingly).
+- Bookmarks placed inside a region that gets deleted are dropped.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.bookmarks.gutterIcon` | `true` | Show the bookmark icon in the gutter |
+| `toolkit.bookmarks.highlightLine` | `false` | Highlight the full line with a subtle background |
+| `toolkit.bookmarks.highlightColor` | `rgba(255,200,0,0.15)` | CSS color used when `highlightLine` is enabled |
+
+#### TODO Tree
+
+Scans the workspace for `TODO`, `FIXME`, `HACK`, etc. comments and lists them in a dedicated activity bar panel. Click an entry to jump to the file at that line.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| TODO Tree - Refresh | Re-scan the whole workspace |
+| TODO Tree - Group by Tag | Group entries by tag (default) |
+| TODO Tree - Group by File | Group entries by file |
+
+All three are also available as title-bar icons on the **TODOs** view in the activity bar.
+
+**Recognized comment styles:**
+
+| Syntax | Languages |
+|---|---|
+| `// TAG: ...` | C-family, JS/TS, C#, Go, Rust, Java… |
+| `# TAG: ...` | Python, Ruby, Shell, YAML |
+| `/* TAG: ... */` and ` * TAG: ... ` (block continuations) | C-family |
+| `<!-- TAG: ... -->` | HTML, Razor, cshtml, XML |
+| `-- TAG: ...` | SQL |
+
+Tags must match a whole word — `// TODOLIST: foo` is not picked up.
+
+**Behavior:**
+
+- Initial scan runs in the background when the extension activates.
+- Saving a document re-scans only that file (fast).
+- Changes to any `toolkit.todoTree.*` setting trigger a full re-scan.
+- The view shows a badge with the total number of detected TODOs.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.todoTree.tags` | `["TODO","FIXME","HACK","XXX","NOTE","BUG","REVIEW"]` | Tags to look for |
+| `toolkit.todoTree.caseSensitive` | `false` | Match tags case-sensitively |
+| `toolkit.todoTree.includeGlob` | `**/*.{ts,js,tsx,...}` | Files to scan |
+| `toolkit.todoTree.excludedFolders` | `["node_modules", ".git", ...]` | Folders to skip |
+| `toolkit.todoTree.groupBy` | `tag` | `tag` or `file` |
+| `toolkit.todoTree.maxFiles` | `5000` | Hard cap on files scanned |
+| `toolkit.todoTree.useGitIgnore` | `true` | Skip files ignored by `.gitignore` (uses `git check-ignore`; no-op outside a git repo) |
+
+#### REST Client
+
+Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send Request** code lens; the response opens in a new tab with the right syntax highlighting and a pretty-printed body when it's JSON.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Send Request | Run the request under the cursor (also exposed as a CodeLens above each request) |
+| Send All Requests | Run every request in the active file |
+| Cancel Pending Requests | Abort any requests currently in flight |
+
+**File format:**
+
+```http
+### Get users
+GET https://api.example.com/users
+Accept: application/json
+
+### Create user
+@baseUrl = https://api.example.com
+
+POST {{baseUrl}}/users
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Alice",
+  "email": "alice@example.com"
+}
+```
+
+- `### name` separates request blocks (name optional).
+- `@name = value` defines a variable scoped to the file.
+- `{{name}}` interpolates a variable in the URL, headers or body.
+- Lines starting with a single `#` are comments.
+
+**Built-in variables:**
+
+| Placeholder | Value |
+|---|---|
+| `{{$timestamp}}` | Current Unix epoch in seconds |
+| `{{$randomUUID}}` | Fresh UUID v4 |
+| `{{$datetime iso8601}}` | Current time in ISO 8601 |
+
+**Response format:**
+
+The response opens in a new editor with the language inferred from `Content-Type` (JSON, XML, HTML, JavaScript, CSS, CSV — otherwise plaintext). The header block at the top looks like:
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 1234
+X-Toolkit-Time: 234ms
+
+{
+  ...
+}
+```
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.restClient.timeout` | `30000` | Request timeout in ms (0 disables) |
+| `toolkit.restClient.followRedirects` | `true` | Follow 3xx redirects |
+| `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` |
+
+**Limitations (v1):**
+
+- No environments / `.env` files — the variables live in the `.http` file.
+- No syntax highlighting contributed — relies on whatever language is set (plaintext if none).
+- No request history, no diff between responses, no response → file forwarding.
+- No multipart uploads, file bodies (`< body.json`), WebSockets or gRPC.
+- No built-in auth helpers (Basic, OAuth, AWS Sig) — set the headers manually.
+- No request chaining (`> name`) or cookie persistence between requests.
+
+#### Regex Playground
+
+A side panel where you can test regexes interactively. Pattern, flags, test input and replace template — matches are highlighted live and capture groups are listed below.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Open Regex Playground | Opens the panel, restoring the last pattern/input/replace |
+| Regex Playground - Test Selection as Regex | Opens the panel with the current selection as the pattern |
+| Regex Playground - Test Selection as Input | Opens the panel with the current selection as the test input |
+
+**UI:**
+
+- Pattern input with toggles for the `g`, `i`, `m`, `s`, `u`, `y` flags.
+- Test input textarea; the highlighted output renders just below it (matches alternate between two colors so consecutive ones stay readable).
+- Match list with each match's range, the matched text, and every positional and named capture group.
+- Replace template input with a live preview of the result.
+
+**Behavior:**
+
+- Matching runs in the extension host using JavaScript's `RegExp` — patterns work exactly as they do in Node.
+- Input is debounced (~120 ms) before being sent back for matching, so typing stays responsive.
+- The match cap (10 000) protects against zero-width loops; pathological patterns can still freeze the panel — close it and reopen.
+- Pattern, flags, input and replace persist across sessions in `globalState`.
+
+**Limitations (v1):**
+
+- No cheat sheet of regex tokens.
+- No save / load of named patterns (only the last state survives).
+- No protection against catastrophic backtracking — the panel stays in the UI thread.
+- No export of the pattern as a literal for other languages.
 
 ### Appearance & Viewers
 

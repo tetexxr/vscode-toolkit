@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.120.0"
@@ -42,6 +42,11 @@
           "id": "npm-explorer",
           "title": "npm",
           "icon": "themes/icons/npm-simple.svg"
+        },
+        {
+          "id": "toolkit-todo",
+          "title": "TODOs",
+          "icon": "themes/icons/todo-tree.svg"
         }
       ]
     },
@@ -66,6 +71,12 @@
           "id": "npmProjects",
           "name": "Projects",
           "icon": "themes/icons/npm.svg"
+        }
+      ],
+      "toolkit-todo": [
+        {
+          "id": "toolkitTodoTree",
+          "name": "TODOs"
         }
       ]
     },
@@ -387,6 +398,341 @@
       {
         "command": "toolkit.toggleCsvRainbow",
         "title": "Toolkit: Toggle CSV Rainbow"
+      },
+      {
+        "command": "toolkit.lines",
+        "title": "Toolkit: Lines..."
+      },
+      {
+        "command": "toolkit.lines.sortAsc",
+        "title": "Toolkit: Sort Lines - Ascending"
+      },
+      {
+        "command": "toolkit.lines.sortDesc",
+        "title": "Toolkit: Sort Lines - Descending"
+      },
+      {
+        "command": "toolkit.lines.sortAscCaseInsensitive",
+        "title": "Toolkit: Sort Lines - Ascending (Case-Insensitive)"
+      },
+      {
+        "command": "toolkit.lines.sortDescCaseInsensitive",
+        "title": "Toolkit: Sort Lines - Descending (Case-Insensitive)"
+      },
+      {
+        "command": "toolkit.lines.sortByLength",
+        "title": "Toolkit: Sort Lines - By Length"
+      },
+      {
+        "command": "toolkit.lines.sortByLengthDesc",
+        "title": "Toolkit: Sort Lines - By Length (Descending)"
+      },
+      {
+        "command": "toolkit.lines.sortNumerically",
+        "title": "Toolkit: Sort Lines - Numerically"
+      },
+      {
+        "command": "toolkit.lines.reverse",
+        "title": "Toolkit: Reverse Lines"
+      },
+      {
+        "command": "toolkit.lines.shuffle",
+        "title": "Toolkit: Shuffle Lines"
+      },
+      {
+        "command": "toolkit.lines.removeDuplicates",
+        "title": "Toolkit: Remove Duplicate Lines"
+      },
+      {
+        "command": "toolkit.lines.removeDuplicatesCaseInsensitive",
+        "title": "Toolkit: Remove Duplicate Lines (Case-Insensitive)"
+      },
+      {
+        "command": "toolkit.lines.removeEmpty",
+        "title": "Toolkit: Remove Empty Lines"
+      },
+      {
+        "command": "toolkit.lines.trimTrailingWhitespace",
+        "title": "Toolkit: Trim Trailing Whitespace (Selection)"
+      },
+      {
+        "command": "toolkit.align",
+        "title": "Toolkit: Align by Character..."
+      },
+      {
+        "command": "toolkit.align.equals",
+        "title": "Toolkit: Align by ="
+      },
+      {
+        "command": "toolkit.align.colon",
+        "title": "Toolkit: Align by :"
+      },
+      {
+        "command": "toolkit.align.comma",
+        "title": "Toolkit: Align by ,"
+      },
+      {
+        "command": "toolkit.align.arrow",
+        "title": "Toolkit: Align by =>"
+      },
+      {
+        "command": "toolkit.align.lineComment",
+        "title": "Toolkit: Align by //"
+      },
+      {
+        "command": "toolkit.toggleQuotes",
+        "title": "Toolkit: Toggle Quotes"
+      },
+      {
+        "command": "toolkit.quoteAsSingle",
+        "title": "Toolkit: Quote as Single"
+      },
+      {
+        "command": "toolkit.quoteAsDouble",
+        "title": "Toolkit: Quote as Double"
+      },
+      {
+        "command": "toolkit.quoteAsBacktick",
+        "title": "Toolkit: Quote as Backtick"
+      },
+      {
+        "command": "toolkit.transform",
+        "title": "Toolkit: Transform Selection..."
+      },
+      {
+        "command": "toolkit.transform.base64Encode",
+        "title": "Toolkit: Transform - Base64 Encode"
+      },
+      {
+        "command": "toolkit.transform.base64Decode",
+        "title": "Toolkit: Transform - Base64 Decode"
+      },
+      {
+        "command": "toolkit.transform.base64UrlEncode",
+        "title": "Toolkit: Transform - Base64 URL Encode"
+      },
+      {
+        "command": "toolkit.transform.base64UrlDecode",
+        "title": "Toolkit: Transform - Base64 URL Decode"
+      },
+      {
+        "command": "toolkit.transform.urlEncode",
+        "title": "Toolkit: Transform - URL Encode"
+      },
+      {
+        "command": "toolkit.transform.urlDecode",
+        "title": "Toolkit: Transform - URL Decode"
+      },
+      {
+        "command": "toolkit.transform.htmlEncode",
+        "title": "Toolkit: Transform - HTML Encode"
+      },
+      {
+        "command": "toolkit.transform.htmlDecode",
+        "title": "Toolkit: Transform - HTML Decode"
+      },
+      {
+        "command": "toolkit.transform.hexEncode",
+        "title": "Toolkit: Transform - Hex Encode"
+      },
+      {
+        "command": "toolkit.transform.hexDecode",
+        "title": "Toolkit: Transform - Hex Decode"
+      },
+      {
+        "command": "toolkit.transform.md5",
+        "title": "Toolkit: Transform - MD5"
+      },
+      {
+        "command": "toolkit.transform.sha1",
+        "title": "Toolkit: Transform - SHA-1"
+      },
+      {
+        "command": "toolkit.transform.sha256",
+        "title": "Toolkit: Transform - SHA-256"
+      },
+      {
+        "command": "toolkit.transform.sha512",
+        "title": "Toolkit: Transform - SHA-512"
+      },
+      {
+        "command": "toolkit.transform.jwtDecode",
+        "title": "Toolkit: Transform - JWT Decode"
+      },
+      {
+        "command": "toolkit.insert",
+        "title": "Toolkit: Insert..."
+      },
+      {
+        "command": "toolkit.insert.uuidV4",
+        "title": "Toolkit: Insert UUID v4"
+      },
+      {
+        "command": "toolkit.insert.uuidV7",
+        "title": "Toolkit: Insert UUID v7"
+      },
+      {
+        "command": "toolkit.insert.ulid",
+        "title": "Toolkit: Insert ULID"
+      },
+      {
+        "command": "toolkit.insert.isoTimestamp",
+        "title": "Toolkit: Insert ISO Timestamp"
+      },
+      {
+        "command": "toolkit.insert.unixSeconds",
+        "title": "Toolkit: Insert Unix Epoch (seconds)"
+      },
+      {
+        "command": "toolkit.insert.unixMillis",
+        "title": "Toolkit: Insert Unix Epoch (milliseconds)"
+      },
+      {
+        "command": "toolkit.insert.randomHex",
+        "title": "Toolkit: Insert Random Hex..."
+      },
+      {
+        "command": "toolkit.insert.randomBase64",
+        "title": "Toolkit: Insert Random Base64..."
+      },
+      {
+        "command": "toolkit.timestamp.convert",
+        "title": "Toolkit: Convert Timestamp..."
+      },
+      {
+        "command": "toolkit.timestamp.toIsoUtc",
+        "title": "Toolkit: Timestamp to ISO (UTC)"
+      },
+      {
+        "command": "toolkit.timestamp.toIsoLocal",
+        "title": "Toolkit: Timestamp to ISO (Local)"
+      },
+      {
+        "command": "toolkit.timestamp.toUnixSeconds",
+        "title": "Toolkit: Timestamp to Unix Seconds"
+      },
+      {
+        "command": "toolkit.timestamp.toUnixMillis",
+        "title": "Toolkit: Timestamp to Unix Milliseconds"
+      },
+      {
+        "command": "toolkit.timestamp.showInfo",
+        "title": "Toolkit: Show Timestamp Info"
+      },
+      {
+        "command": "toolkit.jsonToType",
+        "title": "Toolkit: JSON to Type..."
+      },
+      {
+        "command": "toolkit.jsonToType.typescriptInterface",
+        "title": "Toolkit: JSON to TypeScript Interface"
+      },
+      {
+        "command": "toolkit.jsonToType.typescriptType",
+        "title": "Toolkit: JSON to TypeScript Type"
+      },
+      {
+        "command": "toolkit.jsonToType.csharpRecord",
+        "title": "Toolkit: JSON to C# Record"
+      },
+      {
+        "command": "toolkit.jsonToType.csharpClass",
+        "title": "Toolkit: JSON to C# Class"
+      },
+      {
+        "command": "toolkit.pasteImage",
+        "title": "Toolkit: Paste Image"
+      },
+      {
+        "command": "toolkit.pasteImage.markdown",
+        "title": "Toolkit: Paste Image (Markdown)"
+      },
+      {
+        "command": "toolkit.pasteImage.html",
+        "title": "Toolkit: Paste Image (HTML)"
+      },
+      {
+        "command": "toolkit.clipboardHistory.show",
+        "title": "Toolkit: Show Clipboard History"
+      },
+      {
+        "command": "toolkit.clipboardHistory.clear",
+        "title": "Toolkit: Clear Clipboard History"
+      },
+      {
+        "command": "toolkit.bookmarks.toggle",
+        "title": "Toolkit: Toggle Bookmark"
+      },
+      {
+        "command": "toolkit.bookmarks.toggleWithLabel",
+        "title": "Toolkit: Toggle Bookmark with Label..."
+      },
+      {
+        "command": "toolkit.bookmarks.editLabel",
+        "title": "Toolkit: Edit Bookmark Label..."
+      },
+      {
+        "command": "toolkit.bookmarks.show",
+        "title": "Toolkit: Show Bookmarks"
+      },
+      {
+        "command": "toolkit.bookmarks.clearFile",
+        "title": "Toolkit: Clear Bookmarks (Current File)"
+      },
+      {
+        "command": "toolkit.bookmarks.clearAll",
+        "title": "Toolkit: Clear All Bookmarks"
+      },
+      {
+        "command": "toolkit.todoTree.refresh",
+        "title": "Toolkit: TODO Tree - Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.todoTree.groupByTag",
+        "title": "Toolkit: TODO Tree - Group by Tag",
+        "icon": "$(symbol-keyword)"
+      },
+      {
+        "command": "toolkit.todoTree.groupByFile",
+        "title": "Toolkit: TODO Tree - Group by File",
+        "icon": "$(file)"
+      },
+      {
+        "command": "toolkit.restClient.send",
+        "title": "Toolkit: Send Request"
+      },
+      {
+        "command": "toolkit.restClient.sendAll",
+        "title": "Toolkit: Send All Requests"
+      },
+      {
+        "command": "toolkit.restClient.cancelAll",
+        "title": "Toolkit: Cancel Pending Requests"
+      },
+      {
+        "command": "toolkit.regexPlayground.open",
+        "title": "Toolkit: Open Regex Playground"
+      },
+      {
+        "command": "toolkit.regexPlayground.testSelectionAsRegex",
+        "title": "Toolkit: Regex Playground - Test Selection as Regex"
+      },
+      {
+        "command": "toolkit.regexPlayground.testSelectionAsInput",
+        "title": "Toolkit: Regex Playground - Test Selection as Input"
+      },
+      {
+        "command": "toolkit.compareWithBranch",
+        "title": "Toolkit: Compare with Branch..."
+      },
+      {
+        "command": "toolkit.peekCommit.showLast",
+        "title": "Toolkit: Show Last Commit for Line"
+      },
+      {
+        "command": "toolkit.peekCommit.showFull",
+        "title": "Toolkit: Show Commit by SHA"
       }
     ],
     "keybindings": [
@@ -409,6 +755,21 @@
         "key": "delete",
         "mac": "cmd+backspace",
         "when": "toolkit.findFileOrFolder.focused && toolkit.findFileOrFolder.emptyInput"
+      },
+      {
+        "command": "toolkit.bookmarks.toggle",
+        "key": "f7",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "toolkit.bookmarks.toggleWithLabel",
+        "key": "shift+f7",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "toolkit.bookmarks.show",
+        "key": "ctrl+f7",
+        "when": "editorTextFocus"
       }
     ],
     "submenus": [
@@ -433,6 +794,21 @@
           "command": "toolkit.npm.workspaceOverview",
           "when": "view == npmProjects",
           "group": "navigation"
+        },
+        {
+          "command": "toolkit.todoTree.groupByTag",
+          "when": "view == toolkitTodoTree && config.toolkit.todoTree.groupBy != tag",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.todoTree.groupByFile",
+          "when": "view == toolkitTodoTree && config.toolkit.todoTree.groupBy != file",
+          "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.todoTree.refresh",
+          "when": "view == toolkitTodoTree",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
@@ -582,34 +958,79 @@
         {
           "command": "toolkit.npm.managePackages",
           "when": "false"
+        },
+        {
+          "command": "toolkit.peekCommit.showFull",
+          "when": "false"
         }
       ],
       "editor/context": [
         {
-          "command": "toolkit.changeCase",
+          "command": "toolkit.align",
           "group": "0_toolkit@1",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.gitHistory",
-          "group": "0_toolkit@2"
+          "command": "toolkit.changeCase",
+          "group": "0_toolkit@2",
+          "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@3"
+          "command": "toolkit.compareWithBranch",
+          "group": "0_toolkit@3",
+          "when": "gitOpenRepositoryCount != 0"
         },
         {
-          "command": "toolkit.slugify",
+          "command": "toolkit.timestamp.convert",
           "group": "0_toolkit@4",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleGitBlame",
+          "command": "toolkit.gitHistory",
           "group": "0_toolkit@5"
         },
         {
+          "command": "toolkit.insert",
+          "group": "0_toolkit@6"
+        },
+        {
+          "command": "toolkit.jsonToType",
+          "group": "0_toolkit@7"
+        },
+        {
+          "command": "toolkit.lines",
+          "group": "0_toolkit@8",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.openInGitHub.file",
+          "group": "0_toolkit@9"
+        },
+        {
+          "command": "toolkit.pasteImage",
+          "group": "0_toolkit@10"
+        },
+        {
+          "command": "toolkit.slugify",
+          "group": "0_toolkit@11",
+          "when": "editorHasSelection"
+        },
+        {
           "command": "toolkit.sumNumbers",
-          "group": "0_toolkit@6",
+          "group": "0_toolkit@12",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.toggleGitBlame",
+          "group": "0_toolkit@13"
+        },
+        {
+          "command": "toolkit.toggleQuotes",
+          "group": "0_toolkit@14"
+        },
+        {
+          "command": "toolkit.transform",
+          "group": "0_toolkit@15",
           "when": "editorHasSelection"
         }
       ]
@@ -688,7 +1109,7 @@
         "toolkit.formatFiles.useGitIgnore": {
           "type": "boolean",
           "default": true,
-          "description": "Skip files that are ignored by git."
+          "description": "Skip files that are ignored by .gitignore (uses `git check-ignore` under the hood). Falls back gracefully when the workspace is not a git repository."
         },
         "toolkit.expandRecursively.excludePatterns": {
           "type": "array",
@@ -1003,6 +1424,278 @@
           "type": "number",
           "default": 5000,
           "description": "Maximum number of lines to colorize. Lines beyond this limit are skipped to keep performance predictable on huge files."
+        },
+        "toolkit.lines.naturalSort": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use natural sort (so 'item2' comes before 'item10') when sorting alphabetically."
+        },
+        "toolkit.lines.dedupeKeepLast": {
+          "type": "boolean",
+          "default": false,
+          "description": "When removing duplicate lines, keep the last occurrence instead of the first."
+        },
+        "toolkit.align.spacesBefore": {
+          "type": "object",
+          "default": {
+            "default": 1,
+            ":": 0,
+            ",": 0
+          },
+          "description": "Number of spaces inserted between the (trimmed) prefix and the alignment delimiter, with optional per-delimiter overrides. The 'default' key applies when no specific override matches.",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "toolkit.align.spacesAfter": {
+          "type": "object",
+          "default": {
+            "default": 1
+          },
+          "description": "Number of spaces inserted between the alignment delimiter and the (trimmed) suffix, with optional per-delimiter overrides. Ignored on lines where the suffix is empty.",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "toolkit.insert.randomHexBytes": {
+          "type": "number",
+          "default": 16,
+          "description": "Default number of random bytes for 'Toolkit: Insert Random Hex...' (the output is 2× this many hex characters)."
+        },
+        "toolkit.insert.randomBase64Bytes": {
+          "type": "number",
+          "default": 16,
+          "description": "Default number of random bytes for 'Toolkit: Insert Random Base64...' (the output is URL-safe Base64 without padding)."
+        },
+        "toolkit.insert.uuidUppercase": {
+          "type": "boolean",
+          "default": false,
+          "description": "Output UUIDs (v4 and v7) in uppercase. ULID is always uppercase per its specification."
+        },
+        "toolkit.timestamp.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover with the decoded date when hovering 10/13/16-digit numbers that look like Unix timestamps."
+        },
+        "toolkit.timestamp.hover.languages": {
+          "type": "array",
+          "default": ["*"],
+          "description": "Languages for which the timestamp hover is active. Requires reload after change. Use [\"*\"] for all languages.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.timestamp.hover.minYear": {
+          "type": "number",
+          "default": 1990,
+          "description": "Lower bound (inclusive) for considering a number to be a timestamp."
+        },
+        "toolkit.timestamp.hover.maxYear": {
+          "type": "number",
+          "default": 2100,
+          "description": "Upper bound (inclusive) for considering a number to be a timestamp."
+        },
+        "toolkit.jsonToType.extractNestedTypes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Emit a named type for each nested object instead of inlining anonymous shapes."
+        },
+        "toolkit.jsonToType.typescript.semicolons": {
+          "type": "boolean",
+          "default": true,
+          "description": "Terminate each TypeScript field with a semicolon."
+        },
+        "toolkit.jsonToType.csharp.collectionType": {
+          "type": "string",
+          "enum": ["IReadOnlyList", "List", "IEnumerable", "array"],
+          "default": "IReadOnlyList",
+          "description": "Collection wrapper used for JSON arrays in C# output."
+        },
+        "toolkit.jsonToType.csharp.recordStyle": {
+          "type": "string",
+          "enum": ["positional", "withProperties"],
+          "default": "positional",
+          "description": "Generated C# record style. Positional: 'public record X(int Id, string Name)'. With properties: declared bodies with init-only properties."
+        },
+        "toolkit.jsonToType.csharp.useNullable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mark optional or nullable fields with '?' (assumes a nullable context for reference types)."
+        },
+        "toolkit.pasteImage.directory": {
+          "type": "string",
+          "default": "assets/images",
+          "description": "Folder where pasted images are saved. Relative to the file or the workspace (see toolkit.pasteImage.basePath). Absolute paths are honored as-is."
+        },
+        "toolkit.pasteImage.basePath": {
+          "type": "string",
+          "enum": ["file", "workspace"],
+          "default": "file",
+          "description": "Anchor for the image directory: relative to the current file or to the workspace root."
+        },
+        "toolkit.pasteImage.naming": {
+          "type": "string",
+          "enum": ["timestamp", "prompt"],
+          "default": "timestamp",
+          "description": "How to name pasted images. 'timestamp' uses the configured timestamp format; 'prompt' asks every time."
+        },
+        "toolkit.pasteImage.timestampFormat": {
+          "type": "string",
+          "default": "YYYYMMDD-HHmmss",
+          "description": "Token-based timestamp format. Supported tokens: YYYY, MM, DD, HH, mm, ss."
+        },
+        "toolkit.pasteImage.format": {
+          "type": "string",
+          "enum": ["auto", "markdown", "html"],
+          "default": "auto",
+          "description": "Link format used when inserting the image. 'auto' picks Markdown for .md and HTML for .html/.razor/.cshtml."
+        },
+        "toolkit.pasteImage.useForwardSlashes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Force forward slashes in the inserted relative path (cleaner for cross-platform repos)."
+        },
+        "toolkit.pasteImage.htmlAttributes": {
+          "type": "string",
+          "default": "",
+          "description": "Extra attributes appended to the inserted <img> tag (e.g. class=\"screenshot\")."
+        },
+        "toolkit.clipboardHistory.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Track changes to the clipboard while VS Code is focused so they can be recalled with 'Toolkit: Show Clipboard History'."
+        },
+        "toolkit.clipboardHistory.maxItems": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum number of entries kept in the in-memory clipboard history (FIFO when the limit is reached)."
+        },
+        "toolkit.clipboardHistory.maxItemLength": {
+          "type": "number",
+          "default": 10000,
+          "description": "Maximum character length of a single entry. Larger clipboard contents are skipped."
+        },
+        "toolkit.clipboardHistory.pollInterval": {
+          "type": "number",
+          "default": 1000,
+          "description": "How often (ms) the clipboard is polled for changes while VS Code is focused."
+        },
+        "toolkit.bookmarks.gutterIcon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a bookmark icon in the gutter on bookmarked lines."
+        },
+        "toolkit.bookmarks.highlightLine": {
+          "type": "boolean",
+          "default": false,
+          "description": "Highlight the full line of every bookmark with a subtle background color."
+        },
+        "toolkit.bookmarks.highlightColor": {
+          "type": "string",
+          "default": "rgba(255,200,0,0.15)",
+          "description": "Background color used when 'highlightLine' is enabled. Accepts any CSS color."
+        },
+        "toolkit.todoTree.tags": {
+          "type": "array",
+          "default": ["TODO", "FIXME", "HACK", "XXX", "NOTE", "BUG", "REVIEW"],
+          "description": "Comment tags collected by the TODO Tree.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.todoTree.caseSensitive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Match tags case-sensitively."
+        },
+        "toolkit.todoTree.includeGlob": {
+          "type": "string",
+          "default": "**/*.{ts,js,tsx,jsx,cs,razor,cshtml,py,rb,go,rs,java,c,cpp,h,hpp,vue,svelte,html,md,sh,yml,yaml,sql}",
+          "description": "Glob pattern for files to scan."
+        },
+        "toolkit.todoTree.excludedFolders": {
+          "type": "array",
+          "default": ["node_modules", ".git", "dist", "build", "bin", "obj", ".vs", "out"],
+          "description": "Folders to skip when scanning.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.todoTree.groupBy": {
+          "type": "string",
+          "enum": ["tag", "file"],
+          "default": "tag",
+          "description": "Initial grouping of the TODO Tree view."
+        },
+        "toolkit.todoTree.maxFiles": {
+          "type": "number",
+          "default": 5000,
+          "description": "Hard cap on the number of files scanned."
+        },
+        "toolkit.todoTree.useGitIgnore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Skip files that are ignored by .gitignore (uses `git check-ignore` under the hood). Falls back gracefully when the workspace is not a git repository."
+        },
+        "toolkit.restClient.timeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Request timeout in milliseconds. 0 disables the timeout."
+        },
+        "toolkit.restClient.followRedirects": {
+          "type": "boolean",
+          "default": true,
+          "description": "Follow HTTP redirects (3xx)."
+        },
+        "toolkit.restClient.previewResponseAs": {
+          "type": "string",
+          "enum": ["auto", "raw", "json"],
+          "default": "auto",
+          "description": "Editor language used to render the response. 'auto' picks one from the Content-Type."
+        },
+        "toolkit.peekCommit.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover with the last commit that touched the line under the cursor."
+        },
+        "toolkit.peekCommit.hover.languages": {
+          "type": "array",
+          "default": ["*"],
+          "description": "Languages where the peek-commit hover is active. Reload required after change.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.toggleQuotes.languageQuotes": {
+          "type": "object",
+          "default": {
+            "default": ["'", "\""],
+            "typescript": ["'", "\"", "`"],
+            "typescriptreact": ["'", "\"", "`"],
+            "javascript": ["'", "\"", "`"],
+            "javascriptreact": ["'", "\"", "`"],
+            "csharp": ["\""],
+            "java": ["\""],
+            "c": ["\""],
+            "cpp": ["\""],
+            "rust": ["\""],
+            "python": ["'", "\""],
+            "go": ["\""],
+            "json": ["\""],
+            "jsonc": ["\""],
+            "yaml": ["'", "\""],
+            "shellscript": ["'", "\""]
+          },
+          "description": "Allowed quote characters per language id. Used to cycle 'Toolkit: Toggle Quotes' through only the quotes that are valid for the current language. The 'default' key is used when the current language id is not listed.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["'", "\"", "`"]
+            }
+          }
         }
       }
     }

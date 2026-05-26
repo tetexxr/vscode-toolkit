@@ -5,6 +5,7 @@ import {
   buildExcludeGlob as buildExcludeGlobPure,
   type ExcludeMap
 } from './format-files-utils'
+import { filterGitIgnored } from '../utils/git-ignore'
 
 /**
  * Format Files — bulk format all files in workspace or a specific folder.
@@ -32,7 +33,18 @@ async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Prom
     relativePattern = includeGlob
   }
 
-  const files = await vscode.workspace.findFiles(relativePattern, excludeGlob)
+  let files = await vscode.workspace.findFiles(relativePattern, excludeGlob)
+
+  const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
+  const useGitIgnore = config.get<boolean>('useGitIgnore', true)
+  if (useGitIgnore && files.length > 0) {
+    const cwd = baseFolder?.fsPath ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+    if (cwd) {
+      const kept = await filterGitIgnored(files.map(u => u.fsPath), cwd)
+      const keptSet = new Set(kept)
+      files = files.filter(u => keptSet.has(u.fsPath))
+    }
+  }
 
   if (files.length === 0) {
     vscode.window.showInformationMessage('No files found matching the pattern.')

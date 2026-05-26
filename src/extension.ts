@@ -23,6 +23,21 @@ import { registerFindFileOrFolderCommands } from './features/find-file-or-folder
 import { registerSumNumbersCommands } from './features/sum-numbers'
 import { registerCsvRainbowCommands } from './features/csv-rainbow'
 import { registerTypeOnlyImportsCommands } from './features/type-only-imports'
+import { registerLinesCommands } from './features/lines'
+import { registerAlignCommands } from './features/align'
+import { registerToggleQuotesCommands } from './features/toggle-quotes'
+import { registerTransformCommands } from './features/transform'
+import { registerInsertCommands } from './features/insert'
+import { registerTimestampCommands } from './features/timestamp'
+import { registerJsonToTypeCommands } from './features/json-to-type'
+import { registerPasteImageCommands } from './features/paste-image'
+import { registerClipboardHistoryCommands } from './features/clipboard-history'
+import { registerBookmarkCommands } from './features/bookmarks'
+import { registerTodoTreeCommands } from './features/todo-tree'
+import { registerRestClientCommands } from './features/rest-client'
+import { registerRegexPlaygroundCommands } from './features/regex-playground'
+import { registerCompareCommands } from './features/compare'
+import { registerPeekCommitCommands } from './features/peek-commit'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -49,6 +64,21 @@ export function activate(context: vscode.ExtensionContext) {
   registerSumNumbersCommands(context)
   registerCsvRainbowCommands(context)
   registerTypeOnlyImportsCommands(context)
+  registerLinesCommands(context)
+  registerAlignCommands(context)
+  registerToggleQuotesCommands(context)
+  registerTransformCommands(context)
+  registerInsertCommands(context)
+  registerTimestampCommands(context)
+  registerJsonToTypeCommands(context)
+  registerPasteImageCommands(context)
+  registerClipboardHistoryCommands(context)
+  registerBookmarkCommands(context)
+  registerTodoTreeCommands(context)
+  registerRestClientCommands(context)
+  registerRegexPlaygroundCommands(context)
+  registerCompareCommands(context)
+  registerPeekCommitCommands(context)
 }
 
 export function deactivate() {}
