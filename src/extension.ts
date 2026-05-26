@@ -27,6 +27,7 @@ import { registerLinesCommands } from './features/lines'
 import { registerAlignCommands } from './features/align'
 import { registerToggleQuotesCommands } from './features/toggle-quotes'
 import { registerTransformCommands } from './features/transform'
+import { registerInsertCommands } from './features/insert'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -57,6 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerAlignCommands(context)
   registerToggleQuotesCommands(context)
   registerTransformCommands(context)
+  registerInsertCommands(context)
 }
 
 export function deactivate() {}

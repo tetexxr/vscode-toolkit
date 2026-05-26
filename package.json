@@ -547,6 +547,42 @@
       {
         "command": "toolkit.transform.jwtDecode",
         "title": "Toolkit: Transform - JWT Decode"
+      },
+      {
+        "command": "toolkit.insert",
+        "title": "Toolkit: Insert..."
+      },
+      {
+        "command": "toolkit.insert.uuidV4",
+        "title": "Toolkit: Insert UUID v4"
+      },
+      {
+        "command": "toolkit.insert.uuidV7",
+        "title": "Toolkit: Insert UUID v7"
+      },
+      {
+        "command": "toolkit.insert.ulid",
+        "title": "Toolkit: Insert ULID"
+      },
+      {
+        "command": "toolkit.insert.isoTimestamp",
+        "title": "Toolkit: Insert ISO Timestamp"
+      },
+      {
+        "command": "toolkit.insert.unixSeconds",
+        "title": "Toolkit: Insert Unix Epoch (seconds)"
+      },
+      {
+        "command": "toolkit.insert.unixMillis",
+        "title": "Toolkit: Insert Unix Epoch (milliseconds)"
+      },
+      {
+        "command": "toolkit.insert.randomHex",
+        "title": "Toolkit: Insert Random Hex..."
+      },
+      {
+        "command": "toolkit.insert.randomBase64",
+        "title": "Toolkit: Insert Random Base64..."
       }
     ],
     "keybindings": [
@@ -760,35 +796,39 @@
           "group": "0_toolkit@3"
         },
         {
+          "command": "toolkit.insert",
+          "group": "0_toolkit@4"
+        },
+        {
           "command": "toolkit.lines",
-          "group": "0_toolkit@4",
+          "group": "0_toolkit@5",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@5"
+          "group": "0_toolkit@6"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@6",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.sumNumbers",
           "group": "0_toolkit@7",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@8"
+          "command": "toolkit.sumNumbers",
+          "group": "0_toolkit@8",
+          "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleQuotes",
+          "command": "toolkit.toggleGitBlame",
           "group": "0_toolkit@9"
         },
         {
+          "command": "toolkit.toggleQuotes",
+          "group": "0_toolkit@10"
+        },
+        {
           "command": "toolkit.transform",
-          "group": "0_toolkit@10",
+          "group": "0_toolkit@11",
           "when": "editorHasSelection"
         }
       ]
@@ -1216,6 +1256,21 @@
             "type": "number",
             "minimum": 0
           }
+        },
+        "toolkit.insert.randomHexBytes": {
+          "type": "number",
+          "default": 16,
+          "description": "Default number of random bytes for 'Toolkit: Insert Random Hex...' (the output is 2× this many hex characters)."
+        },
+        "toolkit.insert.randomBase64Bytes": {
+          "type": "number",
+          "default": 16,
+          "description": "Default number of random bytes for 'Toolkit: Insert Random Base64...' (the output is URL-safe Base64 without padding)."
+        },
+        "toolkit.insert.uuidUppercase": {
+          "type": "boolean",
+          "default": false,
+          "description": "Output UUIDs (v4 and v7) in uppercase. ULID is always uppercase per its specification."
         },
         "toolkit.toggleQuotes.languageQuotes": {
           "type": "object",

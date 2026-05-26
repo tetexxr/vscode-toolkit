@@ -28,6 +28,7 @@ All-in-one VS Code utility extension.
     - [Align by Character](#align-by-character)
     - [Toggle Quotes](#toggle-quotes)
     - [Transform Selection](#transform-selection)
+    - [Insert UUID / Timestamp / Random](#insert-uuid--timestamp--random)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
     - [C# Code Actions](#c-code-actions)
@@ -626,6 +627,37 @@ Available from:
 - Invalid input (malformed Base64, non-hex characters, broken percent encoding, malformed JWT) triggers a warning and leaves the selection untouched.
 - Hashes always output lowercase hex.
 - JWT Decode opens a new untitled `jsonc` editor with the formatted header, payload and signature. The signature is **not** verified.
+
+#### Insert UUID / Timestamp / Random
+
+Insert freshly-generated values at the cursor position (or replace the selection if any). Multi-cursor: **each cursor receives its own generated value** — no duplicates.
+
+**Commands:**
+
+| Command | Output |
+|---|---|
+| Insert... | Quick pick of all generators |
+| Insert UUID v4 | Random UUID, e.g. `f47ac10b-58cc-4372-a567-0e02b2c3d479` |
+| Insert UUID v7 | Time-ordered UUID (RFC 9562), e.g. `01893f81-a3a8-7000-b2bb-7a76e84d0a5d` |
+| Insert ULID | Crockford Base32, time-ordered, e.g. `01ARYZ6S41ABCDEFGHJKMNPQRS` |
+| Insert ISO Timestamp | `2026-05-26T17:30:00.000Z` |
+| Insert Unix Epoch (seconds) | `1748278800` |
+| Insert Unix Epoch (milliseconds) | `1748278800000` |
+| Insert Random Hex... | Prompts for byte count; output is 2× hex chars |
+| Insert Random Base64... | Prompts for byte count; URL-safe Base64 without padding |
+
+Available from:
+
+- **Editor context menu** — right-click and pick **Toolkit: Insert...**
+- **Command Palette** — any of the individual commands or the dispatcher
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.insert.randomHexBytes` | `16` | Default byte count for Random Hex (output is `2 ×` this many chars) |
+| `toolkit.insert.randomBase64Bytes` | `16` | Default byte count for Random Base64 (URL-safe, no padding) |
+| `toolkit.insert.uuidUppercase` | `false` | Emit UUID v4 / v7 in uppercase. ULID is always uppercase per its spec |
 
 ### Code Generation & Refactoring
 
