@@ -23,6 +23,7 @@ import { registerFindFileOrFolderCommands } from './features/find-file-or-folder
 import { registerSumNumbersCommands } from './features/sum-numbers'
 import { registerCsvRainbowCommands } from './features/csv-rainbow'
 import { registerTypeOnlyImportsCommands } from './features/type-only-imports'
+import { registerLinesCommands } from './features/lines'
 
 export function activate(context: vscode.ExtensionContext) {
   registerChangeCaseCommands(context)
@@ -49,6 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerSumNumbersCommands(context)
   registerCsvRainbowCommands(context)
   registerTypeOnlyImportsCommands(context)
+  registerLinesCommands(context)
 }
 
 export function deactivate() {}

@@ -387,6 +387,62 @@
       {
         "command": "toolkit.toggleCsvRainbow",
         "title": "Toolkit: Toggle CSV Rainbow"
+      },
+      {
+        "command": "toolkit.lines",
+        "title": "Toolkit: Lines..."
+      },
+      {
+        "command": "toolkit.lines.sortAsc",
+        "title": "Toolkit: Sort Lines - Ascending"
+      },
+      {
+        "command": "toolkit.lines.sortDesc",
+        "title": "Toolkit: Sort Lines - Descending"
+      },
+      {
+        "command": "toolkit.lines.sortAscCaseInsensitive",
+        "title": "Toolkit: Sort Lines - Ascending (Case-Insensitive)"
+      },
+      {
+        "command": "toolkit.lines.sortDescCaseInsensitive",
+        "title": "Toolkit: Sort Lines - Descending (Case-Insensitive)"
+      },
+      {
+        "command": "toolkit.lines.sortByLength",
+        "title": "Toolkit: Sort Lines - By Length"
+      },
+      {
+        "command": "toolkit.lines.sortByLengthDesc",
+        "title": "Toolkit: Sort Lines - By Length (Descending)"
+      },
+      {
+        "command": "toolkit.lines.sortNumerically",
+        "title": "Toolkit: Sort Lines - Numerically"
+      },
+      {
+        "command": "toolkit.lines.reverse",
+        "title": "Toolkit: Reverse Lines"
+      },
+      {
+        "command": "toolkit.lines.shuffle",
+        "title": "Toolkit: Shuffle Lines"
+      },
+      {
+        "command": "toolkit.lines.removeDuplicates",
+        "title": "Toolkit: Remove Duplicate Lines"
+      },
+      {
+        "command": "toolkit.lines.removeDuplicatesCaseInsensitive",
+        "title": "Toolkit: Remove Duplicate Lines (Case-Insensitive)"
+      },
+      {
+        "command": "toolkit.lines.removeEmpty",
+        "title": "Toolkit: Remove Empty Lines"
+      },
+      {
+        "command": "toolkit.lines.trimTrailingWhitespace",
+        "title": "Toolkit: Trim Trailing Whitespace (Selection)"
       }
     ],
     "keybindings": [
@@ -1003,6 +1059,16 @@
           "type": "number",
           "default": 5000,
           "description": "Maximum number of lines to colorize. Lines beyond this limit are skipped to keep performance predictable on huge files."
+        },
+        "toolkit.lines.naturalSort": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use natural sort (so 'item2' comes before 'item10') when sorting alphabetically."
+        },
+        "toolkit.lines.dedupeKeepLast": {
+          "type": "boolean",
+          "default": false,
+          "description": "When removing duplicate lines, keep the last occurrence instead of the first."
         }
       }
     }

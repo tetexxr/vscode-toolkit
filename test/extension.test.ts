@@ -27,7 +27,9 @@ describe('extension entry point', () => {
     'registerGitStageCommands',
     'registerFindFileOrFolderCommands',
     'registerSumNumbersCommands',
-    'registerCsvRainbowCommands'
+    'registerCsvRainbowCommands',
+    'registerTypeOnlyImportsCommands',
+    'registerLinesCommands'
   ]
 
   for (const fn of expectedRegistrations) {

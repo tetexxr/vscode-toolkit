@@ -24,6 +24,7 @@ All-in-one VS Code utility extension.
     - [Convert Import Paths](#convert-import-paths)
     - [Type-Only Imports](#type-only-imports)
     - [Sum Numbers in Selection](#sum-numbers-in-selection)
+    - [Sort, Dedupe & Transform Lines](#sort-dedupe--transform-lines)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
     - [C# Code Actions](#c-code-actions)
@@ -422,6 +423,41 @@ Run **Toolkit: Sum Numbers in Selection** from the Command Palette or the editor
 ```
 
 → notification: `sum of 4 numbers = 7,25`.
+
+#### Sort, Dedupe & Transform Lines
+
+Operate on the lines under the current selection (or the whole document if nothing is selected). Each operation is available as a dedicated command, and a unified **Toolkit: Lines...** quick pick lists them all when you don't remember the exact name.
+
+**Operations:**
+
+| Command | Description |
+|---|---|
+| Sort Lines - Ascending | A → Z, case-sensitive |
+| Sort Lines - Descending | Z → A, case-sensitive |
+| Sort Lines - Ascending (Case-Insensitive) | A → Z ignoring case |
+| Sort Lines - Descending (Case-Insensitive) | Z → A ignoring case |
+| Sort Lines - By Length | Shorter lines first |
+| Sort Lines - By Length (Descending) | Longer lines first |
+| Sort Lines - Numerically | Sort by the first number found on each line |
+| Reverse Lines | Flip the line order |
+| Shuffle Lines | Random order (Fisher-Yates) |
+| Remove Duplicate Lines | Drop repeated lines, keep first occurrence |
+| Remove Duplicate Lines (Case-Insensitive) | Same, ignoring case |
+| Remove Empty Lines | Drop blank and whitespace-only lines |
+| Trim Trailing Whitespace (Selection) | Trim trailing spaces and tabs on each line |
+
+**Behavior:**
+
+- If there is a non-empty selection, the operation applies to the full lines touched by the selection. Each selection block is processed independently (multi-cursor friendly).
+- If every selection is empty, the operation applies to the whole document.
+- Line endings (`\n` vs `\r\n`) are preserved.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.lines.naturalSort` | `true` | Use natural sort (so `item2` comes before `item10`) when sorting alphabetically |
+| `toolkit.lines.dedupeKeepLast` | `false` | When removing duplicates, keep the last occurrence instead of the first |
 
 ### Code Generation & Refactoring
 
