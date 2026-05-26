@@ -141,20 +141,30 @@ function buildHtml(webview: vscode.Webview, nonce: string): string {
     border-color: var(--vscode-focusBorder);
   }
   textarea { min-height: 140px; resize: vertical; }
-  .flags { display: flex; gap: 6px; }
-  .flags label {
+  .flags { display: flex; gap: 4px; }
+  .flag {
     cursor: pointer;
     user-select: none;
-    padding: 2px 6px;
+    padding: 4px 8px;
     border-radius: 2px;
     border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
     font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 12px;
+    min-width: 22px;
+    text-align: center;
   }
-  .flags label input { display: none; }
-  .flags label.active {
+  .flag:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+  }
+  .flag.active {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border-color: var(--vscode-button-background);
+  }
+  .flag.active:hover {
+    background: var(--vscode-button-hoverBackground);
   }
   .status { font-size: 12px; opacity: 0.7; margin-top: 4px; }
   .error {
@@ -212,12 +222,12 @@ function buildHtml(webview: vscode.Webview, nonce: string): string {
     <div class="row">
       <input id="pattern" type="text" class="pattern-input" placeholder="\\\\d+" autocomplete="off" spellcheck="false">
       <div class="flags" id="flags">
-        <label data-flag="g"><input type="checkbox">g</label>
-        <label data-flag="i"><input type="checkbox">i</label>
-        <label data-flag="m"><input type="checkbox">m</label>
-        <label data-flag="s"><input type="checkbox">s</label>
-        <label data-flag="u"><input type="checkbox">u</label>
-        <label data-flag="y"><input type="checkbox">y</label>
+        <button type="button" class="flag" data-flag="g" title="global — match every occurrence, not just the first">g</button>
+        <button type="button" class="flag" data-flag="i" title="case-insensitive — ignore upper/lower case">i</button>
+        <button type="button" class="flag" data-flag="m" title="multiline — ^ and $ match start/end of each line">m</button>
+        <button type="button" class="flag" data-flag="s" title="dotAll — . also matches newline characters">s</button>
+        <button type="button" class="flag" data-flag="u" title="unicode — proper handling of code points ≥ U+10000 and \\p{...}">u</button>
+        <button type="button" class="flag" data-flag="y" title="sticky — match must start exactly at lastIndex">y</button>
       </div>
     </div>
     <div id="status" class="status">No pattern</div>
@@ -251,18 +261,16 @@ function buildHtml(webview: vscode.Webview, nonce: string): string {
   function getFlags() {
     let s = ''
     for (const k of FLAG_KEYS) {
-      const label = document.querySelector('.flags label[data-flag="' + k + '"]')
-      if (label.classList.contains('active')) s += k
+      const btn = document.querySelector('.flag[data-flag="' + k + '"]')
+      if (btn && btn.classList.contains('active')) s += k
     }
     return s
   }
 
   function setFlags(flags) {
     for (const k of FLAG_KEYS) {
-      const label = document.querySelector('.flags label[data-flag="' + k + '"]')
-      const active = (flags || '').includes(k)
-      label.classList.toggle('active', active)
-      label.querySelector('input').checked = active
+      const btn = document.querySelector('.flag[data-flag="' + k + '"]')
+      if (btn) btn.classList.toggle('active', (flags || '').includes(k))
     }
   }
 
@@ -339,11 +347,9 @@ function buildHtml(webview: vscode.Webview, nonce: string): string {
 
   function attach() {
     ['pattern', 'input', 'replace'].forEach(id => $(id).addEventListener('input', schedule))
-    document.querySelectorAll('.flags label').forEach(label => {
-      label.addEventListener('click', () => {
-        label.classList.toggle('active')
-        const cb = label.querySelector('input')
-        cb.checked = label.classList.contains('active')
+    document.querySelectorAll('.flag').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active')
         schedule()
       })
     })
