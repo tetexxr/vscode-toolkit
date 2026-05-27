@@ -121,8 +121,34 @@ function resolveExtendsPath(configDir: string, ext: string): string | undefined 
   }
 }
 
+/**
+ * In-memory cache for resolved configs. The `provideCodeActions` provider can
+ * fire many times per editing session, so reading + parsing the tsconfig file
+ * (and any extended parents) every time is wasteful. The cache is invalidated
+ * by `clearConfigCache()` when a tsconfig/jsconfig changes — see the
+ * FileSystemWatcher in `relative-imports.ts`.
+ *
+ * `undefined` is a valid cached result ("we know there's nothing here") so
+ * the map stores `ResolvedPaths | null` and we sentinel `null` for "no paths".
+ */
+const configCache = new Map<string, ResolvedPaths | null>()
+
+/** Drop all cached configs. Call this when any tsconfig / jsconfig file changes on disk. */
+export function clearConfigCache(): void {
+  configCache.clear()
+}
+
 export function loadPathsFromConfig(configPath: string, depth = 0): ResolvedPaths | undefined {
   if (depth > 5) return undefined
+  if (configCache.has(configPath)) {
+    return configCache.get(configPath) ?? undefined
+  }
+  const result = computeConfig(configPath, depth)
+  configCache.set(configPath, result ?? null)
+  return result
+}
+
+function computeConfig(configPath: string, depth: number): ResolvedPaths | undefined {
   try {
     const raw = fs.readFileSync(configPath, 'utf-8')
     const config = JSON.parse(stripJsonComments(raw)) as TsConfigShape

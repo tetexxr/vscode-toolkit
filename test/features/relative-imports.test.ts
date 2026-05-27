@@ -12,6 +12,7 @@ import {
   loadPathsFromConfig,
   findImportMatches,
   findAliasMatches,
+  clearConfigCache,
   type ResolvedPaths
 } from '../../src/features/relative-imports-utils'
 
@@ -515,5 +516,54 @@ describe('findAliasMatches', () => {
     const matches = findAliasMatches(source, filePath, config)
     assert.equal(matches.length, 1)
     assert.equal(source.slice(matches[0].pathStart, matches[0].pathStart + matches[0].importPath.length), './store')
+  })
+})
+
+describe('loadPathsFromConfig caching', () => {
+  beforeEach(() => clearConfigCache())
+
+  it('should return the cached result on the second call without re-reading the file', () => {
+    const root = tmpDir()
+    const cfg = path.join(root, 'tsconfig.json')
+    writeJson(cfg, { compilerOptions: { baseUrl: '.', paths: { '@foo/*': ['src/foo/*'] } } })
+
+    const first = loadPathsFromConfig(cfg)
+    assert.ok(first)
+    assert.equal(first!.mappings[0].prefix, '@foo/')
+
+    // Mutate the file but skip cache invalidation — cached result should win.
+    writeJson(cfg, { compilerOptions: { baseUrl: '.', paths: { '@bar/*': ['src/bar/*'] } } })
+    const second = loadPathsFromConfig(cfg)
+    assert.equal(second!.mappings[0].prefix, '@foo/', 'expected the cached prefix, not the new one on disk')
+  })
+
+  it('should re-read the file after clearConfigCache is called', () => {
+    const root = tmpDir()
+    const cfg = path.join(root, 'tsconfig.json')
+    writeJson(cfg, { compilerOptions: { baseUrl: '.', paths: { '@foo/*': ['src/foo/*'] } } })
+
+    loadPathsFromConfig(cfg)
+
+    writeJson(cfg, { compilerOptions: { baseUrl: '.', paths: { '@bar/*': ['src/bar/*'] } } })
+    clearConfigCache()
+
+    const reloaded = loadPathsFromConfig(cfg)
+    assert.equal(reloaded!.mappings[0].prefix, '@bar/')
+  })
+
+  it('should cache a missing-paths config as undefined and not retry until cleared', () => {
+    const root = tmpDir()
+    const cfg = path.join(root, 'tsconfig.json')
+    writeJson(cfg, { compilerOptions: { baseUrl: '.' } }) // no paths
+
+    assert.equal(loadPathsFromConfig(cfg), undefined)
+
+    // Add paths but don't invalidate — should still return undefined.
+    writeJson(cfg, { compilerOptions: { baseUrl: '.', paths: { '@a/*': ['src/a/*'] } } })
+    assert.equal(loadPathsFromConfig(cfg), undefined)
+
+    clearConfigCache()
+    const reloaded = loadPathsFromConfig(cfg)
+    assert.equal(reloaded?.mappings[0].prefix, '@a/')
   })
 })
