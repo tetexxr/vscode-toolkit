@@ -134,6 +134,8 @@ export interface OverviewPackage {
   installedVersion: string
   latestVersion: string
   isOutdated: boolean
+  /** True when the .csproj pins the version with `[x.y.z]` bracket syntax. */
+  isPinned?: boolean
 }
 
 export interface OverviewProject {

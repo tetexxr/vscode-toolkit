@@ -210,6 +210,13 @@ function applyListDataToProjects(
     for (const fw of dnProject.frameworks ?? []) {
       for (const pkg of fw.topLevelPackages ?? []) {
         if (isPinned(pkg.requestedVersion)) {
+          // Tag the existing entry (from the XML first paint) as pinned and
+          // leave latestVersion / isOutdated alone — the user has explicitly
+          // locked the version, so we don't push them to update.
+          const entry = project.packages.find(p => p.id === pkg.id)
+          if (entry) {
+            entry.isPinned = true
+          }
           continue
         }
         const latest = outdatedForProject?.get(pkg.id) ?? pkg.resolvedVersion

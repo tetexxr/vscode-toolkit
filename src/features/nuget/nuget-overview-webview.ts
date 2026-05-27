@@ -222,6 +222,12 @@ html, body {
   padding: 0 1rem;
 }
 
+.pin-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--vscode-editorWarning-foreground, #e5c07b);
+}
+
 .btn-update-sm {
   font-size: 0.8rem;
   padding: 2px 8px;
@@ -233,6 +239,8 @@ html, body {
 const JS = /*js*/ `
 (function() {
   const vscode = acquireVsCodeApi();
+
+  const PIN_ICON = '<span class="pin-icon" title="Version pinned to an exact value in the project file"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>';
 
   const state = {
     projects: [],
@@ -368,7 +376,8 @@ const JS = /*js*/ `
         html += '<tr>';
         html += '<td class="col-name">' + esc(pkg.id) + '</td>';
         html += '<td class="col-version">' + esc(pkg.installedVersion) + '</td>';
-        html += '<td class="col-latest">' + (hasLatest ? esc(pkg.latestVersion) : '-') + '</td>';
+        const latestCell = pkg.isPinned ? PIN_ICON : (hasLatest ? esc(pkg.latestVersion) : '-');
+        html += '<td class="col-latest">' + latestCell + '</td>';
         html += '<td class="col-status">' + statusBadge + '</td>';
         html += '<td class="col-actions">';
         if (pkg.isOutdated) {
