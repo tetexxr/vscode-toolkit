@@ -1,14 +1,26 @@
 /**
  * Message handler for the NuGet Solution Overview panel.
- * Discovers all projects, loads installed packages, and resolves latest versions.
+ *
+ * Two phases on the wire:
+ *   1. "ready": send the installed-package list from a quick XML scan so the
+ *      panel paints immediately.
+ *   2. "load-versions": shell out to `dotnet list package --outdated` against
+ *      the solution (or against each project when there's no .sln/.slnx) to
+ *      pick up resolved/latest versions. Same code path `dotnet outdated` uses,
+ *      so it inherits the local NuGet HTTP cache and `project.assets.json`
+ *      reads for free — orders of magnitude faster than reimplementing the
+ *      protocol from Node.
  */
 
 import * as vscode from 'vscode'
+import * as path from 'path'
 import type { OverviewWebviewMessage, OverviewExtensionMessage, OverviewProject, OverviewPackage } from './nuget-types'
-import { getNugetSources, getNugetConfig } from './nuget-config'
-import * as nugetApi from './nuget-api'
+import { getNugetConfig } from './nuget-config'
 import { discoverProjectFiles, loadProject } from './nuget-project-loader'
+import { listOutdatedPackages, type DotnetListOutput } from './nuget-cli'
 import { NugetTaskManager } from './nuget-task-manager'
+
+const SOLUTION_GLOB = '**/*.{sln,slnx,slnf}'
 
 export class NugetOverviewHandler implements vscode.Disposable {
   private taskManager: NugetTaskManager
@@ -46,11 +58,23 @@ export class NugetOverviewHandler implements vscode.Disposable {
   }
 
   private async sendOverview(loadVersions: boolean): Promise<void> {
-    const projectUris = await discoverProjectFiles()
-    const source = getNugetSources()[0]
-    const config = getNugetConfig()
+    const projects = await this.loadInstalled()
 
-    // Load all projects and their installed packages
+    // First paint with installed list only — no versions yet.
+    this.post({ type: 'overview-data', projects, loading: loadVersions })
+
+    if (!loadVersions) {
+      return
+    }
+
+    const result = await this.runOutdated()
+    applyOutdatedToProjects(projects, result)
+    this.post({ type: 'overview-data', projects, loading: false })
+  }
+
+  /** Quick first paint: XML-parsed installed list. No network or msbuild. */
+  private async loadInstalled(): Promise<OverviewProject[]> {
+    const projectUris = await discoverProjectFiles()
     const projects: OverviewProject[] = []
     for (const uri of projectUris) {
       const project = await loadProject(uri)
@@ -62,53 +86,34 @@ export class NugetOverviewHandler implements vscode.Disposable {
       }))
       projects.push({ name: project.name, fsPath: project.fsPath, packages: overviewPkgs })
     }
-
-    // Sort projects alphabetically
     projects.sort((a, b) => a.name.localeCompare(b.name))
+    return projects
+  }
 
-    // Send initial data immediately (without versions)
-    this.post({ type: 'overview-data', projects, loading: loadVersions })
+  /**
+   * Run `dotnet list package --outdated` once against the .sln/.slnx if one
+   * exists, otherwise once per .csproj in parallel. Aggregates results into a
+   * single DotnetListOutput.
+   */
+  private async runOutdated(): Promise<DotnetListOutput> {
+    const config = getNugetConfig()
+    const solution = (await vscode.workspace.findFiles(SOLUTION_GLOB, undefined, 1))[0]
 
-    if (!loadVersions) {
-      return
+    if (solution) {
+      return listOutdatedPackages(solution.fsPath, config.defaultPrerelease)
     }
 
-    // Resolve latest versions for all unique package IDs
-    const uniqueIds = new Set<string>()
-    for (const proj of projects) {
-      for (const pkg of proj.packages) {
-        uniqueIds.add(pkg.id)
-      }
-    }
-
-    const latestMap = new Map<string, string>()
-    await Promise.allSettled(
-      [...uniqueIds].map(async id => {
-        const metadata = await nugetApi.fetchInstalledPackagesMetadata(
-          [{ id, version: '' }],
-          '',
-          config.defaultPrerelease,
-          source,
-          config.requestTimeout
-        )
-        if (metadata.length > 0) {
-          latestMap.set(id, metadata[0].version)
-        }
-      })
+    const projectUris = await discoverProjectFiles()
+    const perProject = await Promise.all(
+      projectUris.map(uri => listOutdatedPackages(uri.fsPath, config.defaultPrerelease).catch(() => null))
     )
-
-    // Update projects with resolved versions
-    for (const proj of projects) {
-      for (const pkg of proj.packages) {
-        const latest = latestMap.get(pkg.id)
-        if (latest) {
-          pkg.latestVersion = latest
-          pkg.isOutdated = pkg.installedVersion !== latest
-        }
+    const combined: DotnetListOutput = { version: 1, parameters: '--outdated', projects: [] }
+    for (const r of perProject) {
+      if (r) {
+        combined.projects.push(...r.projects)
       }
     }
-
-    this.post({ type: 'overview-data', projects, loading: false })
+    return combined
   }
 
   private handleUpdate(projectFsPath: string, packageId: string, version: string, sourceUrl: string): void {
@@ -152,4 +157,55 @@ export class NugetOverviewHandler implements vscode.Disposable {
     }
     this.disposables = []
   }
+}
+
+/**
+ * Merge a `dotnet list --outdated` result back into the OverviewProject list:
+ *  - Match projects by fsPath.
+ *  - For each outdated package, update installedVersion / latestVersion /
+ *    isOutdated on the corresponding package.
+ *  - If the outdated JSON reports a package we don't have (e.g. it came from
+ *    Directory.Packages.props which the XML loader doesn't see), append it.
+ *  - Skip packages with a pinned `[x.y.z]` requested version — that's an
+ *    explicit lock and matches `dotnet outdated`'s default behavior.
+ */
+function applyOutdatedToProjects(projects: OverviewProject[], result: DotnetListOutput): void {
+  const byPath = new Map<string, OverviewProject>()
+  for (const p of projects) {
+    byPath.set(normalizePath(p.fsPath), p)
+  }
+
+  for (const dnProject of result.projects ?? []) {
+    const project = byPath.get(normalizePath(dnProject.path))
+    if (!project) {
+      continue
+    }
+    for (const fw of dnProject.frameworks ?? []) {
+      for (const pkg of fw.topLevelPackages ?? []) {
+        if (isPinned(pkg.requestedVersion)) {
+          continue
+        }
+        upsertPackage(project, pkg.id, pkg.resolvedVersion, pkg.latestVersion ?? '')
+      }
+    }
+  }
+}
+
+function upsertPackage(project: OverviewProject, id: string, resolved: string, latest: string): void {
+  let entry = project.packages.find(p => p.id === id)
+  if (!entry) {
+    entry = { id, installedVersion: resolved, latestVersion: '', isOutdated: false }
+    project.packages.push(entry)
+  }
+  entry.installedVersion = resolved
+  entry.latestVersion = latest
+  entry.isOutdated = !!latest && latest !== resolved
+}
+
+function isPinned(requestedVersion: string | undefined): boolean {
+  return !!requestedVersion && requestedVersion.startsWith('[')
+}
+
+function normalizePath(p: string): string {
+  return path.normalize(p).toLowerCase()
 }
