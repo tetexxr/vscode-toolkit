@@ -129,6 +129,10 @@ export interface NpmOverviewPackage {
   latestVersion: string
   dependencyType: DependencyType
   isOutdated: boolean
+  /** True when the package.json range is a bare version (no ^ ~ etc). */
+  isPinned?: boolean
+  /** Severity of the bump between installed and latest — drives the colour in the UI. */
+  versionBump?: 'major' | 'minor' | 'patch'
 }
 
 export interface NpmOverviewProject {

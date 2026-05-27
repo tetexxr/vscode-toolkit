@@ -135,6 +135,29 @@ export function isPrerelease(version: string): boolean {
 }
 
 /**
+ * Classify the jump from `installed` to `latest` using the standard semver
+ * colour code: major change → red, minor → yellow, patch → green. Prerelease
+ * upgrades are always treated as major because the API surface isn't stable.
+ */
+export function classifyBump(installed: string, latest: string): 'major' | 'minor' | 'patch' | undefined {
+  const a = parseSemVer(installed)
+  const b = parseSemVer(latest)
+  if (!a || !b) {
+    return undefined
+  }
+  if (b.prerelease) {
+    return 'major'
+  }
+  if (a.major !== b.major) {
+    return 'major'
+  }
+  if (a.minor !== b.minor) {
+    return 'minor'
+  }
+  return 'patch'
+}
+
+/**
  * Formats a download count into a human-readable short string.
  *   0        → "0"
  *   999      → "999"
