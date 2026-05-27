@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import type { BlameInfo } from '../utils/git'
 import { getRepoRoot, getFileBlame } from '../utils/git'
+import { logError } from '../utils/logger'
 import * as path from 'path'
 
 /** Palette of subtle background colors to distinguish consecutive commit groups. */
@@ -74,8 +75,11 @@ async function applyBlame(editor: vscode.TextEditor | undefined): Promise<void> 
     }
 
     renderAnnotations(editor, blameData)
-  } catch {
-    // File is not tracked by git or other error — silently ignore
+  } catch (err) {
+    // Untracked files are the most common cause and are not actionable, so we
+    // intentionally avoid surfacing a toast. The OutputChannel keeps a trail
+    // for anything genuinely unexpected (auth, corrupt repo, etc.).
+    logError('git-blame', err)
   }
 }
 

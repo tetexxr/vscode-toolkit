@@ -4,6 +4,7 @@ import { statSync } from 'fs'
 import { builtinModules } from 'module'
 import { join, resolve, dirname } from 'path'
 import { shouldProvide, guessVariableName } from './npm-intellisense-utils'
+import { logError } from '../utils/logger'
 
 // --- Config ---
 
@@ -107,7 +108,10 @@ async function getNpmPackages(rootPath: string, filePath: string, config: NpmInt
       ...(config.scanDevDependencies ? Object.keys(pkg.devDependencies ?? {}) : []),
       ...(config.showBuiltinModules ? getBuiltinModules() : [])
     ].filter(name => !exclude.has(name))
-  } catch {
+  } catch (err) {
+    // Missing or malformed package.json is the typical cause — we keep
+    // completions empty rather than surfacing an error per keystroke.
+    logError('npm-intellisense', err)
     return []
   }
 }
@@ -154,7 +158,8 @@ async function resolveSubfolders(packages: string[], line: string, rootPath: str
     const dir = join(rootPath, 'node_modules', ...parts.filter(Boolean))
     const files = await readdir(dir)
     return files.map(file => fragment + file.replace(/\.js$/, ''))
-  } catch {
+  } catch (err) {
+    logError('npm-intellisense.subfolders', err)
     return packages
   }
 }

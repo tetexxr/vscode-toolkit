@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import * as crypto from 'crypto'
 import type { CommitLogEntry, CommitFileInfo } from '../utils/git'
 import {
   getRepoRoot,
@@ -14,11 +13,9 @@ import {
   countCommitsBetween,
   hasUncommittedChanges
 } from '../utils/git'
-import { escapeHtml, renderFileList, renderDiffContent, renderDiffPlaceholders } from './git-edit-commit-utils'
-
-function getNonce(): string {
-  return crypto.randomBytes(16).toString('hex')
-}
+import { renderFileList, renderDiffContent, renderDiffPlaceholders } from './git-edit-commit-utils'
+import { escapeHtml, createNonce } from '../utils/html'
+import { logError } from '../utils/logger'
 
 function buildEditWebviewHtml(
   commit: CommitLogEntry,
@@ -573,7 +570,8 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
     try {
       this.cachedRepoRoot = await getRepoRoot(folder.uri.fsPath)
       return this.cachedRepoRoot
-    } catch {
+    } catch (err) {
+      logError('git-edit-commit.getRepoRoot', err)
       return undefined
     }
   }
@@ -592,7 +590,8 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
     try {
       const [commits, headHash] = await Promise.all([getCommitLog(root), getCommitHash(root).catch(() => '')])
       return commits.map(c => new CommitTreeItem(c, c.hash === headHash))
-    } catch {
+    } catch (err) {
+      logError('git-edit-commit.getChildren', err)
       return []
     }
   }
@@ -712,7 +711,7 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
         if (editPanel === panel) editPanel = undefined
       })
 
-      const nonce = getNonce()
+      const nonce = createNonce()
       panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, isHead, nonce, commitDateIso)
 
       panel.webview.onDidReceiveMessage((msg: unknown) => {

@@ -1,3 +1,5 @@
+import { escapeHtml } from '../utils/html'
+
 export interface MatchInfo {
   full: string
   index: number
@@ -98,15 +100,6 @@ export function highlightMatches(input: string, matches: MatchInfo[]): string {
 
 export function applyReplace(re: RegExp, input: string, replaceText: string): string {
   return input.replace(re, replaceText)
-}
-
-export function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
 }
 
 /**

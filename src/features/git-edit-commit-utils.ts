@@ -1,10 +1,7 @@
 import type { CommitFileInfo } from '../utils/git'
+import { escapeHtml } from '../utils/html'
 
 export const LARGE_DIFF_LINE_THRESHOLD = 5000
-
-export function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
 
 export function renderFileList(files: CommitFileInfo[]): string {
   const html: string[] = []

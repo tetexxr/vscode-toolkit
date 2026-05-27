@@ -211,7 +211,8 @@ class TypeOnlyImportsCodeActionProvider implements vscode.CodeActionProvider {
     let findings: TypeOnlyImportFinding[]
     try {
       findings = findTypeOnlyImports(document.getText(), document.uri.fsPath)
-    } catch {
+    } catch (err) {
+      log(`code-action analysis failed for ${document.uri.fsPath}: ${err instanceof Error ? err.message : String(err)}`)
       return []
     }
     if (findings.length === 0) return []

@@ -25,6 +25,7 @@ import { detectPackageManager } from './npm-commands'
 import { runOutdated, type NpmOutdatedEntry } from './npm-cli'
 import { applyOutdatedToProject } from './npm-utils'
 import { NpmTaskManager } from './npm-task-manager'
+import { logInfo } from '../../utils/logger'
 
 const LOCKFILE_NAMES = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'npm-shrinkwrap.json']
 
@@ -83,12 +84,14 @@ export class NpmOverviewHandler implements vscode.Disposable {
     }
 
     // Phase 2: run `npm outdated` for every project in parallel and merge.
+    const t0 = performance.now()
     await Promise.all(
       projects.map(async project => {
         const outdated = await this.runOutdatedCached(project.fsPath).catch(() => ({}) as Record<string, NpmOutdatedEntry>)
         applyOutdatedToProject(project, outdated)
       })
     )
+    logInfo('npm-overview', `outdated check completed in ${Math.round(performance.now() - t0)}ms for ${projects.length} project(s)`)
 
     this.post({ type: 'overview-data', projects, loading: false })
   }

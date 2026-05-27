@@ -1,4 +1,5 @@
 import * as path from 'node:path'
+import { escapeHtml } from '../utils/html'
 
 export type ImageFormat = 'markdown' | 'html'
 
@@ -95,15 +96,7 @@ export function renderLink(format: ImageFormat, relativePath: string, options: R
   }
   const extra = options.htmlAttributes?.trim()
   const attrSuffix = extra ? ` ${extra}` : ''
-  return `<img src="${escapeHtmlAttr(relativePath)}" alt="${escapeHtmlAttr(alt)}"${attrSuffix} />`
-}
-
-function escapeHtmlAttr(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+  return `<img src="${escapeHtml(relativePath)}" alt="${escapeHtml(alt)}"${attrSuffix} />`
 }
 
 /**

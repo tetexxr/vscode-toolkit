@@ -3,8 +3,7 @@ import {
   compileRegex,
   findAllMatches,
   highlightMatches,
-  applyReplace,
-  escapeHtml
+  applyReplace
 } from '../../src/features/regex-playground-utils'
 
 describe('compileRegex', () => {
@@ -115,12 +114,3 @@ describe('applyReplace', () => {
   })
 })
 
-describe('escapeHtml', () => {
-  it('should escape &, <, >, ", and \'', () => {
-    assert.equal(escapeHtml(`<a href="x">&"'</a>`), '&lt;a href=&quot;x&quot;&gt;&amp;&quot;&#39;&lt;/a&gt;')
-  })
-
-  it('should return the input unchanged when there is nothing to escape', () => {
-    assert.equal(escapeHtml('hello world'), 'hello world')
-  })
-})

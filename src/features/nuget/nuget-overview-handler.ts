@@ -22,6 +22,7 @@ import { listInstalledPackages, listOutdatedPackages, type DotnetListOutput } fr
 import { NugetTaskManager } from './nuget-task-manager'
 import { findAuxiliaryFiles } from './nuget-paths'
 import { applyListDataToProjects } from './nuget-utils'
+import { logInfo } from '../../utils/logger'
 
 const SOLUTION_GLOB = '**/*.{sln,slnx,slnf}'
 
@@ -79,11 +80,13 @@ export class NugetOverviewHandler implements vscode.Disposable {
       return
     }
 
+    const t0 = performance.now()
     const [installedResult, outdatedResult] = await Promise.all([
       this.runListPackageCached(false),
       this.runListPackageCached(true)
     ])
     applyListDataToProjects(projects, installedResult, outdatedResult)
+    logInfo('nuget-overview', `dotnet list completed in ${Math.round(performance.now() - t0)}ms for ${projects.length} project(s)`)
     this.post({ type: 'overview-data', projects, loading: false })
   }
 

@@ -8,10 +8,22 @@ import {
   toRelative,
   findImportMatches,
   findAliasMatches,
+  clearConfigCache,
   PATH_RE
 } from './relative-imports-utils'
 
 export function registerRelativeImportsCommands(context: vscode.ExtensionContext): void {
+  // Drop the cached tsconfig/jsconfig results whenever any of those files
+  // changes on disk so the code-action provider always reflects the latest
+  // path aliases.
+  const watcher = vscode.workspace.createFileSystemWatcher('**/{tsconfig,jsconfig}*.json')
+  context.subscriptions.push(
+    watcher,
+    watcher.onDidChange(clearConfigCache),
+    watcher.onDidCreate(clearConfigCache),
+    watcher.onDidDelete(clearConfigCache)
+  )
+
   // Command: convert all alias imports in current file
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.convertImportsToRelative', async () => {
