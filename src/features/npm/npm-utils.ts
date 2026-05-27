@@ -3,7 +3,7 @@
  * tests can load them without spinning up the extension host.
  */
 
-import type { NpmOverviewProject } from './npm-types'
+import type { NpmOverviewProject, NpmPackageViewModel, NpmCategory, InstalledNpmPackage } from './npm-types'
 import type { NpmOutdatedEntry } from './npm-cli'
 import { classifyBump } from '../../utils/semver'
 
@@ -60,4 +60,53 @@ export function applyOutdatedToProject(project: NpmOverviewProject, outdated: Re
       pkg.versionBump = undefined
     }
   }
+}
+
+// ── Per-project panel ─────────────────────────────────────
+
+/**
+ * Build view models for the Installed / Updates tabs of the per-project
+ * panel from the project's package.json + `npm outdated` output. No
+ * description / author / downloads here — that's filled in later via the
+ * Search API.
+ */
+export function buildInstalledViewModels(
+  installed: InstalledNpmPackage[],
+  outdated: Record<string, NpmOutdatedEntry>,
+  sourceUrl: string
+): NpmPackageViewModel[] {
+  return installed.map(p => {
+    const entry = outdated[p.name]
+    const installedVersion = entry?.current ?? stripVersionRange(p.versionRange)
+    const latestVersion = entry?.latest ?? installedVersion
+    const isOutdated = !!entry && entry.latest !== (entry.current ?? installedVersion)
+    return {
+      name: p.name,
+      version: latestVersion,
+      description: '',
+      author: '',
+      homepage: '',
+      license: '',
+      keywords: [],
+      weeklyDownloads: undefined,
+      isInstalled: true,
+      installedVersionRange: p.versionRange,
+      dependencyType: p.dependencyType,
+      isOutdated,
+      sourceUrl
+    }
+  })
+}
+
+/** Apply the user's text filter and the active tab (installed vs updates) to a view-model list. */
+export function filterPackages(all: NpmPackageViewModel[], query: string, category: NpmCategory): NpmPackageViewModel[] {
+  let packages = all
+  const trimmed = query.trim().toLowerCase()
+  if (trimmed) {
+    packages = packages.filter(p => p.name.toLowerCase().includes(trimmed))
+  }
+  if (category === 'updates') {
+    packages = packages.filter(p => p.isOutdated)
+  }
+  return packages
 }

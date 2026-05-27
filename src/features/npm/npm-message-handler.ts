@@ -24,6 +24,7 @@ import { isPrerelease } from '../../utils/semver'
 import * as npmApi from './npm-api'
 import { loadNpmProject, reloadNpmProject } from './npm-project-loader'
 import { runNpmOutdated, type NpmOutdatedEntry } from './npm-cli'
+import { buildInstalledViewModels, filterPackages } from './npm-utils'
 import { NpmTaskManager } from './npm-task-manager'
 
 const LOCKFILE_NAMES = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'npm-shrinkwrap.json']
@@ -392,48 +393,3 @@ export class NpmMessageHandler implements vscode.Disposable {
   }
 }
 
-/**
- * Build view models for the Installed / Updates tabs from the project's
- * package.json + npm outdated output. No description / author / downloads
- * here — that's filled in later via Search API.
- */
-function buildInstalledViewModels(
-  installed: Array<{ name: string; versionRange: string; dependencyType: 'dependencies' | 'devDependencies' }>,
-  outdated: Record<string, NpmOutdatedEntry>,
-  sourceUrl: string
-): NpmPackageViewModel[] {
-  return installed.map(p => {
-    const entry = outdated[p.name]
-    const installedVersion = entry?.current ?? stripVersionRange(p.versionRange)
-    const latestVersion = entry?.latest ?? installedVersion
-    const isOutdated = !!entry && entry.latest !== (entry.current ?? installedVersion)
-    return {
-      name: p.name,
-      version: latestVersion,
-      description: '',
-      author: '',
-      homepage: '',
-      license: '',
-      keywords: [],
-      weeklyDownloads: undefined,
-      isInstalled: true,
-      installedVersionRange: p.versionRange,
-      dependencyType: p.dependencyType,
-      isOutdated,
-      sourceUrl
-    }
-  })
-}
-
-/** Apply the user's text filter and the active tab (installed vs updates) to a view-model list. */
-function filterPackages(all: NpmPackageViewModel[], query: string, category: NpmCategory): NpmPackageViewModel[] {
-  let packages = all
-  const trimmed = query.trim().toLowerCase()
-  if (trimmed) {
-    packages = packages.filter(p => p.name.toLowerCase().includes(trimmed))
-  }
-  if (category === 'updates') {
-    packages = packages.filter(p => p.isOutdated)
-  }
-  return packages
-}
