@@ -1,18 +1,40 @@
 /**
  * Message handler for the NuGet Solution Overview panel.
- * Discovers all projects, loads installed packages, and resolves latest versions.
+ *
+ * Two phases on the wire:
+ *   1. "ready": send the installed-package list from a quick XML scan so the
+ *      panel paints immediately.
+ *   2. "load-versions": shell out to `dotnet list package --outdated` against
+ *      the solution (or against each project when there's no .sln/.slnx) to
+ *      pick up resolved/latest versions. Same code path `dotnet outdated` uses,
+ *      so it inherits the local NuGet HTTP cache and `project.assets.json`
+ *      reads for free — orders of magnitude faster than reimplementing the
+ *      protocol from Node.
  */
 
 import * as vscode from 'vscode'
+import * as path from 'path'
+import * as fs from 'fs/promises'
 import type { OverviewWebviewMessage, OverviewExtensionMessage, OverviewProject, OverviewPackage } from './nuget-types'
-import { getNugetSources, getNugetConfig } from './nuget-config'
-import * as nugetApi from './nuget-api'
+import { getNugetConfig } from './nuget-config'
 import { discoverProjectFiles, loadProject } from './nuget-project-loader'
+import { listInstalledPackages, listOutdatedPackages, type DotnetListOutput } from './nuget-cli'
 import { NugetTaskManager } from './nuget-task-manager'
+import { findAuxiliaryFiles } from './nuget-paths'
+import { applyListDataToProjects } from './nuget-utils'
+
+const SOLUTION_GLOB = '**/*.{sln,slnx,slnf}'
+
+interface ListCache {
+  fingerprint: string
+  installed: DotnetListOutput | null
+  outdated: DotnetListOutput | null
+}
 
 export class NugetOverviewHandler implements vscode.Disposable {
   private taskManager: NugetTaskManager
   private disposables: vscode.Disposable[] = []
+  private listCache: ListCache | null = null
 
   constructor(private webview: vscode.Webview) {
     this.taskManager = new NugetTaskManager()
@@ -27,7 +49,9 @@ export class NugetOverviewHandler implements vscode.Disposable {
     try {
       switch (msg.command) {
         case 'ready':
-          return await this.sendOverview(false)
+          // Auto-trigger the full load on first open: paint installed list
+          // from XML, then immediately enrich with `dotnet list` results.
+          return await this.sendOverview(true)
         case 'load-versions':
           return await this.sendOverview(true)
         case 'update':
@@ -46,11 +70,79 @@ export class NugetOverviewHandler implements vscode.Disposable {
   }
 
   private async sendOverview(loadVersions: boolean): Promise<void> {
-    const projectUris = await discoverProjectFiles()
-    const source = getNugetSources()[0]
-    const config = getNugetConfig()
+    const projects = await this.loadInstalled()
 
-    // Load all projects and their installed packages
+    // First paint with installed list only — no versions yet.
+    this.post({ type: 'overview-data', projects, loading: loadVersions })
+
+    if (!loadVersions) {
+      return
+    }
+
+    const [installedResult, outdatedResult] = await Promise.all([
+      this.runListPackageCached(false),
+      this.runListPackageCached(true)
+    ])
+    applyListDataToProjects(projects, installedResult, outdatedResult)
+    this.post({ type: 'overview-data', projects, loading: false })
+  }
+
+  /**
+   * Cache layer over `runListPackage`. Invalidates whenever any csproj /
+   * Directory.*.props / project.assets.json mtime changes, so editing a
+   * package reference or running `dotnet add package` makes the next refresh
+   * see fresh data while idle clicks come back from memory.
+   */
+  private async runListPackageCached(outdated: boolean): Promise<DotnetListOutput> {
+    const fp = await this.fingerprint()
+    if (!this.listCache || this.listCache.fingerprint !== fp) {
+      this.listCache = { fingerprint: fp, installed: null, outdated: null }
+    }
+    const key = outdated ? 'outdated' : 'installed'
+    if (this.listCache[key]) {
+      return this.listCache[key]!
+    }
+    const result = await this.runListPackage(outdated)
+    this.listCache[key] = result
+    return result
+  }
+
+  private async fingerprint(): Promise<string> {
+    const files = await this.fingerprintFiles()
+    const entries = await Promise.all(
+      files.map(async f => {
+        try {
+          const s = await fs.stat(f)
+          return `${f}:${s.mtimeMs}:${s.size}`
+        } catch {
+          return `${f}:missing`
+        }
+      })
+    )
+    return entries.join('|')
+  }
+
+  /** Collect every file whose change should invalidate the cached list output. */
+  private async fingerprintFiles(): Promise<string[]> {
+    const files = new Set<string>()
+    const projectUris = await discoverProjectFiles()
+    for (const uri of projectUris) {
+      files.add(uri.fsPath)
+      files.add(path.join(path.dirname(uri.fsPath), 'obj', 'project.assets.json'))
+      for (const aux of findAuxiliaryFiles(uri.fsPath)) {
+        files.add(aux)
+      }
+    }
+    const solution = (await vscode.workspace.findFiles(SOLUTION_GLOB, undefined, 1))[0]
+    if (solution) {
+      files.add(solution.fsPath)
+    }
+    return [...files].sort()
+  }
+
+  /** Quick first paint: XML-parsed installed list. No network or msbuild. */
+  private async loadInstalled(): Promise<OverviewProject[]> {
+    const projectUris = await discoverProjectFiles()
     const projects: OverviewProject[] = []
     for (const uri of projectUris) {
       const project = await loadProject(uri)
@@ -62,53 +154,34 @@ export class NugetOverviewHandler implements vscode.Disposable {
       }))
       projects.push({ name: project.name, fsPath: project.fsPath, packages: overviewPkgs })
     }
-
-    // Sort projects alphabetically
     projects.sort((a, b) => a.name.localeCompare(b.name))
+    return projects
+  }
 
-    // Send initial data immediately (without versions)
-    this.post({ type: 'overview-data', projects, loading: loadVersions })
+  /**
+   * Run `dotnet list package [--outdated]` once against the .sln/.slnx if one
+   * exists, otherwise once per .csproj in parallel. Aggregates per-project
+   * results into a single DotnetListOutput.
+   */
+  private async runListPackage(outdated: boolean): Promise<DotnetListOutput> {
+    const config = getNugetConfig()
+    const solution = (await vscode.workspace.findFiles(SOLUTION_GLOB, undefined, 1))[0]
+    const runOne = (target: string): Promise<DotnetListOutput> =>
+      outdated ? listOutdatedPackages(target, config.defaultPrerelease) : listInstalledPackages(target)
 
-    if (!loadVersions) {
-      return
+    if (solution) {
+      return runOne(solution.fsPath)
     }
 
-    // Resolve latest versions for all unique package IDs
-    const uniqueIds = new Set<string>()
-    for (const proj of projects) {
-      for (const pkg of proj.packages) {
-        uniqueIds.add(pkg.id)
+    const projectUris = await discoverProjectFiles()
+    const perProject = await Promise.all(projectUris.map(uri => runOne(uri.fsPath).catch(() => null)))
+    const combined: DotnetListOutput = { version: 1, parameters: outdated ? '--outdated' : '', projects: [] }
+    for (const r of perProject) {
+      if (r) {
+        combined.projects.push(...r.projects)
       }
     }
-
-    const latestMap = new Map<string, string>()
-    await Promise.allSettled(
-      [...uniqueIds].map(async id => {
-        const metadata = await nugetApi.fetchInstalledPackagesMetadata(
-          [{ id, version: '' }],
-          '',
-          config.defaultPrerelease,
-          source,
-          config.requestTimeout
-        )
-        if (metadata.length > 0) {
-          latestMap.set(id, metadata[0].version)
-        }
-      })
-    )
-
-    // Update projects with resolved versions
-    for (const proj of projects) {
-      for (const pkg of proj.packages) {
-        const latest = latestMap.get(pkg.id)
-        if (latest) {
-          pkg.latestVersion = latest
-          pkg.isOutdated = pkg.installedVersion !== latest
-        }
-      }
-    }
-
-    this.post({ type: 'overview-data', projects, loading: false })
+    return combined
   }
 
   private handleUpdate(projectFsPath: string, packageId: string, version: string, sourceUrl: string): void {
@@ -153,3 +226,4 @@ export class NugetOverviewHandler implements vscode.Disposable {
     this.disposables = []
   }
 }
+

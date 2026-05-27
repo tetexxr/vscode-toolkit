@@ -5,17 +5,43 @@
  */
 
 import * as vscode from 'vscode'
+import * as path from 'path'
+import * as fs from 'fs/promises'
 import type { WebviewMessage, ExtensionMessage, PackageViewModel, Category } from './nuget-types'
 import { getNugetSources, getNugetConfig } from './nuget-config'
 import { isPrerelease } from '../../utils/semver'
 import * as nugetApi from './nuget-api'
 import { loadProject, reloadProject } from './nuget-project-loader'
+import { listInstalledPackages, listOutdatedPackages, type DotnetListOutput } from './nuget-cli'
 import { NugetTaskManager } from './nuget-task-manager'
+import type { PackageSource } from './nuget-types'
+import { findAuxiliaryFiles } from './nuget-paths'
+import { filterPackages } from './nuget-utils'
+
+interface ListCache {
+  fingerprint: string
+  installed: DotnetListOutput | null
+  outdated: DotnetListOutput | null
+}
+
+/** Subset of PackageViewModel that Search API can fill in for an installed row. */
+interface PackageMetadata {
+  description: string
+  authors: string
+  iconUrl: string
+  totalDownloads?: number
+  verified: boolean
+}
 
 export class NugetMessageHandler implements vscode.Disposable {
   private taskManager: NugetTaskManager
   private projectFsPath: string
   private disposables: vscode.Disposable[] = []
+  private listCache: ListCache | null = null
+  /** id → metadata cache, lifetime = this panel session. Negative entries (no match) stored as `null`. */
+  private metadataCache = new Map<string, PackageMetadata | null>()
+  /** Monotonic counter so a slow background enrichment can't overwrite a newer search. */
+  private currentSearchId = 0
 
   constructor(
     private webview: vscode.Webview,
@@ -29,6 +55,7 @@ export class NugetMessageHandler implements vscode.Disposable {
       this.taskManager,
       vscode.workspace.onDidChangeConfiguration(() => {
         nugetApi.clearEndpointCache()
+        this.listCache = null
         void this.sendInit()
       })
     )
@@ -85,38 +112,236 @@ export class NugetMessageHandler implements vscode.Disposable {
   ): Promise<void> {
     this.post({ type: 'loading', loading: true })
 
-    const sources = getNugetSources()
-    const source = sources[sourceIndex] || sources[0]
-    const timeout = getNugetConfig().requestTimeout
-
-    const project = await reloadProject(this.projectFsPath)
     let packages: PackageViewModel[]
     let totalHits = 0
 
     if (category === 'browse') {
+      // Browse keeps the Search API: that's what surfaces the description /
+      // icon / author / downloads that make package discovery useful.
+      const sources = getNugetSources()
+      const source = sources[sourceIndex] || sources[0]
+      const timeout = getNugetConfig().requestTimeout
+      const project = await reloadProject(this.projectFsPath)
+
       const result = await nugetApi.searchPackages(query, prerelease, source, timeout, skip)
       packages = result.packages
       totalHits = result.totalHits
+
+      for (const pkg of packages) {
+        const installed = project.packages.find(p => p.id === pkg.id)
+        pkg.isInstalled = !!installed
+        pkg.installedVersion = installed?.version || ''
+        pkg.isOutdated = pkg.isInstalled && pkg.installedVersion !== pkg.version
+      }
     } else {
-      packages = await nugetApi.fetchInstalledPackagesMetadata(project.packages, query, prerelease, source, timeout)
-      totalHits = packages.length
-    }
+      // Installed / Updates: two-phase render.
+      //   1) Fast paint with versions only (dotnet list).
+      //   2) Background enrichment with description / icon / author / downloads
+      //      via Search API — re-rendered when ready.
+      const searchId = ++this.currentSearchId
+      const sources = getNugetSources()
+      const source = sources[sourceIndex] || sources[0]
+      const all = await this.buildInstalledViewModels(prerelease, source?.url ?? '')
 
-    // Mark installed status
-    for (const pkg of packages) {
-      const installed = project.packages.find(p => p.id === pkg.id)
-      pkg.isInstalled = !!installed
-      pkg.installedVersion = installed?.version || ''
-      pkg.isOutdated = pkg.isInstalled && pkg.installedVersion !== pkg.version
-    }
+      // Apply cached metadata immediately so revisits to the same project show
+      // icons without any flicker.
+      this.applyCachedMetadata(all)
 
-    // Filter for updates category
-    if (category === 'updates') {
-      packages = packages.filter(p => p.isOutdated)
+      packages = filterPackages(all, query, category)
+      this.post({ type: 'packages', packages, category, totalHits: packages.length, append: skip > 0 })
+      this.post({ type: 'loading', loading: false })
+
+      // Phase 2: enrich any rows whose metadata we don't already have. Fired
+      // and forgotten — staleness is guarded by `searchId`.
+      void this.enrichInBackground(searchId, all, source, query, category, skip)
+      return
     }
 
     this.post({ type: 'packages', packages, category, totalHits, append: skip > 0 })
     this.post({ type: 'loading', loading: false })
+  }
+
+  /**
+   * Background enrichment for the Installed / Updates tabs. Sends a fresh
+   * `packages` message only if the user hasn't moved on to a newer search.
+   * Posts a `metadata-loading` toggle so the webview can show / hide its
+   * "loading details" status bar.
+   */
+  private async enrichInBackground(
+    searchId: number,
+    all: PackageViewModel[],
+    source: PackageSource | undefined,
+    query: string,
+    category: Category,
+    skip: number
+  ): Promise<void> {
+    const needsFetch = all.some(vm => !this.metadataCache.has(vm.id))
+    if (!needsFetch) {
+      return
+    }
+    if (searchId === this.currentSearchId) {
+      this.post({ type: 'metadata-loading', loading: true })
+    }
+    try {
+      await this.enrichWithSearchMetadata(all, source)
+    } catch {
+      if (searchId === this.currentSearchId) {
+        this.post({ type: 'metadata-loading', loading: false })
+      }
+      return
+    }
+    if (searchId !== this.currentSearchId) {
+      return
+    }
+    this.applyCachedMetadata(all)
+    const packages = filterPackages(all, query, category)
+    this.post({ type: 'packages', packages, category, totalHits: packages.length, append: skip > 0 })
+    this.post({ type: 'metadata-loading', loading: false })
+  }
+
+  /** Paint cached metadata onto fresh view models without hitting the network. */
+  private applyCachedMetadata(viewModels: PackageViewModel[]): void {
+    for (const vm of viewModels) {
+      const meta = this.metadataCache.get(vm.id)
+      if (meta) {
+        vm.description = meta.description
+        vm.authors = meta.authors
+        vm.iconUrl = meta.iconUrl
+        vm.totalDownloads = meta.totalDownloads
+        vm.verified = meta.verified
+      }
+    }
+  }
+
+  /**
+   * Build view models for the Installed / Updates tabs from `dotnet list`
+   * output. No description / icon / author / downloads here — the panel of
+   * package details (handleSelectPackage) still hits Registration for that
+   * when the user clicks a row.
+   */
+  private async buildInstalledViewModels(prerelease: boolean, sourceUrl: string): Promise<PackageViewModel[]> {
+    const [installed, outdated] = await Promise.all([this.runListCached(false, prerelease), this.runListCached(true, prerelease)])
+
+    // Build per-id maps so multi-targeting projects don't show the same package twice.
+    const installedMap = new Map<string, { resolved: string; isPinned: boolean }>()
+    for (const proj of installed.projects ?? []) {
+      for (const fw of proj.frameworks ?? []) {
+        for (const pkg of fw.topLevelPackages ?? []) {
+          if (!installedMap.has(pkg.id)) {
+            installedMap.set(pkg.id, {
+              resolved: pkg.resolvedVersion,
+              isPinned: !!pkg.requestedVersion && pkg.requestedVersion.startsWith('[')
+            })
+          }
+        }
+      }
+    }
+
+    const outdatedMap = new Map<string, string>()
+    for (const proj of outdated.projects ?? []) {
+      for (const fw of proj.frameworks ?? []) {
+        for (const pkg of fw.topLevelPackages ?? []) {
+          if (pkg.latestVersion) {
+            outdatedMap.set(pkg.id, pkg.latestVersion)
+          }
+        }
+      }
+    }
+
+    const result: PackageViewModel[] = []
+    for (const [id, info] of installedMap) {
+      const latest = info.isPinned ? info.resolved : (outdatedMap.get(id) ?? info.resolved)
+      result.push({
+        id,
+        version: latest,
+        description: '',
+        authors: '',
+        iconUrl: '',
+        totalDownloads: undefined,
+        verified: false,
+        isInstalled: true,
+        installedVersion: info.resolved,
+        isOutdated: !info.isPinned && latest !== info.resolved,
+        sourceUrl
+      })
+    }
+    result.sort((a, b) => a.id.localeCompare(b.id))
+    return result
+  }
+
+  /**
+   * Hit the Search API once per package id whose metadata we haven't cached
+   * yet, and stash the results in `metadataCache`. Does not mutate the view
+   * models — callers reapply via `applyCachedMetadata`.
+   */
+  private async enrichWithSearchMetadata(viewModels: PackageViewModel[], source: PackageSource | undefined): Promise<void> {
+    if (!source || viewModels.length === 0) {
+      return
+    }
+    const timeout = getNugetConfig().requestTimeout
+    const toFetch = viewModels.filter(vm => !this.metadataCache.has(vm.id))
+    if (toFetch.length === 0) {
+      return
+    }
+
+    await Promise.allSettled(
+      toFetch.map(async vm => {
+        try {
+          const result = await nugetApi.searchPackages(vm.id, false, source, timeout)
+          const exact = result.packages.find(p => p.id.toLowerCase() === vm.id.toLowerCase())
+          this.metadataCache.set(
+            vm.id,
+            exact
+              ? {
+                  description: exact.description,
+                  authors: exact.authors,
+                  iconUrl: exact.iconUrl,
+                  totalDownloads: exact.totalDownloads,
+                  verified: exact.verified
+                }
+              : null
+          )
+        } catch {
+          this.metadataCache.set(vm.id, null)
+        }
+      })
+    )
+  }
+
+  /** Cache `dotnet list` results by file mtime so repeated tab switches are instant. */
+  private async runListCached(outdated: boolean, prerelease: boolean): Promise<DotnetListOutput> {
+    const fp = (await this.fingerprint()) + '|prerelease=' + prerelease
+    if (!this.listCache || this.listCache.fingerprint !== fp) {
+      this.listCache = { fingerprint: fp, installed: null, outdated: null }
+    }
+    const key = outdated ? 'outdated' : 'installed'
+    if (this.listCache[key]) {
+      return this.listCache[key]!
+    }
+    const result = outdated
+      ? await listOutdatedPackages(this.projectFsPath, prerelease)
+      : await listInstalledPackages(this.projectFsPath)
+    this.listCache[key] = result
+    return result
+  }
+
+  private async fingerprint(): Promise<string> {
+    const files = [
+      this.projectFsPath,
+      path.join(path.dirname(this.projectFsPath), 'obj', 'project.assets.json'),
+      ...findAuxiliaryFiles(this.projectFsPath)
+    ]
+    const entries = await Promise.all(
+      files.map(async f => {
+        try {
+          const s = await fs.stat(f)
+          return `${f}:${s.mtimeMs}:${s.size}`
+        } catch {
+          return `${f}:missing`
+        }
+      })
+    )
+    return entries.join('|')
   }
 
   // ── Package details ────────────────────────────────────
@@ -210,3 +435,4 @@ export class NugetMessageHandler implements vscode.Disposable {
     this.disposables = []
   }
 }
+

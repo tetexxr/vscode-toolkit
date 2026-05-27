@@ -17,6 +17,7 @@ export function generateOverviewHtml(nonce: string): string {
 <body>
   <div id="app">
     <div id="toolbar"></div>
+    <div id="status-bar" hidden></div>
     <div id="content"></div>
   </div>
   <script nonce="${nonce}">${JS}</script>
@@ -222,6 +223,33 @@ html, body {
   padding: 0 1rem;
 }
 
+.pin-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--vscode-editorWarning-foreground, #e5c07b);
+}
+
+.bump-major { color: #f48771; font-weight: 600; }
+.bump-minor { color: #e5c07b; font-weight: 600; }
+.bump-patch { color: #98c379; font-weight: 600; }
+
+#status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--vscode-editorWidget-background);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.85rem;
+}
+#status-bar[hidden] { display: none; }
+#status-bar .spinner {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+
 .btn-update-sm {
   font-size: 0.8rem;
   padding: 2px 8px;
@@ -234,6 +262,8 @@ const JS = /*js*/ `
 (function() {
   const vscode = acquireVsCodeApi();
 
+  const PIN_ICON = '<span class="pin-icon" title="Version pinned to an exact value in the project file"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>';
+
   const state = {
     projects: [],
     loading: false,
@@ -241,7 +271,18 @@ const JS = /*js*/ `
   };
 
   const $toolbar = document.getElementById('toolbar');
+  const $statusBar = document.getElementById('status-bar');
   const $content = document.getElementById('content');
+
+  function renderStatusBar() {
+    if (state.loading) {
+      $statusBar.innerHTML = '<span class="spinner"></span><span>Checking package versions against NuGet...</span>';
+      $statusBar.hidden = false;
+    } else {
+      $statusBar.hidden = true;
+      $statusBar.innerHTML = '';
+    }
+  }
 
   function post(msg) { vscode.postMessage(msg); }
 
@@ -252,6 +293,7 @@ const JS = /*js*/ `
         state.projects = msg.projects;
         state.loading = msg.loading;
         renderToolbar();
+        renderStatusBar();
         renderContent();
         break;
       case 'overview-error':
@@ -286,7 +328,7 @@ const JS = /*js*/ `
       '<span class="toolbar-title">Solution Overview</span>' +
       '<input id="filter-input" class="search-box" type="search" placeholder="Filter packages..." value="' + esc(state.filter) + '" />' +
       '<button class="btn" id="load-versions-btn"' + (state.loading ? ' disabled' : '') + '>' +
-        (state.loading ? '<span class="spinner"></span> Loading...' : 'Load Package Versions') +
+        (state.loading ? '<span class="spinner"></span> Loading...' : 'Refresh') +
       '</button>' +
       (hasOutdated
         ? '<button class="btn" id="update-all-btn"' + (state.loading ? ' disabled' : '') + '>Update All (' + outdated.length + ')</button>'
@@ -300,6 +342,7 @@ const JS = /*js*/ `
     document.getElementById('load-versions-btn').addEventListener('click', () => {
       state.loading = true;
       renderToolbar();
+      renderStatusBar();
       post({ command: 'load-versions' });
     });
     document.getElementById('settings-btn').addEventListener('click', () => post({ command: 'open-settings' }));
@@ -368,7 +411,9 @@ const JS = /*js*/ `
         html += '<tr>';
         html += '<td class="col-name">' + esc(pkg.id) + '</td>';
         html += '<td class="col-version">' + esc(pkg.installedVersion) + '</td>';
-        html += '<td class="col-latest">' + (hasLatest ? esc(pkg.latestVersion) : '-') + '</td>';
+        const bumpClass = pkg.versionBump ? ' bump-' + pkg.versionBump : '';
+        const latestCell = pkg.isPinned ? PIN_ICON : (hasLatest ? esc(pkg.latestVersion) : '-');
+        html += '<td class="col-latest' + bumpClass + '">' + latestCell + '</td>';
         html += '<td class="col-status">' + statusBadge + '</td>';
         html += '<td class="col-actions">';
         if (pkg.isOutdated) {

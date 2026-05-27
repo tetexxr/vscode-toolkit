@@ -134,6 +134,14 @@ export interface OverviewPackage {
   installedVersion: string
   latestVersion: string
   isOutdated: boolean
+  /** True when the .csproj pins the version with `[x.y.z]` bracket syntax. */
+  isPinned?: boolean
+  /**
+   * Severity of the version jump between installed and latest. Used to colour
+   * the "Latest Version" cell so the user can spot risky upgrades at a glance.
+   * Mirrors the colour legend used by `dotnet outdated`.
+   */
+  versionBump?: 'major' | 'minor' | 'patch'
 }
 
 export interface OverviewProject {
@@ -182,6 +190,8 @@ export type ExtensionMessage =
   | { type: 'packages'; packages: PackageViewModel[]; category: Category; totalHits: number; append: boolean }
   | { type: 'package-details'; pkg: PackageViewModel }
   | { type: 'loading'; loading: boolean }
+  /** Phase-2 enrichment is in progress (icons / descriptions still loading). */
+  | { type: 'metadata-loading'; loading: boolean }
   | { type: 'task-started'; packageId: string; action: string }
   | { type: 'task-finished'; packageId: string; action: string; success: boolean }
   | { type: 'project-updated'; project: Project }
