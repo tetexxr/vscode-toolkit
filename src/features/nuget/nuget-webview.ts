@@ -23,7 +23,6 @@ export function generateWebviewHtml(webview: vscode.Webview, nonce: string): str
       <nav id="nav-bar"></nav>
       <div id="tool-bar"></div>
     </header>
-    <div id="metadata-status-bar" hidden></div>
     <main id="main">
       <div id="package-list"></div>
       <div id="resize-handle"></div>
@@ -391,20 +390,21 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-#metadata-status-bar {
-  display: flex;
+.nav-loading {
+  display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 1rem;
-  background-color: var(--vscode-editorWidget-background);
-  border-bottom: 1px solid var(--vscode-panel-border);
+  gap: 0.4rem;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 0.5rem;
+  background-color: var(--vscode-badge-background);
   color: var(--vscode-descriptionForeground);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
+  opacity: 0.85;
 }
-#metadata-status-bar[hidden] { display: none; }
-#metadata-status-bar .spinner {
-  width: 12px;
-  height: 12px;
+.nav-loading .spinner {
+  width: 10px;
+  height: 10px;
   border-width: 2px;
   margin-right: 0;
 }
@@ -503,6 +503,7 @@ const JS = /*js*/ `
     project: null,
     config: { defaultPrerelease: false, requestTimeout: 10000 },
     loading: false,
+    metadataLoading: false,
     totalHits: 0,
     skip: 0,
   };
@@ -510,20 +511,9 @@ const JS = /*js*/ `
   // ── DOM refs ─────────────────────────────────────
   const $nav = document.getElementById('nav-bar');
   const $toolbar = document.getElementById('tool-bar');
-  const $statusBar = document.getElementById('metadata-status-bar');
   const $list = document.getElementById('package-list');
   const $details = document.getElementById('package-details');
   const $resize = document.getElementById('resize-handle');
-
-  function renderMetadataStatusBar(loading) {
-    if (loading) {
-      $statusBar.innerHTML = '<span class="spinner"></span><span>Loading package details...</span>';
-      $statusBar.hidden = false;
-    } else {
-      $statusBar.hidden = true;
-      $statusBar.innerHTML = '';
-    }
-  }
 
   // ── IPC ──────────────────────────────────────────
   function post(msg) { vscode.postMessage(msg); }
@@ -562,7 +552,8 @@ const JS = /*js*/ `
         }
         break;
       case 'metadata-loading':
-        renderMetadataStatusBar(msg.loading);
+        state.metadataLoading = msg.loading;
+        renderNav();
         break;
       case 'task-started':
         break;
@@ -611,11 +602,15 @@ const JS = /*js*/ `
   // ── Render: Nav ──────────────────────────────────
   function renderNav() {
     const name = state.project ? state.project.name : '';
+    const loadingBadge = state.metadataLoading
+      ? '<span class="nav-loading" title="Fetching package descriptions and icons"><span class="spinner"></span>Loading details</span>'
+      : '';
     $nav.innerHTML =
       '<div class="nav-tabs">' +
         navTab('Browse', 'browse') +
         navTab('Installed', 'installed') +
         navTab('Updates', 'updates') +
+        loadingBadge +
       '</div>' +
       '<span class="project-name" title="' + esc(state.project ? state.project.fsPath : '') + '">' + esc(name) + '</span>';
 
