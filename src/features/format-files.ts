@@ -6,7 +6,7 @@ import {
   type ExcludeMap
 } from './format-files-utils'
 import { filterGitIgnored } from '../utils/git-ignore'
-import { logError } from '../utils/logger'
+import { logError, logInfo } from '../utils/logger'
 
 /**
  * Format Files — bulk format all files in workspace or a specific folder.
@@ -86,6 +86,7 @@ async function formatWithProgress(
   const config = vscode.workspace.getConfiguration('toolkit.formatFiles')
   const runOrganizeImports = config.get<boolean>('runOrganizeImports', false)
 
+  const t0 = performance.now()
   let processed = 0
 
   for (const file of files) {
@@ -119,6 +120,7 @@ async function formatWithProgress(
     }
   }
 
+  logInfo('format-files', `formatted ${processed} of ${files.length} file(s) in ${Math.round(performance.now() - t0)}ms`)
   return processed
 }
 

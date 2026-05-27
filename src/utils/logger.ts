@@ -40,3 +40,12 @@ export function logError(scope: string, err: unknown): void {
 export function logWarn(scope: string, message: string): void {
   getChannel().appendLine(`[${new Date().toISOString()}] [warn]  [${scope}] ${message}`)
 }
+
+/**
+ * Informational log. Reserve this for completed operations whose timing or
+ * volume might matter when diagnosing a slowness report — NOT per-keystroke
+ * or per-iteration noise.
+ */
+export function logInfo(scope: string, message: string): void {
+  getChannel().appendLine(`[${new Date().toISOString()}] [info]  [${scope}] ${message}`)
+}

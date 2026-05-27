@@ -9,7 +9,7 @@ import {
   type TodoItem
 } from './todo-tree-utils'
 import { filterGitIgnored } from '../utils/git-ignore'
-import { logError } from '../utils/logger'
+import { logError, logInfo } from '../utils/logger'
 
 const VIEW_ID = 'toolkitTodoTree'
 
@@ -187,6 +187,7 @@ async function scanWorkspace(provider: TodoTreeProvider): Promise<void> {
     provider.setItems([])
     return
   }
+  const t0 = performance.now()
   const excludeGlob = buildExcludeGlob(cfg.excludedFolders)
   let found = await vscode.workspace.findFiles(cfg.includeGlob, excludeGlob, cfg.maxFiles)
   if (cfg.useGitIgnore && found.length > 0) {
@@ -213,6 +214,7 @@ async function scanWorkspace(provider: TodoTreeProvider): Promise<void> {
       logError(`todo-tree:${uri.fsPath}`, err)
     }
   }
+  logInfo('todo-tree', `scanned ${found.length} file(s) and found ${items.length} todo(s) in ${Math.round(performance.now() - t0)}ms`)
   provider.setItems(items)
 }
 
