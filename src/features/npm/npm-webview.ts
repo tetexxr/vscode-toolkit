@@ -376,6 +376,25 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.nav-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 0.5rem;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+.nav-loading .spinner {
+  width: 10px;
+  height: 10px;
+  border-width: 2px;
+  margin-right: 0;
+}
+
 /* ── Package details ────────────────────────────── */
 
 .detail-header {
@@ -496,6 +515,7 @@ const JS = /*js*/ `
     project: null,
     config: { defaultPrerelease: false, requestTimeout: 10000 },
     loading: false,
+    metadataLoading: false,
     totalHits: 0,
     skip: 0,
   };
@@ -542,6 +562,10 @@ const JS = /*js*/ `
         if (msg.loading && state.selectedId && !state.selectedPkg) {
           $details.innerHTML = '<div class="loading-message"><span class="spinner"></span> Loading package details...</div>';
         }
+        break;
+      case 'metadata-loading':
+        state.metadataLoading = msg.loading;
+        renderNav();
         break;
       case 'task-started':
         break;
@@ -590,11 +614,15 @@ const JS = /*js*/ `
   // ── Render: Nav ──────────────────────────────────
   function renderNav() {
     const name = state.project ? state.project.name : '';
+    const loadingBadge = state.metadataLoading
+      ? '<span class="nav-loading" title="Fetching package descriptions and downloads"><span class="spinner"></span>Loading details</span>'
+      : '';
     $nav.innerHTML =
       '<div class="nav-tabs">' +
         navTab('Browse', 'browse') +
         navTab('Installed', 'installed') +
         navTab('Updates', 'updates') +
+        loadingBadge +
       '</div>' +
       '<span class="project-name" title="' + esc(state.project ? state.project.fsPath : '') + '">' + esc(name) + '</span>';
 
