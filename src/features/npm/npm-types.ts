@@ -109,6 +109,10 @@ export interface NpmPackageViewModel {
   sourceUrl: string
   versions?: NpmVersionDetail[]
   deprecated?: string
+  /** True when the package.json range is a bare version (no ^ ~ etc). */
+  isPinned?: boolean
+  /** Severity of the jump between resolved installed version and latest. */
+  versionBump?: 'major' | 'minor' | 'patch'
 }
 
 export interface NpmVersionDetail {

@@ -77,9 +77,10 @@ export function buildInstalledViewModels(
 ): NpmPackageViewModel[] {
   return installed.map(p => {
     const entry = outdated[p.name]
+    const pinned = isPinned(p.versionRange)
     const installedVersion = entry?.current ?? stripVersionRange(p.versionRange)
     const latestVersion = entry?.latest ?? installedVersion
-    const isOutdated = !!entry && entry.latest !== (entry.current ?? installedVersion)
+    const outdatedFlag = !pinned && !!entry && entry.latest !== (entry.current ?? installedVersion)
     return {
       name: p.name,
       version: latestVersion,
@@ -92,8 +93,10 @@ export function buildInstalledViewModels(
       isInstalled: true,
       installedVersionRange: p.versionRange,
       dependencyType: p.dependencyType,
-      isOutdated,
-      sourceUrl
+      isOutdated: outdatedFlag,
+      sourceUrl,
+      isPinned: pinned,
+      versionBump: outdatedFlag ? classifyBump(installedVersion, latestVersion) : undefined
     }
   })
 }

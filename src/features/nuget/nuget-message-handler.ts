@@ -9,7 +9,7 @@ import * as path from 'path'
 import * as fs from 'fs/promises'
 import type { WebviewMessage, ExtensionMessage, PackageViewModel, Category } from './nuget-types'
 import { getNugetSources, getNugetConfig } from './nuget-config'
-import { isPrerelease } from '../../utils/semver'
+import { isPrerelease, classifyBump } from '../../utils/semver'
 import * as nugetApi from './nuget-api'
 import { loadProject, reloadProject } from './nuget-project-loader'
 import { listInstalledPackages, listOutdatedPackages, type DotnetListOutput } from './nuget-cli'
@@ -251,6 +251,7 @@ export class NugetMessageHandler implements vscode.Disposable {
     const result: PackageViewModel[] = []
     for (const [id, info] of installedMap) {
       const latest = info.isPinned ? info.resolved : (outdatedMap.get(id) ?? info.resolved)
+      const isOutdated = !info.isPinned && latest !== info.resolved
       result.push({
         id,
         version: latest,
@@ -261,8 +262,10 @@ export class NugetMessageHandler implements vscode.Disposable {
         verified: false,
         isInstalled: true,
         installedVersion: info.resolved,
-        isOutdated: !info.isPinned && latest !== info.resolved,
-        sourceUrl
+        isOutdated,
+        sourceUrl,
+        isPinned: info.isPinned,
+        versionBump: isOutdated ? classifyBump(info.resolved, latest) : undefined
       })
     }
     result.sort((a, b) => a.id.localeCompare(b.id))
