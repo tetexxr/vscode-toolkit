@@ -14,6 +14,7 @@
 
 import * as vscode from 'vscode'
 import * as path from 'path'
+import * as fs from 'fs/promises'
 import type { OverviewWebviewMessage, OverviewExtensionMessage, OverviewProject, OverviewPackage } from './nuget-types'
 import { getNugetConfig } from './nuget-config'
 import { discoverProjectFiles, loadProject } from './nuget-project-loader'
@@ -22,9 +23,25 @@ import { NugetTaskManager } from './nuget-task-manager'
 
 const SOLUTION_GLOB = '**/*.{sln,slnx,slnf}'
 
+/** Auxiliary files (relative to a project) that affect the resolved package set. */
+const PARENT_AUX_FILES = [
+  'Directory.Packages.props',
+  'Directory.Build.props',
+  'Directory.Build.targets',
+  'NuGet.config',
+  'nuget.config'
+]
+
+interface ListCache {
+  fingerprint: string
+  installed: DotnetListOutput | null
+  outdated: DotnetListOutput | null
+}
+
 export class NugetOverviewHandler implements vscode.Disposable {
   private taskManager: NugetTaskManager
   private disposables: vscode.Disposable[] = []
+  private listCache: ListCache | null = null
 
   constructor(private webview: vscode.Webview) {
     this.taskManager = new NugetTaskManager()
@@ -39,7 +56,9 @@ export class NugetOverviewHandler implements vscode.Disposable {
     try {
       switch (msg.command) {
         case 'ready':
-          return await this.sendOverview(false)
+          // Auto-trigger the full load on first open: paint installed list
+          // from XML, then immediately enrich with `dotnet list` results.
+          return await this.sendOverview(true)
         case 'load-versions':
           return await this.sendOverview(true)
         case 'update':
@@ -67,9 +86,65 @@ export class NugetOverviewHandler implements vscode.Disposable {
       return
     }
 
-    const [installedResult, outdatedResult] = await Promise.all([this.runListPackage(false), this.runListPackage(true)])
+    const [installedResult, outdatedResult] = await Promise.all([
+      this.runListPackageCached(false),
+      this.runListPackageCached(true)
+    ])
     applyListDataToProjects(projects, installedResult, outdatedResult)
     this.post({ type: 'overview-data', projects, loading: false })
+  }
+
+  /**
+   * Cache layer over `runListPackage`. Invalidates whenever any csproj /
+   * Directory.*.props / project.assets.json mtime changes, so editing a
+   * package reference or running `dotnet add package` makes the next refresh
+   * see fresh data while idle clicks come back from memory.
+   */
+  private async runListPackageCached(outdated: boolean): Promise<DotnetListOutput> {
+    const fp = await this.fingerprint()
+    if (!this.listCache || this.listCache.fingerprint !== fp) {
+      this.listCache = { fingerprint: fp, installed: null, outdated: null }
+    }
+    const key = outdated ? 'outdated' : 'installed'
+    if (this.listCache[key]) {
+      return this.listCache[key]!
+    }
+    const result = await this.runListPackage(outdated)
+    this.listCache[key] = result
+    return result
+  }
+
+  private async fingerprint(): Promise<string> {
+    const files = await this.fingerprintFiles()
+    const entries = await Promise.all(
+      files.map(async f => {
+        try {
+          const s = await fs.stat(f)
+          return `${f}:${s.mtimeMs}:${s.size}`
+        } catch {
+          return `${f}:missing`
+        }
+      })
+    )
+    return entries.join('|')
+  }
+
+  /** Collect every file whose change should invalidate the cached list output. */
+  private async fingerprintFiles(): Promise<string[]> {
+    const files = new Set<string>()
+    const projectUris = await discoverProjectFiles()
+    for (const uri of projectUris) {
+      files.add(uri.fsPath)
+      files.add(path.join(path.dirname(uri.fsPath), 'obj', 'project.assets.json'))
+      for (const aux of findAuxiliaryFiles(uri.fsPath)) {
+        files.add(aux)
+      }
+    }
+    const solution = (await vscode.workspace.findFiles(SOLUTION_GLOB, undefined, 1))[0]
+    if (solution) {
+      files.add(solution.fsPath)
+    }
+    return [...files].sort()
   }
 
   /** Quick first paint: XML-parsed installed list. No network or msbuild. */
@@ -243,4 +318,22 @@ function isPinned(requestedVersion: string | undefined): boolean {
 
 function normalizePath(p: string): string {
   return path.normalize(p).toLowerCase()
+}
+
+/** Walk every parent directory of `projectFsPath` and emit candidate aux-file paths. */
+function findAuxiliaryFiles(projectFsPath: string): string[] {
+  const found: string[] = []
+  let dir = path.dirname(projectFsPath)
+  const root = path.parse(dir).root
+  while (dir && dir !== root) {
+    for (const name of PARENT_AUX_FILES) {
+      found.push(path.join(dir, name))
+    }
+    const parent = path.dirname(dir)
+    if (parent === dir) {
+      break
+    }
+    dir = parent
+  }
+  return found
 }
