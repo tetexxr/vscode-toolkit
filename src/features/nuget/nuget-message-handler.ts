@@ -14,6 +14,7 @@ import * as nugetApi from './nuget-api'
 import { loadProject, reloadProject } from './nuget-project-loader'
 import { listInstalledPackages, listOutdatedPackages, type DotnetListOutput } from './nuget-cli'
 import { NugetTaskManager } from './nuget-task-manager'
+import type { PackageSource } from './nuget-types'
 
 const PARENT_AUX_FILES = [
   'Directory.Packages.props',
@@ -29,11 +30,22 @@ interface ListCache {
   outdated: DotnetListOutput | null
 }
 
+/** Subset of PackageViewModel that Search API can fill in for an installed row. */
+interface PackageMetadata {
+  description: string
+  authors: string
+  iconUrl: string
+  totalDownloads?: number
+  verified: boolean
+}
+
 export class NugetMessageHandler implements vscode.Disposable {
   private taskManager: NugetTaskManager
   private projectFsPath: string
   private disposables: vscode.Disposable[] = []
   private listCache: ListCache | null = null
+  /** id → metadata cache, lifetime = this panel session. Negative entries (no match) stored as `null`. */
+  private metadataCache = new Map<string, PackageMetadata | null>()
 
   constructor(
     private webview: vscode.Webview,
@@ -126,8 +138,13 @@ export class NugetMessageHandler implements vscode.Disposable {
         pkg.isOutdated = pkg.isInstalled && pkg.installedVersion !== pkg.version
       }
     } else {
-      // Installed / Updates: same `dotnet list` path the overview uses.
-      packages = await this.buildInstalledViewModels(prerelease, getNugetSources()[0]?.url ?? '')
+      // Installed / Updates: same `dotnet list` path the overview uses, then
+      // enrich each row with description / icon / authors / downloads via the
+      // Search API (light and fast, unlike Registration).
+      const sources = getNugetSources()
+      const source = sources[sourceIndex] || sources[0]
+      packages = await this.buildInstalledViewModels(prerelease, source?.url ?? '')
+      await this.enrichWithSearchMetadata(packages, source)
       if (query.trim()) {
         const q = query.trim().toLowerCase()
         packages = packages.filter(p => p.id.toLowerCase().includes(q))
@@ -196,6 +213,54 @@ export class NugetMessageHandler implements vscode.Disposable {
     }
     result.sort((a, b) => a.id.localeCompare(b.id))
     return result
+  }
+
+  /**
+   * Fill description / icon / author / downloads on each view model by hitting
+   * the Search API once per package id. Search responses are tiny (~1KB) and
+   * the request is parallelised — typically adds ~200-400ms total. Results are
+   * cached per-id so subsequent tab switches don't refetch.
+   */
+  private async enrichWithSearchMetadata(viewModels: PackageViewModel[], source: PackageSource | undefined): Promise<void> {
+    if (!source || viewModels.length === 0) {
+      return
+    }
+    const timeout = getNugetConfig().requestTimeout
+    const toFetch = viewModels.filter(vm => !this.metadataCache.has(vm.id))
+
+    await Promise.allSettled(
+      toFetch.map(async vm => {
+        try {
+          const result = await nugetApi.searchPackages(vm.id, false, source, timeout)
+          const exact = result.packages.find(p => p.id.toLowerCase() === vm.id.toLowerCase())
+          this.metadataCache.set(
+            vm.id,
+            exact
+              ? {
+                  description: exact.description,
+                  authors: exact.authors,
+                  iconUrl: exact.iconUrl,
+                  totalDownloads: exact.totalDownloads,
+                  verified: exact.verified
+                }
+              : null
+          )
+        } catch {
+          this.metadataCache.set(vm.id, null)
+        }
+      })
+    )
+
+    for (const vm of viewModels) {
+      const meta = this.metadataCache.get(vm.id)
+      if (meta) {
+        vm.description = meta.description
+        vm.authors = meta.authors
+        vm.iconUrl = meta.iconUrl
+        vm.totalDownloads = meta.totalDownloads
+        vm.verified = meta.verified
+      }
+    }
   }
 
   /** Cache `dotnet list` results by file mtime so repeated tab switches are instant. */
