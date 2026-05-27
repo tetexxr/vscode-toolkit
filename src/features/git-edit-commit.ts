@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import * as crypto from 'crypto'
 import type { CommitLogEntry, CommitFileInfo } from '../utils/git'
 import {
   getRepoRoot,
@@ -14,11 +13,8 @@ import {
   countCommitsBetween,
   hasUncommittedChanges
 } from '../utils/git'
-import { escapeHtml, renderFileList, renderDiffContent, renderDiffPlaceholders } from './git-edit-commit-utils'
-
-function getNonce(): string {
-  return crypto.randomBytes(16).toString('hex')
-}
+import { renderFileList, renderDiffContent, renderDiffPlaceholders } from './git-edit-commit-utils'
+import { escapeHtml, createNonce } from '../utils/html'
 
 function buildEditWebviewHtml(
   commit: CommitLogEntry,
@@ -712,7 +708,7 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
         if (editPanel === panel) editPanel = undefined
       })
 
-      const nonce = getNonce()
+      const nonce = createNonce()
       panel.webview.html = buildEditWebviewHtml(item.commit, fullMessage, files, isHead, nonce, commitDateIso)
 
       panel.webview.onDidReceiveMessage((msg: unknown) => {

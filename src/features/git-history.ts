@@ -1,10 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { getRepoRoot, getFileLogPatch } from '../utils/git'
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
+import { escapeHtml, createNonce } from '../utils/html'
 
 function renderPatch(raw: string): string {
   const lines = raw.split('\n')
@@ -184,15 +181,6 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string): s
 </html>`
 }
 
-function getNonce(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let nonce = ''
-  for (let i = 0; i < 32; i++) {
-    nonce += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return nonce
-}
-
 const panels = new Map<string, vscode.WebviewPanel>()
 
 export function registerGitHistoryCommands(context: vscode.ExtensionContext): void {
@@ -246,7 +234,7 @@ export function registerGitHistoryCommands(context: vscode.ExtensionContext): vo
       panels.set(filePath, panel)
       panel.onDidDispose(() => panels.delete(filePath))
 
-      const nonce = getNonce()
+      const nonce = createNonce()
       const patchHtml = renderPatch(raw)
       panel.webview.html = buildWebviewHtml(fileName, patchHtml, nonce)
     })

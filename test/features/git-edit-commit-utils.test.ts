@@ -1,6 +1,5 @@
 import { strict as assert } from 'assert'
 import {
-  escapeHtml,
   renderFileList,
   renderDiffContent,
   renderDiffPlaceholders,
@@ -18,32 +17,6 @@ function file(overrides: Partial<CommitFileInfo> = {}): CommitFileInfo {
     ...overrides
   }
 }
-
-describe('escapeHtml', () => {
-  it('should escape angle brackets', () => {
-    assert.equal(escapeHtml('<div>'), '&lt;div&gt;')
-  })
-
-  it('should escape ampersands', () => {
-    assert.equal(escapeHtml('a & b'), 'a &amp; b')
-  })
-
-  it('should escape double quotes', () => {
-    assert.equal(escapeHtml('a "b" c'), 'a &quot;b&quot; c')
-  })
-
-  it('should escape ampersand before other entities', () => {
-    assert.equal(escapeHtml('&<>"'), '&amp;&lt;&gt;&quot;')
-  })
-
-  it('should leave plain text untouched', () => {
-    assert.equal(escapeHtml('hello world'), 'hello world')
-  })
-
-  it('should handle empty string', () => {
-    assert.equal(escapeHtml(''), '')
-  })
-})
 
 describe('renderFileList', () => {
   it('should render an entry per file', () => {
