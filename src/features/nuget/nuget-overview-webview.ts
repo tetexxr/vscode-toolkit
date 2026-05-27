@@ -17,7 +17,6 @@ export function generateOverviewHtml(nonce: string): string {
 <body>
   <div id="app">
     <div id="toolbar"></div>
-    <div id="status-bar" hidden></div>
     <div id="content"></div>
   </div>
   <script nonce="${nonce}">${JS}</script>
@@ -233,22 +232,6 @@ html, body {
 .bump-minor { color: #e5c07b; font-weight: 600; }
 .bump-patch { color: #98c379; font-weight: 600; }
 
-#status-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 1rem;
-  background-color: var(--vscode-editorWidget-background);
-  border-bottom: 1px solid var(--vscode-panel-border);
-  color: var(--vscode-descriptionForeground);
-  font-size: 0.85rem;
-}
-#status-bar[hidden] { display: none; }
-#status-bar .spinner {
-  width: 14px;
-  height: 14px;
-  border-width: 2px;
-}
 
 .btn-update-sm {
   font-size: 0.8rem;
@@ -266,23 +249,14 @@ const JS = /*js*/ `
 
   const state = {
     projects: [],
-    loading: false,
+    // Start in "loading" so the status bar is visible from the moment the
+    // panel opens, even before the backend responds.
+    loading: true,
     filter: '',
   };
 
   const $toolbar = document.getElementById('toolbar');
-  const $statusBar = document.getElementById('status-bar');
   const $content = document.getElementById('content');
-
-  function renderStatusBar() {
-    if (state.loading) {
-      $statusBar.innerHTML = '<span class="spinner"></span><span>Checking package versions against NuGet...</span>';
-      $statusBar.hidden = false;
-    } else {
-      $statusBar.hidden = true;
-      $statusBar.innerHTML = '';
-    }
-  }
 
   function post(msg) { vscode.postMessage(msg); }
 
@@ -293,7 +267,6 @@ const JS = /*js*/ `
         state.projects = msg.projects;
         state.loading = msg.loading;
         renderToolbar();
-        renderStatusBar();
         renderContent();
         break;
       case 'overview-error':
@@ -342,7 +315,6 @@ const JS = /*js*/ `
     document.getElementById('load-versions-btn').addEventListener('click', () => {
       state.loading = true;
       renderToolbar();
-      renderStatusBar();
       post({ command: 'load-versions' });
     });
     document.getElementById('settings-btn').addEventListener('click', () => post({ command: 'open-settings' }));
@@ -464,6 +436,10 @@ const JS = /*js*/ `
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // Paint the toolbar (with its "Loading..." button) immediately so the
+  // spinner is visible from the moment the panel opens, not just after the
+  // backend's first message.
+  renderToolbar();
   post({ command: 'ready' });
 })();
 `

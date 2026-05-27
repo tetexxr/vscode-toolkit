@@ -109,6 +109,10 @@ export interface NpmPackageViewModel {
   sourceUrl: string
   versions?: NpmVersionDetail[]
   deprecated?: string
+  /** True when the package.json range is a bare version (no ^ ~ etc). */
+  isPinned?: boolean
+  /** Severity of the jump between resolved installed version and latest. */
+  versionBump?: 'major' | 'minor' | 'patch'
 }
 
 export interface NpmVersionDetail {
@@ -129,6 +133,10 @@ export interface NpmOverviewPackage {
   latestVersion: string
   dependencyType: DependencyType
   isOutdated: boolean
+  /** True when the package.json range is a bare version (no ^ ~ etc). */
+  isPinned?: boolean
+  /** Severity of the bump between installed and latest — drives the colour in the UI. */
+  versionBump?: 'major' | 'minor' | 'patch'
 }
 
 export interface NpmOverviewProject {
@@ -157,6 +165,8 @@ export type NpmExtensionMessage =
   | { type: 'packages'; packages: NpmPackageViewModel[]; category: NpmCategory; totalHits: number; append: boolean }
   | { type: 'package-details'; pkg: NpmPackageViewModel }
   | { type: 'loading'; loading: boolean }
+  /** Phase-2 enrichment is in progress (icons / descriptions still loading). */
+  | { type: 'metadata-loading'; loading: boolean }
   | { type: 'task-started'; packageName: string; action: string }
   | { type: 'task-finished'; packageName: string; action: string; success: boolean }
   | { type: 'project-updated'; project: NpmProject }

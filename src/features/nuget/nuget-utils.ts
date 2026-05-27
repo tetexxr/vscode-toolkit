@@ -4,9 +4,11 @@
  */
 
 import * as path from 'path'
-import { parseSemVer } from '../../utils/semver'
+import { classifyBump } from '../../utils/semver'
 import type { DotnetListOutput } from './nuget-cli'
 import type { OverviewProject, PackageViewModel, Category } from './nuget-types'
+
+export { classifyBump }
 
 // ── Overview merge ─────────────────────────────────────────
 
@@ -83,29 +85,6 @@ export function upsertPackage(project: OverviewProject, id: string, resolved: st
   entry.latestVersion = latest
   entry.isOutdated = !!latest && latest !== resolved
   entry.versionBump = entry.isOutdated ? classifyBump(resolved, latest) : undefined
-}
-
-/**
- * Classify the jump from `installed` to `latest` using the standard semver
- * colour code: major change → red, minor → yellow, patch → green. Prerelease
- * upgrades are always treated as major because the API surface isn't stable.
- */
-export function classifyBump(installed: string, latest: string): 'major' | 'minor' | 'patch' | undefined {
-  const a = parseSemVer(installed)
-  const b = parseSemVer(latest)
-  if (!a || !b) {
-    return undefined
-  }
-  if (b.prerelease) {
-    return 'major'
-  }
-  if (a.major !== b.major) {
-    return 'major'
-  }
-  if (a.minor !== b.minor) {
-    return 'minor'
-  }
-  return 'patch'
 }
 
 export function isPinned(requestedVersion: string | undefined): boolean {

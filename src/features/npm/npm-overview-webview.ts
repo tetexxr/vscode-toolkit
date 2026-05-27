@@ -216,6 +216,16 @@ html, body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.pin-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--vscode-editorWarning-foreground, #e5c07b);
+}
+
+.bump-major { color: #f48771; font-weight: 600; }
+.bump-minor { color: #e5c07b; font-weight: 600; }
+.bump-patch { color: #98c379; font-weight: 600; }
+
 .error-container {
   display: flex;
   flex-direction: column;
@@ -245,9 +255,13 @@ const JS = /*js*/ `
 
   const state = {
     projects: [],
-    loading: false,
+    // Start in "loading" so the status bar is visible from the moment the
+    // panel opens, even before the backend responds.
+    loading: true,
     filter: '',
   };
+
+  const PIN_ICON = '<span class="pin-icon" title="Version pinned to an exact value in package.json"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>';
 
   const $toolbar = document.getElementById('toolbar');
   const $content = document.getElementById('content');
@@ -295,7 +309,7 @@ const JS = /*js*/ `
       '<span class="toolbar-title">Workspace Overview</span>' +
       '<input id="filter-input" class="search-box" type="search" placeholder="Filter packages..." value="' + esc(state.filter) + '" />' +
       '<button class="btn" id="load-versions-btn"' + (state.loading ? ' disabled' : '') + '>' +
-        (state.loading ? '<span class="spinner"></span> Loading...' : 'Load Package Versions') +
+        (state.loading ? '<span class="spinner"></span> Loading...' : 'Refresh') +
       '</button>' +
       (hasOutdated
         ? '<button class="btn" id="update-all-btn"' + (state.loading ? ' disabled' : '') + '>Update All (' + outdated.length + ')</button>'
@@ -378,11 +392,14 @@ const JS = /*js*/ `
 
         const typeBadge = pkg.dependencyType === 'devDependencies' ? 'dev' : 'dep';
 
+        const bumpClass = pkg.versionBump ? ' bump-' + pkg.versionBump : '';
+        const latestCell = pkg.isPinned ? PIN_ICON : (hasLatest ? esc(pkg.latestVersion) : '-');
+
         html += '<tr>';
         html += '<td class="col-name">' + esc(pkg.name) + '</td>';
         html += '<td class="col-type"><span class="badge-dep">' + typeBadge + '</span></td>';
         html += '<td class="col-version">' + esc(pkg.installedVersionRange) + '</td>';
-        html += '<td class="col-latest">' + (hasLatest ? esc(pkg.latestVersion) : '-') + '</td>';
+        html += '<td class="col-latest' + bumpClass + '">' + latestCell + '</td>';
         html += '<td class="col-status">' + statusBadge + '</td>';
         html += '<td class="col-actions">';
         if (pkg.isOutdated) {
@@ -433,6 +450,10 @@ const JS = /*js*/ `
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // Paint the toolbar (with its "Loading..." button) immediately so the
+  // spinner is visible from the moment the panel opens, not just after the
+  // backend's first message.
+  renderToolbar();
   post({ command: 'ready' });
 })();
 `

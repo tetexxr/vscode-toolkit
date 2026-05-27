@@ -402,6 +402,16 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   font-size: 0.78rem;
   opacity: 0.85;
 }
+.pin-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--vscode-editorWarning-foreground, #e5c07b);
+  margin-right: 0.3rem;
+}
+.bump-major { color: #f48771; font-weight: 600; }
+.bump-minor { color: #e5c07b; font-weight: 600; }
+.bump-patch { color: #98c379; font-weight: 600; }
+
 .nav-loading .spinner {
   width: 10px;
   height: 10px;
@@ -492,6 +502,8 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 const JS = /*js*/ `
 (function() {
   const vscode = acquireVsCodeApi();
+
+  const PIN_ICON = '<span class="pin-icon" title="Version pinned to an exact value in the project file"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>';
 
   // ── State ────────────────────────────────────────
   const state = {
@@ -711,6 +723,8 @@ const JS = /*js*/ `
       html += '</div>';
 
       // Right side: version + action per row
+      const pin = pkg.isPinned ? PIN_ICON : '';
+      const bumpClass = pkg.versionBump ? ' class="bump-' + pkg.versionBump + '"' : '';
       html += '<div class="pkg-right">';
       if (pkg.isOutdated) {
         html += '<div class="pkg-right-row">';
@@ -718,12 +732,12 @@ const JS = /*js*/ `
         html += '<button class="btn btn-secondary btn-icon pkg-action-btn" data-action="uninstall" data-pkg="' + esc(pkg.id) + '" title="Uninstall">&#x2716;</button>';
         html += '</div>';
         html += '<div class="pkg-right-row">';
-        html += '<span>' + esc(pkg.version) + '</span>';
+        html += '<span' + bumpClass + '>' + esc(pkg.version) + '</span>';
         html += '<button class="btn btn-secondary btn-icon pkg-action-btn" data-action="update" data-pkg="' + esc(pkg.id) + '" data-ver="' + esc(pkg.version) + '" data-src="' + esc(pkg.sourceUrl) + '" title="Update">&#x2191;</button>';
         html += '</div>';
       } else if (pkg.isInstalled) {
         html += '<div class="pkg-right-row">';
-        html += '<span>' + esc(pkg.version) + '</span>';
+        html += pin + '<span>' + esc(pkg.version) + '</span>';
         html += '<button class="btn btn-secondary btn-icon pkg-action-btn" data-action="uninstall" data-pkg="' + esc(pkg.id) + '" title="Uninstall">&#x2716;</button>';
         html += '</div>';
       } else {

@@ -123,6 +123,10 @@ export interface PackageViewModel {
   isOutdated: boolean
   sourceUrl: string
   versions?: CatalogEntry[]
+  /** True when the .csproj pins the version with `[x.y.z]` bracket syntax. */
+  isPinned?: boolean
+  /** Severity of the jump between installedVersion and version. */
+  versionBump?: 'major' | 'minor' | 'patch'
 }
 
 export type Category = 'browse' | 'installed' | 'updates'

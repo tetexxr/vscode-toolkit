@@ -376,6 +376,35 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.nav-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 0.5rem;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+.nav-loading .spinner {
+  width: 10px;
+  height: 10px;
+  border-width: 2px;
+  margin-right: 0;
+}
+
+.pin-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--vscode-editorWarning-foreground, #e5c07b);
+  margin-right: 0.3rem;
+}
+.bump-major { color: #f48771; font-weight: 600; }
+.bump-minor { color: #e5c07b; font-weight: 600; }
+.bump-patch { color: #98c379; font-weight: 600; }
+
 /* ── Package details ────────────────────────────── */
 
 .detail-header {
@@ -486,6 +515,8 @@ const JS = /*js*/ `
 (function() {
   const vscode = acquireVsCodeApi();
 
+  const PIN_ICON = '<span class="pin-icon" title="Version pinned to an exact value in package.json"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>';
+
   // ── State ────────────────────────────────────────
   const state = {
     category: 'browse',
@@ -496,6 +527,7 @@ const JS = /*js*/ `
     project: null,
     config: { defaultPrerelease: false, requestTimeout: 10000 },
     loading: false,
+    metadataLoading: false,
     totalHits: 0,
     skip: 0,
   };
@@ -542,6 +574,10 @@ const JS = /*js*/ `
         if (msg.loading && state.selectedId && !state.selectedPkg) {
           $details.innerHTML = '<div class="loading-message"><span class="spinner"></span> Loading package details...</div>';
         }
+        break;
+      case 'metadata-loading':
+        state.metadataLoading = msg.loading;
+        renderNav();
         break;
       case 'task-started':
         break;
@@ -590,11 +626,15 @@ const JS = /*js*/ `
   // ── Render: Nav ──────────────────────────────────
   function renderNav() {
     const name = state.project ? state.project.name : '';
+    const loadingBadge = state.metadataLoading
+      ? '<span class="nav-loading" title="Fetching package descriptions and downloads"><span class="spinner"></span>Loading details</span>'
+      : '';
     $nav.innerHTML =
       '<div class="nav-tabs">' +
         navTab('Browse', 'browse') +
         navTab('Installed', 'installed') +
         navTab('Updates', 'updates') +
+        loadingBadge +
       '</div>' +
       '<span class="project-name" title="' + esc(state.project ? state.project.fsPath : '') + '">' + esc(name) + '</span>';
 
@@ -694,6 +734,8 @@ const JS = /*js*/ `
       html += '</div>';
 
       // Right side: version + action per row
+      const pin = pkg.isPinned ? PIN_ICON : '';
+      const bumpClass = pkg.versionBump ? ' class="bump-' + pkg.versionBump + '"' : '';
       html += '<div class="pkg-right">';
       if (pkg.isOutdated) {
         html += '<div class="pkg-right-row">';
@@ -701,12 +743,12 @@ const JS = /*js*/ `
         html += '<button class="btn btn-secondary btn-icon pkg-action-btn" data-action="uninstall" data-pkg="' + esc(pkg.name) + '" title="Uninstall">&#x2716;</button>';
         html += '</div>';
         html += '<div class="pkg-right-row">';
-        html += '<span>' + esc(pkg.version) + '</span>';
+        html += '<span' + bumpClass + '>' + esc(pkg.version) + '</span>';
         html += '<button class="btn btn-secondary btn-icon pkg-action-btn" data-action="update" data-pkg="' + esc(pkg.name) + '" data-ver="' + esc(pkg.version) + '" data-dev="' + (pkg.dependencyType === 'devDependencies' ? '1' : '0') + '" title="Update">&#x2191;</button>';
         html += '</div>';
       } else if (pkg.isInstalled) {
         html += '<div class="pkg-right-row">';
-        html += '<span>' + esc(pkg.installedVersionRange) + '</span>';
+        html += pin + '<span>' + esc(pkg.installedVersionRange) + '</span>';
         html += '<button class="btn btn-secondary btn-icon pkg-action-btn" data-action="uninstall" data-pkg="' + esc(pkg.name) + '" title="Uninstall">&#x2716;</button>';
         html += '</div>';
       } else {
