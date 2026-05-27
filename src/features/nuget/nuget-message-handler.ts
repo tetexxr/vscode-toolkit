@@ -46,6 +46,8 @@ export class NugetMessageHandler implements vscode.Disposable {
   private listCache: ListCache | null = null
   /** id → metadata cache, lifetime = this panel session. Negative entries (no match) stored as `null`. */
   private metadataCache = new Map<string, PackageMetadata | null>()
+  /** Monotonic counter so a slow background enrichment can't overwrite a newer search. */
+  private currentSearchId = 0
 
   constructor(
     private webview: vscode.Webview,
@@ -138,25 +140,71 @@ export class NugetMessageHandler implements vscode.Disposable {
         pkg.isOutdated = pkg.isInstalled && pkg.installedVersion !== pkg.version
       }
     } else {
-      // Installed / Updates: same `dotnet list` path the overview uses, then
-      // enrich each row with description / icon / authors / downloads via the
-      // Search API (light and fast, unlike Registration).
+      // Installed / Updates: two-phase render.
+      //   1) Fast paint with versions only (dotnet list).
+      //   2) Background enrichment with description / icon / author / downloads
+      //      via Search API — re-rendered when ready.
+      const searchId = ++this.currentSearchId
       const sources = getNugetSources()
       const source = sources[sourceIndex] || sources[0]
-      packages = await this.buildInstalledViewModels(prerelease, source?.url ?? '')
-      await this.enrichWithSearchMetadata(packages, source)
-      if (query.trim()) {
-        const q = query.trim().toLowerCase()
-        packages = packages.filter(p => p.id.toLowerCase().includes(q))
-      }
-      if (category === 'updates') {
-        packages = packages.filter(p => p.isOutdated)
-      }
-      totalHits = packages.length
+      const all = await this.buildInstalledViewModels(prerelease, source?.url ?? '')
+
+      // Apply cached metadata immediately so revisits to the same project show
+      // icons without any flicker.
+      this.applyCachedMetadata(all)
+
+      packages = filterPackages(all, query, category)
+      this.post({ type: 'packages', packages, category, totalHits: packages.length, append: skip > 0 })
+      this.post({ type: 'loading', loading: false })
+
+      // Phase 2: enrich any rows whose metadata we don't already have. Fired
+      // and forgotten — staleness is guarded by `searchId`.
+      void this.enrichInBackground(searchId, all, source, query, category, skip)
+      return
     }
 
     this.post({ type: 'packages', packages, category, totalHits, append: skip > 0 })
     this.post({ type: 'loading', loading: false })
+  }
+
+  /**
+   * Background enrichment for the Installed / Updates tabs. Sends a fresh
+   * `packages` message only if the user hasn't moved on to a newer search.
+   */
+  private async enrichInBackground(
+    searchId: number,
+    all: PackageViewModel[],
+    source: PackageSource | undefined,
+    query: string,
+    category: Category,
+    skip: number
+  ): Promise<void> {
+    try {
+      await this.enrichWithSearchMetadata(all, source)
+    } catch {
+      // Network failures here are non-fatal — rows just stay metadata-less.
+      return
+    }
+    if (searchId !== this.currentSearchId) {
+      return
+    }
+    this.applyCachedMetadata(all)
+    const packages = filterPackages(all, query, category)
+    this.post({ type: 'packages', packages, category, totalHits: packages.length, append: skip > 0 })
+  }
+
+  /** Paint cached metadata onto fresh view models without hitting the network. */
+  private applyCachedMetadata(viewModels: PackageViewModel[]): void {
+    for (const vm of viewModels) {
+      const meta = this.metadataCache.get(vm.id)
+      if (meta) {
+        vm.description = meta.description
+        vm.authors = meta.authors
+        vm.iconUrl = meta.iconUrl
+        vm.totalDownloads = meta.totalDownloads
+        vm.verified = meta.verified
+      }
+    }
   }
 
   /**
@@ -216,10 +264,9 @@ export class NugetMessageHandler implements vscode.Disposable {
   }
 
   /**
-   * Fill description / icon / author / downloads on each view model by hitting
-   * the Search API once per package id. Search responses are tiny (~1KB) and
-   * the request is parallelised — typically adds ~200-400ms total. Results are
-   * cached per-id so subsequent tab switches don't refetch.
+   * Hit the Search API once per package id whose metadata we haven't cached
+   * yet, and stash the results in `metadataCache`. Does not mutate the view
+   * models — callers reapply via `applyCachedMetadata`.
    */
   private async enrichWithSearchMetadata(viewModels: PackageViewModel[], source: PackageSource | undefined): Promise<void> {
     if (!source || viewModels.length === 0) {
@@ -227,6 +274,9 @@ export class NugetMessageHandler implements vscode.Disposable {
     }
     const timeout = getNugetConfig().requestTimeout
     const toFetch = viewModels.filter(vm => !this.metadataCache.has(vm.id))
+    if (toFetch.length === 0) {
+      return
+    }
 
     await Promise.allSettled(
       toFetch.map(async vm => {
@@ -250,17 +300,6 @@ export class NugetMessageHandler implements vscode.Disposable {
         }
       })
     )
-
-    for (const vm of viewModels) {
-      const meta = this.metadataCache.get(vm.id)
-      if (meta) {
-        vm.description = meta.description
-        vm.authors = meta.authors
-        vm.iconUrl = meta.iconUrl
-        vm.totalDownloads = meta.totalDownloads
-        vm.verified = meta.verified
-      }
-    }
   }
 
   /** Cache `dotnet list` results by file mtime so repeated tab switches are instant. */
@@ -389,6 +428,19 @@ export class NugetMessageHandler implements vscode.Disposable {
     }
     this.disposables = []
   }
+}
+
+/** Apply the user's text filter and the active tab (installed vs updates) to a view-model list. */
+function filterPackages(all: PackageViewModel[], query: string, category: Category): PackageViewModel[] {
+  let packages = all
+  const trimmed = query.trim().toLowerCase()
+  if (trimmed) {
+    packages = packages.filter(p => p.id.toLowerCase().includes(trimmed))
+  }
+  if (category === 'updates') {
+    packages = packages.filter(p => p.isOutdated)
+  }
+  return packages
 }
 
 /** Walk every parent directory of `projectFsPath` collecting aux-file paths. */
