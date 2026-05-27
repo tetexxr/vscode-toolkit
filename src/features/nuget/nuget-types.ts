@@ -136,6 +136,12 @@ export interface OverviewPackage {
   isOutdated: boolean
   /** True when the .csproj pins the version with `[x.y.z]` bracket syntax. */
   isPinned?: boolean
+  /**
+   * Severity of the version jump between installed and latest. Used to colour
+   * the "Latest Version" cell so the user can spot risky upgrades at a glance.
+   * Mirrors the colour legend used by `dotnet outdated`.
+   */
+  versionBump?: 'major' | 'minor' | 'patch'
 }
 
 export interface OverviewProject {

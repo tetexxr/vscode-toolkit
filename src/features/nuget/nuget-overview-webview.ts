@@ -229,6 +229,10 @@ html, body {
   color: var(--vscode-editorWarning-foreground, #e5c07b);
 }
 
+.bump-major { color: #f48771; font-weight: 600; }
+.bump-minor { color: #e5c07b; font-weight: 600; }
+.bump-patch { color: #98c379; font-weight: 600; }
+
 #status-bar {
   display: flex;
   align-items: center;
@@ -407,8 +411,9 @@ const JS = /*js*/ `
         html += '<tr>';
         html += '<td class="col-name">' + esc(pkg.id) + '</td>';
         html += '<td class="col-version">' + esc(pkg.installedVersion) + '</td>';
+        const bumpClass = pkg.versionBump ? ' bump-' + pkg.versionBump : '';
         const latestCell = pkg.isPinned ? PIN_ICON : (hasLatest ? esc(pkg.latestVersion) : '-');
-        html += '<td class="col-latest">' + latestCell + '</td>';
+        html += '<td class="col-latest' + bumpClass + '">' + latestCell + '</td>';
         html += '<td class="col-status">' + statusBadge + '</td>';
         html += '<td class="col-actions">';
         if (pkg.isOutdated) {

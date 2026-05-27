@@ -20,6 +20,7 @@ import { getNugetConfig } from './nuget-config'
 import { discoverProjectFiles, loadProject } from './nuget-project-loader'
 import { listInstalledPackages, listOutdatedPackages, type DotnetListOutput } from './nuget-cli'
 import { NugetTaskManager } from './nuget-task-manager'
+import { parseSemVer } from '../../utils/semver'
 
 const SOLUTION_GLOB = '**/*.{sln,slnx,slnf}'
 
@@ -310,6 +311,30 @@ function upsertPackage(project: OverviewProject, id: string, resolved: string, l
   entry.installedVersion = resolved
   entry.latestVersion = latest
   entry.isOutdated = !!latest && latest !== resolved
+  entry.versionBump = entry.isOutdated ? classifyBump(resolved, latest) : undefined
+}
+
+/**
+ * Classify the jump from `installed` to `latest` using the standard semver
+ * colour code: major change → red, minor → yellow, patch → green. Prerelease
+ * upgrades are always treated as major because the API surface isn't stable.
+ */
+function classifyBump(installed: string, latest: string): 'major' | 'minor' | 'patch' | undefined {
+  const a = parseSemVer(installed)
+  const b = parseSemVer(latest)
+  if (!a || !b) {
+    return undefined
+  }
+  if (b.prerelease) {
+    return 'major'
+  }
+  if (a.major !== b.major) {
+    return 'major'
+  }
+  if (a.minor !== b.minor) {
+    return 'minor'
+  }
+  return 'patch'
 }
 
 function isPinned(requestedVersion: string | undefined): boolean {
