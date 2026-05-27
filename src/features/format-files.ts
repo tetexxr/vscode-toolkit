@@ -6,6 +6,7 @@ import {
   type ExcludeMap
 } from './format-files-utils'
 import { filterGitIgnored } from '../utils/git-ignore'
+import { logError } from '../utils/logger'
 
 /**
  * Format Files — bulk format all files in workspace or a specific folder.
@@ -111,8 +112,10 @@ async function formatWithProgress(
       await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
 
       processed++
-    } catch {
-      // Skip files that fail
+    } catch (err) {
+      // The batch can include hundreds of files; we keep going and log the
+      // failure so the user can pinpoint which one.
+      logError(`format-files:${file.fsPath}`, err)
     }
   }
 

@@ -15,6 +15,7 @@ import {
 } from '../utils/git'
 import { renderFileList, renderDiffContent, renderDiffPlaceholders } from './git-edit-commit-utils'
 import { escapeHtml, createNonce } from '../utils/html'
+import { logError } from '../utils/logger'
 
 function buildEditWebviewHtml(
   commit: CommitLogEntry,
@@ -569,7 +570,8 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
     try {
       this.cachedRepoRoot = await getRepoRoot(folder.uri.fsPath)
       return this.cachedRepoRoot
-    } catch {
+    } catch (err) {
+      logError('git-edit-commit.getRepoRoot', err)
       return undefined
     }
   }
@@ -588,7 +590,8 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
     try {
       const [commits, headHash] = await Promise.all([getCommitLog(root), getCommitHash(root).catch(() => '')])
       return commits.map(c => new CommitTreeItem(c, c.hash === headHash))
-    } catch {
+    } catch (err) {
+      logError('git-edit-commit.getChildren', err)
       return []
     }
   }

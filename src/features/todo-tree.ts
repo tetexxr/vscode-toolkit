@@ -9,6 +9,7 @@ import {
   type TodoItem
 } from './todo-tree-utils'
 import { filterGitIgnored } from '../utils/git-ignore'
+import { logError } from '../utils/logger'
 
 const VIEW_ID = 'toolkitTodoTree'
 
@@ -206,8 +207,10 @@ async function scanWorkspace(provider: TodoTreeProvider): Promise<void> {
         caseSensitive: cfg.caseSensitive
       })
       items.push(...parsed)
-    } catch {
-      // ignore unreadable files
+    } catch (err) {
+      // The scan touches every matching file — keep going on permission /
+      // encoding / read errors but leave a trail so the user can identify them.
+      logError(`todo-tree:${uri.fsPath}`, err)
     }
   }
   provider.setItems(items)

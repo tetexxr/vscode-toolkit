@@ -6,7 +6,11 @@
  * "Output: Toolkit" in the Command Palette.
  *
  * The channel is created lazily on first use, so this module is free to import
- * from anywhere without any activation-time cost.
+ * from any vscode-dependent file without an activation-time cost.
+ *
+ * NOTE: do not import this from a pure `*-utils.ts` file that has its own
+ * unit tests — those modules deliberately avoid the `vscode` import so they
+ * can run under mocha, and this module brings `vscode` along transitively.
  */
 
 import * as vscode from 'vscode'
