@@ -1075,8 +1075,9 @@ Scans the workspace for `TODO`, `FIXME`, `HACK`, etc. comments and lists them in
 | TODO Tree - Refresh | Re-scan the whole workspace |
 | TODO Tree - Group by Tag | Group entries by tag (default) |
 | TODO Tree - Group by File | Group entries by file |
+| TODO Tree - Exclude Folder… | Add a folder to `excludedFolders` for the current workspace |
 
-All three are also available as title-bar icons on the **TODOs** view in the activity bar.
+The first three commands are also available as title-bar icons on the **TODOs** view in the activity bar. **Exclude Folder…** is available from the right-click menu on any file or TODO entry inside the **TODOs** view, and from the right-click menu on any folder in the file explorer. When invoked on a folder, that exact path is excluded; when invoked on a file or a TODO entry, a quick pick lets you choose which ancestor folder to exclude.
 
 **Recognized comment styles:**
 
@@ -1104,7 +1105,7 @@ Tags must match a whole word — `// TODOLIST: foo` is not picked up.
 | `toolkit.todoTree.tags` | `["TODO","FIXME","HACK","XXX","NOTE","BUG","REVIEW"]` | Tags to look for |
 | `toolkit.todoTree.caseSensitive` | `false` | Match tags case-sensitively |
 | `toolkit.todoTree.includeGlob` | `**/*.{ts,js,tsx,...}` | Files to scan |
-| `toolkit.todoTree.excludedFolders` | `["node_modules", ".git", ...]` | Folders to skip |
+| `toolkit.todoTree.excludedFolders` | `["node_modules", ".git", ...]` | Folders to skip. Each entry can be a bare folder name matched at any depth (`node_modules`), a workspace-relative path (`src/vendor/lib-x`), or a glob (`packages/*/dist`) |
 | `toolkit.todoTree.groupBy` | `tag` | `tag` or `file` |
 | `toolkit.todoTree.maxFiles` | `5000` | Hard cap on files scanned |
 | `toolkit.todoTree.useGitIgnore` | `true` | Skip files ignored by `.gitignore` (uses `git check-ignore`; no-op outside a git repo) |
