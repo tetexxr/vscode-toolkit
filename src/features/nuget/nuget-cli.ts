@@ -80,6 +80,10 @@ function runDotnetList(target: string, packageArgs: string[], timeoutMs: number)
 
     child.on('error', err => {
       clearTimeout(timer)
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+        reject(new Error('dotnet CLI not found on PATH. Install the .NET SDK 9 or newer from https://dot.net.'))
+        return
+      }
       reject(new Error(`Failed to spawn dotnet: ${err.message}`))
     })
 
