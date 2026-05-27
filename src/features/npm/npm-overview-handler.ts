@@ -21,7 +21,8 @@ import type {
   NpmOverviewPackage
 } from './npm-types'
 import { discoverPackageJsonFiles, loadNpmProject } from './npm-project-loader'
-import { runNpmOutdated, type NpmOutdatedEntry } from './npm-cli'
+import { detectPackageManager } from './npm-commands'
+import { runOutdated, type NpmOutdatedEntry } from './npm-cli'
 import { applyOutdatedToProject } from './npm-utils'
 import { NpmTaskManager } from './npm-task-manager'
 
@@ -121,7 +122,7 @@ export class NpmOverviewHandler implements vscode.Disposable {
       return cached.outdated
     }
     const cwd = path.dirname(packageJsonFsPath)
-    const outdated = await runNpmOutdated(cwd)
+    const outdated = await runOutdated(cwd, detectPackageManager(cwd))
     this.outdatedCache.set(packageJsonFsPath, { fingerprint: fp, outdated })
     return outdated
   }

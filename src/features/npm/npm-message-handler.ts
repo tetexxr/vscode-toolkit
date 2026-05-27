@@ -23,7 +23,8 @@ import { stripVersionRange } from './npm-api'
 import { isPrerelease } from '../../utils/semver'
 import * as npmApi from './npm-api'
 import { loadNpmProject, reloadNpmProject } from './npm-project-loader'
-import { runNpmOutdated, type NpmOutdatedEntry } from './npm-cli'
+import { runOutdated, type NpmOutdatedEntry } from './npm-cli'
+import { detectPackageManager } from './npm-commands'
 import { buildInstalledViewModels, filterPackages } from './npm-utils'
 import { NpmTaskManager } from './npm-task-manager'
 
@@ -265,7 +266,7 @@ export class NpmMessageHandler implements vscode.Disposable {
       return this.outdatedCache.outdated
     }
     const cwd = path.dirname(this.projectFsPath)
-    const outdated = await runNpmOutdated(cwd)
+    const outdated = await runOutdated(cwd, detectPackageManager(cwd))
     this.outdatedCache = { fingerprint: fp, outdated }
     return outdated
   }
