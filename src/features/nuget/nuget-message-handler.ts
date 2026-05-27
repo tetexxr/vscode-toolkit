@@ -15,14 +15,8 @@ import { loadProject, reloadProject } from './nuget-project-loader'
 import { listInstalledPackages, listOutdatedPackages, type DotnetListOutput } from './nuget-cli'
 import { NugetTaskManager } from './nuget-task-manager'
 import type { PackageSource } from './nuget-types'
-
-const PARENT_AUX_FILES = [
-  'Directory.Packages.props',
-  'Directory.Build.props',
-  'Directory.Build.targets',
-  'NuGet.config',
-  'nuget.config'
-]
+import { findAuxiliaryFiles } from './nuget-paths'
+import { filterPackages } from './nuget-utils'
 
 interface ListCache {
   fingerprint: string
@@ -442,33 +436,3 @@ export class NugetMessageHandler implements vscode.Disposable {
   }
 }
 
-/** Apply the user's text filter and the active tab (installed vs updates) to a view-model list. */
-function filterPackages(all: PackageViewModel[], query: string, category: Category): PackageViewModel[] {
-  let packages = all
-  const trimmed = query.trim().toLowerCase()
-  if (trimmed) {
-    packages = packages.filter(p => p.id.toLowerCase().includes(trimmed))
-  }
-  if (category === 'updates') {
-    packages = packages.filter(p => p.isOutdated)
-  }
-  return packages
-}
-
-/** Walk every parent directory of `projectFsPath` collecting aux-file paths. */
-function findAuxiliaryFiles(projectFsPath: string): string[] {
-  const found: string[] = []
-  let dir = path.dirname(projectFsPath)
-  const root = path.parse(dir).root
-  while (dir && dir !== root) {
-    for (const name of PARENT_AUX_FILES) {
-      found.push(path.join(dir, name))
-    }
-    const parent = path.dirname(dir)
-    if (parent === dir) {
-      break
-    }
-    dir = parent
-  }
-  return found
-}

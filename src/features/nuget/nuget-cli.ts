@@ -110,8 +110,10 @@ function runDotnetList(target: string, packageArgs: string[], timeoutMs: number)
  * `dotnet list` sometimes prints informational lines before the JSON body
  * (e.g. when a project is being restored). Trim everything up to the first
  * `{` so JSON.parse always sees clean input.
+ *
+ * Exported for testing.
  */
-function parseJsonOutput(stdoutText: string): DotnetListOutput {
+export function parseJsonOutput(stdoutText: string): DotnetListOutput {
   const start = stdoutText.indexOf('{')
   if (start < 0) {
     throw new Error('no JSON body in output')
