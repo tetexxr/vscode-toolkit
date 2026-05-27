@@ -220,7 +220,7 @@ Hover any line in a tracked file to see the **full commit** that last touched it
 
 #### NuGet Package Manager
 
-Manage NuGet packages for .NET projects directly from VS Code. Supports browsing, installing, updating, and uninstalling packages using the NuGet V3 API.
+Manage NuGet packages for .NET projects directly from VS Code. Supports browsing, installing, updating, and uninstalling packages using the NuGet V3 API. Requires the `dotnet` CLI on `PATH` — the panel shows a clear error message if it isn't installed.
 
 **Access:**
 
@@ -238,9 +238,11 @@ Manage NuGet packages for .NET projects directly from VS Code. Supports browsing
 
 Click any package to view its details: all versions, description, dependencies, vulnerabilities, license, and project URL.
 
+In the **Installed** and **Updates** tabs, the **Latest** column is tinted by semver bump severity (red for major, orange for minor, yellow for patch) so the riskier updates stand out at a glance. Versions pinned to an exact value in the project file show a lock icon instead of the latest version, since they will not be auto-updated.
+
 **Solution Overview:**
 
-Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution Overview**) to open a summary table of all projects and their packages. Click **Load Package Versions** to check for updates across the entire solution — outdated packages are highlighted with a red "No" badge. Once versions are loaded, click **Update All** to update every outdated package across all projects in one go.
+Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution Overview**) to open a summary table of all projects and their packages. Click **Load Package Versions** to check for updates across the entire solution — outdated packages are highlighted with a red "No" badge, and the **Latest** column uses the same semver-severity colour and lock icon as the per-project panel. Once versions are loaded, click **Update All** to update every outdated package across all projects in one go.
 
 **Settings:**
 
@@ -270,9 +272,11 @@ Manage npm packages for Node.js projects directly from VS Code. Supports browsin
 
 Click any package to view its details: all versions, description, author, license, homepage, keywords, dependencies, peer dependencies, and deprecation warnings. When installing a new package, a checkbox allows choosing between regular and dev dependency.
 
+In the **Installed** and **Updates** tabs, the **Latest** column is tinted by semver bump severity (red for major, orange for minor, yellow for patch). Versions pinned to an exact value in `package.json` show a lock icon instead of the latest version, since they will not be auto-updated.
+
 **Workspace Overview:**
 
-Click the list icon in the sidebar title bar (or run **Toolkit: npm Workspace Overview**) to open a summary table of all projects and their packages. Click **Load Package Versions** to check for updates across the entire workspace — outdated packages are highlighted with a red "No" badge. Once versions are loaded, click **Update All** to update every outdated package across all projects in one go.
+Click the list icon in the sidebar title bar (or run **Toolkit: npm Workspace Overview**) to open a summary table of all projects and their packages. Click **Load Package Versions** to check for updates across the entire workspace — outdated packages are highlighted with a red "No" badge, and the **Latest** column uses the same semver-severity colour and lock icon as the per-project panel. Once versions are loaded, click **Update All** to update every outdated package across all projects in one go.
 
 **Settings:**
 
