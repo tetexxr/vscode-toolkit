@@ -5,17 +5,35 @@
  */
 
 import * as vscode from 'vscode'
+import * as path from 'path'
+import * as fs from 'fs/promises'
 import type { WebviewMessage, ExtensionMessage, PackageViewModel, Category } from './nuget-types'
 import { getNugetSources, getNugetConfig } from './nuget-config'
 import { isPrerelease } from '../../utils/semver'
 import * as nugetApi from './nuget-api'
 import { loadProject, reloadProject } from './nuget-project-loader'
+import { listInstalledPackages, listOutdatedPackages, type DotnetListOutput } from './nuget-cli'
 import { NugetTaskManager } from './nuget-task-manager'
+
+const PARENT_AUX_FILES = [
+  'Directory.Packages.props',
+  'Directory.Build.props',
+  'Directory.Build.targets',
+  'NuGet.config',
+  'nuget.config'
+]
+
+interface ListCache {
+  fingerprint: string
+  installed: DotnetListOutput | null
+  outdated: DotnetListOutput | null
+}
 
 export class NugetMessageHandler implements vscode.Disposable {
   private taskManager: NugetTaskManager
   private projectFsPath: string
   private disposables: vscode.Disposable[] = []
+  private listCache: ListCache | null = null
 
   constructor(
     private webview: vscode.Webview,
@@ -29,6 +47,7 @@ export class NugetMessageHandler implements vscode.Disposable {
       this.taskManager,
       vscode.workspace.onDidChangeConfiguration(() => {
         nugetApi.clearEndpointCache()
+        this.listCache = null
         void this.sendInit()
       })
     )
@@ -85,38 +104,134 @@ export class NugetMessageHandler implements vscode.Disposable {
   ): Promise<void> {
     this.post({ type: 'loading', loading: true })
 
-    const sources = getNugetSources()
-    const source = sources[sourceIndex] || sources[0]
-    const timeout = getNugetConfig().requestTimeout
-
-    const project = await reloadProject(this.projectFsPath)
     let packages: PackageViewModel[]
     let totalHits = 0
 
     if (category === 'browse') {
+      // Browse keeps the Search API: that's what surfaces the description /
+      // icon / author / downloads that make package discovery useful.
+      const sources = getNugetSources()
+      const source = sources[sourceIndex] || sources[0]
+      const timeout = getNugetConfig().requestTimeout
+      const project = await reloadProject(this.projectFsPath)
+
       const result = await nugetApi.searchPackages(query, prerelease, source, timeout, skip)
       packages = result.packages
       totalHits = result.totalHits
+
+      for (const pkg of packages) {
+        const installed = project.packages.find(p => p.id === pkg.id)
+        pkg.isInstalled = !!installed
+        pkg.installedVersion = installed?.version || ''
+        pkg.isOutdated = pkg.isInstalled && pkg.installedVersion !== pkg.version
+      }
     } else {
-      packages = await nugetApi.fetchInstalledPackagesMetadata(project.packages, query, prerelease, source, timeout)
+      // Installed / Updates: same `dotnet list` path the overview uses.
+      packages = await this.buildInstalledViewModels(prerelease, getNugetSources()[0]?.url ?? '')
+      if (query.trim()) {
+        const q = query.trim().toLowerCase()
+        packages = packages.filter(p => p.id.toLowerCase().includes(q))
+      }
+      if (category === 'updates') {
+        packages = packages.filter(p => p.isOutdated)
+      }
       totalHits = packages.length
-    }
-
-    // Mark installed status
-    for (const pkg of packages) {
-      const installed = project.packages.find(p => p.id === pkg.id)
-      pkg.isInstalled = !!installed
-      pkg.installedVersion = installed?.version || ''
-      pkg.isOutdated = pkg.isInstalled && pkg.installedVersion !== pkg.version
-    }
-
-    // Filter for updates category
-    if (category === 'updates') {
-      packages = packages.filter(p => p.isOutdated)
     }
 
     this.post({ type: 'packages', packages, category, totalHits, append: skip > 0 })
     this.post({ type: 'loading', loading: false })
+  }
+
+  /**
+   * Build view models for the Installed / Updates tabs from `dotnet list`
+   * output. No description / icon / author / downloads here — the panel of
+   * package details (handleSelectPackage) still hits Registration for that
+   * when the user clicks a row.
+   */
+  private async buildInstalledViewModels(prerelease: boolean, sourceUrl: string): Promise<PackageViewModel[]> {
+    const [installed, outdated] = await Promise.all([this.runListCached(false, prerelease), this.runListCached(true, prerelease)])
+
+    // Build per-id maps so multi-targeting projects don't show the same package twice.
+    const installedMap = new Map<string, { resolved: string; isPinned: boolean }>()
+    for (const proj of installed.projects ?? []) {
+      for (const fw of proj.frameworks ?? []) {
+        for (const pkg of fw.topLevelPackages ?? []) {
+          if (!installedMap.has(pkg.id)) {
+            installedMap.set(pkg.id, {
+              resolved: pkg.resolvedVersion,
+              isPinned: !!pkg.requestedVersion && pkg.requestedVersion.startsWith('[')
+            })
+          }
+        }
+      }
+    }
+
+    const outdatedMap = new Map<string, string>()
+    for (const proj of outdated.projects ?? []) {
+      for (const fw of proj.frameworks ?? []) {
+        for (const pkg of fw.topLevelPackages ?? []) {
+          if (pkg.latestVersion) {
+            outdatedMap.set(pkg.id, pkg.latestVersion)
+          }
+        }
+      }
+    }
+
+    const result: PackageViewModel[] = []
+    for (const [id, info] of installedMap) {
+      const latest = info.isPinned ? info.resolved : (outdatedMap.get(id) ?? info.resolved)
+      result.push({
+        id,
+        version: latest,
+        description: '',
+        authors: '',
+        iconUrl: '',
+        totalDownloads: undefined,
+        verified: false,
+        isInstalled: true,
+        installedVersion: info.resolved,
+        isOutdated: !info.isPinned && latest !== info.resolved,
+        sourceUrl
+      })
+    }
+    result.sort((a, b) => a.id.localeCompare(b.id))
+    return result
+  }
+
+  /** Cache `dotnet list` results by file mtime so repeated tab switches are instant. */
+  private async runListCached(outdated: boolean, prerelease: boolean): Promise<DotnetListOutput> {
+    const fp = (await this.fingerprint()) + '|prerelease=' + prerelease
+    if (!this.listCache || this.listCache.fingerprint !== fp) {
+      this.listCache = { fingerprint: fp, installed: null, outdated: null }
+    }
+    const key = outdated ? 'outdated' : 'installed'
+    if (this.listCache[key]) {
+      return this.listCache[key]!
+    }
+    const result = outdated
+      ? await listOutdatedPackages(this.projectFsPath, prerelease)
+      : await listInstalledPackages(this.projectFsPath)
+    this.listCache[key] = result
+    return result
+  }
+
+  private async fingerprint(): Promise<string> {
+    const files = [
+      this.projectFsPath,
+      path.join(path.dirname(this.projectFsPath), 'obj', 'project.assets.json'),
+      ...findAuxiliaryFiles(this.projectFsPath)
+    ]
+    const entries = await Promise.all(
+      files.map(async f => {
+        try {
+          const s = await fs.stat(f)
+          return `${f}:${s.mtimeMs}:${s.size}`
+        } catch {
+          return `${f}:missing`
+        }
+      })
+    )
+    return entries.join('|')
   }
 
   // ── Package details ────────────────────────────────────
@@ -209,4 +324,22 @@ export class NugetMessageHandler implements vscode.Disposable {
     }
     this.disposables = []
   }
+}
+
+/** Walk every parent directory of `projectFsPath` collecting aux-file paths. */
+function findAuxiliaryFiles(projectFsPath: string): string[] {
+  const found: string[] = []
+  let dir = path.dirname(projectFsPath)
+  const root = path.parse(dir).root
+  while (dir && dir !== root) {
+    for (const name of PARENT_AUX_FILES) {
+      found.push(path.join(dir, name))
+    }
+    const parent = path.dirname(dir)
+    if (parent === dir) {
+      break
+    }
+    dir = parent
+  }
+  return found
 }
