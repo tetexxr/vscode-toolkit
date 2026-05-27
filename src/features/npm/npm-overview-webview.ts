@@ -17,7 +17,6 @@ export function generateOverviewHtml(nonce: string): string {
 <body>
   <div id="app">
     <div id="toolbar"></div>
-    <div id="status-bar" hidden></div>
     <div id="content"></div>
   </div>
   <script nonce="${nonce}">${JS}</script>
@@ -217,24 +216,6 @@ html, body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-#status-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 1rem;
-  background-color: var(--vscode-editorWidget-background);
-  border-bottom: 1px solid var(--vscode-panel-border);
-  color: var(--vscode-descriptionForeground);
-  font-size: 0.85rem;
-}
-#status-bar[hidden] { display: none; }
-#status-bar .spinner {
-  width: 14px;
-  height: 14px;
-  border-width: 2px;
-  margin-right: 0;
-}
-
 .pin-icon {
   display: inline-flex;
   align-items: center;
@@ -274,27 +255,18 @@ const JS = /*js*/ `
 
   const state = {
     projects: [],
-    loading: false,
+    // Start in "loading" so the status bar is visible from the moment the
+    // panel opens, even before the backend responds.
+    loading: true,
     filter: '',
   };
 
   const PIN_ICON = '<span class="pin-icon" title="Version pinned to an exact value in package.json"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>';
 
   const $toolbar = document.getElementById('toolbar');
-  const $statusBar = document.getElementById('status-bar');
   const $content = document.getElementById('content');
 
   function post(msg) { vscode.postMessage(msg); }
-
-  function renderStatusBar() {
-    if (state.loading) {
-      $statusBar.innerHTML = '<span class="spinner"></span><span>Checking package versions...</span>';
-      $statusBar.hidden = false;
-    } else {
-      $statusBar.hidden = true;
-      $statusBar.innerHTML = '';
-    }
-  }
 
   window.addEventListener('message', (e) => {
     const msg = e.data;
@@ -303,7 +275,6 @@ const JS = /*js*/ `
         state.projects = msg.projects;
         state.loading = msg.loading;
         renderToolbar();
-        renderStatusBar();
         renderContent();
         break;
       case 'overview-error':
@@ -351,7 +322,6 @@ const JS = /*js*/ `
     });
     document.getElementById('load-versions-btn').addEventListener('click', () => {
       state.loading = true;
-      renderStatusBar();
       renderToolbar();
       post({ command: 'load-versions' });
     });
@@ -480,6 +450,10 @@ const JS = /*js*/ `
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // Paint the toolbar (with its "Loading..." button) immediately so the
+  // spinner is visible from the moment the panel opens, not just after the
+  // backend's first message.
+  renderToolbar();
   post({ command: 'ready' });
 })();
 `
