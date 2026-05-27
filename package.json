@@ -1481,7 +1481,9 @@
         },
         "toolkit.timestamp.hover.languages": {
           "type": "array",
-          "default": ["*"],
+          "default": [
+            "*"
+          ],
           "description": "Languages for which the timestamp hover is active. Requires reload after change. Use [\"*\"] for all languages.",
           "items": {
             "type": "string"
@@ -1509,13 +1511,21 @@
         },
         "toolkit.jsonToType.csharp.collectionType": {
           "type": "string",
-          "enum": ["IReadOnlyList", "List", "IEnumerable", "array"],
+          "enum": [
+            "IReadOnlyList",
+            "List",
+            "IEnumerable",
+            "array"
+          ],
           "default": "IReadOnlyList",
           "description": "Collection wrapper used for JSON arrays in C# output."
         },
         "toolkit.jsonToType.csharp.recordStyle": {
           "type": "string",
-          "enum": ["positional", "withProperties"],
+          "enum": [
+            "positional",
+            "withProperties"
+          ],
           "default": "positional",
           "description": "Generated C# record style. Positional: 'public record X(int Id, string Name)'. With properties: declared bodies with init-only properties."
         },
@@ -1531,13 +1541,19 @@
         },
         "toolkit.pasteImage.basePath": {
           "type": "string",
-          "enum": ["file", "workspace"],
+          "enum": [
+            "file",
+            "workspace"
+          ],
           "default": "file",
           "description": "Anchor for the image directory: relative to the current file or to the workspace root."
         },
         "toolkit.pasteImage.naming": {
           "type": "string",
-          "enum": ["timestamp", "prompt"],
+          "enum": [
+            "timestamp",
+            "prompt"
+          ],
           "default": "timestamp",
           "description": "How to name pasted images. 'timestamp' uses the configured timestamp format; 'prompt' asks every time."
         },
@@ -1548,7 +1564,11 @@
         },
         "toolkit.pasteImage.format": {
           "type": "string",
-          "enum": ["auto", "markdown", "html"],
+          "enum": [
+            "auto",
+            "markdown",
+            "html"
+          ],
           "default": "auto",
           "description": "Link format used when inserting the image. 'auto' picks Markdown for .md and HTML for .html/.razor/.cshtml."
         },
@@ -1599,7 +1619,15 @@
         },
         "toolkit.todoTree.tags": {
           "type": "array",
-          "default": ["TODO", "FIXME", "HACK", "XXX", "NOTE", "BUG", "REVIEW"],
+          "default": [
+            "TODO",
+            "FIXME",
+            "HACK",
+            "XXX",
+            "NOTE",
+            "BUG",
+            "REVIEW"
+          ],
           "description": "Comment tags collected by the TODO Tree.",
           "items": {
             "type": "string"
@@ -1617,7 +1645,16 @@
         },
         "toolkit.todoTree.excludedFolders": {
           "type": "array",
-          "default": ["node_modules", ".git", "dist", "build", "bin", "obj", ".vs", "out"],
+          "default": [
+            "node_modules",
+            ".git",
+            "dist",
+            "build",
+            "bin",
+            "obj",
+            ".vs",
+            "out"
+          ],
           "description": "Folders to skip when scanning.",
           "items": {
             "type": "string"
@@ -1625,7 +1662,10 @@
         },
         "toolkit.todoTree.groupBy": {
           "type": "string",
-          "enum": ["tag", "file"],
+          "enum": [
+            "tag",
+            "file"
+          ],
           "default": "tag",
           "description": "Initial grouping of the TODO Tree view."
         },
@@ -1651,7 +1691,11 @@
         },
         "toolkit.restClient.previewResponseAs": {
           "type": "string",
-          "enum": ["auto", "raw", "json"],
+          "enum": [
+            "auto",
+            "raw",
+            "json"
+          ],
           "default": "auto",
           "description": "Editor language used to render the response. 'auto' picks one from the Content-Type."
         },
@@ -1662,7 +1706,9 @@
         },
         "toolkit.peekCommit.hover.languages": {
           "type": "array",
-          "default": ["*"],
+          "default": [
+            "*"
+          ],
           "description": "Languages where the peek-commit hover is active. Reload required after change.",
           "items": {
             "type": "string"
@@ -1671,29 +1717,77 @@
         "toolkit.toggleQuotes.languageQuotes": {
           "type": "object",
           "default": {
-            "default": ["'", "\""],
-            "typescript": ["'", "\"", "`"],
-            "typescriptreact": ["'", "\"", "`"],
-            "javascript": ["'", "\"", "`"],
-            "javascriptreact": ["'", "\"", "`"],
-            "csharp": ["\""],
-            "java": ["\""],
-            "c": ["\""],
-            "cpp": ["\""],
-            "rust": ["\""],
-            "python": ["'", "\""],
-            "go": ["\""],
-            "json": ["\""],
-            "jsonc": ["\""],
-            "yaml": ["'", "\""],
-            "shellscript": ["'", "\""]
+            "default": [
+              "'",
+              "\""
+            ],
+            "typescript": [
+              "'",
+              "\"",
+              "`"
+            ],
+            "typescriptreact": [
+              "'",
+              "\"",
+              "`"
+            ],
+            "javascript": [
+              "'",
+              "\"",
+              "`"
+            ],
+            "javascriptreact": [
+              "'",
+              "\"",
+              "`"
+            ],
+            "csharp": [
+              "\""
+            ],
+            "java": [
+              "\""
+            ],
+            "c": [
+              "\""
+            ],
+            "cpp": [
+              "\""
+            ],
+            "rust": [
+              "\""
+            ],
+            "python": [
+              "'",
+              "\""
+            ],
+            "go": [
+              "\""
+            ],
+            "json": [
+              "\""
+            ],
+            "jsonc": [
+              "\""
+            ],
+            "yaml": [
+              "'",
+              "\""
+            ],
+            "shellscript": [
+              "'",
+              "\""
+            ]
           },
           "description": "Allowed quote characters per language id. Used to cycle 'Toolkit: Toggle Quotes' through only the quotes that are valid for the current language. The 'default' key is used when the current language id is not listed.",
           "additionalProperties": {
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["'", "\"", "`"]
+              "enum": [
+                "'",
+                "\"",
+                "`"
+              ]
             }
           }
         }
@@ -1714,15 +1808,15 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^25.9.0",
+    "@types/node": "^25.9.1",
     "@types/vscode": "^1.120.0",
     "@vscode/vsce": "^3.9.1",
     "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
-    "mocha": "^11.3.0",
+    "mocha": "^11.7.6",
     "pdfjs-dist": "^5.7.284",
     "prettier": "^3.8.3",
     "tsx": "^4.22.3",
-    "typescript-eslint": "^8.59.4"
+    "typescript-eslint": "^8.60.0"
   }
 }
