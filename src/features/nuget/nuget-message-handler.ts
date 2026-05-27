@@ -170,6 +170,8 @@ export class NugetMessageHandler implements vscode.Disposable {
   /**
    * Background enrichment for the Installed / Updates tabs. Sends a fresh
    * `packages` message only if the user hasn't moved on to a newer search.
+   * Posts a `metadata-loading` toggle so the webview can show / hide its
+   * "loading details" status bar.
    */
   private async enrichInBackground(
     searchId: number,
@@ -179,10 +181,19 @@ export class NugetMessageHandler implements vscode.Disposable {
     category: Category,
     skip: number
   ): Promise<void> {
+    const needsFetch = all.some(vm => !this.metadataCache.has(vm.id))
+    if (!needsFetch) {
+      return
+    }
+    if (searchId === this.currentSearchId) {
+      this.post({ type: 'metadata-loading', loading: true })
+    }
     try {
       await this.enrichWithSearchMetadata(all, source)
     } catch {
-      // Network failures here are non-fatal — rows just stay metadata-less.
+      if (searchId === this.currentSearchId) {
+        this.post({ type: 'metadata-loading', loading: false })
+      }
       return
     }
     if (searchId !== this.currentSearchId) {
@@ -191,6 +202,7 @@ export class NugetMessageHandler implements vscode.Disposable {
     this.applyCachedMetadata(all)
     const packages = filterPackages(all, query, category)
     this.post({ type: 'packages', packages, category, totalHits: packages.length, append: skip > 0 })
+    this.post({ type: 'metadata-loading', loading: false })
   }
 
   /** Paint cached metadata onto fresh view models without hitting the network. */

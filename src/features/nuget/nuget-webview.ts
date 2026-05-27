@@ -23,6 +23,7 @@ export function generateWebviewHtml(webview: vscode.Webview, nonce: string): str
       <nav id="nav-bar"></nav>
       <div id="tool-bar"></div>
     </header>
+    <div id="metadata-status-bar" hidden></div>
     <main id="main">
       <div id="package-list"></div>
       <div id="resize-handle"></div>
@@ -390,6 +391,24 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+#metadata-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 1rem;
+  background-color: var(--vscode-editorWidget-background);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.85rem;
+}
+#metadata-status-bar[hidden] { display: none; }
+#metadata-status-bar .spinner {
+  width: 12px;
+  height: 12px;
+  border-width: 2px;
+  margin-right: 0;
+}
+
 /* ── Package details ────────────────────────────── */
 
 .detail-header {
@@ -491,9 +510,20 @@ const JS = /*js*/ `
   // ── DOM refs ─────────────────────────────────────
   const $nav = document.getElementById('nav-bar');
   const $toolbar = document.getElementById('tool-bar');
+  const $statusBar = document.getElementById('metadata-status-bar');
   const $list = document.getElementById('package-list');
   const $details = document.getElementById('package-details');
   const $resize = document.getElementById('resize-handle');
+
+  function renderMetadataStatusBar(loading) {
+    if (loading) {
+      $statusBar.innerHTML = '<span class="spinner"></span><span>Loading package details...</span>';
+      $statusBar.hidden = false;
+    } else {
+      $statusBar.hidden = true;
+      $statusBar.innerHTML = '';
+    }
+  }
 
   // ── IPC ──────────────────────────────────────────
   function post(msg) { vscode.postMessage(msg); }
@@ -530,6 +560,9 @@ const JS = /*js*/ `
         if (msg.loading && state.selectedId && !state.selectedPkg) {
           $details.innerHTML = '<div class="loading-message"><span class="spinner"></span> Loading package details...</div>';
         }
+        break;
+      case 'metadata-loading':
+        renderMetadataStatusBar(msg.loading);
         break;
       case 'task-started':
         break;

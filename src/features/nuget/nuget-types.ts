@@ -190,6 +190,8 @@ export type ExtensionMessage =
   | { type: 'packages'; packages: PackageViewModel[]; category: Category; totalHits: number; append: boolean }
   | { type: 'package-details'; pkg: PackageViewModel }
   | { type: 'loading'; loading: boolean }
+  /** Phase-2 enrichment is in progress (icons / descriptions still loading). */
+  | { type: 'metadata-loading'; loading: boolean }
   | { type: 'task-started'; packageId: string; action: string }
   | { type: 'task-finished'; packageId: string; action: string; success: boolean }
   | { type: 'project-updated'; project: Project }
