@@ -13,28 +13,28 @@ import type { OverviewProject, PackageViewModel } from '../../../src/features/nu
 // ── classifyBump ─────────────────────────────────────────
 
 describe('classifyBump', () => {
-  it('returns major for a major version bump', () => {
+  it('should return major when the major version differs', () => {
     assert.equal(classifyBump('1.0.0', '2.0.0'), 'major')
     assert.equal(classifyBump('1.2.3', '3.0.0'), 'major')
   })
 
-  it('returns minor when the minor changes but major stays', () => {
+  it('should return minor when only the minor version differs', () => {
     assert.equal(classifyBump('1.0.0', '1.1.0'), 'minor')
     assert.equal(classifyBump('4.16.0', '4.17.0'), 'minor')
   })
 
-  it('returns patch when only patch changes', () => {
+  it('should return patch when only the patch version differs', () => {
     assert.equal(classifyBump('1.0.0', '1.0.1'), 'patch')
     assert.equal(classifyBump('18.5.1', '18.5.99'), 'patch')
   })
 
-  it('treats any prerelease latest as major (unstable API)', () => {
+  it('should return major when the latest version is a prerelease', () => {
     assert.equal(classifyBump('1.0.0', '1.0.1-beta'), 'major')
     assert.equal(classifyBump('1.0.0', '1.1.0-preview.3'), 'major')
     assert.equal(classifyBump('2.0.0', '2.0.0-rc.1'), 'major')
   })
 
-  it('returns undefined when either version is unparseable', () => {
+  it('should return undefined when either version is unparseable', () => {
     assert.equal(classifyBump('not-a-version', '1.0.0'), undefined)
     assert.equal(classifyBump('1.0.0', 'something'), undefined)
     assert.equal(classifyBump('', '1.0.0'), undefined)
@@ -44,12 +44,12 @@ describe('classifyBump', () => {
 // ── isPinned ─────────────────────────────────────────────
 
 describe('isPinned', () => {
-  it('detects bracket-style pinned versions', () => {
+  it('should return true when the requested version uses bracket syntax', () => {
     assert.equal(isPinned('[3.1.12]'), true)
     assert.equal(isPinned('[1.0.0, 2.0.0)'), true)
   })
 
-  it('treats bare versions and unbounded ranges as not pinned', () => {
+  it('should return false for bare versions, unbounded ranges and missing values', () => {
     assert.equal(isPinned('3.1.12'), false)
     assert.equal(isPinned('(1.0.0, )'), false)
     assert.equal(isPinned(undefined), false)
@@ -60,7 +60,7 @@ describe('isPinned', () => {
 // ── normalizePath ────────────────────────────────────────
 
 describe('normalizePath', () => {
-  it('lowercases and collapses path segments', () => {
+  it('should lowercase and collapse path segments', () => {
     assert.equal(normalizePath('/Repo/Src/App.csproj'), '/repo/src/app.csproj')
     assert.equal(normalizePath('/repo//src/./App.csproj'), '/repo/src/app.csproj')
   })
@@ -69,7 +69,7 @@ describe('normalizePath', () => {
 // ── upsertPackage ────────────────────────────────────────
 
 describe('upsertPackage', () => {
-  it('appends a new package when the project has none with that id', () => {
+  it('should append a new package when the project has no entry with that id', () => {
     const project: OverviewProject = { name: 'X', fsPath: '/x', packages: [] }
     upsertPackage(project, 'Serilog', '3.1.1', '4.0.0')
     assert.equal(project.packages.length, 1)
@@ -80,7 +80,7 @@ describe('upsertPackage', () => {
     assert.equal(project.packages[0].versionBump, 'major')
   })
 
-  it('updates an existing entry in place', () => {
+  it('should update an existing entry in place when the id already exists', () => {
     const project: OverviewProject = {
       name: 'X',
       fsPath: '/x',
@@ -134,7 +134,7 @@ describe('applyListDataToProjects', () => {
     }
   }
 
-  it('marks outdated packages and sets versionBump', () => {
+  it('should mark a package as outdated and set versionBump when the latest version differs', () => {
     const projects = [makeProject('/repo/App.csproj', [{ id: 'Serilog', version: 'placeholder' }])]
     const installed = listOutput('/repo/App.csproj', [{ id: 'Serilog', resolved: '3.1.1' }])
     const outdated = listOutput('/repo/App.csproj', [{ id: 'Serilog', resolved: '3.1.1', latest: '4.0.0' }])
@@ -148,7 +148,7 @@ describe('applyListDataToProjects', () => {
     assert.equal(pkg.versionBump, 'major')
   })
 
-  it('marks up-to-date packages with latestVersion = resolvedVersion and isOutdated = false', () => {
+  it('should mark a package as up-to-date when it does not appear in the outdated list', () => {
     const projects = [makeProject('/repo/App.csproj', [{ id: 'Serilog', version: 'placeholder' }])]
     const installed = listOutput('/repo/App.csproj', [{ id: 'Serilog', resolved: '3.1.1' }])
     // No outdated entry for this package → up-to-date.
@@ -163,7 +163,7 @@ describe('applyListDataToProjects', () => {
     assert.equal(pkg.versionBump, undefined)
   })
 
-  it('flags packages with bracket-pinned versions as isPinned without changing isOutdated', () => {
+  it('should set isPinned without touching isOutdated when the requested version uses brackets', () => {
     const projects = [
       makeProject('/repo/App.csproj', [{ id: 'SixLabors.ImageSharp', version: '[3.1.12]' }])
     ]
@@ -183,7 +183,7 @@ describe('applyListDataToProjects', () => {
     assert.equal(pkg.latestVersion, '')
   })
 
-  it('appends packages reported by dotnet list that the XML first paint missed (CPM case)', () => {
+  it('should append packages from dotnet list when the XML first paint missed them', () => {
     const projects = [makeProject('/repo/App.csproj', [])]
     const installed = listOutput('/repo/App.csproj', [{ id: 'Newtonsoft.Json', resolved: '13.0.3' }])
     const outdated = listOutput('/repo/App.csproj', [
@@ -198,7 +198,7 @@ describe('applyListDataToProjects', () => {
     assert.equal(projects[0].packages[0].versionBump, 'patch')
   })
 
-  it('matches projects case-insensitively across path normalisations', () => {
+  it('should match projects case-insensitively when paths differ in casing', () => {
     const projects = [makeProject('/Repo/App.csproj', [{ id: 'Serilog', version: 'placeholder' }])]
     const installed = listOutput('/repo/App.csproj', [{ id: 'Serilog', resolved: '3.1.1' }])
     const outdated: DotnetListOutput = { version: 1, parameters: '', projects: [] }
@@ -208,7 +208,7 @@ describe('applyListDataToProjects', () => {
     assert.equal(projects[0].packages[0].installedVersion, '3.1.1')
   })
 
-  it('silently skips dotnet list projects not present in the OverviewProject list', () => {
+  it('should silently skip dotnet list projects when they are not in the OverviewProject list', () => {
     const projects = [makeProject('/repo/A.csproj', [{ id: 'X', version: '1.0.0' }])]
     const installed = listOutput('/repo/B.csproj', [{ id: 'X', resolved: '2.0.0' }])
     const outdated: DotnetListOutput = { version: 1, parameters: '', projects: [] }
@@ -238,7 +238,7 @@ describe('filterPackages', () => {
     }
   }
 
-  it('filters by case-insensitive substring on the package id', () => {
+  it('should filter packages by case-insensitive substring match on the id', () => {
     const all = [vm('Newtonsoft.Json'), vm('Serilog'), vm('Polly')]
     const result = filterPackages(all, 'json', 'installed')
     assert.deepEqual(
@@ -247,7 +247,7 @@ describe('filterPackages', () => {
     )
   })
 
-  it('limits the updates tab to outdated packages only', () => {
+  it('should keep only outdated packages when category is updates', () => {
     const all = [vm('A', true), vm('B', false), vm('C', true)]
     const result = filterPackages(all, '', 'updates')
     assert.deepEqual(
@@ -256,13 +256,13 @@ describe('filterPackages', () => {
     )
   })
 
-  it('returns everything when category is installed and query is empty', () => {
+  it('should return everything when category is installed and query is empty', () => {
     const all = [vm('A'), vm('B'), vm('C')]
     const result = filterPackages(all, '', 'installed')
     assert.equal(result.length, 3)
   })
 
-  it('combines text filter and updates category', () => {
+  it('should combine text filter and updates category when both are active', () => {
     const all = [vm('Serilog', true), vm('Serilog.Sinks.Console', false), vm('Newtonsoft.Json', true)]
     const result = filterPackages(all, 'serilog', 'updates')
     assert.deepEqual(
@@ -271,7 +271,7 @@ describe('filterPackages', () => {
     )
   })
 
-  it('returns the original ordering of inputs', () => {
+  it('should preserve the original input order', () => {
     const all = [vm('Z'), vm('A'), vm('M')]
     const result = filterPackages(all, '', 'installed')
     assert.deepEqual(

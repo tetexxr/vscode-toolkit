@@ -3,7 +3,7 @@ import * as path from 'path'
 import { findAuxiliaryFiles, PARENT_AUX_FILES } from '../../../src/features/nuget/nuget-paths'
 
 describe('findAuxiliaryFiles', () => {
-  it('emits aux-file paths for every parent directory of the project', () => {
+  it('should emit aux-file paths for every parent directory of the project', () => {
     const proj = path.join('/repo', 'src', 'App', 'App.csproj')
     const result = findAuxiliaryFiles(proj)
 
@@ -15,7 +15,7 @@ describe('findAuxiliaryFiles', () => {
     }
   })
 
-  it('does not walk past the filesystem root', () => {
+  it('should not walk past the filesystem root', () => {
     const proj = path.join('/repo', 'App.csproj')
     const result = findAuxiliaryFiles(proj)
 
@@ -26,7 +26,7 @@ describe('findAuxiliaryFiles', () => {
     }
   })
 
-  it('returns paths covering both Directory.Packages.props and NuGet.config families', () => {
+  it('should return paths covering both Directory.Packages.props and NuGet.config families', () => {
     const proj = path.join('/repo', 'App.csproj')
     const result = findAuxiliaryFiles(proj)
     const names = new Set(result.map(p => path.basename(p)))

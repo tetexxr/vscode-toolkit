@@ -2,37 +2,37 @@ import { strict as assert } from 'assert'
 import { buildInstallArgs, buildUninstallArgs } from '../../../src/features/npm/npm-commands'
 
 describe('buildInstallArgs', () => {
-  it('npm: regular dependency', () => {
+  it('should build an npm install command when the package is a regular dependency', () => {
     const { cmd, args } = buildInstallArgs('npm', 'express', '4.18.0', false)
     assert.equal(cmd, 'npm')
     assert.deepEqual(args, ['install', 'express@4.18.0'])
   })
 
-  it('npm: dev dependency', () => {
+  it('should build an npm install command when the package is a dev dependency', () => {
     const { cmd, args } = buildInstallArgs('npm', 'typescript', '5.0.0', true)
     assert.equal(cmd, 'npm')
     assert.deepEqual(args, ['install', 'typescript@5.0.0', '--save-dev'])
   })
 
-  it('yarn: regular dependency', () => {
+  it('should build a yarn add command when the package is a regular dependency', () => {
     const { cmd, args } = buildInstallArgs('yarn', 'express', '4.18.0', false)
     assert.equal(cmd, 'yarn')
     assert.deepEqual(args, ['add', 'express@4.18.0'])
   })
 
-  it('yarn: dev dependency', () => {
+  it('should build a yarn add command when the package is a dev dependency', () => {
     const { cmd, args } = buildInstallArgs('yarn', 'typescript', '5.0.0', true)
     assert.equal(cmd, 'yarn')
     assert.deepEqual(args, ['add', 'typescript@5.0.0', '--dev'])
   })
 
-  it('pnpm: regular dependency', () => {
+  it('should build a pnpm add command when the package is a regular dependency', () => {
     const { cmd, args } = buildInstallArgs('pnpm', 'express', '4.18.0', false)
     assert.equal(cmd, 'pnpm')
     assert.deepEqual(args, ['add', 'express@4.18.0'])
   })
 
-  it('pnpm: dev dependency', () => {
+  it('should build a pnpm add command when the package is a dev dependency', () => {
     const { cmd, args } = buildInstallArgs('pnpm', 'typescript', '5.0.0', true)
     assert.equal(cmd, 'pnpm')
     assert.deepEqual(args, ['add', 'typescript@5.0.0', '--save-dev'])
@@ -45,19 +45,19 @@ describe('buildInstallArgs', () => {
 })
 
 describe('buildUninstallArgs', () => {
-  it('npm', () => {
+  it('should build an npm uninstall command when the manager is npm', () => {
     const { cmd, args } = buildUninstallArgs('npm', 'express')
     assert.equal(cmd, 'npm')
     assert.deepEqual(args, ['uninstall', 'express'])
   })
 
-  it('yarn', () => {
+  it('should build a yarn remove command when the manager is yarn', () => {
     const { cmd, args } = buildUninstallArgs('yarn', 'express')
     assert.equal(cmd, 'yarn')
     assert.deepEqual(args, ['remove', 'express'])
   })
 
-  it('pnpm', () => {
+  it('should build a pnpm remove command when the manager is pnpm', () => {
     const { cmd, args } = buildUninstallArgs('pnpm', 'express')
     assert.equal(cmd, 'pnpm')
     assert.deepEqual(args, ['remove', 'express'])

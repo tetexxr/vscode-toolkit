@@ -2,7 +2,7 @@ import { strict as assert } from 'assert'
 import { parseJsonOutput } from '../../../src/features/nuget/nuget-cli'
 
 describe('parseJsonOutput', () => {
-  it('parses a clean dotnet list JSON body', () => {
+  it('should parse a clean dotnet list JSON body', () => {
     const json = `{
       "version": 1,
       "parameters": "--outdated",
@@ -26,18 +26,18 @@ describe('parseJsonOutput', () => {
     assert.equal(result.projects[0].frameworks?.[0].topLevelPackages?.[0].latestVersion, '4.0.0')
   })
 
-  it('strips informational lines before the JSON body', () => {
+  it('should strip informational lines before the JSON body', () => {
     const noisy = 'Restoring packages for /repo/App.csproj...\nDone.\n{ "version": 1, "parameters": "", "projects": [] }'
     const result = parseJsonOutput(noisy)
     assert.equal(result.version, 1)
     assert.equal(result.projects.length, 0)
   })
 
-  it('throws when there is no JSON body at all', () => {
+  it('should throw when there is no JSON body at all', () => {
     assert.throws(() => parseJsonOutput('error: command not found'), /no JSON body/)
   })
 
-  it('throws when the JSON is malformed', () => {
+  it('should throw when the JSON is malformed', () => {
     assert.throws(() => parseJsonOutput('{ this is not valid json'))
   })
 })
