@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.13.2",
+  "version": "1.13.3",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.120.0"
@@ -699,6 +699,10 @@
         "icon": "$(file)"
       },
       {
+        "command": "toolkit.todoTree.excludeFolder",
+        "title": "Toolkit: TODO Tree - Exclude Folder..."
+      },
+      {
         "command": "toolkit.restClient.send",
         "title": "Toolkit: Send Request"
       },
@@ -821,6 +825,11 @@
           "command": "toolkit.gitCommitList.editMessage",
           "when": "view == toolkitCommitList && (viewItem == commit || viewItem == commitHead)",
           "group": "inline@2"
+        },
+        {
+          "command": "toolkit.todoTree.excludeFolder",
+          "when": "view == toolkitTodoTree && (viewItem == file || viewItem == todo)",
+          "group": "1_modify@1"
         }
       ],
       "toolkit.csharp.new": [
@@ -913,6 +922,11 @@
           "command": "toolkit.formatFiles.thisFolder",
           "when": "explorerResourceIsFolder",
           "group": "0_toolkit@4"
+        },
+        {
+          "command": "toolkit.todoTree.excludeFolder",
+          "when": "explorerResourceIsFolder",
+          "group": "0_toolkit@9"
         },
         {
           "command": "toolkit.gitHistory",
@@ -1655,7 +1669,7 @@
             ".vs",
             "out"
           ],
-          "description": "Folders to skip when scanning.",
+          "description": "Folders to skip when scanning. Each entry can be: a bare folder name matched at any depth (e.g. `node_modules`), a workspace-relative path (e.g. `src/vendor/lib-x`), or a glob (e.g. `packages/*/dist`).",
           "items": {
             "type": "string"
           }

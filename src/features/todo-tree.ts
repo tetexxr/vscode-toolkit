@@ -43,14 +43,32 @@ function readConfig(): Config {
   }
 }
 
-function buildExcludeGlob(folders: string[]): string | undefined {
-  if (folders.length === 0) {
+function toExcludePattern(entry: string): string | undefined {
+  const trimmed = entry.trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, '')
+  if (!trimmed) {
     return undefined
   }
-  if (folders.length === 1) {
-    return `**/${folders[0]}/**`
+  // Explicit glob: pass through untouched.
+  if (/[*?{[]/.test(trimmed)) {
+    return trimmed
   }
-  return `**/{${folders.join(',')}}/**`
+  // Workspace-relative path (contains a slash): anchor it.
+  if (trimmed.includes('/')) {
+    return `${trimmed}/**`
+  }
+  // Bare folder name: match it anywhere.
+  return `**/${trimmed}/**`
+}
+
+function buildExcludeGlob(folders: string[]): string | undefined {
+  const patterns = folders.map(toExcludePattern).filter((p): p is string => !!p)
+  if (patterns.length === 0) {
+    return undefined
+  }
+  if (patterns.length === 1) {
+    return patterns[0]
+  }
+  return `{${patterns.join(',')}}`
 }
 
 function relativeFor(uri: vscode.Uri): string {
@@ -233,6 +251,89 @@ function rescanSingleFile(provider: TodoTreeProvider, document: vscode.TextDocum
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Exclude folder command                                                    */
+/* -------------------------------------------------------------------------- */
+
+function uriFromNode(node: Node): vscode.Uri | undefined {
+  if (node.kind === 'file') {
+    return vscode.Uri.parse(node.uri)
+  }
+  if (node.kind === 'item') {
+    return vscode.Uri.parse(node.item.uri)
+  }
+  return undefined
+}
+
+function ancestorPaths(relPath: string): string[] {
+  const parts = relPath.split('/').filter(Boolean)
+  // Drop the file itself; keep every folder ancestor down to the immediate parent.
+  parts.pop()
+  const out: string[] = []
+  for (let i = 1; i <= parts.length; i++) {
+    out.push(parts.slice(0, i).join('/'))
+  }
+  return out
+}
+
+async function addExclusion(relPath: string): Promise<void> {
+  const config = vscode.workspace.getConfiguration('toolkit.todoTree')
+  const current = config.get<string[]>('excludedFolders', [])
+  if (current.includes(relPath)) {
+    void vscode.window.showInformationMessage(`TODO Tree: "${relPath}" is already excluded.`)
+    return
+  }
+  await config.update('excludedFolders', [...current, relPath], vscode.ConfigurationTarget.Workspace)
+  // The configuration listener will trigger a rescan.
+}
+
+function workspaceRelative(uri: vscode.Uri): string | undefined {
+  const folder = vscode.workspace.getWorkspaceFolder(uri)
+  if (!folder) {
+    return undefined
+  }
+  return path.relative(folder.uri.fsPath, uri.fsPath).split(path.sep).join('/')
+}
+
+async function isDirectory(uri: vscode.Uri): Promise<boolean> {
+  try {
+    const stat = await vscode.workspace.fs.stat(uri)
+    return (stat.type & vscode.FileType.Directory) !== 0
+  } catch {
+    return false
+  }
+}
+
+async function excludeFolderFromUri(uri: vscode.Uri): Promise<void> {
+  const rel = workspaceRelative(uri)
+  if (rel === undefined) {
+    void vscode.window.showWarningMessage('TODO Tree: path is outside the workspace; cannot derive a relative path to exclude.')
+    return
+  }
+  if (await isDirectory(uri)) {
+    if (!rel) {
+      void vscode.window.showInformationMessage('TODO Tree: the workspace root cannot be excluded.')
+      return
+    }
+    await addExclusion(rel)
+    return
+  }
+  // It's a file: offer its ancestor folders.
+  const ancestors = ancestorPaths(rel)
+  if (ancestors.length === 0) {
+    void vscode.window.showInformationMessage('TODO Tree: this file lives at the workspace root; nothing to exclude.')
+    return
+  }
+  const picked = await vscode.window.showQuickPick(
+    ancestors.slice().reverse().map(p => ({ label: p, description: 'workspace-relative' })),
+    { title: 'Exclude folder from TODO Tree', placeHolder: 'Pick which ancestor folder to exclude' }
+  )
+  if (!picked) {
+    return
+  }
+  await addExclusion(picked.label)
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Registration                                                              */
 /* -------------------------------------------------------------------------- */
 
@@ -265,6 +366,19 @@ export function registerTodoTreeCommands(context: vscode.ExtensionContext): void
         .getConfiguration('toolkit.todoTree')
         .update('groupBy', 'file', vscode.ConfigurationTarget.Workspace)
       provider.refresh()
+    }),
+    vscode.commands.registerCommand('toolkit.todoTree.excludeFolder', async (arg?: Node | vscode.Uri) => {
+      if (!arg) {
+        return
+      }
+      if (arg instanceof vscode.Uri) {
+        await excludeFolderFromUri(arg)
+        return
+      }
+      const uri = uriFromNode(arg)
+      if (uri) {
+        await excludeFolderFromUri(uri)
+      }
     })
   )
 
