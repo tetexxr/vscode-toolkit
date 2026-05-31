@@ -3,7 +3,9 @@ import {
   renderFileList,
   renderDiffContent,
   renderDiffPlaceholders,
-  LARGE_DIFF_LINE_THRESHOLD
+  pickRepoRoot,
+  LARGE_DIFF_LINE_THRESHOLD,
+  SelectableRepo
 } from '../../src/features/git-edit-commit-utils'
 import { CommitFileInfo } from '../../src/utils/git'
 
@@ -226,5 +228,34 @@ describe('renderDiffPlaceholders', () => {
 
   it('should return empty string for empty file list', () => {
     assert.equal(renderDiffPlaceholders([]), '')
+  })
+})
+
+describe('pickRepoRoot', () => {
+  function repo(fsPath: string, selected = false): SelectableRepo {
+    return { rootUri: { fsPath }, ui: { selected } }
+  }
+
+  it('should return undefined when there are no repositories', () => {
+    assert.equal(pickRepoRoot([]), undefined)
+  })
+
+  it('should return the only repository root when there is a single repo', () => {
+    assert.equal(pickRepoRoot([repo('/work/repo-a')]), '/work/repo-a')
+  })
+
+  it('should return the selected repository root when multiple repos exist', () => {
+    const repos = [repo('/work/repo-a'), repo('/work/repo-b', true), repo('/work/repo-c')]
+    assert.equal(pickRepoRoot(repos), '/work/repo-b')
+  })
+
+  it('should fall back to the first repository when none is selected', () => {
+    const repos = [repo('/work/repo-a'), repo('/work/repo-b'), repo('/work/repo-c')]
+    assert.equal(pickRepoRoot(repos), '/work/repo-a')
+  })
+
+  it('should return the first selected repository when several are marked selected', () => {
+    const repos = [repo('/work/repo-a'), repo('/work/repo-b', true), repo('/work/repo-c', true)]
+    assert.equal(pickRepoRoot(repos), '/work/repo-b')
   })
 })

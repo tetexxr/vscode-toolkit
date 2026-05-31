@@ -13,7 +13,7 @@ import {
   countCommitsBetween,
   hasUncommittedChanges
 } from '../utils/git'
-import { renderFileList, renderDiffContent, renderDiffPlaceholders } from './git-edit-commit-utils'
+import { renderFileList, renderDiffContent, renderDiffPlaceholders, pickRepoRoot } from './git-edit-commit-utils'
 import { escapeHtml, createNonce } from '../utils/html'
 import { logError } from '../utils/logger'
 
@@ -590,9 +590,8 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
 
   private getSelectedRepoRoot(): string | undefined {
     const repos = this.gitApi?.repositories
-    if (!repos || repos.length === 0) return undefined
-    const repo = repos.find(r => r.ui.selected) ?? repos[0]
-    return repo.rootUri.fsPath
+    if (!repos) return undefined
+    return pickRepoRoot(repos)
   }
 
   refresh(): void {

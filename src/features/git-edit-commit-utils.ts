@@ -3,6 +3,24 @@ import { escapeHtml } from '../utils/html'
 
 export const LARGE_DIFF_LINE_THRESHOLD = 5000
 
+/** Minimal shape of a git-extension repository needed to pick which one to show. */
+export interface SelectableRepo {
+  rootUri: { fsPath: string }
+  ui: { selected: boolean }
+}
+
+/**
+ * Picks which repository's commits the Commit History view should display.
+ * Prefers the repository currently selected in the SCM "Repositories" list so
+ * the view follows the user's selection; otherwise falls back to the first
+ * repository. Returns undefined when there are no repositories.
+ */
+export function pickRepoRoot(repos: readonly SelectableRepo[]): string | undefined {
+  if (repos.length === 0) return undefined
+  const repo = repos.find(r => r.ui.selected) ?? repos[0]
+  return repo.rootUri.fsPath
+}
+
 export function renderFileList(files: CommitFileInfo[]): string {
   const html: string[] = []
   for (const file of files) {
