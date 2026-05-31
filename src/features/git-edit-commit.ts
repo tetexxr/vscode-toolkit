@@ -561,19 +561,38 @@ class CommitTreeItem extends vscode.TreeItem {
 class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event
-  private cachedRepoRoot: string | undefined
+  private gitApi: GitApi | undefined
 
+  setGitApi(api: GitApi): void {
+    this.gitApi = api
+  }
+
+  /**
+   * Resolves the repo root whose commits the view should show. Prefers the
+   * repository currently selected in the Source Control "Repositories" list,
+   * so when a folder contains several repos the view follows the user's
+   * selection. Falls back to resolving the first workspace folder via
+   * `git rev-parse` when the git extension API is unavailable.
+   */
   async getRepoRoot(): Promise<string | undefined> {
-    if (this.cachedRepoRoot) return this.cachedRepoRoot
+    const selected = this.getSelectedRepoRoot()
+    if (selected) return selected
+
     const folder = vscode.workspace.workspaceFolders?.[0]
     if (!folder) return undefined
     try {
-      this.cachedRepoRoot = await getRepoRoot(folder.uri.fsPath)
-      return this.cachedRepoRoot
+      return await getRepoRoot(folder.uri.fsPath)
     } catch (err) {
       logError('git-edit-commit.getRepoRoot', err)
       return undefined
     }
+  }
+
+  private getSelectedRepoRoot(): string | undefined {
+    const repos = this.gitApi?.repositories
+    if (!repos || repos.length === 0) return undefined
+    const repo = repos.find(r => r.ui.selected) ?? repos[0]
+    return repo.rootUri.fsPath
   }
 
   refresh(): void {
@@ -599,31 +618,41 @@ class CommitListProvider implements vscode.TreeDataProvider<CommitTreeItem> {
 
 let editPanel: vscode.WebviewPanel | undefined
 
+interface GitRepositoryUIState {
+  readonly selected: boolean
+  readonly onDidChange: vscode.Event<void>
+}
+
 interface GitRepository {
+  readonly rootUri: vscode.Uri
   readonly state: { readonly onDidChange: vscode.Event<void> }
+  readonly ui: GitRepositoryUIState
 }
 
 interface GitApi {
   readonly repositories: ReadonlyArray<GitRepository>
   readonly onDidOpenRepository: vscode.Event<GitRepository>
+  readonly onDidCloseRepository: vscode.Event<GitRepository>
 }
 
 interface GitExtension {
   getAPI(version: 1): GitApi
 }
 
-function watchHeadChanges(context: vscode.ExtensionContext, provider: CommitListProvider): void {
+function watchGit(context: vscode.ExtensionContext, provider: CommitListProvider): void {
   const gitExt = vscode.extensions.getExtension<GitExtension>('vscode.git')
   if (!gitExt) return
 
+  let lastRoot: string | undefined
   let lastHeadHash: string | undefined
 
-  const onRepoChange = async () => {
+  const onRepoStateChange = async () => {
     const root = await provider.getRepoRoot()
     if (!root) return
     try {
       const headHash = await getCommitHash(root)
-      if (headHash !== lastHeadHash) {
+      if (root !== lastRoot || headHash !== lastHeadHash) {
+        lastRoot = root
         lastHeadHash = headHash
         provider.refresh()
       }
@@ -631,12 +660,22 @@ function watchHeadChanges(context: vscode.ExtensionContext, provider: CommitList
   }
 
   const subscribe = (repo: GitRepository) => {
-    context.subscriptions.push(repo.state.onDidChange(onRepoChange))
+    context.subscriptions.push(repo.state.onDidChange(onRepoStateChange))
+    // Refresh when the user selects a different repository in the SCM view.
+    context.subscriptions.push(repo.ui.onDidChange(() => provider.refresh()))
   }
 
   const setup = (api: GitApi) => {
+    provider.setGitApi(api)
     for (const repo of api.repositories) subscribe(repo)
-    context.subscriptions.push(api.onDidOpenRepository(subscribe))
+    context.subscriptions.push(
+      api.onDidOpenRepository(repo => {
+        subscribe(repo)
+        provider.refresh()
+      }),
+      api.onDidCloseRepository(() => provider.refresh())
+    )
+    provider.refresh()
   }
 
   if (gitExt.isActive) {
@@ -660,7 +699,7 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
     }
   })
 
-  watchHeadChanges(context, provider)
+  watchGit(context, provider)
 
   context.subscriptions.push(
     treeView,
