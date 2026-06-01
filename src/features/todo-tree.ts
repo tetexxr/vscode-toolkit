@@ -5,7 +5,10 @@ import {
   formatItemLabel,
   groupByFile,
   groupByTag,
+  mergeExclusions,
   parseTodos,
+  resolveGroupBy,
+  type GroupBy,
   type TodoItem
 } from './todo-tree-utils'
 import { filterGitIgnored } from '../utils/git-ignore'
@@ -29,8 +32,6 @@ const DEFAULT_INCLUDE_GLOB =
   '**/*.{ts,js,tsx,jsx,cs,razor,cshtml,py,rb,go,rs,java,c,cpp,h,hpp,vue,svelte,html,md,sh,yml,yaml,sql}'
 const DEFAULT_EXCLUDED_FOLDERS = ['node_modules', '.git', 'dist', 'build', 'bin', 'obj', '.vs', 'out']
 
-type GroupBy = 'tag' | 'file'
-
 interface Config {
   tags: string[]
   caseSensitive: boolean
@@ -51,10 +52,10 @@ function readConfig(): Config {
   // possibly committed on purpose); personal ones come from workspaceState. The
   // effective list is the union, de-duplicated.
   const baseExclusions = config.get<string[]>('excludedFolders', DEFAULT_EXCLUDED_FOLDERS)
-  const excludedFolders = [...new Set([...baseExclusions, ...personalExclusions()])]
+  const excludedFolders = mergeExclusions(baseExclusions, personalExclusions())
   // Grouping is a personal view preference: prefer the stored value, falling
   // back to the declared setting (honors any pre-existing config / migration).
-  const groupBy = stateStore?.get<GroupBy>(STATE_GROUP_BY) ?? config.get<GroupBy>('groupBy', 'tag')
+  const groupBy = resolveGroupBy(stateStore?.get<string>(STATE_GROUP_BY), config.get<GroupBy>('groupBy', 'tag'))
   return {
     tags: config.get<string[]>('tags', DEFAULT_TAGS),
     caseSensitive: config.get<boolean>('caseSensitive', false),
