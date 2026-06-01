@@ -5,7 +5,10 @@ import {
   formatItemLabel,
   groupByFile,
   groupByTag,
+  mergeExclusions,
   parseTodos,
+  resolveGroupBy,
+  type GroupBy,
   type TodoItem
 } from './todo-tree-utils'
 import { filterGitIgnored } from '../utils/git-ignore'
@@ -13,12 +16,21 @@ import { logError, logInfo } from '../utils/logger'
 
 const VIEW_ID = 'toolkitTodoTree'
 
+// Per-workspace, machine-local storage keys. These hold the user's *personal*
+// preferences (folders excluded via the command, current grouping). They live in
+// VS Code's own storage rather than `.vscode/settings.json`, so they never get
+// committed and never collide with a teammate's choices.
+const STATE_EXCLUDED_FOLDERS = 'todoTree.excludedFolders'
+const STATE_GROUP_BY = 'todoTree.groupBy'
+
+// Set during registration; lets the module-level helpers reach workspaceState
+// without threading the context through every call site.
+let stateStore: vscode.Memento | undefined
+
 const DEFAULT_TAGS = ['TODO', 'FIXME', 'HACK', 'XXX', 'NOTE', 'BUG', 'REVIEW']
 const DEFAULT_INCLUDE_GLOB =
   '**/*.{ts,js,tsx,jsx,cs,razor,cshtml,py,rb,go,rs,java,c,cpp,h,hpp,vue,svelte,html,md,sh,yml,yaml,sql}'
 const DEFAULT_EXCLUDED_FOLDERS = ['node_modules', '.git', 'dist', 'build', 'bin', 'obj', '.vs', 'out']
-
-type GroupBy = 'tag' | 'file'
 
 interface Config {
   tags: string[]
@@ -30,14 +42,33 @@ interface Config {
   useGitIgnore: boolean
 }
 
+function personalExclusions(): string[] {
+  return stateStore?.get<string[]>(STATE_EXCLUDED_FOLDERS, []) ?? []
+}
+
+// Mirror the active grouping into a context key so the view-title toggle buttons
+// can react via their `when` clauses. The grouping lives in workspaceState now,
+// which `when` expressions can't read directly (they only see config + context).
+function syncGroupByContext(value: GroupBy): Thenable<unknown> {
+  return vscode.commands.executeCommand('setContext', 'toolkitTodoTreeGroupBy', value)
+}
+
 function readConfig(): Config {
   const config = vscode.workspace.getConfiguration('toolkit.todoTree')
+  // Base exclusions still come from the declared setting (team/user defaults,
+  // possibly committed on purpose); personal ones come from workspaceState. The
+  // effective list is the union, de-duplicated.
+  const baseExclusions = config.get<string[]>('excludedFolders', DEFAULT_EXCLUDED_FOLDERS)
+  const excludedFolders = mergeExclusions(baseExclusions, personalExclusions())
+  // Grouping is a personal view preference: prefer the stored value, falling
+  // back to the declared setting (honors any pre-existing config / migration).
+  const groupBy = resolveGroupBy(stateStore?.get<string>(STATE_GROUP_BY), config.get<GroupBy>('groupBy', 'tag'))
   return {
     tags: config.get<string[]>('tags', DEFAULT_TAGS),
     caseSensitive: config.get<boolean>('caseSensitive', false),
     includeGlob: config.get<string>('includeGlob', DEFAULT_INCLUDE_GLOB),
-    excludedFolders: config.get<string[]>('excludedFolders', DEFAULT_EXCLUDED_FOLDERS),
-    groupBy: config.get<GroupBy>('groupBy', 'tag'),
+    excludedFolders,
+    groupBy,
     maxFiles: Math.max(1, config.get<number>('maxFiles', 5000)),
     useGitIgnore: config.get<boolean>('useGitIgnore', true)
   }
@@ -275,15 +306,16 @@ function ancestorPaths(relPath: string): string[] {
   return out
 }
 
-async function addExclusion(relPath: string): Promise<void> {
-  const config = vscode.workspace.getConfiguration('toolkit.todoTree')
-  const current = config.get<string[]>('excludedFolders', [])
-  if (current.includes(relPath)) {
+async function addExclusion(relPath: string, provider: TodoTreeProvider): Promise<void> {
+  // Already covered by either the base setting or a previous personal exclusion.
+  if (readConfig().excludedFolders.includes(relPath)) {
     void vscode.window.showInformationMessage(`TODO Tree: "${relPath}" is already excluded.`)
     return
   }
-  await config.update('excludedFolders', [...current, relPath], vscode.ConfigurationTarget.Workspace)
-  // The configuration listener will trigger a rescan.
+  await stateStore?.update(STATE_EXCLUDED_FOLDERS, [...personalExclusions(), relPath])
+  // Writes go to workspaceState, not configuration, so the config-change listener
+  // won't fire — rescan explicitly to reflect the new exclusion.
+  await scanWorkspace(provider)
 }
 
 function workspaceRelative(uri: vscode.Uri): string | undefined {
@@ -303,7 +335,7 @@ async function isDirectory(uri: vscode.Uri): Promise<boolean> {
   }
 }
 
-async function excludeFolderFromUri(uri: vscode.Uri): Promise<void> {
+async function excludeFolderFromUri(uri: vscode.Uri, provider: TodoTreeProvider): Promise<void> {
   const rel = workspaceRelative(uri)
   if (rel === undefined) {
     void vscode.window.showWarningMessage('TODO Tree: path is outside the workspace; cannot derive a relative path to exclude.')
@@ -314,7 +346,7 @@ async function excludeFolderFromUri(uri: vscode.Uri): Promise<void> {
       void vscode.window.showInformationMessage('TODO Tree: the workspace root cannot be excluded.')
       return
     }
-    await addExclusion(rel)
+    await addExclusion(rel, provider)
     return
   }
   // It's a file: offer its ancestor folders.
@@ -330,7 +362,7 @@ async function excludeFolderFromUri(uri: vscode.Uri): Promise<void> {
   if (!picked) {
     return
   }
-  await addExclusion(picked.label)
+  await addExclusion(picked.label, provider)
 }
 
 /* -------------------------------------------------------------------------- */
@@ -338,6 +370,8 @@ async function excludeFolderFromUri(uri: vscode.Uri): Promise<void> {
 /* -------------------------------------------------------------------------- */
 
 export function registerTodoTreeCommands(context: vscode.ExtensionContext): void {
+  stateStore = context.workspaceState
+  void syncGroupByContext(readConfig().groupBy)
   const provider = new TodoTreeProvider()
   const treeView = vscode.window.createTreeView<Node>(VIEW_ID, { treeDataProvider: provider })
   context.subscriptions.push(treeView)
@@ -356,15 +390,13 @@ export function registerTodoTreeCommands(context: vscode.ExtensionContext): void
       await scanWorkspace(provider)
     }),
     vscode.commands.registerCommand('toolkit.todoTree.groupByTag', async () => {
-      await vscode.workspace
-        .getConfiguration('toolkit.todoTree')
-        .update('groupBy', 'tag', vscode.ConfigurationTarget.Workspace)
+      await context.workspaceState.update(STATE_GROUP_BY, 'tag')
+      await syncGroupByContext('tag')
       provider.refresh()
     }),
     vscode.commands.registerCommand('toolkit.todoTree.groupByFile', async () => {
-      await vscode.workspace
-        .getConfiguration('toolkit.todoTree')
-        .update('groupBy', 'file', vscode.ConfigurationTarget.Workspace)
+      await context.workspaceState.update(STATE_GROUP_BY, 'file')
+      await syncGroupByContext('file')
       provider.refresh()
     }),
     vscode.commands.registerCommand('toolkit.todoTree.excludeFolder', async (arg?: Node | vscode.Uri) => {
@@ -372,12 +404,12 @@ export function registerTodoTreeCommands(context: vscode.ExtensionContext): void
         return
       }
       if (arg instanceof vscode.Uri) {
-        await excludeFolderFromUri(arg)
+        await excludeFolderFromUri(arg, provider)
         return
       }
       const uri = uriFromNode(arg)
       if (uri) {
-        await excludeFolderFromUri(uri)
+        await excludeFolderFromUri(uri, provider)
       }
     })
   )

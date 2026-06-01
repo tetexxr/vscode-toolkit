@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.13.4",
+  "version": "1.13.5",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.120.0"
@@ -801,12 +801,12 @@
         },
         {
           "command": "toolkit.todoTree.groupByTag",
-          "when": "view == toolkitTodoTree && config.toolkit.todoTree.groupBy != tag",
+          "when": "view == toolkitTodoTree && toolkitTodoTreeGroupBy != tag",
           "group": "navigation@1"
         },
         {
           "command": "toolkit.todoTree.groupByFile",
-          "when": "view == toolkitTodoTree && config.toolkit.todoTree.groupBy != file",
+          "when": "view == toolkitTodoTree && toolkitTodoTreeGroupBy != file",
           "group": "navigation@2"
         },
         {
@@ -1669,7 +1669,7 @@
             ".vs",
             "out"
           ],
-          "description": "Folders to skip when scanning. Each entry can be: a bare folder name matched at any depth (e.g. `node_modules`), a workspace-relative path (e.g. `src/vendor/lib-x`), or a glob (e.g. `packages/*/dist`).",
+          "description": "Base folders to skip when scanning. Each entry can be: a bare folder name matched at any depth (e.g. `node_modules`), a workspace-relative path (e.g. `src/vendor/lib-x`), or a glob (e.g. `packages/*/dist`). Folders excluded interactively via the \"Exclude Folder…\" command are stored per-workspace in VS Code's local storage (not in `.vscode/settings.json`), so they are never committed; the effective exclusion list is the union of this setting and those personal exclusions.",
           "items": {
             "type": "string"
           }
@@ -1681,7 +1681,7 @@
             "file"
           ],
           "default": "tag",
-          "description": "Initial grouping of the TODO Tree view."
+          "description": "Default grouping of the TODO Tree view. Toggling the grouping from the view is remembered per-workspace in VS Code's local storage and takes precedence over this setting."
         },
         "toolkit.todoTree.maxFiles": {
           "type": "number",
