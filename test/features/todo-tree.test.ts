@@ -5,6 +5,8 @@ import {
   groupByFile,
   formatItemLabel,
   formatItemDescription,
+  mergeExclusions,
+  resolveGroupBy,
   type TodoItem
 } from '../../src/features/todo-tree-utils'
 
@@ -162,5 +164,58 @@ describe('formatItemLabel / formatItemDescription', () => {
       formatItemDescription({ tag: 'TODO', message: 'x', line: 4, uri: URI }, 'src/foo.ts'),
       'src/foo.ts:5'
     )
+  })
+})
+
+describe('mergeExclusions', () => {
+  it('should union base and personal exclusions, base first', () => {
+    assert.deepEqual(
+      mergeExclusions(['node_modules', 'dist'], ['src/vendor', 'out']),
+      ['node_modules', 'dist', 'src/vendor', 'out']
+    )
+  })
+
+  it('should de-duplicate entries that appear in both lists', () => {
+    assert.deepEqual(
+      mergeExclusions(['node_modules', 'dist'], ['dist', 'src/vendor']),
+      ['node_modules', 'dist', 'src/vendor']
+    )
+  })
+
+  it('should de-duplicate repeats within a single list, keeping first-seen order', () => {
+    assert.deepEqual(
+      mergeExclusions(['a', 'a', 'b'], ['b', 'c', 'c']),
+      ['a', 'b', 'c']
+    )
+  })
+
+  it('should return an empty array when both lists are empty', () => {
+    assert.deepEqual(mergeExclusions([], []), [])
+  })
+
+  it('should not mutate its inputs', () => {
+    const base = ['node_modules']
+    const personal = ['out']
+    mergeExclusions(base, personal)
+    assert.deepEqual(base, ['node_modules'])
+    assert.deepEqual(personal, ['out'])
+  })
+})
+
+describe('resolveGroupBy', () => {
+  it('should prefer the stored value when it is "tag"', () => {
+    assert.equal(resolveGroupBy('tag', 'file'), 'tag')
+  })
+
+  it('should prefer the stored value when it is "file"', () => {
+    assert.equal(resolveGroupBy('file', 'tag'), 'file')
+  })
+
+  it('should fall back to the configured default when stored is undefined', () => {
+    assert.equal(resolveGroupBy(undefined, 'file'), 'file')
+  })
+
+  it('should fall back to the configured default when stored is an unrecognised value', () => {
+    assert.equal(resolveGroupBy('something-else', 'tag'), 'tag')
   })
 })

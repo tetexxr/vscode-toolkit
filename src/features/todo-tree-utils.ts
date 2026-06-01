@@ -127,3 +127,26 @@ export function formatItemLabel(item: TodoItem): string {
 export function formatItemDescription(item: TodoItem, relativePath: string): string {
   return `${relativePath}:${item.line + 1}`
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Preferences                                                               */
+/* -------------------------------------------------------------------------- */
+
+export type GroupBy = 'tag' | 'file'
+
+/**
+ * Combines the base exclusions (from the declared setting) with the personal
+ * ones (stored per-workspace in VS Code's local storage). Base entries come
+ * first, duplicates are removed while preserving first-seen order.
+ */
+export function mergeExclusions(base: readonly string[], personal: readonly string[]): string[] {
+  return [...new Set([...base, ...personal])]
+}
+
+/**
+ * Resolves the effective grouping: the per-workspace stored value wins, falling
+ * back to the configured default when it is unset (or not a recognised value).
+ */
+export function resolveGroupBy(stored: string | undefined, configured: GroupBy): GroupBy {
+  return stored === 'tag' || stored === 'file' ? stored : configured
+}
