@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.13.4",
+  "version": "1.13.5",
   "publisher": "tete",
   "engines": {
     "vscode": "^1.120.0"
@@ -801,12 +801,12 @@
         },
         {
           "command": "toolkit.todoTree.groupByTag",
-          "when": "view == toolkitTodoTree && config.toolkit.todoTree.groupBy != tag",
+          "when": "view == toolkitTodoTree && toolkitTodoTreeGroupBy != tag",
           "group": "navigation@1"
         },
         {
           "command": "toolkit.todoTree.groupByFile",
-          "when": "view == toolkitTodoTree && config.toolkit.todoTree.groupBy != file",
+          "when": "view == toolkitTodoTree && toolkitTodoTreeGroupBy != file",
           "group": "navigation@2"
         },
         {
