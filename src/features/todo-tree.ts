@@ -46,6 +46,13 @@ function personalExclusions(): string[] {
   return stateStore?.get<string[]>(STATE_EXCLUDED_FOLDERS, []) ?? []
 }
 
+// Mirror the active grouping into a context key so the view-title toggle buttons
+// can react via their `when` clauses. The grouping lives in workspaceState now,
+// which `when` expressions can't read directly (they only see config + context).
+function syncGroupByContext(value: GroupBy): Thenable<unknown> {
+  return vscode.commands.executeCommand('setContext', 'toolkitTodoTreeGroupBy', value)
+}
+
 function readConfig(): Config {
   const config = vscode.workspace.getConfiguration('toolkit.todoTree')
   // Base exclusions still come from the declared setting (team/user defaults,
@@ -364,6 +371,7 @@ async function excludeFolderFromUri(uri: vscode.Uri, provider: TodoTreeProvider)
 
 export function registerTodoTreeCommands(context: vscode.ExtensionContext): void {
   stateStore = context.workspaceState
+  void syncGroupByContext(readConfig().groupBy)
   const provider = new TodoTreeProvider()
   const treeView = vscode.window.createTreeView<Node>(VIEW_ID, { treeDataProvider: provider })
   context.subscriptions.push(treeView)
@@ -383,10 +391,12 @@ export function registerTodoTreeCommands(context: vscode.ExtensionContext): void
     }),
     vscode.commands.registerCommand('toolkit.todoTree.groupByTag', async () => {
       await context.workspaceState.update(STATE_GROUP_BY, 'tag')
+      await syncGroupByContext('tag')
       provider.refresh()
     }),
     vscode.commands.registerCommand('toolkit.todoTree.groupByFile', async () => {
       await context.workspaceState.update(STATE_GROUP_BY, 'file')
+      await syncGroupByContext('file')
       provider.refresh()
     }),
     vscode.commands.registerCommand('toolkit.todoTree.excludeFolder', async (arg?: Node | vscode.Uri) => {
