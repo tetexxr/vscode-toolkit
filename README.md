@@ -198,7 +198,7 @@ If the file doesn't exist on the chosen branch — or the file is untracked / ou
 
 Preview a merge before you make it: diff **every** changed file at once against any other local branch.
 
-- Run **Toolkit: Compare Project with Branch...** from the Command Palette to compare the whole project.
+- Run **Toolkit: Compare Project with Branch...** from the Command Palette — or right-click any folder in the Explorer — to compare the whole project.
 - Right-click a folder in the Explorer and choose **Compare Folder with Branch...** to scope the comparison to that folder.
 
 A quick pick shows the local branches (excluding the current one). Picking one opens a single multi-file diff view listing each changed file: its content at the merge-base on the left, your working-tree copy on the right — so you see exactly what your side has changed since the branches diverged, including unsaved edits. Added files show an empty left side, deleted files an empty right side.
