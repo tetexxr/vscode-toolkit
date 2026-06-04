@@ -13,6 +13,7 @@ All-in-one VS Code utility extension.
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
     - [Compare with Branch](#compare-with-branch)
+    - [Compare Project / Folder with Branch](#compare-project--folder-with-branch)
     - [Peek Last Commit on Line](#peek-last-commit-on-line)
   - [Package Management](#package-management)
     - [NuGet Package Manager](#nuget-package-manager)
@@ -192,6 +193,17 @@ Diff the active file against the same file in any other local branch.
 Run **Toolkit: Compare with Branch...** from the Command Palette or the editor context menu. A quick pick shows every local branch (sorted by most recent commit, excluding the current one). Picking one opens a diff editor: `file (branch)` on the left (read-only) and your working-tree copy on the right.
 
 If the file doesn't exist on the chosen branch — or the file is untracked / outside a git repo — a warning explains why and the diff is not opened.
+
+#### Compare Project / Folder with Branch
+
+Preview a merge before you make it: diff **every** changed file at once against any other local branch.
+
+- Run **Toolkit: Compare Project with Branch...** from the Command Palette — or right-click any folder in the Explorer — to compare the whole project.
+- Right-click a folder in the Explorer and choose **Compare Folder with Branch...** to scope the comparison to that folder.
+
+A quick pick shows the local branches (excluding the current one). Picking one opens a single multi-file diff view listing each changed file: its content at the merge-base on the left, your working-tree copy on the right — so you see exactly what your side has changed since the branches diverged, including unsaved edits. Added files show an empty left side, deleted files an empty right side.
+
+If there are no differences a message says so, and above 100 changed files a confirmation is asked first. Untracked (never-committed) files are not included.
 
 #### Peek Last Commit on Line
 
