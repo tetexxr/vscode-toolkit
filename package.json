@@ -927,59 +927,64 @@
           "group": "0_toolkit@3"
         },
         {
-          "command": "toolkit.expandChangedFiles",
-          "when": "explorerResourceIsFolder",
+          "command": "toolkit.compareWithBranch",
+          "when": "!explorerResourceIsFolder && gitOpenRepositoryCount != 0",
           "group": "0_toolkit@4"
         },
         {
-          "command": "toolkit.expandRecursively",
+          "command": "toolkit.expandChangedFiles",
           "when": "explorerResourceIsFolder",
           "group": "0_toolkit@5"
         },
         {
-          "command": "toolkit.formatFiles.thisFolder",
+          "command": "toolkit.expandRecursively",
           "when": "explorerResourceIsFolder",
           "group": "0_toolkit@6"
         },
         {
+          "command": "toolkit.formatFiles.thisFolder",
+          "when": "explorerResourceIsFolder",
+          "group": "0_toolkit@7"
+        },
+        {
           "command": "toolkit.gitHistory",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@7"
+          "group": "0_toolkit@8"
         },
         {
           "command": "toolkit.npm.managePackages",
           "when": "resourceFilename == package.json",
-          "group": "0_toolkit@8"
+          "group": "0_toolkit@9"
         },
         {
           "command": "toolkit.nuget.managePackages",
           "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
-          "group": "0_toolkit@9"
+          "group": "0_toolkit@10"
         },
         {
           "submenu": "toolkit.csharp.new",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@10"
+          "group": "0_toolkit@11"
         },
         {
           "command": "toolkit.openInGitHub.explorerFile",
           "when": "explorerResourceIsRoot == false",
-          "group": "0_toolkit@11"
+          "group": "0_toolkit@12"
         },
         {
           "command": "toolkit.git.stageChanges",
           "when": "gitOpenRepositoryCount != 0",
-          "group": "0_toolkit@12"
+          "group": "0_toolkit@13"
         },
         {
           "command": "toolkit.todoTree.excludeFolder",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@13"
+          "group": "0_toolkit@14"
         },
         {
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@14"
+          "group": "0_toolkit@15"
         }
       ],
       "commandPalette": [

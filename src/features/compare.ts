@@ -98,18 +98,18 @@ async function isTrackedInBranch(repoRoot: string, branch: string, relPath: stri
   return code === 0
 }
 
-async function compareWithBranch(provider: BranchContentProvider): Promise<void> {
-  const editor = vscode.window.activeTextEditor
-  if (!editor || editor.document.isUntitled) {
-    vscode.window.showInformationMessage('Toolkit: open a saved file first.')
+async function compareWithBranch(provider: BranchContentProvider, uri?: vscode.Uri): Promise<void> {
+  const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri
+  if (!targetUri || targetUri.scheme === 'untitled') {
+    vscode.window.showInformationMessage('Toolkit: open or select a saved file first.')
     return
   }
-  if (editor.document.uri.scheme !== 'file') {
+  if (targetUri.scheme !== 'file') {
     vscode.window.showInformationMessage('Toolkit: this command only works on local files.')
     return
   }
 
-  const fileFsPath = editor.document.uri.fsPath
+  const fileFsPath = targetUri.fsPath
   const fileDir = path.dirname(fileFsPath)
 
   const repoRoot = await getRepoRoot(fileDir)
@@ -163,7 +163,7 @@ async function compareWithBranch(provider: BranchContentProvider): Promise<void>
   const leftUri = buildBranchUri(picked.branch, relPath)
   provider.set(leftUri, content)
   const title = buildDiffTitle(path.basename(fileFsPath), picked.branch)
-  await vscode.commands.executeCommand('vscode.diff', leftUri, editor.document.uri, title)
+  await vscode.commands.executeCommand('vscode.diff', leftUri, targetUri, title)
 }
 
 async function getMergeBase(repoRoot: string, branch: string): Promise<string | null> {
@@ -327,7 +327,9 @@ export function registerCompareCommands(context: vscode.ExtensionContext): void 
   const provider = new BranchContentProvider()
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider(BRANCH_SCHEME, provider),
-    vscode.commands.registerCommand('toolkit.compareWithBranch', () => compareWithBranch(provider)),
+    vscode.commands.registerCommand('toolkit.compareWithBranch', (uri?: vscode.Uri) =>
+      compareWithBranch(provider, uri)
+    ),
     vscode.commands.registerCommand('toolkit.compareProjectWithBranch', () => compareProjectWithBranch(provider)),
     vscode.commands.registerCommand('toolkit.compareFolderWithBranch', (uri?: vscode.Uri) =>
       compareFolderWithBranch(provider, uri)
