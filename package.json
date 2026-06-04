@@ -731,6 +731,14 @@
         "title": "Toolkit: Compare with Branch..."
       },
       {
+        "command": "toolkit.compareProjectWithBranch",
+        "title": "Toolkit: Compare Project with Branch..."
+      },
+      {
+        "command": "toolkit.compareFolderWithBranch",
+        "title": "Toolkit: Compare Folder with Branch..."
+      },
+      {
         "command": "toolkit.peekCommit.showLast",
         "title": "Toolkit: Show Last Commit for Line"
       },
@@ -962,6 +970,11 @@
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
           "group": "0_toolkit@11"
+        },
+        {
+          "command": "toolkit.compareFolderWithBranch",
+          "when": "explorerResourceIsFolder && gitOpenRepositoryCount != 0",
+          "group": "0_toolkit@12"
         }
       ],
       "commandPalette": [
@@ -976,6 +989,14 @@
         {
           "command": "toolkit.peekCommit.showFull",
           "when": "false"
+        },
+        {
+          "command": "toolkit.compareFolderWithBranch",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.compareProjectWithBranch",
+          "when": "gitOpenRepositoryCount != 0"
         }
       ],
       "editor/context": [
