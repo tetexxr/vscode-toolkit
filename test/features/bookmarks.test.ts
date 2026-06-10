@@ -189,3 +189,87 @@ describe('formatBookmark', () => {
     assert.equal(f.label, 'Line 8')
   })
 })
+
+describe('BookmarkStore.renamePath', () => {
+  it('should move bookmarks to the new uri on a file rename', () => {
+    const store = new BookmarkStore()
+    store.toggle(URI, 5, 'mark')
+    const moved = store.renamePath(URI, 'file:///workspace/src/renamed.ts')
+    assert.equal(moved, 1)
+    assert.deepEqual(store.getForUri(URI), [])
+    assert.deepEqual(store.getForUri('file:///workspace/src/renamed.ts'), [{ line: 5, label: 'mark' }])
+  })
+
+  it('should move bookmarks of every file under a renamed folder', () => {
+    const store = new BookmarkStore()
+    store.toggle('file:///workspace/src/a.ts', 1)
+    store.toggle('file:///workspace/src/nested/b.ts', 2)
+    store.toggle('file:///workspace/other/c.ts', 3)
+    const moved = store.renamePath('file:///workspace/src', 'file:///workspace/lib')
+    assert.equal(moved, 2)
+    assert.deepEqual(store.getForUri('file:///workspace/lib/a.ts'), [{ line: 1 }])
+    assert.deepEqual(store.getForUri('file:///workspace/lib/nested/b.ts'), [{ line: 2 }])
+    assert.deepEqual(store.getForUri('file:///workspace/other/c.ts'), [{ line: 3 }])
+  })
+
+  it('should not move uris that only share a textual prefix', () => {
+    const store = new BookmarkStore()
+    store.toggle('file:///workspace/src/app.ts', 1)
+    store.toggle('file:///workspace/src/app2.ts', 2)
+    store.renamePath('file:///workspace/src/app.ts', 'file:///workspace/src/main.ts')
+    assert.deepEqual(store.getForUri('file:///workspace/src/app2.ts'), [{ line: 2 }])
+    assert.deepEqual(store.getForUri('file:///workspace/src/main.ts'), [{ line: 1 }])
+  })
+
+  it('should merge with existing bookmarks at the target keeping one per line', () => {
+    const store = new BookmarkStore()
+    store.toggle(URI, 5, 'old')
+    store.toggle(OTHER, 5, 'target')
+    store.toggle(OTHER, 9)
+    store.renamePath(URI, OTHER)
+    const lines = store.getForUri(OTHER).map(b => b.line)
+    assert.deepEqual(lines, [5, 9])
+  })
+
+  it('should return 0 when nothing matches', () => {
+    const store = new BookmarkStore()
+    store.toggle(URI, 5)
+    assert.equal(store.renamePath('file:///workspace/none.ts', 'file:///workspace/new.ts'), 0)
+    assert.deepEqual(store.getForUri(URI), [{ line: 5 }])
+  })
+})
+
+describe('BookmarkStore.deletePath', () => {
+  it('should remove bookmarks of a deleted file', () => {
+    const store = new BookmarkStore()
+    store.toggle(URI, 5)
+    store.toggle(URI, 9)
+    const removed = store.deletePath(URI)
+    assert.equal(removed, 2)
+    assert.deepEqual(store.getForUri(URI), [])
+  })
+
+  it('should remove bookmarks of every file under a deleted folder', () => {
+    const store = new BookmarkStore()
+    store.toggle('file:///workspace/src/a.ts', 1)
+    store.toggle('file:///workspace/src/nested/b.ts', 2)
+    store.toggle('file:///workspace/other/c.ts', 3)
+    const removed = store.deletePath('file:///workspace/src')
+    assert.equal(removed, 2)
+    assert.deepEqual(store.getAll().map(e => e.uri), ['file:///workspace/other/c.ts'])
+  })
+
+  it('should not remove uris that only share a textual prefix', () => {
+    const store = new BookmarkStore()
+    store.toggle('file:///workspace/src/app.ts', 1)
+    store.toggle('file:///workspace/src/app2.ts', 2)
+    store.deletePath('file:///workspace/src/app.ts')
+    assert.deepEqual(store.getForUri('file:///workspace/src/app2.ts'), [{ line: 2 }])
+  })
+
+  it('should return 0 when nothing matches', () => {
+    const store = new BookmarkStore()
+    store.toggle(URI, 5)
+    assert.equal(store.deletePath('file:///workspace/none.ts'), 0)
+  })
+})

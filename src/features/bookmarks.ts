@@ -217,6 +217,25 @@ export function registerBookmarkCommands(context: vscode.ExtensionContext): void
         controller.applyToAllEditors()
       }
     }),
+    vscode.workspace.onDidRenameFiles(event => {
+      let moved = 0
+      for (const { oldUri, newUri } of event.files) {
+        moved += store.renamePath(oldUri.toString(), newUri.toString())
+      }
+      if (moved > 0) {
+        void controller.persist()
+        controller.applyToAllEditors()
+      }
+    }),
+    vscode.workspace.onDidDeleteFiles(event => {
+      let removed = 0
+      for (const uri of event.files) {
+        removed += store.deletePath(uri.toString())
+      }
+      if (removed > 0) {
+        void controller.persist()
+      }
+    }),
     vscode.workspace.onDidChangeTextDocument(event => {
       const uri = event.document.uri.toString()
       if (store.getForUri(uri).length === 0) {
