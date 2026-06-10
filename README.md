@@ -62,7 +62,7 @@ All-in-one VS Code utility extension.
 
 #### Open in GitHub
 
-Open the current file, repository, blame view, or commit history directly in GitHub. Supports both SSH and HTTPS remotes.
+Open the current file, repository, blame view, or commit history directly in GitHub. Supports both SSH and HTTPS remotes, including SSH remotes with a custom port. With a detached HEAD, links use the exact commit hash instead of a branch.
 
 | Command | Description |
 |---|---|
@@ -93,6 +93,8 @@ Available from:
 - **Command Palette** — run **Toolkit: Git File History**
 
 Reuses the same panel if the file is already open. Supports VS Code's built-in find widget (`Ctrl+F` / `Cmd+F`) inside the history view.
+
+History is loaded in pages of 50 commits — files with a long history open instantly, and a **Load more** button at the bottom fetches the next page.
 
 #### Git Blame (Inline Annotations)
 
@@ -161,7 +163,9 @@ All three actions show a modal confirmation before running. The Hard button in t
 **Safeguards:**
 
 - If there are **staged changes** when editing HEAD's message, the operation is rejected to prevent accidentally including them in the amend.
+- If a **rebase is already in progress** in the repository (e.g. stopped on a conflict), editing older commits is rejected — your rebase is never touched.
 - If the **working tree is dirty** when editing an older commit's message, the operation is rejected (rebase requires a clean tree). Commit or stash your changes first.
+- If the automated rebase fails midway, it is **rolled back automatically** so the repository is left exactly as it was.
 - Both **edit message** and **reset** rewrite git history. If the commits have already been pushed, a force push will be required.
 - **Reset --hard cannot be easily undone** — the modal confirmation is the only check. If in doubt, use Soft instead and decide what to do with the staged changes afterwards.
 
@@ -184,7 +188,7 @@ Stage files or folders directly from the file explorer context menu. Works with 
 
 - **Explorer context menu** — right-click a file, folder, or multi-selection and select **Toolkit: Stage Changes**.
 
-Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once.
+Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once. In multi-root workspaces the selection can span repositories: targets are grouped and staged per repository.
 
 #### Compare with Branch
 
@@ -263,6 +267,8 @@ Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution O
 | `toolkit.nuget.sources` | `[nuget.org]` | NuGet V3 package sources (supports private feeds with auth) |
 | `toolkit.nuget.requestTimeout` | `10000` | HTTP timeout in milliseconds |
 | `toolkit.nuget.defaultPrerelease` | `false` | Include prerelease packages by default |
+
+> Security note: the `authorizationHeader` of a source is only ever sent to that source's own origin (scheme + host + port). Endpoint URLs advertised by the registry that point to a different host are fetched without credentials.
 
 #### NPM Package Manager
 
@@ -573,6 +579,7 @@ Available from:
 
 - Operates on the lines touched by the current selection. Needs at least two selected lines.
 - Aligns by the **first** occurrence of the delimiter on each line.
+- Aligning by `=` skips compound operators (`==`, `===`, `+=`, `=>`, `??=`, …) — they are never split, and lines whose only `=` is part of one are left untouched.
 - Lines that don't contain the delimiter are left untouched.
 - Leading indentation and the suffix after the delimiter are preserved (leading whitespace on the suffix is normalized).
 
@@ -749,7 +756,7 @@ Available from:
 | 10 digits (optionally signed) | Unix seconds |
 | 13 digits | Unix milliseconds |
 | 16 digits | Unix microseconds (rounded to ms) |
-| Other digit-only lengths | Unix milliseconds (best-effort) |
+| Other digit-only lengths | First plausible reading (seconds → ms → µs) whose date lands between 1971 and 2150 — e.g. 9-digit values are 1973–2001 epochs in seconds. Falls back to milliseconds |
 | ISO 8601-like (date with optional time / offset) | ISO |
 
 **Hover:**
@@ -789,7 +796,7 @@ Available from:
 - Nested objects become their own named types, derived from the property key (singularized for array items).
 - Arrays of objects merge field shapes; fields missing in some samples are emitted as `?` (TS) or nullable (C#).
 - Numbers are inferred as integer or float; integers beyond `Int32.MaxValue` become `long` in C#.
-- The output replaces the JSON selection in place, or opens in a new editor when the JSON comes from the clipboard.
+- The output replaces the JSON selection in place, or opens in a new editor when the JSON comes from the clipboard. If the document changed (or was closed) while the name prompt was open, the result opens in a new editor instead of overwriting anything.
 
 **Example input:**
 
@@ -959,7 +966,7 @@ Bulk format all files in the workspace or a specific folder using VS Code's buil
 | Format Files - From Glob | Prompt for a custom glob pattern |
 | Format Files - This Folder | Format files in a folder (right-click in explorer) |
 
-Shows progress with cancellation support. Each file is opened, formatted, saved, and closed sequentially.
+Shows progress with cancellation support. Files are formatted in memory through the language's formatting provider — no editors are opened or focused, so you can keep working while a batch runs.
 
 **Settings:**
 
@@ -1057,6 +1064,8 @@ Pin specific lines in your code with an optional label and jump between them fro
 | Toggle Bookmark with Label... | `Shift+F7` | Add a bookmark, asking for a label |
 | Edit Bookmark Label... | — | Change (or clear) the label of the bookmark on the current line |
 | Show Bookmarks | `Ctrl+F7` | Quick pick of every bookmark in the workspace; selecting one navigates to it |
+| Next Bookmark | `Alt+F7` | Jump to the next bookmark in document order, crossing files, with wrap-around |
+| Previous Bookmark | `Shift+Alt+F7` | Jump to the previous bookmark, crossing files, with wrap-around |
 | Clear Bookmarks (Current File) | — | Remove all bookmarks in the active file |
 | Clear All Bookmarks | — | Remove every bookmark in the workspace (with confirmation) |
 
@@ -1071,6 +1080,7 @@ Pin specific lines in your code with an optional label and jump between them fro
 - Bookmarks live in the workspace state and survive across sessions.
 - Line numbers are auto-adjusted while you edit the document (insertions / deletions above a bookmark shift it accordingly).
 - Bookmarks placed inside a region that gets deleted are dropped.
+- Bookmarks follow file and folder renames, and are cleaned up when their file is deleted.
 
 **Settings:**
 
@@ -1109,8 +1119,8 @@ Tags must match a whole word — `// TODOLIST: foo` is not picked up.
 
 **Behavior:**
 
-- Initial scan runs in the background when the extension activates.
-- Saving a document re-scans only that file (fast).
+- The initial scan runs in the background the first time the TODOs view becomes visible (so startup pays nothing if you don't use it; the badge appears after that first scan).
+- Saving a document re-scans only that file (fast), honoring the include glob, the excluded folders, and `.gitignore`.
 - Changes to any `toolkit.todoTree.*` setting trigger a full re-scan.
 - The view shows a badge with the total number of detected TODOs.
 
@@ -1162,6 +1172,7 @@ Authorization: Bearer {{token}}
 - `@name = value` defines a variable scoped to the file.
 - `{{name}}` interpolates a variable in the URL, headers or body.
 - Lines starting with a single `#` are comments.
+- Response bodies are capped at 50 MB; larger responses abort with an error.
 
 **Built-in variables:**
 
@@ -1224,16 +1235,16 @@ A side panel where you can test regexes interactively. Pattern, flags, test inpu
 
 **Behavior:**
 
-- Matching runs in the extension host using JavaScript's `RegExp` — patterns work exactly as they do in Node.
+- Matching uses JavaScript's `RegExp` — patterns work exactly as they do in Node.
+- Evaluation runs in a **worker thread with a 1.5 s timeout**: a pattern with catastrophic backtracking shows a "Pattern timed out" error instead of freezing the editor.
 - Input is debounced (~120 ms) before being sent back for matching, so typing stays responsive.
-- The match cap (10 000) protects against zero-width loops; pathological patterns can still freeze the panel — close it and reopen.
+- The match cap (10 000) protects against runaway match lists.
 - Pattern, flags, input and replace persist across sessions in `globalState`.
 
 **Limitations (v1):**
 
 - No cheat sheet of regex tokens.
 - No save / load of named patterns (only the last state survives).
-- No protection against catastrophic backtracking — the panel stays in the UI thread.
 - No export of the pattern as a literal for other languages.
 
 ### Appearance & Viewers
