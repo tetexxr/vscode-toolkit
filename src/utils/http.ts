@@ -21,6 +21,19 @@ export interface HttpRequestOptions {
 }
 
 /**
+ * Whether two URLs share the same origin (scheme + host + port).
+ * Used to avoid forwarding credentials to hosts other than the one
+ * they were configured for. Returns false when either URL is invalid.
+ */
+export function sameOrigin(a: string, b: string): boolean {
+  try {
+    return new URL(a).origin === new URL(b).origin
+  } catch {
+    return false
+  }
+}
+
+/**
  * Makes an HTTP/HTTPS GET request and parses the JSON response.
  * Automatically decompresses gzip, deflate, and br responses.
  * Reuses TCP/TLS connections via keep-alive agents.

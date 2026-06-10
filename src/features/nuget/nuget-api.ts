@@ -6,7 +6,7 @@
  * version metadata retrieval with filtering and sorting.
  */
 
-import { httpGetJson } from '../../utils/http'
+import { httpGetJson, sameOrigin } from '../../utils/http'
 import { compareSemVer, isPrerelease as isSemVerPrerelease } from '../../utils/semver'
 import type {
   ApiIndexResponse,
@@ -49,7 +49,7 @@ async function resolveEndpoints(source: PackageSource, timeout: number): Promise
     return cached
   }
 
-  const headers = authHeaders(source)
+  const headers = authHeaders(source, source.url)
   const index = await httpGetJson<ApiIndexResponse>({ url: source.url, headers, timeout })
 
   const search = findEndpoint(index.resources, SEARCH_ENDPOINTS)
@@ -85,12 +85,11 @@ export async function searchPackages(
   skip: number = 0
 ): Promise<{ packages: PackageViewModel[]; totalHits: number }> {
   const endpoints = await resolveEndpoints(source, timeout)
-  const headers = authHeaders(source)
 
   const separator = endpoints.search.includes('?') ? '&' : '?'
   const url = `${endpoints.search}${separator}q=${encodeURIComponent(query)}&prerelease=${prerelease}&semVerLevel=2.0.0&skip=${skip}&take=30`
 
-  const results = await httpGetJson<SearchResults>({ url, headers, timeout })
+  const results = await httpGetJson<SearchResults>({ url, headers: authHeaders(source, url), timeout })
   return {
     packages: results.data.map(pkg => searchResultToViewModel(pkg, source.url)),
     totalHits: results.totalHits
@@ -128,11 +127,10 @@ export async function fetchInstalledPackagesMetadata(
   timeout: number
 ): Promise<PackageViewModel[]> {
   const endpoints = await resolveEndpoints(source, timeout)
-  const headers = authHeaders(source)
 
   const results = await Promise.allSettled(
     installedPackages.map(pkg =>
-      fetchSinglePackageMetadata(pkg.id, endpoints.registration, headers, prerelease, source.url, timeout)
+      fetchSinglePackageMetadata(pkg.id, endpoints.registration, source, prerelease, timeout)
     )
   )
 
@@ -154,11 +152,10 @@ export async function fetchPackageVersions(
   timeout: number
 ): Promise<CatalogEntry[]> {
   const endpoints = await resolveEndpoints(source, timeout)
-  const headers = authHeaders(source)
 
   const registrationUrl = ensureTrailingSlash(endpoints.registration) + `${packageId.toLowerCase()}/index.json`
-  const index = await httpGetJson<RegistrationIndex>({ url: registrationUrl, headers, timeout })
-  const leafs = await fetchAllLeafs(index, headers, timeout)
+  const index = await httpGetJson<RegistrationIndex>({ url: registrationUrl, headers: authHeaders(source, registrationUrl), timeout })
+  const leafs = await fetchAllLeafs(index, source, timeout)
 
   return filterAndSortEntries(leafs, prerelease)
 }
@@ -169,14 +166,13 @@ export async function fetchPackageVersions(
 async function fetchSinglePackageMetadata(
   packageId: string,
   registrationBase: string,
-  headers: Record<string, string>,
+  source: PackageSource,
   prerelease: boolean,
-  sourceUrl: string,
   timeout: number
 ): Promise<PackageViewModel | null> {
   const url = ensureTrailingSlash(registrationBase) + `${packageId.toLowerCase()}/index.json`
-  const index = await httpGetJson<RegistrationIndex>({ url, headers, timeout })
-  const leafs = await fetchAllLeafs(index, headers, timeout)
+  const index = await httpGetJson<RegistrationIndex>({ url, headers: authHeaders(source, url), timeout })
+  const leafs = await fetchAllLeafs(index, source, timeout)
   const entries = filterAndSortEntries(leafs, prerelease)
 
   if (entries.length === 0) {
@@ -195,7 +191,7 @@ async function fetchSinglePackageMetadata(
     isInstalled: false,
     installedVersion: '',
     isOutdated: false,
-    sourceUrl
+    sourceUrl: source.url
   }
 }
 
@@ -205,17 +201,15 @@ async function fetchSinglePackageMetadata(
  * Uses Promise.allSettled to fetch pages in parallel while tolerating
  * individual page failures.
  */
-async function fetchAllLeafs(
-  index: RegistrationIndex,
-  headers: Record<string, string>,
-  timeout: number
-): Promise<RegistrationLeaf[]> {
+async function fetchAllLeafs(index: RegistrationIndex, source: PackageSource, timeout: number): Promise<RegistrationLeaf[]> {
   const results = await Promise.allSettled(
     index.items.map(page => {
       if (page.items) {
         return Promise.resolve(page.items)
       }
-      return httpGetJson<RegistrationPage>({ url: page['@id'], headers, timeout }).then(p => p.items || [])
+      return httpGetJson<RegistrationPage>({ url: page['@id'], headers: authHeaders(source, page['@id']), timeout }).then(
+        p => p.items || []
+      )
     })
   )
 
@@ -264,8 +258,14 @@ function filterAndSortResults(results: (PackageViewModel | null)[], query: strin
   return filtered
 }
 
-function authHeaders(source: PackageSource): Record<string, string> {
-  if (source.authorizationHeader) {
+/**
+ * Auth headers for a request to `targetUrl`. The authorization header is
+ * only sent to the origin the source was configured for — endpoint URLs
+ * come from registry responses, so following them with credentials would
+ * leak the token to whatever host the registry names.
+ */
+function authHeaders(source: PackageSource, targetUrl: string): Record<string, string> {
+  if (source.authorizationHeader && sameOrigin(source.url, targetUrl)) {
     return { authorization: source.authorizationHeader }
   }
   return {}
