@@ -54,6 +54,7 @@ All-in-one VS Code utility extension.
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
     - [PDF Viewer](#pdf-viewer)
+    - [SVG Preview](#svg-preview)
     - [Generic Dark Theme](#generic-dark-theme)
     - [JetBrains Dark Icons](#jetbrains-dark-icons)
 - [Development](#development)
@@ -1379,6 +1380,26 @@ Just open any `.pdf` file and it renders in an editor tab.
 | Setting | Default | Description |
 |---|---|---|
 | `toolkit.pdfViewer.scale` | `auto` | Default zoom level (`auto`, `page-actual`, `page-fit`, `page-width`, or a numeric value like `1.5`) |
+
+#### SVG Preview
+
+Render the active `.svg` file in a side panel that refreshes live as you edit the XML.
+
+**Access:**
+
+- **Editor title bar** — the preview icon when an `.svg` file is open
+- **Explorer context menu** — right-click an `.svg` file and pick **Toolkit: Preview SVG**
+- **Command Palette** — run **Toolkit: Preview SVG**
+
+**Features:**
+
+- **Live refresh** — the preview updates (debounced) as you type in the SVG source, without saving
+- **Zoom** — `+` / `−` buttons, click the percentage to reset, or `Ctrl`/`Cmd` + mouse wheel
+- **Background cycle** — checkerboard (transparency), light, and dark backgrounds
+- Shows the image's natural dimensions; invalid SVG shows a clear error instead of a blank panel
+- One panel per file, reused on subsequent invocations
+
+**Security:** the SVG is rendered through an `<img>` element with a `data:` URI — browsers never execute scripts nor load external resources for image-rendered SVGs, so a malicious file cannot run code in the preview.
 
 #### Generic Dark Theme
 

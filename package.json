@@ -777,6 +777,11 @@
       {
         "command": "toolkit.envCheck.checkWorkspace",
         "title": "Toolkit: Check .env Files"
+      },
+      {
+        "command": "toolkit.svgPreview.open",
+        "title": "Toolkit: Preview SVG",
+        "icon": "$(open-preview)"
       }
     ],
     "keybindings": [
@@ -863,6 +868,13 @@
           "command": "toolkit.todoTree.refresh",
           "when": "view == toolkitTodoTree",
           "group": "navigation@3"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "toolkit.svgPreview.open",
+          "when": "resourceExtname == .svg",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -1014,19 +1026,24 @@
           "group": "0_toolkit@12"
         },
         {
+          "command": "toolkit.svgPreview.open",
+          "when": "resourceExtname == .svg",
+          "group": "0_toolkit@13"
+        },
+        {
           "command": "toolkit.git.stageChanges",
           "when": "gitOpenRepositoryCount != 0",
-          "group": "0_toolkit@13"
+          "group": "0_toolkit@14"
         },
         {
           "command": "toolkit.todoTree.excludeFolder",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@14"
+          "group": "0_toolkit@15"
         },
         {
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@15"
+          "group": "0_toolkit@16"
         }
       ],
       "commandPalette": [

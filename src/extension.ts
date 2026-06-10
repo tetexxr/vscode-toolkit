@@ -9,6 +9,7 @@ import { registerNugetCommands } from './features/nuget/nuget'
 import { registerCSharpCommands } from './features/csharp/csharp'
 import { registerNpmIntellisenseCommands } from './features/npm-intellisense'
 import { registerPdfViewer } from './features/pdf-viewer/pdf-provider'
+import { registerSvgPreviewCommands } from './features/svg-preview'
 import { registerGitHistoryCommands } from './features/git-history'
 import { registerAddBracesCodeActions } from './features/add-braces'
 import { registerGitBlameCommands } from './features/git-blame'
@@ -52,6 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerCSharpCommands(context)
   registerNpmIntellisenseCommands(context)
   registerPdfViewer(context)
+  registerSvgPreviewCommands(context)
   registerGitHistoryCommands(context)
   registerAddBracesCodeActions(context)
   registerGitBlameCommands(context)
