@@ -12,6 +12,7 @@ import {
   type TodoItem
 } from './todo-tree-utils'
 import { filterGitIgnored } from '../utils/git-ignore'
+import { isGitIgnored } from '../utils/git'
 import { logError, logInfo } from '../utils/logger'
 
 const VIEW_ID = 'toolkitTodoTree'
@@ -267,9 +268,39 @@ async function scanWorkspace(provider: TodoTreeProvider): Promise<void> {
   provider.setItems(items)
 }
 
-function rescanSingleFile(provider: TodoTreeProvider, document: vscode.TextDocument): void {
+/**
+ * Whether a saved document would be picked up by the full scan: inside a
+ * workspace folder, matching the include glob, not excluded, not git-ignored.
+ * Keeps the incremental on-save path consistent with `scanWorkspace`.
+ */
+async function shouldRescan(document: vscode.TextDocument, cfg: Config): Promise<boolean> {
+  if (document.uri.scheme !== 'file') {
+    return false
+  }
+  const folder = vscode.workspace.getWorkspaceFolder(document.uri)
+  if (!folder) {
+    return false
+  }
+  const includes = vscode.languages.match({ pattern: new vscode.RelativePattern(folder, cfg.includeGlob) }, document)
+  if (includes === 0) {
+    return false
+  }
+  const excludeGlob = buildExcludeGlob(cfg.excludedFolders)
+  if (excludeGlob && vscode.languages.match({ pattern: new vscode.RelativePattern(folder, excludeGlob) }, document) > 0) {
+    return false
+  }
+  if (cfg.useGitIgnore && (await isGitIgnored(folder.uri.fsPath, document.uri.fsPath))) {
+    return false
+  }
+  return true
+}
+
+async function rescanSingleFile(provider: TodoTreeProvider, document: vscode.TextDocument): Promise<void> {
   const cfg = readConfig()
   if (cfg.tags.length === 0) {
+    return
+  }
+  if (!(await shouldRescan(document, cfg))) {
     return
   }
   const uri = document.uri.toString()
@@ -416,7 +447,7 @@ export function registerTodoTreeCommands(context: vscode.ExtensionContext): void
 
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(doc => {
-      rescanSingleFile(provider, doc)
+      void rescanSingleFile(provider, doc)
     }),
     vscode.workspace.onDidChangeConfiguration(event => {
       if (event.affectsConfiguration('toolkit.todoTree')) {
