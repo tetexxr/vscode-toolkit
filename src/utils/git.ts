@@ -365,11 +365,18 @@ export async function editCommitMessage(
       amendArgs.push('--date', newDate)
     }
 
+    // Portable sequence editor: rewrites the rebase todo with Node instead of sed
+    // (BSD and GNU sed disagree on -i, and Windows has no sed). Git appends the
+    // todo path as the last argument. ELECTRON_RUN_AS_NODE makes VS Code's
+    // Electron binary behave as plain Node when process.execPath points at it.
+    const todoScript = `const fs=require("fs");const f=process.argv[1];fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/^pick ${shortHash}/m,"edit ${shortHash}"))`
+
     try {
       // --committer-date-is-author-date keeps later commits' committer date equal to
       // their original author date instead of being reset to "now" by rebase --continue.
       await gitExec(cwd, ['rebase', '-i', '--committer-date-is-author-date', parentHash], 60000, {
-        GIT_SEQUENCE_EDITOR: `sed -i '' 's/^pick ${shortHash}/edit ${shortHash}/'`
+        GIT_SEQUENCE_EDITOR: `"${process.execPath}" -e '${todoScript}'`,
+        ELECTRON_RUN_AS_NODE: '1'
       })
 
       await gitExec(cwd, amendArgs, 30000, dateEnv)
