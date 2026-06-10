@@ -283,6 +283,37 @@ describe('parseRemoteUrl', () => {
   it('should return undefined for an empty string', () => {
     assert.equal(parseRemoteUrl(''), undefined)
   })
+
+  it('should ignore the port in ssh:// URLs', () => {
+    const result = parseRemoteUrl('ssh://git@github.corp.com:2222/owner/repo.git')
+    assert.deepEqual(result, { domain: 'github.corp.com', owner: 'owner', repo: 'repo' })
+  })
+
+  it('should ignore the port in https:// URLs', () => {
+    const result = parseRemoteUrl('https://github.corp.com:8443/owner/repo.git')
+    assert.deepEqual(result, { domain: 'github.corp.com', owner: 'owner', repo: 'repo' })
+  })
+
+  it('should parse hosts without dots', () => {
+    const result = parseRemoteUrl('ssh://git@gitserver/owner/repo.git')
+    assert.deepEqual(result, { domain: 'gitserver', owner: 'owner', repo: 'repo' })
+  })
+
+  it('should keep nested group paths in the repo segment', () => {
+    const result = parseRemoteUrl('git@gitlab.com:group/subgroup/project.git')
+    assert.deepEqual(result, { domain: 'gitlab.com', owner: 'group', repo: 'subgroup/project' })
+  })
+
+  it('should return undefined for local filesystem paths', () => {
+    assert.equal(parseRemoteUrl('/srv/git/repo.git'), undefined)
+    assert.equal(parseRemoteUrl('../sibling/repo'), undefined)
+    assert.equal(parseRemoteUrl('C:\\repos\\project'), undefined)
+  })
+
+  it('should handle a trailing slash', () => {
+    const result = parseRemoteUrl('https://github.com/owner/repo/')
+    assert.deepEqual(result, { domain: 'github.com', owner: 'owner', repo: 'repo' })
+  })
 })
 
 describe('getCommitLog', () => {

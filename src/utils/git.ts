@@ -196,14 +196,41 @@ export function getChangedFileDirectories(filePaths: string[]): string[] {
 }
 
 export function parseRemoteUrl(url: string): RemoteInfo | undefined {
-  const match = url.match(/([\w-]+(?:\.[\w-]+)+)[:/]+([^/]+)\/(.*?)(?:\.git|\/)?$/)
-  if (!match) {
+  const trimmed = url.trim()
+  let host: string
+  let pathname: string
+
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) {
+    // Scheme form (ssh://, https://, git://...): URL handles user@ and :port.
+    try {
+      const parsed = new URL(trimmed)
+      host = parsed.hostname
+      pathname = parsed.pathname
+    } catch {
+      return undefined
+    }
+  } else {
+    // scp-like form: [user@]host:path
+    const match = trimmed.match(/^(?:[^@/]+@)?([^:/]+):(.+)$/)
+    if (!match) {
+      return undefined
+    }
+    host = match[1]
+    pathname = match[2]
+  }
+
+  const cleanPath = pathname
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '')
+    .replace(/\.git$/, '')
+  const slash = cleanPath.indexOf('/')
+  if (!host || slash <= 0 || slash === cleanPath.length - 1) {
     return undefined
   }
   return {
-    domain: match[1],
-    owner: match[2],
-    repo: match[3]
+    domain: host,
+    owner: cleanPath.slice(0, slash),
+    repo: cleanPath.slice(slash + 1)
   }
 }
 
