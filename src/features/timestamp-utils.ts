@@ -2,6 +2,21 @@ export type InputFormat = 'seconds' | 'millis' | 'micros' | 'iso'
 
 const ISO_LIKE = /^-?\d{4}-\d{1,2}-\d{1,2}([T ]\d{1,2}:\d{1,2}(:\d{1,2})?(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$/
 
+// Plausibility window for the ambiguous-length fallback. The lower bound sits
+// above 1970 so degenerate "everything maps to the epoch" readings don't win.
+const PLAUSIBLE_MIN_MS = Date.UTC(1971, 0, 1)
+const PLAUSIBLE_MAX_MS = Date.UTC(2150, 11, 31, 23, 59, 59, 999)
+
+function toMillis(n: number, format: 'seconds' | 'millis' | 'micros'): number {
+  if (format === 'seconds') {
+    return n * 1000
+  }
+  if (format === 'micros') {
+    return n / 1000
+  }
+  return n
+}
+
 export function detectInputFormat(input: string): InputFormat | null {
   const trimmed = input.trim()
   if (trimmed.length === 0) {
@@ -18,7 +33,17 @@ export function detectInputFormat(input: string): InputFormat | null {
     if (digitCount === 16) {
       return 'micros'
     }
-    // Fall back: treat as ms if it could be reasonable, else as seconds
+    // Ambiguous length: pick the first interpretation that lands on a
+    // plausible date (e.g. 9-digit values are 1973–2001 epochs in seconds).
+    const n = Number(trimmed)
+    if (Number.isFinite(n)) {
+      for (const format of ['seconds', 'millis', 'micros'] as const) {
+        const ms = toMillis(n, format)
+        if (ms >= PLAUSIBLE_MIN_MS && ms <= PLAUSIBLE_MAX_MS) {
+          return format
+        }
+      }
+    }
     return 'millis'
   }
   if (ISO_LIKE.test(trimmed)) {

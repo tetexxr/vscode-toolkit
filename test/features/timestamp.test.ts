@@ -23,9 +23,26 @@ describe('detectInputFormat', () => {
     assert.equal(detectInputFormat('1700000000000000'), 'micros')
   })
 
-  it('should fall back to milliseconds for other digit lengths', () => {
+  it('should fall back to milliseconds for other digit lengths with no plausible reading', () => {
     assert.equal(detectInputFormat('12345'), 'millis')
+    // 14 digits, but its micros reading lands in 1970 — not plausible either
     assert.equal(detectInputFormat('12345678901234'), 'millis')
+    assert.equal(detectInputFormat('99999999999999999999'), 'millis')
+  })
+
+  it('should detect 9-digit numbers as seconds (1973–2001 epochs)', () => {
+    assert.equal(detectInputFormat('999999999'), 'seconds') // 2001-09-09
+    assert.equal(detectInputFormat('500000000'), 'seconds') // 1985-11-05
+  })
+
+  it('should detect 11- and 12-digit numbers as milliseconds', () => {
+    assert.equal(detectInputFormat('99999999999'), 'millis') // 1973-03-03
+    assert.equal(detectInputFormat('999999999999'), 'millis') // 2001-09-09
+  })
+
+  it('should detect 14- and 15-digit numbers with plausible micros readings as microseconds', () => {
+    assert.equal(detectInputFormat('50000000000000'), 'micros') // 1971-08-02
+    assert.equal(detectInputFormat('999999999999999'), 'micros') // 2001-09-09
   })
 
   it('should detect ISO 8601 strings', () => {
