@@ -89,12 +89,27 @@ function generateFor(target: Target, schema: ReturnType<typeof inferSchema>, roo
   return generateCSharp(schema, rootName, getCSharpOptions(target.outputKind))
 }
 
-async function readSource(): Promise<{ source: 'selection' | 'clipboard'; text: string } | null> {
+interface SourceInfo {
+  source: 'selection' | 'clipboard'
+  text: string
+  /** Captured at read time so the replacement targets exactly what was read. */
+  document?: vscode.TextDocument
+  range?: vscode.Range
+  version?: number
+}
+
+async function readSource(): Promise<SourceInfo | null> {
   const editor = vscode.window.activeTextEditor
   if (editor) {
     const selection = editor.selections.find(s => !s.isEmpty)
     if (selection) {
-      return { source: 'selection', text: editor.document.getText(selection) }
+      return {
+        source: 'selection',
+        text: editor.document.getText(selection),
+        document: editor.document,
+        range: selection,
+        version: editor.document.version
+      }
     }
   }
   const clipboard = await vscode.env.clipboard.readText()
@@ -156,11 +171,22 @@ async function applyTarget(target: Target): Promise<void> {
   const schema = inferSchema(parsed)
   const output = generateFor(target, schema, rootName)
 
-  if (source.source === 'selection') {
-    const editor = vscode.window.activeTextEditor!
-    const selection = editor.selections.find(s => !s.isEmpty)!
-    await editor.edit(builder => builder.replace(selection, output))
-    return
+  // Replace the captured selection only if the document is untouched since the
+  // read — the root-name prompt leaves time to close the editor or move the
+  // selection, and stale offsets would overwrite text that wasn't the JSON.
+  if (
+    source.source === 'selection' &&
+    source.document &&
+    source.range &&
+    !source.document.isClosed &&
+    source.document.version === source.version
+  ) {
+    const edit = new vscode.WorkspaceEdit()
+    edit.replace(source.document.uri, source.range, output)
+    const applied = await vscode.workspace.applyEdit(edit)
+    if (applied) {
+      return
+    }
   }
 
   const language = target.kind === 'typescript' ? 'typescript' : 'csharp'
