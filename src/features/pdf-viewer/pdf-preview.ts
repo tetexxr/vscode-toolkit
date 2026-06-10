@@ -3,7 +3,13 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as crypto from 'crypto'
 import type { TemplateValues } from './pdf-types'
-import { parseScale, buildTemplateHtml, isZoomChangedMessage } from './pdf-types'
+import {
+  parseScale,
+  sanitizeStoredScale,
+  sanitizeStoredScaleMode,
+  buildTemplateHtml,
+  isZoomChangedMessage
+} from './pdf-types'
 
 export class PdfPreview implements vscode.Disposable {
   private readonly libUri: vscode.Uri
@@ -50,8 +56,8 @@ export class PdfPreview implements vscode.Disposable {
       cspSource: webview.cspSource,
       nonce: crypto.randomBytes(16).toString('hex'),
       scale: parseScale(configScale),
-      lastScale: this.lastScale,
-      lastScaleMode: this.lastScaleMode
+      lastScale: sanitizeStoredScale(this.lastScale),
+      lastScaleMode: sanitizeStoredScaleMode(this.lastScaleMode)
     }
 
     return buildTemplateHtml(template, values)

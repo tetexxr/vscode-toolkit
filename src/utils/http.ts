@@ -14,6 +14,9 @@ import type { Readable } from 'stream'
 const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 16 })
 const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 16 })
 
+/** Hard cap on buffered response bodies so a registry cannot exhaust memory. */
+export const MAX_RESPONSE_BYTES = 50 * 1024 * 1024
+
 export interface HttpRequestOptions {
   url: string
   headers?: Record<string, string>
@@ -66,7 +69,16 @@ export function httpGetJson<T>(options: HttpRequestOptions): Promise<T> {
       }
 
       const chunks: Buffer[] = []
-      stream.on('data', (chunk: Buffer) => chunks.push(chunk))
+      let received = 0
+      stream.on('data', (chunk: Buffer) => {
+        received += chunk.length
+        if (received > MAX_RESPONSE_BYTES) {
+          req.destroy()
+          reject(new Error(`Response larger than ${MAX_RESPONSE_BYTES} bytes for ${url}`))
+          return
+        }
+        chunks.push(chunk)
+      })
       stream.on('end', () => {
         try {
           const body = Buffer.concat(chunks).toString('utf-8')

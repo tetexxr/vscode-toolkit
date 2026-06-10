@@ -83,8 +83,14 @@ export class NugetMessageHandler implements vscode.Disposable {
             'workbench.action.openSettings',
             '@ext:tete.vscode-toolkit toolkit.nuget'
           )
-        case 'open-url':
-          return void vscode.env.openExternal(vscode.Uri.parse(msg.url))
+        case 'open-url': {
+          // URLs come from registry metadata: only allow web schemes.
+          const target = vscode.Uri.parse(msg.url)
+          if (target.scheme === 'http' || target.scheme === 'https') {
+            void vscode.env.openExternal(target)
+          }
+          return
+        }
       }
     } catch (err) {
       this.post({ type: 'error', message: err instanceof Error ? err.message : String(err) })

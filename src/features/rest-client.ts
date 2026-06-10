@@ -13,6 +13,32 @@ import {
 
 const FILE_GLOB = '**/*.{http,rest}'
 
+/** Hard cap on buffered response bodies (mirrors utils/http.ts). */
+const MAX_RESPONSE_BYTES = 50 * 1024 * 1024
+
+/** Reads the response body as text, aborting if it exceeds the cap. */
+async function readBodyCapped(response: Response): Promise<string> {
+  if (!response.body) {
+    return ''
+  }
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let received = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) {
+      break
+    }
+    received += value.byteLength
+    if (received > MAX_RESPONSE_BYTES) {
+      await reader.cancel()
+      throw new Error(`Response body exceeded ${MAX_RESPONSE_BYTES / (1024 * 1024)} MB — request aborted.`)
+    }
+    chunks.push(value)
+  }
+  return Buffer.concat(chunks).toString('utf-8')
+}
+
 interface RestClientConfig {
   timeoutMs: number
   followRedirects: boolean
@@ -101,7 +127,7 @@ async function executeRequest(
       signal: controller.signal,
       redirect: config.followRedirects ? 'follow' : 'manual'
     })
-    const text = await response.text()
+    const text = await readBodyCapped(response)
     const durationMs = Date.now() - start
     const responseHeaders: Array<{ name: string; value: string }> = []
     response.headers.forEach((value, name) => {
