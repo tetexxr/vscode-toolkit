@@ -31,6 +31,9 @@ export function registerGitBlameCommands(context: vscode.ExtensionContext): void
           void applyBlame(editor)
         }
       }
+    }),
+    vscode.workspace.onDidCloseTextDocument(doc => {
+      activeBlame.delete(doc.uri.toString())
     })
   )
 }
@@ -69,6 +72,12 @@ async function applyBlame(editor: vscode.TextEditor | undefined): Promise<void> 
       const relativePath = path.relative(repoRoot, filePath)
       blameData = await getFileBlame(repoRoot, relativePath)
       activeBlame.set(cacheKey, blameData)
+    }
+
+    // The blame may have been toggled off (or the editor switched) while the
+    // git call was in flight — rendering now would leave orphan decorations.
+    if (!enabled || editor !== vscode.window.activeTextEditor) {
+      return
     }
 
     if (blameData.length === 0) {

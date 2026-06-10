@@ -474,8 +474,11 @@ function buildEditWebviewHtml(
         const el = findBlock(msg.path);
         if (el) {
           el.dataset.diffStatus = 'error';
+          // msg.error carries raw git stderr — escape it before it touches innerHTML.
+          const escaped = String(msg.error || 'desconocido')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
           const retry = '<button class="secondary load-large" style="margin-left:8px">Reintentar</button>';
-          el.innerHTML = '<div class="diff-error">Error cargando diff: ' + (msg.error || 'desconocido') + retry + '</div>';
+          el.innerHTML = '<div class="diff-error">Error cargando diff: ' + escaped + retry + '</div>';
           const btn = el.querySelector('.load-large');
           if (btn) btn.addEventListener('click', () => requestDiff(el));
         }
@@ -658,11 +661,32 @@ function watchGit(context: vscode.ExtensionContext, provider: CommitListProvider
     } catch {}
   }
 
+  // Per-repo listeners, released when their repository closes — pushing them
+  // onto context.subscriptions would accumulate them for the whole session.
+  const repoSubscriptions = new Map<GitRepository, vscode.Disposable[]>()
+
   const subscribe = (repo: GitRepository) => {
-    context.subscriptions.push(repo.state.onDidChange(onRepoStateChange))
-    // Refresh when the user selects a different repository in the SCM view.
-    context.subscriptions.push(repo.ui.onDidChange(() => provider.refresh()))
+    repoSubscriptions.set(repo, [
+      repo.state.onDidChange(onRepoStateChange),
+      // Refresh when the user selects a different repository in the SCM view.
+      repo.ui.onDidChange(() => provider.refresh())
+    ])
   }
+
+  const unsubscribe = (repo: GitRepository) => {
+    for (const disposable of repoSubscriptions.get(repo) ?? []) {
+      disposable.dispose()
+    }
+    repoSubscriptions.delete(repo)
+  }
+
+  context.subscriptions.push({
+    dispose: () => {
+      for (const repo of [...repoSubscriptions.keys()]) {
+        unsubscribe(repo)
+      }
+    }
+  })
 
   const setup = (api: GitApi) => {
     provider.setGitApi(api)
@@ -672,7 +696,10 @@ function watchGit(context: vscode.ExtensionContext, provider: CommitListProvider
         subscribe(repo)
         provider.refresh()
       }),
-      api.onDidCloseRepository(() => provider.refresh())
+      api.onDidCloseRepository(repo => {
+        unsubscribe(repo)
+        provider.refresh()
+      })
     )
     provider.refresh()
   }
@@ -680,7 +707,10 @@ function watchGit(context: vscode.ExtensionContext, provider: CommitListProvider
   if (gitExt.isActive) {
     setup(gitExt.exports.getAPI(1))
   } else {
-    gitExt.activate().then(ext => setup(ext.getAPI(1)))
+    gitExt.activate().then(
+      ext => setup(ext.getAPI(1)),
+      err => logError('git-edit-commit:activate', err)
+    )
   }
 }
 

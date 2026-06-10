@@ -30,10 +30,17 @@ async function getGitInfo(filePath?: string) {
 
     const baseUrl = `https://${remote.domain}/${remote.owner}/${remote.repo}`
 
+    // Detached HEAD: there is no current branch — link to the exact commit
+    // instead of silently falling back to a branch that may not contain the file.
+    let ref = branch
+    if (useCurrentBranch && !ref) {
+      ref = await getCommitHash(cwd).catch(() => '')
+    }
+
     return {
       repoRoot,
       baseUrl,
-      branch: branch || defaultBranch,
+      branch: ref || defaultBranch,
       cwd
     }
   } catch (err) {
