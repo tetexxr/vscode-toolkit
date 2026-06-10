@@ -1077,43 +1077,39 @@
           "group": "0_toolkit@6"
         },
         {
-          "command": "toolkit.jsonToType",
-          "group": "0_toolkit@7"
-        },
-        {
           "command": "toolkit.lines",
-          "group": "0_toolkit@8",
+          "group": "0_toolkit@7",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@9"
+          "group": "0_toolkit@8"
         },
         {
           "command": "toolkit.pasteImage",
-          "group": "0_toolkit@10"
+          "group": "0_toolkit@9"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@11",
+          "group": "0_toolkit@10",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.sumNumbers",
-          "group": "0_toolkit@12",
+          "group": "0_toolkit@11",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@13"
+          "group": "0_toolkit@12"
         },
         {
           "command": "toolkit.toggleQuotes",
-          "group": "0_toolkit@14"
+          "group": "0_toolkit@13"
         },
         {
           "command": "toolkit.transform",
-          "group": "0_toolkit@15",
+          "group": "0_toolkit@14",
           "when": "editorHasSelection"
         }
       ]

@@ -791,10 +791,7 @@ Generate type definitions from a JSON sample. The source is the current selectio
 | JSON to C# Record | `public record Root(int Id, string Name)` |
 | JSON to C# Class | `public class Root { public int Id { get; set; } }` |
 
-Available from:
-
-- **Editor context menu** — right-click and pick **Toolkit: JSON to Type...** (also works without a selection — reads from the clipboard)
-- **Command Palette** — any of the individual commands
+Available from the **Command Palette** — the dispatcher or any of the individual commands (they also work without a selection, reading the JSON from the clipboard).
 
 **Behavior:**
 
