@@ -61,7 +61,12 @@ export function registerCsvRainbowCommands(context: vscode.ExtensionContext): vo
       }
     }),
 
-    { dispose: () => disposeDecorationTypes() }
+    {
+      dispose: () => {
+        if (debounceTimer) clearTimeout(debounceTimer)
+        disposeDecorationTypes()
+      }
+    }
   )
 
   if (enabled) {

@@ -107,6 +107,11 @@ describe('html encode/decode', () => {
     assert.equal(htmlDecode('caf&eacute;'), 'caf&eacute;') // unknown name is preserved
   })
 
+  it('should preserve numeric references beyond the unicode range instead of throwing', () => {
+    assert.equal(htmlDecode('&#x110000;'), '&#x110000;')
+    assert.equal(htmlDecode('&#9999999999;'), '&#9999999999;')
+  })
+
   it('should decode numeric and hex entities', () => {
     assert.equal(htmlDecode('&#65;&#66;&#67;'), 'ABC')
     assert.equal(htmlDecode('&#x41;&#x42;&#x43;'), 'ABC')

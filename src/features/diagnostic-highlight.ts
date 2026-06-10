@@ -70,7 +70,12 @@ export function registerDiagnosticHighlightCommands(context: vscode.ExtensionCon
       }
     }),
 
-    { dispose: () => disposeDecorationTypes() }
+    {
+      dispose: () => {
+        if (debounceTimer) clearTimeout(debounceTimer)
+        disposeDecorationTypes()
+      }
+    }
   )
 
   // Initial application
@@ -188,7 +193,12 @@ function splitRangePerLine(
 ): vscode.DecorationOptions[] {
   const doc = editor.document
   const startLine = range.start.line
-  const endLine = range.end.line
+  // Language servers may briefly report ranges from a longer, previous
+  // version of the document; lineAt would throw past the current end.
+  const endLine = Math.min(range.end.line, doc.lineCount - 1)
+  if (startLine > endLine) {
+    return []
+  }
 
   // Single-line range — use as-is
   if (startLine === endLine) {

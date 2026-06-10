@@ -26,6 +26,16 @@ describe('compileRegex', () => {
     assert.match((r as { ok: false; error: string }).error, /Unknown flag/)
   })
 
+  it('should accept the d (indices) and v (unicodeSets) flags', () => {
+    assert.equal(compileRegex('a', 'd').ok, true)
+    assert.equal(compileRegex('a', 'v').ok, true)
+  })
+
+  it('should reject the invalid u+v flag combination via RegExp', () => {
+    const r = compileRegex('a', 'uv')
+    assert.equal(r.ok, false)
+  })
+
   it('should reject duplicate flags', () => {
     const r = compileRegex('a', 'gg')
     assert.equal(r.ok, false)

@@ -54,7 +54,8 @@ export function compareSemVer(a: string, b: string): number {
   const pa = parseSemVer(a)
   const pb = parseSemVer(b)
 
-  // Unparseable versions sort to the end
+  // Unparseable versions compare as lowest, so the descending sorts used by
+  // the callers (latest first) push them to the end of the list.
   if (!pa && !pb) {
     return 0
   }
@@ -118,9 +119,9 @@ function comparePrerelease(a: string, b: string): number {
     } else if (bIsNum) {
       return 1
     } else {
-      const cmp = segA.localeCompare(segB)
-      if (cmp !== 0) {
-        return cmp
+      // SemVer mandates ASCII order; localeCompare would vary with the locale.
+      if (segA !== segB) {
+        return segA < segB ? -1 : 1
       }
     }
   }

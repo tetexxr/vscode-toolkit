@@ -12,7 +12,7 @@ export interface MatchInfo {
 export type CompileResult = { ok: true; re: RegExp } | { ok: false; error: string }
 
 const MAX_MATCHES = 10000
-const VALID_FLAGS = 'gimsuy'
+const VALID_FLAGS = 'dgimsuvy'
 
 /**
  * Validates flags and constructs a RegExp. Returns an error string on failure.

@@ -145,6 +145,10 @@ describe('toSlug', () => {
     assert.equal(toSlug('myVariableName'), 'my-variable-name')
   })
 
+  it('should collapse repeats of a multi-character separator as a unit', () => {
+    assert.equal(toSlug('a !? b', { separator: '--' }), 'a--b')
+  })
+
   it('should collapse consecutive special characters into a single separator', () => {
     assert.equal(toSlug('hello!!!world'), 'hello-world')
   })
