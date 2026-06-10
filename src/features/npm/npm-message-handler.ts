@@ -164,7 +164,7 @@ export class NpmMessageHandler implements vscode.Disposable {
     //      the Search API — re-rendered when ready.
     const searchId = ++this.currentSearchId
     const project = await reloadNpmProject(this.projectFsPath)
-    const outdated = await this.runOutdatedCached().catch(() => ({}) as Record<string, NpmOutdatedEntry>)
+    const outdated = await this.runOutdatedCached().catch(() => ({}))
     const all = buildInstalledViewModels(project.packages, outdated, source?.url ?? '')
     this.applyCachedMetadata(all)
 

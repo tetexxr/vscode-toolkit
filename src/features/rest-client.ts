@@ -21,12 +21,12 @@ async function readBodyCapped(response: Response): Promise<string> {
   if (!response.body) {
     return ''
   }
-  const reader = response.body.getReader()
+  const reader = response.body.getReader() as ReadableStreamDefaultReader<Uint8Array>
   const chunks: Uint8Array[] = []
   let received = 0
   for (;;) {
     const { done, value } = await reader.read()
-    if (done) {
+    if (done || value === undefined) {
       break
     }
     received += value.byteLength

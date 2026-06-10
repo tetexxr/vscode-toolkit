@@ -173,7 +173,7 @@ export function registerChangeCaseCommands(context: vscode.ExtensionContext): vo
       })
 
       if (picked) {
-        applyTransformation(picked.fn)
+        await applyTransformation(picked.fn)
       }
     })
   )

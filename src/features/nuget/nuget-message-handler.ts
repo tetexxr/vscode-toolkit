@@ -325,7 +325,7 @@ export class NugetMessageHandler implements vscode.Disposable {
     }
     const key = outdated ? 'outdated' : 'installed'
     if (this.listCache[key]) {
-      return this.listCache[key]!
+      return this.listCache[key]
     }
     const result = outdated
       ? await listOutdatedPackages(this.projectFsPath, prerelease)

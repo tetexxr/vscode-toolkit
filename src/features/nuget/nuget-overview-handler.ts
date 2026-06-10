@@ -103,7 +103,7 @@ export class NugetOverviewHandler implements vscode.Disposable {
     }
     const key = outdated ? 'outdated' : 'installed'
     if (this.listCache[key]) {
-      return this.listCache[key]!
+      return this.listCache[key]
     }
     const result = await this.runListPackage(outdated)
     this.listCache[key] = result

@@ -183,7 +183,7 @@ export function parseYarnOutdatedOutput(stdoutText: string): Record<string, NpmO
     }
     const msg = parsed as { type?: string; data?: unknown }
     if (msg.type === 'table' && msg.data && typeof msg.data === 'object') {
-      table = msg.data as { head?: string[]; body?: string[][] }
+      table = msg.data
       break
     }
     if (msg.type === 'error' && typeof msg.data === 'string' && /not a recognised command/i.test(msg.data)) {

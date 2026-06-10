@@ -87,7 +87,7 @@ export class NpmOverviewHandler implements vscode.Disposable {
     const t0 = performance.now()
     await Promise.all(
       projects.map(async project => {
-        const outdated = await this.runOutdatedCached(project.fsPath).catch(() => ({}) as Record<string, NpmOutdatedEntry>)
+        const outdated = await this.runOutdatedCached(project.fsPath).catch(() => ({}))
         applyOutdatedToProject(project, outdated)
       })
     )
