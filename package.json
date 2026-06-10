@@ -676,6 +676,14 @@
         "title": "Toolkit: Show Bookmarks"
       },
       {
+        "command": "toolkit.bookmarks.next",
+        "title": "Toolkit: Next Bookmark"
+      },
+      {
+        "command": "toolkit.bookmarks.previous",
+        "title": "Toolkit: Previous Bookmark"
+      },
+      {
         "command": "toolkit.bookmarks.clearFile",
         "title": "Toolkit: Clear Bookmarks (Current File)"
       },
@@ -781,6 +789,16 @@
       {
         "command": "toolkit.bookmarks.show",
         "key": "ctrl+f7",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "toolkit.bookmarks.next",
+        "key": "alt+f7",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "toolkit.bookmarks.previous",
+        "key": "shift+alt+f7",
         "when": "editorTextFocus"
       }
     ],

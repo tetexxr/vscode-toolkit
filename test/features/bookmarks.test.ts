@@ -2,6 +2,8 @@ import { strict as assert } from 'assert'
 import {
   BookmarkStore,
   adjustLineNumber,
+  findNextBookmark,
+  findPreviousBookmark,
   formatBookmark
 } from '../../src/features/bookmarks-utils'
 
@@ -271,5 +273,60 @@ describe('BookmarkStore.deletePath', () => {
     const store = new BookmarkStore()
     store.toggle(URI, 5)
     assert.equal(store.deletePath('file:///workspace/none.ts'), 0)
+  })
+})
+
+describe('findNextBookmark / findPreviousBookmark', () => {
+  const A = 'file:///ws/a.ts'
+  const B = 'file:///ws/b.ts'
+  const locations = [
+    { uri: A, line: 5 },
+    { uri: A, line: 20 },
+    { uri: B, line: 3 }
+  ]
+
+  it('should find the next bookmark after the cursor in the same file', () => {
+    assert.deepEqual(findNextBookmark(locations, A, 10), { uri: A, line: 20 })
+  })
+
+  it('should skip a bookmark on the current line when going forward', () => {
+    assert.deepEqual(findNextBookmark(locations, A, 5), { uri: A, line: 20 })
+  })
+
+  it('should move to the next file when no bookmarks remain in the current one', () => {
+    assert.deepEqual(findNextBookmark(locations, A, 25), { uri: B, line: 3 })
+  })
+
+  it('should wrap around to the first bookmark', () => {
+    assert.deepEqual(findNextBookmark(locations, B, 10), { uri: A, line: 5 })
+  })
+
+  it('should return the first bookmark when there is no active editor', () => {
+    assert.deepEqual(findNextBookmark(locations, undefined, 0), { uri: A, line: 5 })
+  })
+
+  it('should find the previous bookmark before the cursor', () => {
+    assert.deepEqual(findPreviousBookmark(locations, A, 10), { uri: A, line: 5 })
+  })
+
+  it('should skip a bookmark on the current line when going backward', () => {
+    assert.deepEqual(findPreviousBookmark(locations, A, 20), { uri: A, line: 5 })
+  })
+
+  it('should move to the previous file when at the top of the current one', () => {
+    assert.deepEqual(findPreviousBookmark(locations, B, 1), { uri: A, line: 20 })
+  })
+
+  it('should wrap around to the last bookmark', () => {
+    assert.deepEqual(findPreviousBookmark(locations, A, 0), { uri: B, line: 3 })
+  })
+
+  it('should return the last bookmark when there is no active editor', () => {
+    assert.deepEqual(findPreviousBookmark(locations, undefined, 0), { uri: B, line: 3 })
+  })
+
+  it('should return undefined when there are no bookmarks', () => {
+    assert.equal(findNextBookmark([], A, 0), undefined)
+    assert.equal(findPreviousBookmark([], A, 0), undefined)
   })
 })
