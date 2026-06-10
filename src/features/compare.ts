@@ -9,11 +9,15 @@ import {
   relativizeToRepo,
   type FileChange
 } from './compare-utils'
+import { mapWithConcurrency } from '../utils/async'
 
 /** Above this many changed files, ask for confirmation before opening the multi-diff view. */
 const MANY_FILES_THRESHOLD = 100
 
 const BRANCH_SCHEME = 'toolkit-branch'
+
+/** Above this many cached left-hand sides, the oldest entries are evicted. */
+const CACHE_MAX_ENTRIES = 500
 
 /** Serves file content read from a git ref as a virtual document, so the diff editor
  * doesn't materialize a standalone tab for the left-hand side. */
@@ -23,8 +27,23 @@ class BranchContentProvider implements vscode.TextDocumentContentProvider {
   readonly onDidChange = this.emitter.event
 
   set(uri: vscode.Uri, content: string): void {
-    this.cache.set(uri.toString(), content)
+    const key = uri.toString()
+    this.cache.delete(key)
+    this.cache.set(key, content)
+    // Bounded FIFO eviction so a long session never accumulates the content
+    // of every file ever compared.
+    while (this.cache.size > CACHE_MAX_ENTRIES) {
+      const oldest = this.cache.keys().next().value
+      if (oldest === undefined) {
+        break
+      }
+      this.cache.delete(oldest)
+    }
     this.emitter.fire(uri)
+  }
+
+  delete(uri: vscode.Uri): void {
+    this.cache.delete(uri.toString())
   }
 
   provideTextDocumentContent(uri: vscode.Uri): string {
@@ -33,10 +52,13 @@ class BranchContentProvider implements vscode.TextDocumentContentProvider {
 }
 
 function buildBranchUri(branch: string, relPath: string): vscode.Uri {
-  // Path → /<branch>/<relPath>, so VS Code can derive the language from the file extension.
+  // Path → /<relPath>, so VS Code can derive the language from the extension.
+  // The branch travels in the query: appending it to the path would make
+  // (branch 'a', path 'b/c.ts') collide with (branch 'a/b', path 'c.ts').
   return vscode.Uri.from({
     scheme: BRANCH_SCHEME,
-    path: '/' + branch + '/' + relPath
+    path: '/' + relPath,
+    query: branch
   })
 }
 
@@ -238,9 +260,9 @@ async function compareScopeWithBranch(
     }
   }
 
-  // Resolve every left-hand side (merge-base content) in parallel, then build the resource tuples.
-  const resources = await Promise.all(
-    changes.map(async change => {
+  // Resolve every left-hand side (merge-base content) with bounded concurrency:
+  // unbounded Promise.all would spawn one git process per changed file at once.
+  const resources = await mapWithConcurrency(changes, 8, async change => {
       let left: vscode.Uri | undefined
       if (change.oldPath !== null) {
         const content = await showFromRef(repoRoot, mergeBase, change.oldPath)
@@ -255,8 +277,7 @@ async function compareScopeWithBranch(
       const labelPath = change.newPath ?? change.oldPath ?? ''
       const label = vscode.Uri.file(path.join(repoRoot, labelPath))
       return [label, left, right] as [vscode.Uri, vscode.Uri?, vscode.Uri?]
-    })
-  )
+  })
 
   const title = buildMultiDiffTitle(scopeLabel, branch, resources.length)
   await vscode.commands.executeCommand('vscode.changes', title, resources)
@@ -327,6 +348,12 @@ export function registerCompareCommands(context: vscode.ExtensionContext): void 
   const provider = new BranchContentProvider()
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider(BRANCH_SCHEME, provider),
+    // Free the cached left-hand side once its diff document is closed.
+    vscode.workspace.onDidCloseTextDocument(doc => {
+      if (doc.uri.scheme === BRANCH_SCHEME) {
+        provider.delete(doc.uri)
+      }
+    }),
     vscode.commands.registerCommand('toolkit.compareWithBranch', (uri?: vscode.Uri) =>
       compareWithBranch(provider, uri)
     ),
