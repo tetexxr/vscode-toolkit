@@ -1,5 +1,10 @@
 import * as vscode from 'vscode'
-import { SELF_CLOSING_TAGS, getTagAtOffset } from '../utils/tags'
+import {
+  SELF_CLOSING_TAGS,
+  findNearestUnmatchedClosingTag,
+  findNearestUnmatchedOpeningTag,
+  getTagAtOffset
+} from '../utils/tags'
 
 /**
  * Auto Rename Tag — when an opening/closing HTML/XML tag is edited,
@@ -9,8 +14,6 @@ import { SELF_CLOSING_TAGS, getTagAtOffset } from '../utils/tags'
  * the document already contains `<divx>` but the closing tag is still `</div>`.
  * We find the nearest unmatched paired tag and replace its name with the new one.
  */
-
-const TAG_RE = /^[!:\w$]((?![>/])[\S])*/
 
 /** Languages where VS Code's built-in linked editing handles tag renaming. */
 const LINKED_EDITING_LANGUAGES = new Set(['html', 'handlebars'])
@@ -116,14 +119,16 @@ export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
     for (const change of event.contentChanges) {
       const offset = change.rangeOffset + change.text.length
 
-      // Don't process edits inside script/style blocks
-      if (isInsideScriptOrStyle(text, offset)) {
+      // Find the tag at the cursor position (after the edit). Checked first:
+      // it is cheap (bounded backward scan) and usually rules the change out,
+      // while the script/style check below walks the document from the top.
+      const tag = getTagAtOffset(text, offset)
+      if (!tag) {
         continue
       }
 
-      // Find the tag at the cursor position (after the edit)
-      const tag = getTagAtOffset(text, offset)
-      if (!tag) {
+      // Don't process edits inside script/style blocks
+      if (isInsideScriptOrStyle(text, offset)) {
         continue
       }
 
@@ -143,7 +148,9 @@ export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
       let matchRange: { start: number; end: number } | undefined
 
       if (tag.isClosing) {
-        matchRange = findNearestUnmatchedOpeningTag(text, tag.tagNameStart)
+        // Scan from the closing tag's own '<' so the edited tag itself is not
+        // counted as an extra closing tag (which would swallow its opener).
+        matchRange = findNearestUnmatchedOpeningTag(text, tag.tagNameStart - 2)
       } else {
         // Find the end of the current opening tag
         let tagEnd = tag.tagNameEnd
@@ -197,116 +204,4 @@ export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
   })
 
   context.subscriptions.push(disposable)
-}
-
-/**
- * Finds the nearest unmatched closing tag scanning forward from startOffset.
- * Uses a stack: opening tags push, closing tags pop. First closing tag at depth 0 wins.
- */
-function findNearestUnmatchedClosingTag(text: string, startOffset: number): { start: number; end: number } | undefined {
-  let pos = startOffset
-  let depth = 0
-
-  while (pos < text.length) {
-    const idx = text.indexOf('<', pos)
-    if (idx === -1) {
-      break
-    }
-
-    if (text[idx + 1] === '/') {
-      const nameStart = idx + 2
-      const remaining = text.substring(nameStart)
-      const match = remaining.match(TAG_RE)
-      if (match) {
-        const name = match[0]
-        const nameEnd = nameStart + name.length
-        if (depth === 0) {
-          return { start: nameStart, end: nameEnd }
-        }
-        depth--
-        pos = nameEnd
-        continue
-      }
-    } else if (text[idx + 1] !== '!' && text[idx + 1] !== '?') {
-      const nameStart = idx + 1
-      const remaining = text.substring(nameStart)
-      const match = remaining.match(TAG_RE)
-      if (match) {
-        const name = match[0]
-        const nameEnd = nameStart + name.length
-        let j = nameEnd
-        while (j < text.length && text[j] !== '>') {
-          if (text[j] === '<') {
-            break
-          }
-          j++
-        }
-        const isSelfClosing = j < text.length && text[j] === '>' && text[j - 1] === '/'
-        if (!isSelfClosing && !SELF_CLOSING_TAGS.has(name.toLowerCase())) {
-          depth++
-        }
-        pos = nameEnd
-        continue
-      }
-    }
-
-    pos = idx + 1
-  }
-
-  return undefined
-}
-
-/**
- * Finds the nearest unmatched opening tag scanning backward from startOffset.
- * Uses a stack: closing tags push, opening tags pop. First opening tag at depth 0 wins.
- */
-function findNearestUnmatchedOpeningTag(text: string, startOffset: number): { start: number; end: number } | undefined {
-  let pos = startOffset
-  let depth = 0
-
-  while (pos > 0) {
-    const idx = text.lastIndexOf('<', pos - 1)
-    if (idx === -1) {
-      break
-    }
-
-    if (text[idx + 1] === '/') {
-      const nameStart = idx + 2
-      const remaining = text.substring(nameStart)
-      const match = remaining.match(TAG_RE)
-      if (match) {
-        depth++
-      }
-      pos = idx
-      continue
-    }
-
-    if (text[idx + 1] !== '!' && text[idx + 1] !== '?') {
-      const nameStart = idx + 1
-      const remaining = text.substring(nameStart)
-      const match = remaining.match(TAG_RE)
-      if (match) {
-        const name = match[0]
-        const nameEnd = nameStart + name.length
-        let j = nameEnd
-        while (j < text.length && text[j] !== '>') {
-          if (text[j] === '<') {
-            break
-          }
-          j++
-        }
-        const isSelfClosing = j < text.length && text[j] === '>' && text[j - 1] === '/'
-        if (!isSelfClosing && !SELF_CLOSING_TAGS.has(name.toLowerCase())) {
-          if (depth === 0) {
-            return { start: nameStart, end: nameEnd }
-          }
-          depth--
-        }
-      }
-    }
-
-    pos = idx
-  }
-
-  return undefined
 }
