@@ -220,3 +220,62 @@ describe('severity helpers', () => {
     assert.equal(summary, '3 vulnerabilities (2 critical, 1 low)')
   })
 })
+
+describe('parseDotnetVulnerableJson — solution with several projects', () => {
+  const SOLUTION = JSON.stringify({
+    version: 1,
+    projects: [
+      {
+        path: '/src/Api/Api.csproj',
+        frameworks: [
+          {
+            framework: 'net8.0',
+            topLevelPackages: [
+              {
+                id: 'Newtonsoft.Json',
+                resolvedVersion: '12.0.1',
+                vulnerabilities: [{ severity: 'High', advisoryurl: 'https://github.com/advisories/GHSA-n' }]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        path: '/src/Worker/Worker.csproj',
+        frameworks: [
+          {
+            framework: 'net8.0',
+            topLevelPackages: [
+              {
+                id: 'Newtonsoft.Json',
+                resolvedVersion: '12.0.1',
+                vulnerabilities: [{ severity: 'High', advisoryurl: 'https://github.com/advisories/GHSA-n' }]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  })
+
+  it('should report the same advisory once per affected project', () => {
+    const findings = parseDotnetVulnerableJson(SOLUTION)
+    assert.equal(findings.length, 2)
+  })
+
+  it('should tag each finding with its project name', () => {
+    const findings = parseDotnetVulnerableJson(SOLUTION)
+    assert.deepEqual(
+      findings.map(f => f.project).sort(),
+      ['Api.csproj', 'Worker.csproj']
+    )
+  })
+
+  it('should omit the project tag for single-project reports', () => {
+    const single = JSON.parse(SOLUTION) as { projects: unknown[] }
+    single.projects = single.projects.slice(0, 1)
+    const findings = parseDotnetVulnerableJson(JSON.stringify(single))
+    assert.equal(findings.length, 1)
+    assert.equal(findings[0].project, undefined)
+  })
+})

@@ -1035,7 +1035,7 @@
         },
         {
           "command": "toolkit.nuget.vulnerabilities",
-          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
+          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj || resourceExtname == .sln || resourceExtname == .slnx",
           "group": "0_toolkit@13"
         },
         {

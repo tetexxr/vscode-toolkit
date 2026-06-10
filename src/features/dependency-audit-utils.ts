@@ -20,6 +20,8 @@ export interface VulnerabilityFinding {
   range: string
   fixAvailable?: boolean
   transitive?: boolean
+  /** Project name, when the report covers several (e.g. a .NET solution). */
+  project?: string
 }
 
 /** Narrowing String() replacement: objects fall back instead of "[object Object]". */
@@ -189,6 +191,7 @@ interface DotnetPackage {
 export function parseDotnetVulnerableJson(stdout: string): VulnerabilityFinding[] {
   let data: {
     projects?: Array<{
+      path?: string
       frameworks?: Array<{ topLevelPackages?: DotnetPackage[]; transitivePackages?: DotnetPackage[] }>
     }>
   }
@@ -200,7 +203,9 @@ export function parseDotnetVulnerableJson(stdout: string): VulnerabilityFinding[
 
   const findings: VulnerabilityFinding[] = []
   const seen = new Set<string>()
+  const multiProject = (data.projects ?? []).length > 1
   for (const project of data.projects ?? []) {
+    const projectName = asString(project.path).split(/[\\/]/).pop() ?? ''
     for (const framework of project.frameworks ?? []) {
       const groups: Array<{ packages: DotnetPackage[]; transitive: boolean }> = [
         { packages: framework.topLevelPackages ?? [], transitive: false },
@@ -209,7 +214,9 @@ export function parseDotnetVulnerableJson(stdout: string): VulnerabilityFinding[
       for (const { packages, transitive } of groups) {
         for (const pkg of packages) {
           for (const vulnerability of pkg.vulnerabilities ?? []) {
-            const key = `${pkg.id}|${pkg.resolvedVersion}|${vulnerability.advisoryurl}`
+            // Keyed per project: the same advisory in two projects of a
+            // solution is two actionable findings.
+            const key = `${projectName}|${pkg.id}|${pkg.resolvedVersion}|${vulnerability.advisoryurl}`
             if (seen.has(key)) {
               continue // the same package can repeat across frameworks
             }
@@ -220,7 +227,8 @@ export function parseDotnetVulnerableJson(stdout: string): VulnerabilityFinding[
               title: `${pkg.id} ${pkg.resolvedVersion ?? ''}`.trim(),
               url: typeof vulnerability.advisoryurl === 'string' ? vulnerability.advisoryurl : null,
               range: String(pkg.resolvedVersion ?? ''),
-              transitive
+              transitive,
+              ...(multiProject && projectName ? { project: projectName } : {})
             })
           }
         }

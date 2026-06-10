@@ -344,10 +344,10 @@ Check a project's dependencies for known vulnerabilities using each ecosystem's 
 
 **Access:**
 
-- **Explorer context menu** — right-click a `package.json` or a `.csproj`/`.fsproj`/`.vbproj`
+- **Explorer context menu** — right-click a `package.json`, a `.csproj`/`.fsproj`/`.vbproj`, or a **solution** (`.sln`/`.slnx`) to audit every project in it at once
 - **Command Palette** — run either command; with several projects in the workspace, a picker asks which one
 
-**Results:** findings are listed in a quick pick sorted by severity (critical → high → moderate → low), showing the affected range, whether it is a transitive dependency, and whether a fix is available. Picking an entry opens its security advisory in the browser. A clean project shows a confirmation message instead.
+**Results:** findings are listed in a quick pick sorted by severity (critical → high → moderate → low), showing the affected range, whether it is a transitive dependency, and whether a fix is available. When auditing a solution, each finding is tagged with the project it belongs to — the same advisory in two projects shows once per project. Picking an entry opens its security advisory in the browser. A clean project shows a confirmation message instead.
 
 > Note: NuGet requires the project to be restored (`dotnet restore`) — the vulnerability data comes from the restore graph.
 

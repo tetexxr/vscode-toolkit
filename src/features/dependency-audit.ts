@@ -59,7 +59,7 @@ async function showFindings(findings: VulnerabilityFinding[], scopeLabel: string
   type Item = vscode.QuickPickItem & { url: string | null }
   const items: Item[] = sorted.map(f => ({
     label: `${SEVERITY_ICONS[f.severity]} ${f.severity} — ${f.package}`,
-    description: [f.range, f.transitive ? 'transitive' : '', f.fixAvailable ? 'fix available' : '']
+    description: [f.range, f.project ?? '', f.transitive ? 'transitive' : '', f.fixAvailable ? 'fix available' : '']
       .filter(Boolean)
       .join(' · '),
     detail: f.title,
@@ -133,7 +133,8 @@ async function npmAudit(uri?: vscode.Uri): Promise<void> {
 /* -------------------------------------------------------------------------- */
 
 async function nugetVulnerabilities(uri?: vscode.Uri): Promise<void> {
-  const projectUri = await pickProjectFile('**/*.{csproj,fsproj,vbproj}', 'Check which project?', uri)
+  // A solution file covers every project in it at once.
+  const projectUri = await pickProjectFile('**/*.{csproj,fsproj,vbproj,sln,slnx}', 'Check which project or solution?', uri)
   if (!projectUri) {
     return
   }
