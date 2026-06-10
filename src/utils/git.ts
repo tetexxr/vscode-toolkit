@@ -251,21 +251,33 @@ export async function getCommitFiles(cwd: string, hash: string): Promise<CommitF
   const parents = await getCommitParents(cwd, hash)
   const nameStatusArgs =
     parents.length === 0
-      ? ['diff-tree', '--no-commit-id', '--root', '-r', '--name-status', hash]
-      : ['diff', '--name-status', parents[0], hash]
+      ? ['diff-tree', '--no-commit-id', '--root', '-r', '--name-status', '-z', hash]
+      : ['diff', '--name-status', '-z', parents[0], hash]
   const numstatArgs =
     parents.length === 0
-      ? ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', hash]
-      : ['diff', '--numstat', parents[0], hash]
+      ? ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', '-z', hash]
+      : ['diff', '--numstat', '-z', parents[0], hash]
   const [statusRaw, numstatRaw] = await Promise.all([
     gitExec(cwd, nameStatusArgs, 30000),
     gitExec(cwd, numstatArgs, 30000)
   ])
 
+  // --numstat -z: "add\tdel\tpath\0", except renames/copies, which come as
+  // "add\tdel\t\0src\0dst\0" (empty path field, then both paths as tokens).
+  // Keyed by the new path to match the name-status pass below.
   const stats = new Map<string, { additions: number; deletions: number; isBinary: boolean }>()
-  for (const line of numstatRaw.split('\n').filter(Boolean)) {
-    const [add, del, ...rest] = line.split('\t')
-    const filePath = rest.join('\t')
+  const numstatTokens = numstatRaw.split('\0')
+  for (let i = 0; i < numstatTokens.length; i++) {
+    const entry = numstatTokens[i]
+    if (!entry) continue
+    const match = entry.match(/^([0-9-]+)\t([0-9-]+)\t([\s\S]*)$/)
+    if (!match) continue
+    const [, add, del, pathField] = match
+    let filePath = pathField
+    if (filePath === '') {
+      filePath = numstatTokens[i + 2] ?? ''
+      i += 2
+    }
     const isBinary = add === '-' && del === '-'
     stats.set(filePath, {
       additions: isBinary ? 0 : parseInt(add, 10),
@@ -274,11 +286,20 @@ export async function getCommitFiles(cwd: string, hash: string): Promise<CommitF
     })
   }
 
+  // --name-status -z: "STATUS\0path\0", with two paths (src, dst) for R/C.
   const files: CommitFileInfo[] = []
-  for (const line of statusRaw.split('\n').filter(Boolean)) {
-    const [statusCode, ...pathParts] = line.split('\t')
-    const filePath = pathParts[pathParts.length - 1]
-    const status = statusCode.charAt(0)
+  const statusTokens = statusRaw.split('\0')
+  for (let i = 0; i < statusTokens.length; i++) {
+    const statusToken = statusTokens[i]
+    if (!statusToken) continue
+    const status = statusToken.charAt(0)
+    let filePath = statusTokens[i + 1] ?? ''
+    i++
+    if (status === 'R' || status === 'C') {
+      filePath = statusTokens[i + 1] ?? ''
+      i++
+    }
+    if (!filePath) continue
     const stat = stats.get(filePath) || { additions: 0, deletions: 0, isBinary: false }
     files.push({ status, path: filePath, ...stat })
   }
