@@ -48,6 +48,20 @@ describe('getFileLogPatch', () => {
   it('should reject for an invalid cwd', async () => {
     await assert.rejects(() => getFileLogPatch('/nonexistent-dir', 'file.txt'))
   })
+
+  it('should limit the number of commits with maxCount', async () => {
+    const result = await getFileLogPatch(repoRoot, 'package.json', 1)
+    assert.equal(result.split('---COMMIT---').length - 1, 1)
+  })
+
+  it('should return the next page with skip', async () => {
+    const firstTwo = await getFileLogPatch(repoRoot, 'package.json', 2)
+    const second = await getFileLogPatch(repoRoot, 'package.json', 1, 1)
+    const firstTwoHashes = [...firstTwo.matchAll(/^commit ([0-9a-f]{40})$/gm)].map(m => m[1])
+    const secondHashes = [...second.matchAll(/^commit ([0-9a-f]{40})$/gm)].map(m => m[1])
+    assert.equal(firstTwoHashes.length, 2)
+    assert.deepEqual(secondHashes, [firstTwoHashes[1]])
+  })
 })
 
 describe('getFileBlame', () => {

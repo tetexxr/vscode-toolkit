@@ -64,18 +64,22 @@ export interface RemoteInfo {
   repo: string
 }
 
-export async function getFileLogPatch(cwd: string, relativePath: string): Promise<string> {
-  return gitExec(
-    cwd,
-    [
-      'log',
-      '-p',
-      '--format=%n---COMMIT---%ncommit %H%nAuthor: %an <%ae>%nDate:   %ar (%ai)%n%n    %s%n',
-      '--',
-      relativePath
-    ],
-    30000
-  )
+export async function getFileLogPatch(
+  cwd: string,
+  relativePath: string,
+  maxCount?: number,
+  skip?: number
+): Promise<string> {
+  const args = ['log', '-p', '--format=%n---COMMIT---%ncommit %H%nAuthor: %an <%ae>%nDate:   %ar (%ai)%n%n    %s%n']
+  // Paged: a file's full history with patches can blow past maxBuffer.
+  if (maxCount !== undefined) {
+    args.push(`--max-count=${maxCount}`)
+  }
+  if (skip !== undefined && skip > 0) {
+    args.push(`--skip=${skip}`)
+  }
+  args.push('--', relativePath)
+  return gitExec(cwd, args, 30000)
 }
 
 export interface BlameInfo {
