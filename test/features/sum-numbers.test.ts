@@ -28,6 +28,10 @@ describe('extractLeadingNumbers', () => {
     assert.deepEqual(extractLeadingNumbers('1.5\n2.25\n3.0'), [1.5, 2.25, 3.0])
   })
 
+  it('should handle comma decimals', () => {
+    assert.deepEqual(extractLeadingNumbers('3,14 cafe\n2,5 te'), [3.14, 2.5])
+  })
+
   it('should handle leading whitespace before the number', () => {
     assert.deepEqual(extractLeadingNumbers('   1,25 h kickoff call\n\t0,75 h retro'), [1.25, 0.75])
   })

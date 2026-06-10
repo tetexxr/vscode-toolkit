@@ -218,6 +218,20 @@ describe('jwt decode', () => {
     assert.throws(() => decodeJwt('not_base64.eyJ9.x'), TransformError)
   })
 
+  it('should throw a TransformError for a token whose payload is not valid JSON', () => {
+    const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')
+    const payload = Buffer.from('not json at all').toString('base64url')
+    assert.throws(() => decodeJwt(`${header}.${payload}.sig`), /Could not parse JWT payload/)
+  })
+
+  it('should decode a token with an empty signature', () => {
+    const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64url')
+    const payload = Buffer.from(JSON.stringify({ sub: '42' })).toString('base64url')
+    const decoded = decodeJwt(`${header}.${payload}.`)
+    assert.equal(decoded.signature, '')
+    assert.deepEqual(decoded.payload, { sub: '42' })
+  })
+
   it('should format a decoded JWT as readable jsonc-style output', () => {
     const formatted = formatDecodedJwt(decodeJwt(SAMPLE_JWT))
     assert.ok(formatted.includes('// Header'))

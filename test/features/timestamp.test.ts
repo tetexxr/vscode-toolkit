@@ -52,6 +52,24 @@ describe('detectInputFormat', () => {
     assert.equal(detectInputFormat('2024-03-15'), 'iso')
   })
 
+  it('should detect ISO-like strings with a space separator', () => {
+    assert.equal(detectInputFormat('2024-01-02 10:30'), 'iso')
+    assert.equal(detectInputFormat('2024-01-02 10:30:45'), 'iso')
+  })
+
+  it('should detect ISO strings with an offset without colon', () => {
+    assert.equal(detectInputFormat('2024-03-15T12:34:56+0200'), 'iso')
+  })
+
+  it('should parse the space-separated and no-colon-offset variants', () => {
+    const spaced = parseTimestamp('2024-01-02 10:30')
+    assert.ok(spaced)
+    assert.equal(spaced!.getFullYear(), 2024)
+    const offset = parseTimestamp('2024-03-15T12:34:56+0200')
+    assert.ok(offset)
+    assert.equal(offset!.toISOString(), '2024-03-15T10:34:56.000Z')
+  })
+
   it('should return null for unrecognized input', () => {
     assert.equal(detectInputFormat(''), null)
     assert.equal(detectInputFormat('hello world'), null)

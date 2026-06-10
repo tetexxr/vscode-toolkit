@@ -131,11 +131,3 @@ export function evaluatePattern(pattern: string, flags: string, input: string, r
   }
   return { error: null, matches, highlightedHtml, replaceResult }
 }
-
-/**
- * Sanitizes a string so it can be safely interpolated into a webview script.
- * Returns a JS string literal (with surrounding quotes).
- */
-export function jsStringLiteral(value: string): string {
-  return JSON.stringify(value)
-}
