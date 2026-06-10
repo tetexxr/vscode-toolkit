@@ -138,3 +138,53 @@ describe('parsePackageReferences', () => {
     assert.equal(result[4].version, '11.9.0')
   })
 })
+
+describe('parsePackageReferences — version scoping', () => {
+  it('should not steal a sibling version for self-closing references without Version', () => {
+    const xml = `
+      <ItemGroup>
+        <PackageReference Include="Cpm.Managed" />
+        <PackageReference Include="Other.Package">
+          <Version>9.9.9</Version>
+        </PackageReference>
+      </ItemGroup>`
+    const result = parsePackageReferences(xml)
+    assert.deepEqual(result, [
+      { id: 'Cpm.Managed', version: '' },
+      { id: 'Other.Package', version: '9.9.9' }
+    ])
+  })
+
+  it('should not look past the closing tag for non-self-closing references', () => {
+    const xml = `
+      <ItemGroup>
+        <PackageReference Include="Empty.Body">
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Other.Package">
+          <Version>2.0.0</Version>
+        </PackageReference>
+      </ItemGroup>`
+    const result = parsePackageReferences(xml)
+    assert.deepEqual(result, [
+      { id: 'Empty.Body', version: '' },
+      { id: 'Other.Package', version: '2.0.0' }
+    ])
+  })
+
+  it('should return empty versions for a Central Package Management style project', () => {
+    const xml = `
+      <Project Sdk="Microsoft.NET.Sdk">
+        <ItemGroup>
+          <PackageReference Include="Serilog" />
+          <PackageReference Include="Polly" />
+          <PackageReference Include="MediatR" />
+        </ItemGroup>
+      </Project>`
+    const result = parsePackageReferences(xml)
+    assert.deepEqual(
+      result.map(r => r.version),
+      ['', '', '']
+    )
+  })
+})

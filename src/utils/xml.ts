@@ -40,10 +40,16 @@ export function parsePackageReferences(xml: string): PackageReference[] {
     // Try Version as an attribute first
     let version = extractAttribute(attrs, 'Version')
 
-    // If not found as attribute, look for a <Version> child element
-    if (!version) {
+    // If not found as attribute, look for a <Version> child element — but only
+    // inside this element's own body. Self-closing tags have no body (typical
+    // with Central Package Management), and an unbounded search would steal
+    // the version of whatever sibling declares one next.
+    const selfClosing = tagMatch[0].endsWith('/>')
+    if (!version && !selfClosing) {
       const afterTag = xml.slice(tagMatch.index + tagMatch[0].length)
-      const childMatch = afterTag.match(/<Version\s*>(.*?)<\/Version\s*>/i)
+      const closeIdx = afterTag.search(/<\/PackageReference\s*>/i)
+      const body = closeIdx === -1 ? '' : afterTag.slice(0, closeIdx)
+      const childMatch = body.match(/<Version\s*>(.*?)<\/Version\s*>/i)
       if (childMatch) {
         version = childMatch[1].trim()
       }
