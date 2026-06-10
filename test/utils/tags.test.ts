@@ -7,6 +7,7 @@ import {
   findNearestUnmatchedClosingTag,
   findNearestUnmatchedOpeningTag,
   matchTagNameAt,
+  postEventOffsets,
   SELF_CLOSING_TAGS
 } from '../../src/utils/tags'
 
@@ -255,5 +256,52 @@ describe('getTagAtOffset — bounded scan', () => {
     const text = 'x'.repeat(5000) + '<div'
     const result = getTagAtOffset(text, text.length)
     assert.equal(result?.tagName, 'div')
+  })
+})
+
+describe('postEventOffsets', () => {
+  it('should equal rangeOffset plus inserted length for a single change', () => {
+    const offsets = postEventOffsets([{ rangeOffset: 10, rangeLength: 0, text: 'x' }])
+    assert.deepEqual(offsets, [11])
+  })
+
+  it('should shift later changes by the net delta of earlier insertions', () => {
+    // Two cursors typing "x" at pre-event offsets 5 and 20
+    const offsets = postEventOffsets([
+      { rangeOffset: 5, rangeLength: 0, text: 'x' },
+      { rangeOffset: 20, rangeLength: 0, text: 'x' }
+    ])
+    assert.deepEqual(offsets, [6, 22])
+  })
+
+  it('should shift later changes negatively after earlier deletions', () => {
+    // Two cursors deleting one character at pre-event offsets 5 and 20
+    const offsets = postEventOffsets([
+      { rangeOffset: 5, rangeLength: 1, text: '' },
+      { rangeOffset: 20, rangeLength: 1, text: '' }
+    ])
+    assert.deepEqual(offsets, [5, 19])
+  })
+
+  it('should preserve the input order regardless of change ordering', () => {
+    // VS Code reports contentChanges in descending offset order
+    const offsets = postEventOffsets([
+      { rangeOffset: 20, rangeLength: 0, text: 'ab' },
+      { rangeOffset: 5, rangeLength: 0, text: 'ab' }
+    ])
+    assert.deepEqual(offsets, [24, 7])
+  })
+
+  it('should handle replacements that change length', () => {
+    // Replace 3 chars with 1 at offset 0, then a change at offset 10
+    const offsets = postEventOffsets([
+      { rangeOffset: 0, rangeLength: 3, text: 'x' },
+      { rangeOffset: 10, rangeLength: 0, text: 'y' }
+    ])
+    assert.deepEqual(offsets, [1, 9])
+  })
+
+  it('should return an empty array for no changes', () => {
+    assert.deepEqual(postEventOffsets([]), [])
   })
 })

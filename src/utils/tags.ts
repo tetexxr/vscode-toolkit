@@ -45,6 +45,33 @@ export function matchTagNameAt(text: string, offset: number): string | undefined
  */
 const MAX_TAG_NAME_SCAN = 256
 
+export interface ContentChangeLike {
+  /** Offset in the document as it was BEFORE the whole change event. */
+  rangeOffset: number
+  /** Length of the replaced range in the pre-event document. */
+  rangeLength: number
+  /** Inserted text. */
+  text: string
+}
+
+/**
+ * Translates each change's pre-event `rangeOffset` into an offset in the
+ * post-event document, pointing right after that change's inserted text.
+ * Multi-cursor typing delivers several changes in one event whose offsets
+ * all refer to the pre-event document; earlier insertions shift later ones.
+ * Results are returned in the same order as the input.
+ */
+export function postEventOffsets(changes: readonly ContentChangeLike[]): number[] {
+  const byOffset = changes.map((change, index) => ({ change, index })).sort((a, b) => a.change.rangeOffset - b.change.rangeOffset)
+  const out = new Array<number>(changes.length)
+  let delta = 0
+  for (const { change, index } of byOffset) {
+    out[index] = change.rangeOffset + delta + change.text.length
+    delta += change.text.length - change.rangeLength
+  }
+  return out
+}
+
 export interface TagInfo {
   isClosing: boolean
   tagNameStart: number

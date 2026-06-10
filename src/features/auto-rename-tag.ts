@@ -3,7 +3,8 @@ import {
   SELF_CLOSING_TAGS,
   findNearestUnmatchedClosingTag,
   findNearestUnmatchedOpeningTag,
-  getTagAtOffset
+  getTagAtOffset,
+  postEventOffsets
 } from '../utils/tags'
 
 /**
@@ -116,8 +117,16 @@ export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
     const document = event.document
     const text = document.getText()
 
-    for (const change of event.contentChanges) {
-      const offset = change.rangeOffset + change.text.length
+    // Renames are collected and applied in one edit at the end: every range
+    // below is computed against the same post-event `text`, and intermediate
+    // edits would shift the offsets of the remaining changes.
+    const renames: Array<{ range: vscode.Range; newTagName: string }> = []
+    const seenRanges = new Set<string>()
+    const offsets = postEventOffsets(event.contentChanges)
+
+    for (let changeIndex = 0; changeIndex < event.contentChanges.length; changeIndex++) {
+      const change = event.contentChanges[changeIndex]
+      const offset = offsets[changeIndex]
 
       // Find the tag at the cursor position (after the edit). Checked first:
       // it is cheap (bounded backward scan) and usually rules the change out,
@@ -176,30 +185,39 @@ export function registerAutoRenameTag(context: vscode.ExtensionContext): void {
         continue
       }
 
-      // Apply the rename
+      const rangeKey = `${matchRange.start}-${matchRange.end}`
+      if (seenRanges.has(rangeKey)) {
+        continue
+      }
+      seenRanges.add(rangeKey)
+
       const matchStartPos = document.positionAt(matchRange.start)
       const matchEndPos = document.positionAt(matchRange.end)
-      const matchVscRange = new vscode.Range(matchStartPos, matchEndPos)
+      renames.push({ range: new vscode.Range(matchStartPos, matchEndPos), newTagName })
+    }
 
-      isUpdating = true
-      try {
-        const success = await editor.edit(
-          editBuilder => {
-            editBuilder.replace(matchVscRange, newTagName)
-          },
-          { undoStopBefore: false, undoStopAfter: false }
-        )
-        if (success) {
-          lastAutoRenameVersion = {
-            fsPath: document.uri.fsPath,
-            version: document.version
+    if (renames.length === 0) {
+      return
+    }
+
+    isUpdating = true
+    try {
+      const success = await editor.edit(
+        editBuilder => {
+          for (const rename of renames) {
+            editBuilder.replace(rename.range, rename.newTagName)
           }
+        },
+        { undoStopBefore: false, undoStopAfter: false }
+      )
+      if (success) {
+        lastAutoRenameVersion = {
+          fsPath: document.uri.fsPath,
+          version: document.version
         }
-      } finally {
-        isUpdating = false
       }
-
-      break
+    } finally {
+      isUpdating = false
     }
   })
 
