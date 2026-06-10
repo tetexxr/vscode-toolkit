@@ -18,7 +18,8 @@ import {
   stageFile,
   getChangedFileDirectories,
   countCommitsBetween,
-  hasUncommittedChanges
+  hasUncommittedChanges,
+  isRebaseInProgress
 } from '../../src/utils/git'
 
 describe('getFileLogPatch', () => {
@@ -521,6 +522,33 @@ describe('editCommitMessage', () => {
     assert.ok(newDate.includes('2020-01-15'))
   })
 
+  function startConflictedRebase(): void {
+    const mainBranch = git('branch', '--show-current')
+    git('checkout', '-b', 'feature', 'HEAD~2')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'conflicting change')
+    git('add', 'file.txt')
+    git('commit', '-m', 'feature commit')
+    let stopped = false
+    try {
+      git('rebase', mainBranch)
+    } catch {
+      stopped = true // expected: rebase stops with a conflict and stays in progress
+    }
+    assert.ok(stopped, 'rebase should have stopped on a conflict')
+  }
+
+  it('should reject when a rebase is already in progress and editing non-HEAD', async () => {
+    startConflictedRebase()
+    const targetHash = git('log', '--format=%H', '--skip=1', '-1')
+    await assert.rejects(() => editCommitMessage(tmpRepo, targetHash, 'should fail'), /rebase is already in progress/)
+  })
+
+  it("should not abort the user's in-progress rebase when rejecting", async () => {
+    startConflictedRebase()
+    const targetHash = git('log', '--format=%H', '--skip=1', '-1')
+    await editCommitMessage(tmpRepo, targetHash, 'should fail').catch(() => {})
+    assert.equal(await isRebaseInProgress(tmpRepo), true, 'the user rebase must still be in progress')
+  })
   it('should reword a non-HEAD commit with a new date via rebase', async () => {
     const secondHash = git('log', '--format=%H', '--skip=1', '-1')
     await editCommitMessage(tmpRepo, secondHash, 'second commit', '2019-06-20 14:00:00')
@@ -567,6 +595,61 @@ describe('editCommitMessage', () => {
       thirdCommitterBefore,
       'third commit committer date should be preserved (not reset to rebase time)'
     )
+  })
+})
+
+describe('isRebaseInProgress', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'one')
+    git('add', 'file.txt')
+    git('commit', '-m', 'first')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'two')
+    git('add', 'file.txt')
+    git('commit', '-m', 'second')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  function startConflictedRebase(): void {
+    const mainBranch = git('branch', '--show-current')
+    git('checkout', '-b', 'feature', 'HEAD~1')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'conflict')
+    git('add', 'file.txt')
+    git('commit', '-m', 'feature change')
+    let stopped = false
+    try {
+      git('rebase', mainBranch)
+    } catch {
+      stopped = true // expected: rebase stops with a conflict and stays in progress
+    }
+    assert.ok(stopped, 'rebase should have stopped on a conflict')
+  }
+
+  it('should return false in a repository with no rebase in progress', async () => {
+    assert.equal(await isRebaseInProgress(tmpRepo), false)
+  })
+
+  it('should return true while a conflicted rebase is in progress', async () => {
+    startConflictedRebase()
+    assert.equal(await isRebaseInProgress(tmpRepo), true)
+  })
+
+  it('should return false again after the rebase is aborted', async () => {
+    startConflictedRebase()
+    git('rebase', '--abort')
+    assert.equal(await isRebaseInProgress(tmpRepo), false)
   })
 })
 

@@ -3,6 +3,8 @@
  */
 
 import { execFile } from 'child_process'
+import { existsSync } from 'fs'
+import * as path from 'path'
 
 function gitExec(cwd: string, args: string[], timeout = 5000, env?: Record<string, string>): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -309,6 +311,15 @@ export async function hasUncommittedChanges(cwd: string): Promise<boolean> {
   return status.length > 0
 }
 
+/** Whether a rebase (interactive or am-based) is currently in progress. */
+export async function isRebaseInProgress(cwd: string): Promise<boolean> {
+  const raw = await gitExec(cwd, ['rev-parse', '--git-path', 'rebase-merge', '--git-path', 'rebase-apply'])
+  return raw
+    .split('\n')
+    .map(p => p.trim())
+    .some(p => p.length > 0 && existsSync(path.resolve(cwd, p)))
+}
+
 export async function editCommitMessage(
   cwd: string,
   hash: string,
@@ -333,12 +344,18 @@ export async function editCommitMessage(
     }
     await gitExec(cwd, args, 30000, dateEnv)
   } else {
+    // Checked before the dirty-tree guard: a conflicted rebase also makes the
+    // working tree dirty, and "rebase in progress" is the actionable error.
+    if (await isRebaseInProgress(cwd)) {
+      throw new Error(
+        'A rebase is already in progress in this repository. Finish or abort it before editing older commits.'
+      )
+    }
+
     const status = await gitExec(cwd, ['status', '--porcelain']).catch(() => '')
     if (status) {
       throw new Error('Working tree has uncommitted changes. Please commit or stash them before editing older commits.')
     }
-
-    await gitExec(cwd, ['rebase', '--abort']).catch(() => {})
 
     const shortHash = hash.substring(0, 7)
     const parentHash = await gitExec(cwd, ['rev-parse', `${hash}^`])
@@ -348,13 +365,21 @@ export async function editCommitMessage(
       amendArgs.push('--date', newDate)
     }
 
-    // --committer-date-is-author-date keeps later commits' committer date equal to
-    // their original author date instead of being reset to "now" by rebase --continue.
-    await gitExec(cwd, ['rebase', '-i', '--committer-date-is-author-date', parentHash], 60000, {
-      GIT_SEQUENCE_EDITOR: `sed -i '' 's/^pick ${shortHash}/edit ${shortHash}/'`
-    })
+    try {
+      // --committer-date-is-author-date keeps later commits' committer date equal to
+      // their original author date instead of being reset to "now" by rebase --continue.
+      await gitExec(cwd, ['rebase', '-i', '--committer-date-is-author-date', parentHash], 60000, {
+        GIT_SEQUENCE_EDITOR: `sed -i '' 's/^pick ${shortHash}/edit ${shortHash}/'`
+      })
 
-    await gitExec(cwd, amendArgs, 30000, dateEnv)
-    await gitExec(cwd, ['rebase', '--continue'], 30000)
+      await gitExec(cwd, amendArgs, 30000, dateEnv)
+      await gitExec(cwd, ['rebase', '--continue'], 30000)
+    } catch (err) {
+      // This rebase is ours (we checked none was running): roll it back so the
+      // repository is left exactly as it was.
+      await gitExec(cwd, ['rebase', '--abort']).catch(() => {})
+      const message = err instanceof Error ? err.message : String(err)
+      throw new Error(`Editing the commit failed and the rebase was rolled back: ${message}`)
+    }
   }
 }
