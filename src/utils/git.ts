@@ -146,29 +146,29 @@ export interface ChangedFile {
  */
 export function parseGitStatus(output: string): ChangedFile[] {
   const files: ChangedFile[] = []
-  for (const line of output.split('\n')) {
-    if (!line || line.length < 4) continue
-    const x = line[0]
-    const y = line[1]
+  const tokens = output.split('\0')
+  for (let i = 0; i < tokens.length; i++) {
+    const entry = tokens[i]
+    if (!entry || entry.length < 4) continue
+    const x = entry[0]
+    const y = entry[1]
+    const filePath = entry.substring(3)
+    // Renames/copies carry the original path as an extra NUL-separated
+    // field after the new path; consume it so it isn't read as an entry.
+    if (x === 'R' || x === 'C') i++
     // Skip deleted files
     if (x === 'D' || y === 'D') continue
     // Skip ignored files
     if (x === '!' || y === '!') continue
-    let filePath = line.substring(3)
-    // Handle renames: "R  old -> new" — take the new path
-    if (x === 'R') {
-      const arrow = filePath.indexOf(' -> ')
-      if (arrow !== -1) {
-        filePath = filePath.substring(arrow + 4)
-      }
-    }
     files.push({ status: `${x}${y}`.trim(), path: filePath })
   }
   return files
 }
 
 export async function getChangedFiles(cwd: string): Promise<ChangedFile[]> {
-  const output = await gitExec(cwd, ['status', '--porcelain'])
+  // -z: NUL-separated entries with unquoted paths, so names with accents,
+  // quotes, or " -> " parse correctly.
+  const output = await gitExec(cwd, ['status', '--porcelain', '-z'])
   return parseGitStatus(output)
 }
 

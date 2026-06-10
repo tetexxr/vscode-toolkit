@@ -16,6 +16,7 @@ import {
   editCommitMessage,
   resetToCommit,
   stageFile,
+  getChangedFiles,
   getChangedFileDirectories,
   countCommitsBetween,
   hasUncommittedChanges,
@@ -84,8 +85,9 @@ describe('getFileBlame', () => {
 })
 
 describe('parseGitStatus', () => {
+  // Input mirrors `git status --porcelain -z`: NUL-separated, unquoted paths.
   it('should parse modified files', () => {
-    const output = ' M src/utils/git.ts\n M README.md'
+    const output = ' M src/utils/git.ts\0 M README.md\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 2)
     assert.equal(result[0].path, 'src/utils/git.ts')
@@ -94,7 +96,7 @@ describe('parseGitStatus', () => {
   })
 
   it('should parse staged modified files', () => {
-    const output = 'M  src/utils/git.ts'
+    const output = 'M  src/utils/git.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/utils/git.ts')
@@ -102,7 +104,7 @@ describe('parseGitStatus', () => {
   })
 
   it('should parse added files', () => {
-    const output = 'A  src/features/new-feature.ts'
+    const output = 'A  src/features/new-feature.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/features/new-feature.ts')
@@ -110,7 +112,7 @@ describe('parseGitStatus', () => {
   })
 
   it('should parse untracked files', () => {
-    const output = '?? src/new-file.ts'
+    const output = '?? src/new-file.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/new-file.ts')
@@ -118,24 +120,41 @@ describe('parseGitStatus', () => {
   })
 
   it('should skip deleted files', () => {
-    const output = 'D  src/old-file.ts\n M src/utils/git.ts'
+    const output = 'D  src/old-file.ts\0 M src/utils/git.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/utils/git.ts')
   })
 
   it('should skip worktree-deleted files', () => {
-    const output = ' D src/old-file.ts'
+    const output = ' D src/old-file.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 0)
   })
 
   it('should handle renames by using the new path', () => {
-    const output = 'R  src/old-name.ts -> src/new-name.ts'
+    const output = 'R  src/new-name.ts\0src/old-name.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/new-name.ts')
     assert.equal(result[0].status, 'R')
+  })
+
+  it('should not parse the original path of a rename as a separate entry', () => {
+    const output = 'R  src/new-name.ts\0src/old-name.ts\0?? src/other.ts\0'
+    const result = parseGitStatus(output)
+    assert.deepEqual(
+      result.map(f => f.path),
+      ['src/new-name.ts', 'src/other.ts']
+    )
+  })
+
+  it('should handle copies by using the new path', () => {
+    const output = 'C  src/copy.ts\0src/original.ts\0'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'src/copy.ts')
+    assert.equal(result[0].status, 'C')
   })
 
   it('should handle mixed statuses', () => {
@@ -145,8 +164,9 @@ describe('parseGitStatus', () => {
       'A  src/c.ts',
       'D  src/d.ts',
       '?? src/e.ts',
-      'R  src/f.ts -> src/g.ts'
-    ].join('\n')
+      'R  src/g.ts',
+      'src/f.ts'
+    ].join('\0')
     const result = parseGitStatus(output)
     assert.equal(result.length, 5)
     const paths = result.map(f => f.path)
@@ -158,16 +178,70 @@ describe('parseGitStatus', () => {
   })
 
   it('should skip ignored files', () => {
-    const output = '!! ignored-file.log'
+    const output = '!! ignored-file.log\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 0)
   })
 
   it('should handle files in deeply nested directories', () => {
-    const output = ' M src/features/nuget/nuget-api.ts'
+    const output = ' M src/features/nuget/nuget-api.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/features/nuget/nuget-api.ts')
+  })
+
+  it('should preserve paths with accents and special characters', () => {
+    const output = ' M café.txt\0?? with"quote.txt\0 M docs/año 2026/niño.md\0'
+    const result = parseGitStatus(output)
+    assert.deepEqual(
+      result.map(f => f.path),
+      ['café.txt', 'with"quote.txt', 'docs/año 2026/niño.md']
+    )
+  })
+
+  it('should preserve paths containing a literal arrow', () => {
+    const output = ' M notes -> draft.md\0'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'notes -> draft.md')
+  })
+})
+
+describe('getChangedFiles', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should return changed files with non-ASCII names unquoted', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'café.txt'), 'hola')
+    fs.writeFileSync(path.join(tmpRepo, 'plain.txt'), 'plain')
+    const result = await getChangedFiles(tmpRepo)
+    const paths = result.map(f => f.path).sort()
+    assert.deepEqual(paths, ['café.txt', 'plain.txt'])
+  })
+
+  it('should report the new path for renamed files', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'old.txt'), 'content')
+    git('add', 'old.txt')
+    git('commit', '-m', 'add file')
+    git('mv', 'old.txt', 'new.txt')
+    const result = await getChangedFiles(tmpRepo)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'new.txt')
+    assert.equal(result[0].status, 'R')
   })
 })
 
