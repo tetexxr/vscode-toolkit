@@ -170,10 +170,12 @@ function computeConfig(configPath: string, depth: number): ResolvedPaths | undef
         if (parentPath) {
           const result = loadPathsFromConfig(parentPath, depth + 1)
           if (result) {
-            if (opts.baseUrl) {
-              result.baseUrl = path.resolve(configDir, opts.baseUrl)
+            // Copy: `result` is the cached parent object, shared by every
+            // config that extends it — mutating its baseUrl would corrupt them.
+            return {
+              baseUrl: opts.baseUrl ? path.resolve(configDir, opts.baseUrl) : result.baseUrl,
+              mappings: result.mappings
             }
-            return result
           }
         }
       }

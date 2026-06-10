@@ -263,6 +263,46 @@ describe('loadPathsFromConfig', () => {
     assert.equal(loadPathsFromConfig(path.join(root, 'tsconfig.json')), undefined)
   })
 
+  it('should not corrupt the cached parent when two configs extend it with different baseUrls', () => {
+    writeJson(path.join(root, 'tsconfig.base.json'), {
+      compilerOptions: { baseUrl: '.', paths: { '@/*': ['*'] } }
+    })
+    fs.mkdirSync(path.join(root, 'pkg-a'))
+    fs.mkdirSync(path.join(root, 'pkg-b'))
+    writeJson(path.join(root, 'pkg-a', 'tsconfig.json'), {
+      extends: '../tsconfig.base.json',
+      compilerOptions: { baseUrl: 'src' }
+    })
+    writeJson(path.join(root, 'pkg-b', 'tsconfig.json'), {
+      extends: '../tsconfig.base.json',
+      compilerOptions: { baseUrl: 'lib' }
+    })
+
+    const a = loadPathsFromConfig(path.join(root, 'pkg-a', 'tsconfig.json'))
+    const b = loadPathsFromConfig(path.join(root, 'pkg-b', 'tsconfig.json'))
+    const base = loadPathsFromConfig(path.join(root, 'tsconfig.base.json'))
+
+    assert.equal(a!.baseUrl, path.join(root, 'pkg-a', 'src'))
+    assert.equal(b!.baseUrl, path.join(root, 'pkg-b', 'lib'))
+    assert.equal(base!.baseUrl, root, 'parent baseUrl must stay untouched')
+
+    // The cached entry for pkg-a must not have been rewritten by resolving pkg-b
+    const aAgain = loadPathsFromConfig(path.join(root, 'pkg-a', 'tsconfig.json'))
+    assert.equal(aAgain!.baseUrl, path.join(root, 'pkg-a', 'src'))
+  })
+
+  it('should inherit the parent baseUrl when the child does not define one', () => {
+    writeJson(path.join(root, 'tsconfig.base.json'), {
+      compilerOptions: { baseUrl: 'common', paths: { '@/*': ['*'] } }
+    })
+    writeJson(path.join(root, 'tsconfig.json'), {
+      extends: './tsconfig.base.json'
+    })
+    const result = loadPathsFromConfig(path.join(root, 'tsconfig.json'))
+    assert.ok(result)
+    assert.equal(result.baseUrl, path.join(root, 'common'))
+  })
+
   it('should handle tsconfig with comments', () => {
     fs.writeFileSync(
       path.join(root, 'tsconfig.json'),
