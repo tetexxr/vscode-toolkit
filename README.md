@@ -46,6 +46,7 @@ All-in-one VS Code utility extension.
     - [Paste Image](#paste-image)
     - [Clipboard History](#clipboard-history)
     - [Bookmarks](#bookmarks)
+    - [.env Checker](#env-checker)
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
@@ -1116,6 +1117,29 @@ Pin specific lines in your code with an optional label and jump between them fro
 | `toolkit.bookmarks.gutterIcon` | `true` | Show the bookmark icon in the gutter |
 | `toolkit.bookmarks.highlightLine` | `false` | Highlight the full line with a subtle background |
 | `toolkit.bookmarks.highlightColor` | `rgba(255,200,0,0.15)` | CSS color used when `highlightLine` is enabled |
+
+#### .env Checker
+
+Keeps your local `.env` files in sync with the committed example (`.env.example`, `.env.sample`, `.env.template`, or `.env.dist` — first one found in the same folder).
+
+**Diagnostics (automatic, on open/save):**
+
+- Editing a `.env` (or `.env.local`, `.env.development`, …): a warning on the first line lists the keys declared in the example but **missing** from your file, and each key **not declared** in the example gets a hint on its line.
+- Editing the example: a warning lists the keys present in the sibling `.env` that are not declared in it (so new variables get documented).
+
+**Quick fix:** `Ctrl+.` on the missing-keys warning offers **Add missing keys** — appends them to your `.env` with the example's placeholder values.
+
+**Command:** run **Toolkit: Check .env Files** from the Command Palette to scan every `.env`/example pair in the workspace at once; out-of-sync files are listed in a quick pick (useful after a big pull).
+
+**Privacy:** only key *names* ever appear in messages — values from a real `.env` are secrets and are never shown or copied anywhere.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.envCheck.enabled` | `true` | Toggle the .env diagnostics |
+| `toolkit.envCheck.exampleNames` | `[.env.example, .env.sample, .env.template, .env.dist]` | File names recognized as the example, in lookup order |
+| `toolkit.envCheck.severity` | `warning` | Severity of the missing-keys diagnostic (undeclared keys are always hints) |
 
 #### TODO Tree
 

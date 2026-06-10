@@ -773,6 +773,10 @@
       {
         "command": "toolkit.peekCommit.showFull",
         "title": "Toolkit: Show Commit by SHA"
+      },
+      {
+        "command": "toolkit.envCheck.checkWorkspace",
+        "title": "Toolkit: Check .env Files"
       }
     ],
     "keybindings": [
@@ -1592,6 +1596,35 @@
           "items": {
             "type": "string"
           }
+        },
+        "toolkit.envCheck.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Compare .env files with their committed example (.env.example, .env.sample, ...) and surface missing/undeclared keys as diagnostics."
+        },
+        "toolkit.envCheck.exampleNames": {
+          "type": "array",
+          "default": [
+            ".env.example",
+            ".env.sample",
+            ".env.template",
+            ".env.dist"
+          ],
+          "description": "File names recognized as the committed example, in lookup order.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.envCheck.severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warning",
+            "information",
+            "hint"
+          ],
+          "default": "warning",
+          "description": "Severity of the missing-keys diagnostic. Undeclared keys are always reported as hints."
         },
         "toolkit.jsonToType.extractNestedTypes": {
           "type": "boolean",
