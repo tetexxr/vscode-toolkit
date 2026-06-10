@@ -19,6 +19,7 @@ All-in-one VS Code utility extension.
     - [NuGet Package Manager](#nuget-package-manager)
     - [NPM Package Manager](#npm-package-manager)
     - [NPM Intellisense](#npm-intellisense)
+    - [Dependency Vulnerability Audit](#dependency-vulnerability-audit)
   - [Code Editing](#code-editing)
     - [Change Case](#change-case)
     - [Slugify](#slugify)
@@ -331,6 +332,24 @@ Run **Toolkit: NPM Intellisense - Import Module** from the Command Palette to pi
 | `toolkit.npmIntellisense.importQuotes` | `'` | Quote style for the import command |
 | `toolkit.npmIntellisense.importLinebreak` | `;\n` | Line ending after the import statement |
 | `toolkit.npmIntellisense.importDeclarationType` | `const` | Declaration type for `require()` imports |
+
+#### Dependency Vulnerability Audit
+
+Check a project's dependencies for known vulnerabilities using each ecosystem's official tool — no extra services or accounts.
+
+| Command | Tool used |
+|---|---|
+| Toolkit: npm Audit | `npm audit` / `yarn audit` / `pnpm audit` (auto-detected from the lock file) |
+| Toolkit: NuGet Vulnerabilities | `dotnet list package --vulnerable --include-transitive` |
+
+**Access:**
+
+- **Explorer context menu** — right-click a `package.json` or a `.csproj`/`.fsproj`/`.vbproj`
+- **Command Palette** — run either command; with several projects in the workspace, a picker asks which one
+
+**Results:** findings are listed in a quick pick sorted by severity (critical → high → moderate → low), showing the affected range, whether it is a transitive dependency, and whether a fix is available. Picking an entry opens its security advisory in the browser. A clean project shows a confirmation message instead.
+
+> Note: NuGet requires the project to be restored (`dotnet restore`) — the vulnerability data comes from the restore graph.
 
 ### Code Editing
 

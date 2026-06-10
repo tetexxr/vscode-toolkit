@@ -782,6 +782,14 @@
         "command": "toolkit.svgPreview.open",
         "title": "Toolkit: Preview SVG",
         "icon": "$(open-preview)"
+      },
+      {
+        "command": "toolkit.npm.audit",
+        "title": "Toolkit: npm Audit"
+      },
+      {
+        "command": "toolkit.nuget.vulnerabilities",
+        "title": "Toolkit: NuGet Vulnerabilities"
       }
     ],
     "keybindings": [
@@ -1021,29 +1029,39 @@
           "group": "0_toolkit@11"
         },
         {
+          "command": "toolkit.npm.audit",
+          "when": "resourceFilename == package.json",
+          "group": "0_toolkit@12"
+        },
+        {
+          "command": "toolkit.nuget.vulnerabilities",
+          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
+          "group": "0_toolkit@13"
+        },
+        {
           "command": "toolkit.openInGitHub.explorerFile",
           "when": "explorerResourceIsRoot == false",
-          "group": "0_toolkit@12"
+          "group": "0_toolkit@14"
         },
         {
           "command": "toolkit.svgPreview.open",
           "when": "resourceExtname == .svg",
-          "group": "0_toolkit@13"
+          "group": "0_toolkit@15"
         },
         {
           "command": "toolkit.git.stageChanges",
           "when": "gitOpenRepositoryCount != 0",
-          "group": "0_toolkit@14"
+          "group": "0_toolkit@16"
         },
         {
           "command": "toolkit.todoTree.excludeFolder",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@15"
+          "group": "0_toolkit@17"
         },
         {
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@16"
+          "group": "0_toolkit@18"
         }
       ],
       "commandPalette": [
