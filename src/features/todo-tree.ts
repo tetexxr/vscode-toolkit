@@ -456,6 +456,25 @@ export function registerTodoTreeCommands(context: vscode.ExtensionContext): void
     })
   )
 
-  // Kick off the initial scan in the background.
-  void scanWorkspace(provider)
+  // Defer the initial scan (reads up to maxFiles files) until the view is
+  // actually looked at, instead of paying for it on every window startup.
+  let initialScanDone = false
+  const runInitialScan = () => {
+    if (initialScanDone) {
+      return
+    }
+    initialScanDone = true
+    void scanWorkspace(provider)
+  }
+  if (treeView.visible) {
+    runInitialScan()
+  } else {
+    context.subscriptions.push(
+      treeView.onDidChangeVisibility(e => {
+        if (e.visible) {
+          runInitialScan()
+        }
+      })
+    )
+  }
 }

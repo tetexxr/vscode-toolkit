@@ -91,10 +91,20 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     ]
   }
 
-  const watcher = vscode.workspace.createFileSystemWatcher('**/*')
-  context.subscriptions.push(watcher, watcher.onDidCreate(invalidateCache), watcher.onDidDelete(invalidateCache))
+  // The '**/*' watcher (the most expensive watcher there is) only exists to
+  // invalidate the QuickPick cache — create it on first use of the command,
+  // not on every window startup.
+  let watcher: vscode.FileSystemWatcher | undefined
+  function ensureWatcher(): void {
+    if (watcher) {
+      return
+    }
+    watcher = vscode.workspace.createFileSystemWatcher('**/*')
+    context.subscriptions.push(watcher, watcher.onDidCreate(invalidateCache), watcher.onDidDelete(invalidateCache))
+  }
 
   async function loadItems(): Promise<FileOrFolderItem[]> {
+    ensureWatcher()
     if (cachedItems) {
       return cachedItems
     }
