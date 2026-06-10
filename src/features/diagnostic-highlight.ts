@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { escapeMd } from '../utils/markdown'
 
 const DEFAULT_COLORS: Record<string, { background: string; border: string; ruler: string }> = {
   hint: {
@@ -214,14 +215,18 @@ function splitRangePerLine(
 
 function buildHover(diag: vscode.Diagnostic): vscode.MarkdownString {
   const md = new vscode.MarkdownString()
-  md.isTrusted = true
 
   const severityLabel = getSeverityLabel(diag.severity)
-  const source = diag.source ? ` [${diag.source}]` : ''
-  const code = diag.code ? (typeof diag.code === 'object' ? ` (${diag.code.value})` : ` (${diag.code})`) : ''
+  const source = diag.source ? ` ${escapeMd(`[${diag.source}]`)}` : ''
+  const code = diag.code ? ` (${escapeMd(String(typeof diag.code === 'object' ? diag.code.value : diag.code))})` : ''
 
   md.appendMarkdown(`**${severityLabel}**${source}${code}\n\n`)
-  md.appendMarkdown(diag.message)
+  md.appendMarkdown(
+    diag.message
+      .split(/\r?\n/)
+      .map(line => escapeMd(line))
+      .join('  \n')
+  )
 
   return md
 }

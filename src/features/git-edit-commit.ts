@@ -15,6 +15,7 @@ import {
 } from '../utils/git'
 import { renderFileList, renderDiffContent, renderDiffPlaceholders, pickRepoRoot } from './git-edit-commit-utils'
 import { escapeHtml, createNonce } from '../utils/html'
+import { escapeMd } from '../utils/markdown'
 import { logError } from '../utils/logger'
 
 function buildEditWebviewHtml(
@@ -549,9 +550,8 @@ class CommitTreeItem extends vscode.TreeItem {
     super(commit.subject, vscode.TreeItemCollapsibleState.None)
     this.description = `${commit.author}, ${commit.date}`
     const md = new vscode.MarkdownString()
-    md.isTrusted = true
-    md.appendMarkdown(`**${commit.subject}**\n\n`)
-    md.appendMarkdown(`$(git-commit) \`${commit.hash.substring(0, 8)}\` · ${commit.author} · ${commit.date}`)
+    md.appendMarkdown(`**${escapeMd(commit.subject)}**\n\n`)
+    md.appendMarkdown(`$(git-commit) \`${commit.hash.substring(0, 8)}\` · ${escapeMd(commit.author)} · ${commit.date}`)
     this.tooltip = md
     this.contextValue = isHead ? 'commitHead' : 'commit'
     this.iconPath = new vscode.ThemeIcon('git-commit')

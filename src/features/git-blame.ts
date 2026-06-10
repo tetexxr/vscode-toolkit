@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import type { BlameInfo } from '../utils/git'
 import { getRepoRoot, getFileBlame } from '../utils/git'
 import { logError } from '../utils/logger'
+import { escapeMd } from '../utils/markdown'
 import * as path from 'path'
 
 /** Palette of subtle background colors to distinguish consecutive commit groups. */
@@ -167,10 +168,9 @@ function renderAnnotations(editor: vscode.TextEditor, blameData: BlameInfo[]): v
 function buildHover(info: BlameInfo): vscode.MarkdownString {
   const date = new Date(info.authorTime * 1000)
   const md = new vscode.MarkdownString()
-  md.isTrusted = true
-  md.appendMarkdown(`**${info.summary}**\n\n`)
+  md.appendMarkdown(`**${escapeMd(info.summary)}**\n\n`)
   md.appendMarkdown(`$(git-commit) \`${info.hash.substring(0, 8)}\`\n\n`)
-  md.appendMarkdown(`$(person) ${info.author}  \n`)
+  md.appendMarkdown(`$(person) ${escapeMd(info.author)}  \n`)
   md.appendMarkdown(`$(calendar) ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`)
   return md
 }
