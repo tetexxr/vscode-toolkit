@@ -8,6 +8,9 @@ import {
   urlDecode,
   htmlEncode,
   htmlDecode,
+  jsonMinify,
+  jsonPrettify,
+  jsonSortKeys,
   hexEncode,
   hexDecode,
   hash,
@@ -239,5 +242,28 @@ describe('jwt decode', () => {
     assert.ok(formatted.includes('// Payload'))
     assert.ok(formatted.includes('"sub": "1234567890"'))
     assert.ok(formatted.includes('// Signature (not verified)'))
+  })
+})
+
+describe('json utilities', () => {
+  it('should prettify minified JSON with 2-space indentation', () => {
+    assert.equal(jsonPrettify('{"a":1,"b":[2,3]}'), '{\n  "a": 1,\n  "b": [\n    2,\n    3\n  ]\n}')
+  })
+
+  it('should minify pretty JSON', () => {
+    assert.equal(jsonMinify('{\n  "a": 1,\n  "b": [2, 3]\n}'), '{"a":1,"b":[2,3]}')
+  })
+
+  it('should sort object keys recursively', () => {
+    assert.equal(
+      jsonSortKeys('{"b":{"z":1,"a":2},"a":[{"y":1,"x":2}]}'),
+      JSON.stringify({ a: [{ x: 2, y: 1 }], b: { a: 2, z: 1 } }, null, 2)
+    )
+  })
+
+  it('should throw a TransformError for invalid JSON input', () => {
+    assert.throws(() => jsonPrettify('{oops}'), TransformError)
+    assert.throws(() => jsonMinify(''), TransformError)
+    assert.throws(() => jsonSortKeys('[1,'), TransformError)
   })
 })

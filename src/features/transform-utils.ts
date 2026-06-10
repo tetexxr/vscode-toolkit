@@ -196,3 +196,41 @@ export function formatDecodedJwt(decoded: DecodedJwt): string {
     JSON.stringify(decoded.signature)
   ].join('\n')
 }
+
+/* -------------------------------------------------------------------------- */
+/*  JSON utilities                                                            */
+/* -------------------------------------------------------------------------- */
+
+function parseJsonStrict(input: string): unknown {
+  try {
+    return JSON.parse(input)
+  } catch (error) {
+    throw new TransformError(`Invalid JSON: ${(error as Error).message}`)
+  }
+}
+
+export function jsonPrettify(input: string): string {
+  return JSON.stringify(parseJsonStrict(input), null, 2)
+}
+
+export function jsonMinify(input: string): string {
+  return JSON.stringify(parseJsonStrict(input))
+}
+
+export function jsonSortKeys(input: string): string {
+  return JSON.stringify(sortKeysDeep(parseJsonStrict(input)), null, 2)
+}
+
+function sortKeysDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sortKeysDeep)
+  }
+  if (value !== null && typeof value === 'object') {
+    const sorted: Record<string, unknown> = {}
+    for (const key of Object.keys(value).sort()) {
+      sorted[key] = sortKeysDeep((value as Record<string, unknown>)[key])
+    }
+    return sorted
+  }
+  return value
+}

@@ -685,6 +685,10 @@ A toolbox of encode/decode and hash operations over the current selection. Avail
 | Hex Encode / Decode | UTF-8 ↔ hex string (case-insensitive on decode, accepts whitespace) |
 | MD5 / SHA-1 / SHA-256 / SHA-512 | Hex digest of the selection |
 | JWT Decode | Decode header + payload, open the result in a new editor |
+| JSON to YAML | Convert a JSON selection to YAML (2-space indentation) |
+| YAML to JSON | Convert a YAML selection to pretty-printed JSON |
+| JSON Prettify / Minify | Re-indent with 2 spaces / strip all whitespace |
+| JSON Sort Keys | Recursively sort object keys (pretty-printed output) |
 
 Available from:
 
@@ -694,9 +698,10 @@ Available from:
 **Behavior:**
 
 - All operations require a non-empty selection. Multi-selection is supported for string-to-string operations.
-- Invalid input (malformed Base64, non-hex characters, broken percent encoding, malformed JWT) triggers a warning and leaves the selection untouched.
+- Invalid input (malformed Base64, non-hex characters, broken percent encoding, malformed JWT, invalid JSON/YAML) triggers a warning and leaves the selection untouched.
 - Hashes always output lowercase hex.
 - JWT Decode opens a new untitled `jsonc` editor with the formatted header, payload and signature. The signature is **not** verified.
+- The YAML converter has no external dependencies and covers the block-style subset typical of config files, plus flow collections (`[a, b]` / `{k: v}`), quoted scalars, and comments. Unsupported YAML constructs — block scalars (`|`, `>`), anchors/aliases, tags, multiple documents — are rejected with a clear message instead of being converted incorrectly.
 
 #### Insert UUID / Timestamp / Random
 

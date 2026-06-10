@@ -560,6 +560,26 @@
         "title": "Toolkit: Transform - JWT Decode"
       },
       {
+        "command": "toolkit.transform.jsonToYaml",
+        "title": "Toolkit: Transform - JSON to YAML"
+      },
+      {
+        "command": "toolkit.transform.yamlToJson",
+        "title": "Toolkit: Transform - YAML to JSON"
+      },
+      {
+        "command": "toolkit.transform.jsonPrettify",
+        "title": "Toolkit: Transform - JSON Prettify"
+      },
+      {
+        "command": "toolkit.transform.jsonMinify",
+        "title": "Toolkit: Transform - JSON Minify"
+      },
+      {
+        "command": "toolkit.transform.jsonSortKeys",
+        "title": "Toolkit: Transform - JSON Sort Keys"
+      },
+      {
         "command": "toolkit.insert",
         "title": "Toolkit: Insert..."
       },
