@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert'
-import { alignLines, resolveSpacing } from '../../src/features/align-utils'
+import { alignLines, findDelimiterIndex, resolveSpacing } from '../../src/features/align-utils'
 
 describe('alignLines', () => {
   it('should align assignment statements by "="', () => {
@@ -97,6 +97,67 @@ describe('alignLines', () => {
     const input = ['foo\t= 1', 'longer = 2']
     const aligned = alignLines(input, '=')
     assert.deepEqual(aligned, ['foo    = 1', 'longer = 2'])
+  })
+
+  it('should not split compound assignment operators when aligning by =', () => {
+    const input = ['a = 1', 'total += 2']
+    const aligned = alignLines(input, '=')
+    assert.deepEqual(aligned, ['a = 1', 'total += 2'])
+  })
+
+  it('should leave comparison-only lines untouched when aligning by =', () => {
+    const input = ['a = 1', 'if (x == y) {', 'b = 2']
+    const aligned = alignLines(input, '=')
+    assert.deepEqual(aligned, ['a = 1', 'if (x == y) {', 'b = 2'])
+  })
+
+  it('should not split arrow functions when aligning by =', () => {
+    const input = ['const f = 1', 'map(v => v)']
+    const aligned = alignLines(input, '=')
+    assert.deepEqual(aligned, ['const f = 1', 'map(v => v)'])
+  })
+
+  it('should align by the assignment even when an arrow or comparison appears later in the line', () => {
+    const input = ['const f = v => v', 'const longer = x == y']
+    const aligned = alignLines(input, '=')
+    assert.deepEqual(aligned, ['const f      = v => v', 'const longer = x == y'])
+  })
+
+  it('should not split logical and nullish compound assignments when aligning by =', () => {
+    const input = ['a = 1', 'b ??= 2', 'c ||= 3', 'd &&= 4', 'e **= 5']
+    const aligned = alignLines(input, '=')
+    assert.deepEqual(aligned, ['a = 1', 'b ??= 2', 'c ||= 3', 'd &&= 4', 'e **= 5'])
+  })
+})
+
+describe('findDelimiterIndex', () => {
+  it('should find a bare assignment equals', () => {
+    assert.equal(findDelimiterIndex('a = 1', '='), 2)
+  })
+
+  it('should skip == and === when looking for =', () => {
+    assert.equal(findDelimiterIndex('if (a == b)', '='), -1)
+    assert.equal(findDelimiterIndex('if (a === b)', '='), -1)
+  })
+
+  it('should skip compound operators when looking for =', () => {
+    const lines = ['a += 1', 'a -= 1', 'a *= 1', 'a /= 1', 'a %= 1', 'a &= 1', 'a |= 1', 'a ^= 1', 'a <<= 1', 'a >>= 1', 'a != 1', 'a <= 1', 'a >= 1']
+    for (const line of lines) {
+      assert.equal(findDelimiterIndex(line, '='), -1, line)
+    }
+  })
+
+  it('should skip arrows when looking for =', () => {
+    assert.equal(findDelimiterIndex('map(v => v)', '='), -1)
+  })
+
+  it('should use plain indexOf for other delimiters', () => {
+    assert.equal(findDelimiterIndex('a: b: c', ':'), 1)
+    assert.equal(findDelimiterIndex('x => y', '=>'), 2)
+  })
+
+  it('should return -1 when the delimiter is absent', () => {
+    assert.equal(findDelimiterIndex('no delimiter here', '='), -1)
   })
 })
 
