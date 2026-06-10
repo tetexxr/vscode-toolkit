@@ -3,7 +3,8 @@ import {
   compileRegex,
   findAllMatches,
   highlightMatches,
-  applyReplace
+  applyReplace,
+  evaluatePattern
 } from '../../src/features/regex-playground-utils'
 
 describe('compileRegex', () => {
@@ -114,3 +115,35 @@ describe('applyReplace', () => {
   })
 })
 
+
+describe('evaluatePattern', () => {
+  it('should return matches, highlight, and replace result for a valid pattern', () => {
+    const r = evaluatePattern('(\\d+)', 'g', 'a 12 b 34', '[$1]')
+    assert.equal(r.error, null)
+    assert.equal(r.matches.length, 2)
+    assert.equal(r.matches[0].full, '12')
+    assert.ok(r.highlightedHtml.includes('<mark'))
+    assert.equal(r.replaceResult, 'a [12] b [34]')
+  })
+
+  it('should return a compile error for an invalid pattern', () => {
+    const r = evaluatePattern('(', 'g', 'abc', '')
+    assert.ok(r.error)
+    assert.equal(r.matches.length, 0)
+    assert.equal(r.highlightedHtml, '')
+    assert.equal(r.replaceResult, '')
+  })
+
+  it('should apply replace without the global flag only once', () => {
+    const r = evaluatePattern('a', '', 'aaa', 'b')
+    assert.equal(r.error, null)
+    assert.equal(r.replaceResult, 'baa')
+  })
+
+  it('should return the input unchanged in replace when nothing matches', () => {
+    const r = evaluatePattern('xyz', 'g', 'abc', 'q')
+    assert.equal(r.error, null)
+    assert.equal(r.matches.length, 0)
+    assert.equal(r.replaceResult, 'abc')
+  })
+})

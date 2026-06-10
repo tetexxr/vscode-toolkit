@@ -1,12 +1,8 @@
 import * as vscode from 'vscode'
 import { randomBytes } from 'node:crypto'
-import {
-  applyReplace,
-  compileRegex,
-  findAllMatches,
-  highlightMatches,
-  type MatchInfo
-} from './regex-playground-utils'
+import * as path from 'node:path'
+import { Worker } from 'node:worker_threads'
+import { highlightMatches, type EvalResult } from './regex-playground-utils'
 
 const STORAGE_KEY = 'toolkit.regexPlayground.state.v1'
 
@@ -48,8 +44,96 @@ interface UpdateMessage {
   replace: string
 }
 
-function handleUpdate(panel: vscode.WebviewPanel, msg: UpdateMessage): void {
+const EVAL_TIMEOUT_MS = 1500
+const TIMEOUT_RESULT: EvalResult = {
+  error: `Pattern timed out after ${EVAL_TIMEOUT_MS}ms — possible catastrophic backtracking.`,
+  matches: [],
+  highlightedHtml: '',
+  replaceResult: ''
+}
+
+/**
+ * Runs evaluations in a persistent worker thread. If an evaluation exceeds
+ * its budget (catastrophic backtracking), the worker is terminated and
+ * recreated lazily; the extension host never blocks.
+ */
+class RegexEvaluator {
+  private worker: Worker | null = null
+  private nextId = 1
+  private pending = new Map<number, { resolve: (result: EvalResult) => void; timer: NodeJS.Timeout }>()
+
+  evaluate(request: Omit<UpdateMessage, 'type'>): Promise<EvalResult> {
+    const id = this.nextId++
+    return new Promise(resolve => {
+      const timer = setTimeout(() => this.onTimeout(id), EVAL_TIMEOUT_MS)
+      this.pending.set(id, { resolve, timer })
+      this.ensureWorker().postMessage({ id, ...request })
+    })
+  }
+
+  dispose(): void {
+    for (const { timer } of this.pending.values()) {
+      clearTimeout(timer)
+    }
+    this.pending.clear()
+    void this.worker?.terminate()
+    this.worker = null
+  }
+
+  private ensureWorker(): Worker {
+    if (this.worker) {
+      return this.worker
+    }
+    const worker = new Worker(path.join(__dirname, 'regex-worker.js'))
+    worker.on('message', (msg: EvalResult & { id: number }) => {
+      const entry = this.pending.get(msg.id)
+      if (!entry) {
+        return
+      }
+      clearTimeout(entry.timer)
+      this.pending.delete(msg.id)
+      entry.resolve(msg)
+    })
+    worker.on('error', (err: Error) => {
+      if (this.worker === worker) {
+        this.worker = null
+      }
+      this.settleAll({ error: `Evaluation failed: ${err.message}`, matches: [], highlightedHtml: '', replaceResult: '' })
+    })
+    worker.on('exit', () => {
+      if (this.worker === worker) {
+        this.worker = null
+      }
+    })
+    this.worker = worker
+    return worker
+  }
+
+  /** A stuck evaluation also blocks everything queued behind it: settle all. */
+  private onTimeout(id: number): void {
+    if (!this.pending.has(id)) {
+      return
+    }
+    void this.worker?.terminate()
+    this.worker = null
+    this.settleAll(TIMEOUT_RESULT)
+  }
+
+  private settleAll(result: EvalResult): void {
+    for (const { resolve, timer } of this.pending.values()) {
+      clearTimeout(timer)
+      resolve(result)
+    }
+    this.pending.clear()
+  }
+}
+
+const evaluator = new RegexEvaluator()
+let updateSeq = 0
+
+async function handleUpdate(panel: vscode.WebviewPanel, msg: UpdateMessage): Promise<void> {
   const { pattern, flags, input, replace } = msg
+  const seq = ++updateSeq
   if (pattern.length === 0) {
     void panel.webview.postMessage({
       type: 'result',
@@ -61,37 +145,16 @@ function handleUpdate(panel: vscode.WebviewPanel, msg: UpdateMessage): void {
     })
     return
   }
-  const compiled = compileRegex(pattern, flags)
-  if (!compiled.ok) {
-    void panel.webview.postMessage({
-      type: 'result',
-      error: compiled.error,
-      matches: [],
-      highlightedHtml: '',
-      replaceResult: '',
-      empty: false
-    })
-    return
+  const result = await evaluator.evaluate({ pattern, flags, input, replace })
+  if (seq !== updateSeq || panel !== currentPanel) {
+    return // a newer evaluation is in flight, or the panel is gone
   }
-  const matches = findAllMatches(compiled.re, input)
-  const highlightedHtml = highlightMatches(input, matches)
-  let replaceResult = ''
-  try {
-    // Fresh RegExp because exec/matchAll above advances lastIndex on global regexes
-    const reFresh = compileRegex(pattern, flags) as { ok: true; re: RegExp }
-    replaceResult = applyReplace(reFresh.re, input, replace)
-  } catch (error) {
-    replaceResult = `Replace failed: ${(error as Error).message}`
-  }
-  const lite: Array<Omit<MatchInfo, 'namedGroups'> & { namedGroups: Record<string, string> }> = matches.map(
-    m => ({ ...m })
-  )
   void panel.webview.postMessage({
     type: 'result',
-    error: null,
-    matches: lite,
-    highlightedHtml,
-    replaceResult,
+    error: result.error,
+    matches: result.matches,
+    highlightedHtml: result.highlightedHtml,
+    replaceResult: result.replaceResult,
     empty: false
   })
 }
@@ -390,6 +453,7 @@ function createPanel(context: vscode.ExtensionContext, override?: Partial<Playgr
   panel.onDidDispose(() => {
     if (currentPanel === panel) {
       currentPanel = null
+      evaluator.dispose() // recreated lazily if the playground is reopened
     }
   })
 
@@ -407,7 +471,7 @@ function createPanel(context: vscode.ExtensionContext, override?: Partial<Playgr
         input: msg.input,
         replace: msg.replace
       })
-      handleUpdate(panel, msg)
+      void handleUpdate(panel, msg)
     }
   })
 
@@ -431,6 +495,7 @@ function ensurePanel(context: vscode.ExtensionContext, override?: Partial<Playgr
 
 export function registerRegexPlaygroundCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
+    { dispose: () => evaluator.dispose() },
     vscode.commands.registerCommand('toolkit.regexPlayground.open', () => {
       ensurePanel(context)
     }),
