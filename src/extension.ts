@@ -29,6 +29,7 @@ import { registerToggleQuotesCommands } from './features/toggle-quotes'
 import { registerTransformCommands } from './features/transform'
 import { registerInsertCommands } from './features/insert'
 import { registerTimestampCommands } from './features/timestamp'
+import { registerUuidHover } from './features/uuid-hover'
 import { registerJsonToTypeCommands } from './features/json-to-type'
 import { registerPasteImageCommands } from './features/paste-image'
 import { registerClipboardHistoryCommands } from './features/clipboard-history'
@@ -70,6 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerTransformCommands(context)
   registerInsertCommands(context)
   registerTimestampCommands(context)
+  registerUuidHover(context)
   registerJsonToTypeCommands(context)
   registerPasteImageCommands(context)
   registerClipboardHistoryCommands(context)

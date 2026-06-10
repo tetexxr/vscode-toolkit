@@ -1578,6 +1578,21 @@
           "default": 2100,
           "description": "Upper bound (inclusive) for considering a number to be a timestamp."
         },
+        "toolkit.uuidHover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a hover with the kind and embedded creation time when hovering UUIDs and ULIDs."
+        },
+        "toolkit.uuidHover.languages": {
+          "type": "array",
+          "default": [
+            "*"
+          ],
+          "description": "Languages for which the UUID/ULID hover is active. Requires reload after change. Use [\"*\"] for all languages.",
+          "items": {
+            "type": "string"
+          }
+        },
         "toolkit.jsonToType.extractNestedTypes": {
           "type": "boolean",
           "default": true,

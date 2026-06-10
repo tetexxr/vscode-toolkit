@@ -33,6 +33,7 @@ All-in-one VS Code utility extension.
     - [Transform Selection](#transform-selection)
     - [Insert UUID / Timestamp / Random](#insert-uuid--timestamp--random)
     - [Timestamp Converter & Hover](#timestamp-converter--hover)
+    - [UUID / ULID Hover](#uuid--ulid-hover)
     - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
@@ -776,6 +777,30 @@ Place the cursor over a 10-, 13- or 16-digit number anywhere in any file. If the
 | `toolkit.timestamp.hover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
 | `toolkit.timestamp.hover.minYear` | `1990` | Lower bound for considering a number to be a timestamp |
 | `toolkit.timestamp.hover.maxYear` | `2100` | Upper bound for considering a number to be a timestamp |
+
+#### UUID / ULID Hover
+
+Hover any UUID or ULID — in logs, database dumps, JSON payloads, or code — to see what it is and, for time-ordered formats, **when it was created**.
+
+| Identifier | Hover shows |
+|---|---|
+| UUID v7 / ULID | Kind + embedded creation time (UTC, local, and relative — e.g. `2 years ago`) |
+| UUID v1 / v6 | Kind + creation time decoded from the Gregorian clock |
+| UUID v4 | "random" — no embedded timestamp |
+| UUID v3 / v5 | "name-based (MD5 / SHA-1)" |
+| Nil / non-RFC variants | Identified as such |
+
+**Behavior:**
+
+- Works in any file type; matching is case-insensitive and requires the identifier to stand alone (it won't trigger inside a longer token).
+- ULID detection is plausibility-checked: 26-character Base32 strings whose embedded date falls outside 2010–2120 are ignored, so random identifiers don't produce bogus hovers.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.uuidHover.enabled` | `true` | Toggle the UUID/ULID hover |
+| `toolkit.uuidHover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
 
 #### JSON to TypeScript / C# Types
 
