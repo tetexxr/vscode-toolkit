@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as path from 'path'
 import { getRepoRoot, getChangedFiles, getChangedFileDirectories } from '../utils/git'
 
 function delay(ms: number): Promise<void> {
@@ -21,7 +22,9 @@ export function registerExpandChangedFilesCommands(context: vscode.ExtensionCont
           cancellable: true
         },
         async (_progress, token) => {
-          const cwd = workspaceFolders[0].uri.fsPath
+          // Resolve the repo from the invoked folder so multi-root workspaces
+          // (or nested repos) target the right repository.
+          const cwd = uri ? uri.fsPath : workspaceFolders[0].uri.fsPath
           let repoRoot: string
           try {
             repoRoot = await getRepoRoot(cwd)
@@ -41,8 +44,15 @@ export function registerExpandChangedFilesCommands(context: vscode.ExtensionCont
           const repoRootUri = vscode.Uri.file(repoRoot)
 
           if (uri) {
-            const targetRelative = uri.fsPath.substring(repoRoot.length).replace(/\\/g, '/').replace(/^\//, '') + '/'
-            filePaths = filePaths.filter(p => p.startsWith(targetRelative))
+            const rel = path.relative(repoRoot, uri.fsPath).split(path.sep).join('/')
+            if (rel.startsWith('..')) {
+              vscode.window.showWarningMessage('The selected folder is outside the resolved git repository.')
+              return
+            }
+            if (rel !== '') {
+              const targetRelative = rel + '/'
+              filePaths = filePaths.filter(p => p.startsWith(targetRelative))
+            }
             if (filePaths.length === 0) {
               vscode.window.showInformationMessage('No changed files in this folder.')
               return
