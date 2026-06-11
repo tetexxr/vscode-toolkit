@@ -98,6 +98,10 @@
     ],
     "commands": [
       {
+        "command": "toolkit.showAllFeatures",
+        "title": "Toolkit: All Features..."
+      },
+      {
         "command": "toolkit.changeCase",
         "title": "Toolkit: Change Case..."
       },
@@ -871,6 +875,10 @@
         "command": "toolkit.bookmarks.previous",
         "key": "shift+alt+f7",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "toolkit.showAllFeatures",
+        "key": "shift+alt+p"
       }
     ],
     "submenus": [

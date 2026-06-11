@@ -22,7 +22,8 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | NuGet Package Manager | — | Browse/install/update/uninstall NuGet packages; solution-wide overview |
 | npm Package Manager | — | Same for npm/yarn/pnpm; workspace-wide overview |
 | NPM Intellisense | — | Autocomplete package names in import/require |
-| Dependency Audit | — | npm audit / dotnet vulnerable packages, sorted by severity, with apply-fixes |
+| npm Audit | — | Known vulnerabilities via npm/yarn/pnpm audit, sorted by severity, with apply-fixes |
+| NuGet Vulnerabilities | — | Same for .NET projects and solutions via dotnet list package |
 
 ## Editing
 
@@ -33,7 +34,8 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Move Symbol Up | `Cmd+Shift+↑` | Move the function/method under the cursor above its previous sibling |
 | Move Symbol Down | `Cmd+Shift+↓` | Move it below its next sibling |
 | Add / Remove Braces | — | Wrap/unwrap single-statement blocks (appears as a Quick Fix code action) |
-| Convert Import Paths | — | Alias ⇄ relative imports using tsconfig paths |
+| Convert Imports to Relative | — | Rewrite alias imports as relative paths using tsconfig paths |
+| Convert Imports to Alias | — | The inverse: relative imports back to aliases |
 | Type-Only Imports | — | Flags imports usable as `import type`, with one-click fix |
 | Lines | — | Sort, dedupe, shuffle, reverse, trim the selected lines |
 | Align by Character | — | Vertically align lines by `=`, `:`, `,`, `=>`, `//`, or custom |
@@ -43,7 +45,8 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Insert | — | UUID v4/v7, ULID, timestamps, random hex/base64 at each cursor |
 | Timestamp Converter & Hover | — | Convert epoch ⇄ ISO; hover any epoch number to decode it |
 | UUID / ULID Hover | — | Hover an id to see its kind and embedded creation time |
-| Format / Compact Markdown Table | — | Align table pipes — or strip the padding for clean diffs |
+| Format Markdown Table | — | Align table pipes to the widest cell, honoring GFM alignment |
+| Compact Markdown Table | — | Strip the padding back out for minimal tables and clean diffs |
 | JSON to Type | — | Generate TypeScript/C# types from a JSON sample |
 
 ## Code Generation
@@ -58,6 +61,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 
 | Feature | Shortcut | What it does |
 |---|---|---|
+| All Features | `Shift+Alt+P` | Searchable index of everything on this page — pick one to run it |
 | Find File or Folder | `Opt+P` | Quick-open that also finds folders; recents, AND terms, `-` negation |
 | ↳ Remove from Recent | `Cmd+Backspace` | Remove the highlighted item from the recent list (while the picker is open, empty input) |
 | Expand / Collapse Recursively | — | Expand or collapse a whole explorer subtree |

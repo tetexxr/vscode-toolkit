@@ -44,6 +44,7 @@ All-in-one VS Code utility extension.
     - [C# Code Actions](#c-code-actions)
     - [Auto Rename Tag](#auto-rename-tag)
   - [Workspace & Explorer](#workspace--explorer)
+    - [All Features](#all-features)
     - [Find File or Folder](#find-file-or-folder)
     - [Expand / Collapse Recursively](#expand--collapse-recursively)
     - [Format Files](#format-files)
@@ -1016,6 +1017,14 @@ When linked editing is active, this feature automatically steps aside for those 
 | `toolkit.autoRenameTag.activationOnLanguage` | `["*"]` | Restrict to specific language IDs |
 
 ### Workspace & Explorer
+
+#### All Features
+
+A searchable, runnable index of everything in this extension. Open it with `Shift+Alt+P` or run **Toolkit: All Features...** from the Command Palette.
+
+Every feature appears grouped by category with its shortcut and a one-line description — fuzzy search matches all three, so typing `curl`, `squash`, or `env` finds the right entry without knowing its exact name. Picking an entry **runs it**; automatic or context-bound features (hovers, themes, code actions — marked with a book icon) open the [feature cheat sheet](FEATURES.md) instead.
+
+The catalog is cross-checked against `FEATURES.md` by the test suite, so the launcher, the cheat sheet, and the actual commands cannot drift apart.
 
 #### Find File or Folder
 
