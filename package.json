@@ -761,6 +761,10 @@
         "title": "Toolkit: REST Client - Copy as curl"
       },
       {
+        "command": "toolkit.restClient.copyAsCurlByIndex",
+        "title": "Toolkit: REST Client - Copy as curl (internal)"
+      },
+      {
         "command": "toolkit.regexPlayground.open",
         "title": "Toolkit: Open Regex Playground"
       },
@@ -1128,6 +1132,14 @@
         {
           "command": "toolkit.compareProjectWithBranch",
           "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "toolkit.restClient.copyAsCurlByIndex",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.sendByIndex",
+          "when": "false"
         }
       ],
       "editor/context": [
@@ -1183,26 +1195,46 @@
           "group": "0_toolkit@11"
         },
         {
-          "command": "toolkit.slugify",
+          "command": "toolkit.restClient.copyAsCurl",
           "group": "0_toolkit@12",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.restClient.selectEnvironment",
+          "group": "0_toolkit@13",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.restClient.sendAll",
+          "group": "0_toolkit@14",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.restClient.send",
+          "group": "0_toolkit@15",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.slugify",
+          "group": "0_toolkit@16",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.sumNumbers",
-          "group": "0_toolkit@13",
+          "group": "0_toolkit@17",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@14"
+          "group": "0_toolkit@18"
         },
         {
           "command": "toolkit.toggleQuotes",
-          "group": "0_toolkit@15"
+          "group": "0_toolkit@19"
         },
         {
           "command": "toolkit.transform",
-          "group": "0_toolkit@16",
+          "group": "0_toolkit@20",
           "when": "editorHasSelection"
         }
       ]

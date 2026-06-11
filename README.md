@@ -1275,7 +1275,9 @@ Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send
 | Send All Requests | Run every request in the active file |
 | Cancel Pending Requests | Abort any requests currently in flight |
 | REST Client - Select Environment... | Pick the active environment from `http-client.env.json` (also via the status bar item) |
-| REST Client - Copy as curl | Copy the request under the cursor as a `curl` command, with all variables resolved |
+| REST Client - Copy as curl | Copy the request under the cursor as a `curl` command, with all variables resolved (also a CodeLens next to each Send Request) |
+
+All of these are also available from the **editor context menu** when right-clicking inside a `.http` / `.rest` file.
 
 **File format:**
 
@@ -1320,7 +1322,7 @@ Point the same `.http` file at dev/staging/prod without editing it. Create an `h
 
 **Copy as curl:**
 
-**REST Client - Copy as curl** builds the `curl` equivalent of the request under the cursor — method, URL, headers and body, with every variable (environment included) already resolved and shell-quoted — and copies it to the clipboard. Handy for reproducing an issue in a terminal, attaching to a ticket, or sharing with someone without VS Code.
+The **Copy as curl** CodeLens next to each request's Send Request (or the command / context menu entry) builds the `curl` equivalent of the request — method, URL, headers and body, with every variable (environment included) already resolved and shell-quoted — and copies it to the clipboard. Handy for reproducing an issue in a terminal, attaching to a ticket, or sharing with someone without VS Code.
 
 **Built-in variables:**
 

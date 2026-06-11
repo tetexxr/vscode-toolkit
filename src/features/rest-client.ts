@@ -188,13 +188,20 @@ class HttpCodeLensProvider implements vscode.CodeLensProvider {
       return []
     }
     const parsed = parseHttpFile(document.getText())
-    return parsed.requests.map((req, index) => {
+    return parsed.requests.flatMap((req, index) => {
       const range = new vscode.Range(req.startLine, 0, req.startLine, 0)
-      return new vscode.CodeLens(range, {
-        title: `$(play) Send Request${req.name && req.name !== `Request ${index + 1}` ? `: ${req.name}` : ''}`,
-        command: 'toolkit.restClient.sendByIndex',
-        arguments: [document.uri.toString(), index]
-      })
+      return [
+        new vscode.CodeLens(range, {
+          title: `$(play) Send Request${req.name && req.name !== `Request ${index + 1}` ? `: ${req.name}` : ''}`,
+          command: 'toolkit.restClient.sendByIndex',
+          arguments: [document.uri.toString(), index]
+        }),
+        new vscode.CodeLens(range, {
+          title: 'Copy as curl',
+          command: 'toolkit.restClient.copyAsCurlByIndex',
+          arguments: [document.uri.toString(), index]
+        })
+      ]
     })
   }
 }
@@ -333,6 +340,19 @@ async function sendByIndex(uriString: string, index: number): Promise<void> {
   await runAndShow(req, parsed, uri)
 }
 
+async function copyCurlFor(req: HttpRequest, parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<void> {
+  const variables = await composeVariables(parsed, documentUri)
+  const opts = { nextUuid: () => randomUUID() }
+  const curl = buildCurl({
+    method: req.method,
+    url: interpolate(req.url, variables, opts),
+    headers: req.headers.map(h => ({ name: h.name, value: interpolate(h.value, variables, opts) })),
+    body: interpolate(req.body, variables, opts)
+  })
+  await vscode.env.clipboard.writeText(curl)
+  vscode.window.showInformationMessage('Toolkit: curl command copied to the clipboard.')
+}
+
 async function copyAsCurl(): Promise<void> {
   const editor = vscode.window.activeTextEditor
   if (!editor || !isHttpFile(editor.document)) {
@@ -345,16 +365,18 @@ async function copyAsCurl(): Promise<void> {
     vscode.window.showInformationMessage('Toolkit: place the cursor inside a request block.')
     return
   }
-  const variables = await composeVariables(parsed, editor.document.uri)
-  const opts = { nextUuid: () => randomUUID() }
-  const curl = buildCurl({
-    method: req.method,
-    url: interpolate(req.url, variables, opts),
-    headers: req.headers.map(h => ({ name: h.name, value: interpolate(h.value, variables, opts) })),
-    body: interpolate(req.body, variables, opts)
-  })
-  await vscode.env.clipboard.writeText(curl)
-  vscode.window.showInformationMessage('Toolkit: curl command copied to the clipboard.')
+  await copyCurlFor(req, parsed, editor.document.uri)
+}
+
+async function copyAsCurlByIndex(uriString: string, index: number): Promise<void> {
+  const uri = vscode.Uri.parse(uriString)
+  const document = await vscode.workspace.openTextDocument(uri)
+  const parsed = parseHttpFile(document.getText())
+  const req = parsed.requests[index]
+  if (!req) {
+    return
+  }
+  await copyCurlFor(req, parsed, uri)
 }
 
 async function sendAll(): Promise<void> {
@@ -406,6 +428,9 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
     vscode.commands.registerCommand('toolkit.restClient.sendAll', () => sendAll()),
     vscode.commands.registerCommand('toolkit.restClient.cancelAll', () => cancelAll()),
     vscode.commands.registerCommand('toolkit.restClient.selectEnvironment', () => selectEnvironment()),
-    vscode.commands.registerCommand('toolkit.restClient.copyAsCurl', () => copyAsCurl())
+    vscode.commands.registerCommand('toolkit.restClient.copyAsCurl', () => copyAsCurl()),
+    vscode.commands.registerCommand('toolkit.restClient.copyAsCurlByIndex', (uri: string, index: number) =>
+      copyAsCurlByIndex(uri, index)
+    )
   )
 }
