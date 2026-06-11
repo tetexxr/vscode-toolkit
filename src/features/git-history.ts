@@ -190,6 +190,9 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, sh
     #loadMore:hover { background: var(--vscode-button-hoverBackground); }
     #loadMore:disabled { opacity: 0.5; cursor: default; }
 
+    /* display: block above beats the UA's [hidden] rule, so re-assert it. */
+    [hidden] { display: none !important; }
+
     #status {
       text-align: center;
       color: var(--vscode-descriptionForeground);
