@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
-import { getRepoRoot, getFileLogPatch } from '../utils/git'
+import { getRepoRoot, getFileLogPatch, getFileCommitCount } from '../utils/git'
 import { escapeHtml, createNonce } from '../utils/html'
 
 function renderPatch(raw: string): string {
@@ -80,7 +80,8 @@ function renderPatch(raw: string): string {
   return html.join('\n')
 }
 
-function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, hasMore: boolean): string {
+function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, shown: number, total: number): string {
+  const hasMore = shown < total
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -188,6 +189,21 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, ha
 
     #loadMore:hover { background: var(--vscode-button-hoverBackground); }
     #loadMore:disabled { opacity: 0.5; cursor: default; }
+
+    /* display: block above beats the UA's [hidden] rule, so re-assert it. */
+    [hidden] { display: none !important; }
+
+    #status {
+      text-align: center;
+      color: var(--vscode-descriptionForeground);
+      padding: 8px 0;
+    }
+
+    #error {
+      text-align: center;
+      color: var(--vscode-errorForeground, #f48771);
+      padding: 8px 0;
+    }
   </style>
 </head>
 <body>
@@ -196,22 +212,49 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, ha
   ${patchHtml}
   </div>
   <button id="loadMore"${hasMore ? '' : ' hidden'}>Load more</button>
+  <div id="error" hidden>Could not load more history.</div>
+  <div id="status"></div>
   <script nonce="${nonce}">
     (function () {
       const vscode = acquireVsCodeApi()
       const btn = document.getElementById('loadMore')
+      const errorEl = document.getElementById('error')
+      const statusEl = document.getElementById('status')
+      let shown = ${shown}
+      const total = ${total}
+
+      function updateStatus() {
+        const commits = total === 1 ? '1 commit' : total + ' commits'
+        statusEl.textContent = shown < total
+          ? 'Showing ' + shown + ' of ' + commits
+          : commits + ' — end of history'
+      }
+      updateStatus()
+
       btn.addEventListener('click', () => {
         btn.disabled = true
+        btn.textContent = 'Loading…'
+        errorEl.hidden = true
         vscode.postMessage({ type: 'loadMore' })
       })
       window.addEventListener('message', e => {
         const msg = e.data
-        if (msg && msg.type === 'append') {
+        if (!msg) {
+          return
+        }
+        if (msg.type === 'append') {
           document.getElementById('content').insertAdjacentHTML('beforeend', msg.html)
+          shown = msg.shown
           btn.disabled = false
+          btn.textContent = 'Load more'
           if (!msg.hasMore) {
             btn.hidden = true
           }
+          updateStatus()
+        } else if (msg.type === 'error') {
+          btn.disabled = false
+          btn.textContent = 'Load more'
+          errorEl.hidden = false
         }
       })
     })()
@@ -258,8 +301,10 @@ export function registerGitHistoryCommands(context: vscode.ExtensionContext): vo
       const relativePath = path.relative(repoRoot, filePath).replace(/\\/g, '/')
 
       let raw: string
+      let total: number
       try {
         raw = await getFileLogPatch(repoRoot, relativePath, PAGE_SIZE)
+        total = await getFileCommitCount(repoRoot, relativePath)
       } catch {
         vscode.window.showErrorMessage('Could not retrieve git history for this file.')
         return
@@ -274,33 +319,40 @@ export function registerGitHistoryCommands(context: vscode.ExtensionContext): vo
         'toolkitGitHistory',
         `History: ${fileName}`,
         vscode.ViewColumn.One,
-        { enableFindWidget: true, enableScripts: true }
+        // retainContextWhenHidden keeps loaded pages (and the script's state)
+        // alive when the tab is hidden; otherwise the webview is rebuilt from
+        // the first page while the extension-side cursor stays advanced.
+        { enableFindWidget: true, enableScripts: true, retainContextWhenHidden: true }
       )
 
       panels.set(filePath, panel)
       panel.onDidDispose(() => panels.delete(filePath))
 
-      let skip = PAGE_SIZE
+      let shown = countCommits(raw)
       panel.webview.onDidReceiveMessage(async (msg: unknown) => {
         if (!msg || (msg as { type?: unknown }).type !== 'loadMore') {
           return
         }
         try {
-          const more = await getFileLogPatch(repoRoot, relativePath, PAGE_SIZE, skip)
-          skip += PAGE_SIZE
+          const more = await getFileLogPatch(repoRoot, relativePath, PAGE_SIZE, shown)
+          const count = countCommits(more)
+          shown += count
           void panel.webview.postMessage({
             type: 'append',
             html: renderPatch(more),
-            hasMore: countCommits(more) === PAGE_SIZE
+            shown,
+            // count > 0 guards against `total` going stale if history changes
+            // (e.g. a rebase) while the panel is open.
+            hasMore: count > 0 && shown < total
           })
         } catch {
-          void panel.webview.postMessage({ type: 'append', html: '', hasMore: false })
+          void panel.webview.postMessage({ type: 'error' })
         }
       })
 
       const nonce = createNonce()
       const patchHtml = renderPatch(raw)
-      panel.webview.html = buildWebviewHtml(fileName, patchHtml, nonce, countCommits(raw) === PAGE_SIZE)
+      panel.webview.html = buildWebviewHtml(fileName, patchHtml, nonce, shown, total)
     })
   )
 }
