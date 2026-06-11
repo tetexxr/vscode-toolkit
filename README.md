@@ -124,13 +124,13 @@ Edit the message of any commit in the repository history, or move HEAD to a prev
 - **Source Control sidebar** — expand the **Commit History** section. Each commit shows inline icons:
   - **Pencil** — opens the edit panel (message, date, and per-file diff). Available on every commit.
   - **Reset arrow** — opens a quick picker to reset HEAD to that commit (Soft / Mixed / Hard). Hidden on the HEAD commit, since resetting HEAD to itself is a no-op.
-- **Right-click a commit** — **Squash into Parent...** melds the commit with its parent (see below).
+  - **Fold-down arrow** — **Squash into Parent...** melds the commit with its parent (see below).
 - **View title bar** — the cherry-pick icon runs **Cherry-pick from Branch...** (see below).
 - **Command Palette** — run **Toolkit: Edit Commit Message** or **Toolkit: Reset HEAD to Commit...** when a commit is selected, or **Toolkit: Cherry-pick from Branch...** anytime.
 
 **Squash into Parent:**
 
-Right-click any commit (including HEAD) and pick the variant:
+Click the fold-down icon on any commit (including HEAD) and pick the variant:
 
 - **Fixup** — melds the commit into its parent keeping the **parent's** message (the classic "absorb my 'fix typo' commit").
 - **Squash** — melds keeping **both** messages, concatenated.

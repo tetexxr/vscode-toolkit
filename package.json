@@ -377,7 +377,8 @@
       },
       {
         "command": "toolkit.gitCommitList.squashInto",
-        "title": "Toolkit: Squash into Parent..."
+        "title": "Toolkit: Squash into Parent...",
+        "icon": "$(fold-down)"
       },
       {
         "command": "toolkit.gitCommitList.cherryPickFromBranch",
@@ -913,7 +914,7 @@
         {
           "command": "toolkit.gitCommitList.squashInto",
           "when": "view == toolkitCommitList && (viewItem == commit || viewItem == commitHead)",
-          "group": "1_modify@1"
+          "group": "inline@3"
         },
         {
           "command": "toolkit.todoTree.excludeFolder",
