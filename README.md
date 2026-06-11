@@ -1124,14 +1124,21 @@ Keep a list of recently-copied text snippets while VS Code is focused. Recall an
 | Command | Description |
 |---|---|
 | Show Clipboard History | Quick pick of recent entries; selecting one pastes it at the cursor |
-| Clear Clipboard History | Wipe the in-memory history (with confirmation) |
+| Clear Clipboard History | Wipe the in-memory history (with confirmation; pinned entries can be kept) |
 
 **How it works:**
 
 - VS Code does not expose a clipboard-change event, so the extension polls the clipboard while the window is focused (default every 1 s). Polling pauses when the window loses focus.
 - The history lives **in memory only** — nothing is persisted to disk, `globalState`, or `workspaceState`. Closing the window drops everything.
-- Duplicates are deduplicated: re-copying an existing entry just moves it to the top.
+- Duplicates are deduplicated: re-copying an existing entry just moves it to the top (a pinned entry stays pinned).
 - The current clipboard is captured on activation but not added as an entry; only subsequent changes appear.
+
+**Pinning:**
+
+- Every entry in the quick pick has a pin button — pinned entries move to a **Pinned** section at the top.
+- Pinned entries are exempt from the FIFO cap, so they stay available for the whole session no matter how much you copy.
+- **Clear Clipboard History** offers to keep them (`Clear unpinned`) or wipe everything.
+- Pins are session-only, like the rest of the history — nothing is ever written to disk.
 
 **Privacy:**
 

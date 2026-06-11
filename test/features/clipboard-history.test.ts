@@ -161,3 +161,80 @@ describe('formatItem', () => {
     assert.ok(f.detail!.endsWith('…'))
   })
 })
+
+describe('ClipboardHistory — pinning', () => {
+  const LIMITS = { maxItems: 3, maxItemLength: 100 }
+
+  it('should toggle the pinned state and report it', () => {
+    const h = new ClipboardHistory(LIMITS)
+    h.add('a')
+    assert.equal(h.togglePin('a'), true)
+    assert.equal(h.togglePin('a'), false)
+    assert.equal(h.togglePin('missing'), null)
+  })
+
+  it('should not evict pinned entries when the cap is exceeded', () => {
+    const h = new ClipboardHistory(LIMITS)
+    h.add('keep me')
+    h.togglePin('keep me')
+    h.add('b')
+    h.add('c')
+    h.add('d')
+    h.add('e') // exceeds maxItems for unpinned: 'b' falls, 'keep me' stays
+    const texts = h.getAll().map(i => i.text)
+    assert.ok(texts.includes('keep me'))
+    assert.ok(!texts.includes('b'))
+    assert.equal(h.getAll().filter(i => !i.pinned).length, 3)
+  })
+
+  it('should keep the pin when a pinned entry is re-copied', () => {
+    const h = new ClipboardHistory(LIMITS)
+    h.add('token')
+    h.togglePin('token')
+    h.add('other')
+    h.add('token') // dedupe moves it to front
+    const item = h.getAll().find(i => i.text === 'token')!
+    assert.equal(item.pinned, true)
+    assert.equal(h.getAll()[0].text, 'token')
+  })
+
+  it('should keep pinned entries on a soft clear and drop them on a full clear', () => {
+    const h = new ClipboardHistory(LIMITS)
+    h.add('pinned one')
+    h.togglePin('pinned one')
+    h.add('loose one')
+    h.clear(true)
+    assert.deepEqual(h.getAll().map(i => i.text), ['pinned one'])
+    h.clear()
+    assert.equal(h.size(), 0)
+  })
+
+  it('should count pinned entries', () => {
+    const h = new ClipboardHistory(LIMITS)
+    h.add('a')
+    h.add('b')
+    h.togglePin('a')
+    assert.equal(h.pinnedCount(), 1)
+  })
+
+  it('should re-evict after unpinning when over the cap', () => {
+    const h = new ClipboardHistory({ maxItems: 1, maxItemLength: 100 })
+    h.add('a')
+    h.togglePin('a')
+    h.add('b') // 1 unpinned (b) + 1 pinned (a)
+    h.togglePin('a') // unpin → 2 unpinned with cap 1 → oldest goes
+    assert.deepEqual(h.getAll().map(i => i.text), ['b'])
+  })
+
+  it('should not evict pinned entries when limits shrink', () => {
+    const h = new ClipboardHistory(LIMITS)
+    h.add('a')
+    h.togglePin('a')
+    h.add('b')
+    h.add('c')
+    h.setLimits({ maxItems: 1, maxItemLength: 100 })
+    const texts = h.getAll().map(i => i.text)
+    assert.ok(texts.includes('a'))
+    assert.equal(h.getAll().filter(i => !i.pinned).length, 1)
+  })
+})
