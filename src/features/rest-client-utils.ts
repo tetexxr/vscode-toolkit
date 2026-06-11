@@ -282,3 +282,78 @@ export function findRequestAtLine(parsed: ParsedHttpFile, line: number): HttpReq
   }
   return undefined
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Environments (http-client.env.json, JetBrains-compatible)                 */
+/* -------------------------------------------------------------------------- */
+
+export type EnvironmentFile = Record<string, Record<string, string>>
+
+/** Parses an http-client.env.json document. Returns null when unusable. */
+export function parseEnvironmentFile(json: string): EnvironmentFile | null {
+  let data: unknown
+  try {
+    data = JSON.parse(json)
+  } catch {
+    return null
+  }
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    return null
+  }
+  const out: EnvironmentFile = {}
+  for (const [envName, vars] of Object.entries(data)) {
+    if (typeof vars !== 'object' || vars === null || Array.isArray(vars)) {
+      continue
+    }
+    const envVars: Record<string, string> = {}
+    for (const [key, value] of Object.entries(vars as Record<string, unknown>)) {
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        envVars[key] = String(value)
+      }
+    }
+    out[envName] = envVars
+  }
+  return out
+}
+
+/** Environment names across both files, public order first. */
+export function environmentNames(publicFile: EnvironmentFile | null, privateFile: EnvironmentFile | null): string[] {
+  const names = Object.keys(publicFile ?? {})
+  for (const name of Object.keys(privateFile ?? {})) {
+    if (!names.includes(name)) {
+      names.push(name)
+    }
+  }
+  return names
+}
+
+/** Variables of one environment; the private file overrides the public one key by key. */
+export function mergeEnvironmentVariables(
+  publicFile: EnvironmentFile | null,
+  privateFile: EnvironmentFile | null,
+  environment: string
+): Record<string, string> {
+  return { ...(publicFile?.[environment] ?? {}), ...(privateFile?.[environment] ?? {}) }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  curl export                                                               */
+/* -------------------------------------------------------------------------- */
+
+/** POSIX single-quote escaping: ' → '\'' */
+export function shellQuote(value: string): string {
+  return `'${value.replaceAll("'", `'\\''`)}'`
+}
+
+/** Builds the curl equivalent of an (already interpolated) request. */
+export function buildCurl(req: { method: string; url: string; headers: HttpHeader[]; body: string }): string {
+  const parts: string[] = []
+  parts.push(req.method === 'GET' ? `curl ${shellQuote(req.url)}` : `curl -X ${req.method} ${shellQuote(req.url)}`)
+  for (const header of req.headers) {
+    parts.push(`-H ${shellQuote(`${header.name}: ${header.value}`)}`)
+  }
+  if (req.body.length > 0) {
+    parts.push(`--data ${shellQuote(req.body)}`)
+  }
+  return parts.join(' \\\n  ')
+}

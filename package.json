@@ -753,6 +753,14 @@
         "title": "Toolkit: Cancel Pending Requests"
       },
       {
+        "command": "toolkit.restClient.selectEnvironment",
+        "title": "Toolkit: REST Client - Select Environment..."
+      },
+      {
+        "command": "toolkit.restClient.copyAsCurl",
+        "title": "Toolkit: REST Client - Copy as curl"
+      },
+      {
         "command": "toolkit.regexPlayground.open",
         "title": "Toolkit: Open Regex Playground"
       },

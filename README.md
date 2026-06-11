@@ -1274,6 +1274,8 @@ Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send
 | Send Request | Run the request under the cursor (also exposed as a CodeLens above each request) |
 | Send All Requests | Run every request in the active file |
 | Cancel Pending Requests | Abort any requests currently in flight |
+| REST Client - Select Environment... | Pick the active environment from `http-client.env.json` (also via the status bar item) |
+| REST Client - Copy as curl | Copy the request under the cursor as a `curl` command, with all variables resolved |
 
 **File format:**
 
@@ -1300,6 +1302,25 @@ Authorization: Bearer {{token}}
 - `{{name}}` interpolates a variable in the URL, headers or body.
 - Lines starting with a single `#` are comments.
 - Response bodies are capped at 50 MB; larger responses abort with an error.
+
+**Environments:**
+
+Point the same `.http` file at dev/staging/prod without editing it. Create an `http-client.env.json` (JetBrains-compatible) next to your `.http` files — or in any parent folder up to the workspace root; the nearest one wins:
+
+```json
+{
+  "dev":  { "baseUrl": "http://localhost:3000", "token": "dev-token" },
+  "prod": { "baseUrl": "https://api.example.com" }
+}
+```
+
+- An optional `http-client.private.env.json` (gitignore it) overlays the public file key by key — put secrets there.
+- Pick the active environment with **REST Client - Select Environment...** or by clicking the **globe item in the status bar** (visible while a `.http` file is active). The choice is remembered per workspace.
+- Resolution order for `{{...}}`: file `@vars` → private environment → public environment → built-ins. A file can therefore override an environment value locally.
+
+**Copy as curl:**
+
+**REST Client - Copy as curl** builds the `curl` equivalent of the request under the cursor — method, URL, headers and body, with every variable (environment included) already resolved and shell-quoted — and copies it to the clipboard. Handy for reproducing an issue in a terminal, attaching to a ticket, or sharing with someone without VS Code.
 
 **Built-in variables:**
 
@@ -1334,7 +1355,6 @@ X-Toolkit-Time: 234ms
 
 **Limitations (v1):**
 
-- No environments / `.env` files — the variables live in the `.http` file.
 - No syntax highlighting contributed — relies on whatever language is set (plaintext if none).
 - No request history, no diff between responses, no response → file forwarding.
 - No multipart uploads, file bodies (`< body.json`), WebSockets or gRPC.
