@@ -1,6 +1,6 @@
 # Toolkit — Feature Cheat Sheet
 
-One line per feature. Full details in [README.md](README.md).
+One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's own shortcuts are not repeated here). Full details in [README.md](README.md).
 
 ## Git
 
@@ -30,8 +30,9 @@ One line per feature. Full details in [README.md](README.md).
 |---|---|---|
 | Change Case | — | Convert selection between 13 case formats (live preview) |
 | Slugify | — | Turn text into a clean URL slug |
-| Move Symbol Up/Down | `Cmd+Shift+↑/↓` | Move the function/method under the cursor past its siblings |
-| Add / Remove Braces | `Cmd+.` | Code action: wrap/unwrap single-statement blocks |
+| Move Symbol Up | `Cmd+Shift+↑` | Move the function/method under the cursor above its previous sibling |
+| Move Symbol Down | `Cmd+Shift+↓` | Move it below its next sibling |
+| Add / Remove Braces | — | Wrap/unwrap single-statement blocks (appears as a Quick Fix code action) |
 | Convert Import Paths | — | Alias ⇄ relative imports using tsconfig paths |
 | Type-Only Imports | — | Flags imports usable as `import type`, with one-click fix |
 | Lines | — | Sort, dedupe, shuffle, reverse, trim the selected lines |
@@ -50,7 +51,7 @@ One line per feature. Full details in [README.md](README.md).
 | Feature | Shortcut | What it does |
 |---|---|---|
 | New C# File | — | Explorer submenu: class, record, controller, Blazor, tests... with namespace detection |
-| C# Code Actions | `Cmd+.` | Generate (expression-bodied) constructor from properties |
+| C# Code Actions | — | Generate (expression-bodied) constructor from properties (Quick Fix code action) |
 | Auto Rename Tag | — | Rename the matching HTML/XML tag pair (disabled by default) |
 
 ## Workspace
@@ -58,11 +59,16 @@ One line per feature. Full details in [README.md](README.md).
 | Feature | Shortcut | What it does |
 |---|---|---|
 | Find File or Folder | `Opt+P` | Quick-open that also finds folders; recents, AND terms, `-` negation |
+| ↳ Remove from Recent | `Cmd+Backspace` | Remove the highlighted item from the recent list (while the picker is open, empty input) |
 | Expand / Collapse Recursively | — | Expand or collapse a whole explorer subtree |
 | Format Files | — | Bulk-format workspace/folder/glob in memory, without stealing focus |
 | Paste Image | — | Save the clipboard image to disk and insert the link |
 | Clipboard History | — | Recall recent copies; pin the ones you need all session |
-| Bookmarks | `F7` toggle · `Shift+F7` label · `Ctrl+F7` list · `Alt+F7`/`Shift+Alt+F7` next/prev | Pin lines, label them, jump between them across files |
+| Toggle Bookmark | `F7` | Add/remove a bookmark on the current line |
+| Toggle Bookmark with Label | `Shift+F7` | Add a bookmark asking for a label |
+| Show Bookmarks | `Ctrl+F7` | Quick pick of every bookmark; pick one to jump |
+| Next Bookmark | `Alt+F7` | Jump to the next bookmark (across files, wraps around) |
+| Previous Bookmark | `Shift+Alt+F7` | Jump to the previous one |
 | .env Checker | — | Diagnostics when .env drifts from .env.example, with quick fix |
 | TODO Tree | — | TODO/FIXME/HACK... comments in a sidebar tree, grouped by tag or file |
 | REST Client | — | Run .http requests; environments (env.json), variables, copy as curl |
