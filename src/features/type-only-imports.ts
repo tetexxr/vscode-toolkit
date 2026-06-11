@@ -23,6 +23,14 @@ export function registerTypeOnlyImportsCommands(context: vscode.ExtensionContext
   log(`activated. supported langs: ${SUPPORTED_LANGS.join(', ')}; enabled=${isEnabled()}; severity=${getSeverity()}`)
 
   context.subscriptions.push(
+    {
+      dispose: () => {
+        for (const timer of debounceTimers.values()) {
+          clearTimeout(timer)
+        }
+        debounceTimers.clear()
+      }
+    },
     vscode.workspace.onDidOpenTextDocument(doc => analyzeDocument(doc)),
     vscode.workspace.onDidChangeTextDocument(e => scheduleAnalyze(e.document)),
     vscode.workspace.onDidCloseTextDocument(doc => {

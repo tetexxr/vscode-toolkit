@@ -2,6 +2,8 @@
 
 All-in-one VS Code utility extension.
 
+> In a hurry? See the [feature cheat sheet](FEATURES.md) — one line per feature, with shortcuts.
+
 ## Table of Contents
 
 - [Features](#features)
@@ -19,6 +21,7 @@ All-in-one VS Code utility extension.
     - [NuGet Package Manager](#nuget-package-manager)
     - [NPM Package Manager](#npm-package-manager)
     - [NPM Intellisense](#npm-intellisense)
+    - [Dependency Vulnerability Audit](#dependency-vulnerability-audit)
   - [Code Editing](#code-editing)
     - [Change Case](#change-case)
     - [Slugify](#slugify)
@@ -33,18 +36,22 @@ All-in-one VS Code utility extension.
     - [Transform Selection](#transform-selection)
     - [Insert UUID / Timestamp / Random](#insert-uuid--timestamp--random)
     - [Timestamp Converter & Hover](#timestamp-converter--hover)
+    - [UUID / ULID Hover](#uuid--ulid-hover)
+    - [Format Markdown Table](#format-markdown-table)
     - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
     - [C# Code Actions](#c-code-actions)
     - [Auto Rename Tag](#auto-rename-tag)
   - [Workspace & Explorer](#workspace--explorer)
+    - [All Features](#all-features)
     - [Find File or Folder](#find-file-or-folder)
     - [Expand / Collapse Recursively](#expand--collapse-recursively)
     - [Format Files](#format-files)
     - [Paste Image](#paste-image)
     - [Clipboard History](#clipboard-history)
     - [Bookmarks](#bookmarks)
+    - [.env Checker](#env-checker)
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
@@ -52,6 +59,7 @@ All-in-one VS Code utility extension.
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
     - [PDF Viewer](#pdf-viewer)
+    - [SVG Preview](#svg-preview)
     - [Generic Dark Theme](#generic-dark-theme)
     - [JetBrains Dark Icons](#jetbrains-dark-icons)
 - [Development](#development)
@@ -62,7 +70,7 @@ All-in-one VS Code utility extension.
 
 #### Open in GitHub
 
-Open the current file, repository, blame view, or commit history directly in GitHub. Supports both SSH and HTTPS remotes.
+Open the current file, repository, blame view, or commit history directly in GitHub. Supports both SSH and HTTPS remotes, including SSH remotes with a custom port. With a detached HEAD, links use the exact commit hash instead of a branch.
 
 | Command | Description |
 |---|---|
@@ -94,6 +102,8 @@ Available from:
 
 Reuses the same panel if the file is already open. Supports VS Code's built-in find widget (`Ctrl+F` / `Cmd+F`) inside the history view.
 
+History is loaded in pages of 50 commits — files with a long history open instantly, and a **Load more** button at the bottom fetches the next page.
+
 #### Git Blame (Inline Annotations)
 
 Show git blame annotations for every line in the editor, similar to JetBrains IDEs. Displays author, date, and commit message inline before each line of code.
@@ -118,7 +128,22 @@ Edit the message of any commit in the repository history, or move HEAD to a prev
 - **Source Control sidebar** — expand the **Commit History** section. Each commit shows inline icons:
   - **Pencil** — opens the edit panel (message, date, and per-file diff). Available on every commit.
   - **Reset arrow** — opens a quick picker to reset HEAD to that commit (Soft / Mixed / Hard). Hidden on the HEAD commit, since resetting HEAD to itself is a no-op.
-- **Command Palette** — run **Toolkit: Edit Commit Message** or **Toolkit: Reset HEAD to Commit...** when a commit is selected.
+  - **Fold-down arrow** — **Squash into Parent...** melds the commit with its parent (see below).
+- **View title bar** — the cherry-pick icon runs **Cherry-pick from Branch...** (see below).
+- **Command Palette** — run **Toolkit: Edit Commit Message** or **Toolkit: Reset HEAD to Commit...** when a commit is selected, or **Toolkit: Cherry-pick from Branch...** anytime.
+
+**Squash into Parent:**
+
+Click the fold-down icon on any commit (including HEAD) and pick the variant:
+
+- **Fixup** — melds the commit into its parent keeping the **parent's** message (the classic "absorb my 'fix typo' commit").
+- **Squash** — melds keeping **both** messages, concatenated.
+
+Runs the same automated, cross-platform interactive rebase as message editing — with the same safeguards: rejected if a rebase is already in progress or the working tree is dirty, modal confirmation (history is rewritten — force push needed if already pushed), and automatic rollback if the rebase fails. Root commits and merge commits cannot be squashed.
+
+**Cherry-pick from Branch:**
+
+Pick a local branch, then one of the commits that branch has and the current branch doesn't (already cherry-picked, patch-equivalent commits are filtered out), and it is applied onto HEAD with `git cherry-pick`. On conflicts, the cherry-pick is left in the standard in-progress state so you can resolve it with VS Code's regular merge UI — or abort with `git cherry-pick --abort`.
 
 **Workflow:**
 
@@ -161,7 +186,9 @@ All three actions show a modal confirmation before running. The Hard button in t
 **Safeguards:**
 
 - If there are **staged changes** when editing HEAD's message, the operation is rejected to prevent accidentally including them in the amend.
+- If a **rebase is already in progress** in the repository (e.g. stopped on a conflict), editing older commits is rejected — your rebase is never touched.
 - If the **working tree is dirty** when editing an older commit's message, the operation is rejected (rebase requires a clean tree). Commit or stash your changes first.
+- If the automated rebase fails midway, it is **rolled back automatically** so the repository is left exactly as it was.
 - Both **edit message** and **reset** rewrite git history. If the commits have already been pushed, a force push will be required.
 - **Reset --hard cannot be easily undone** — the modal confirmation is the only check. If in doubt, use Soft instead and decide what to do with the staged changes afterwards.
 
@@ -184,7 +211,7 @@ Stage files or folders directly from the file explorer context menu. Works with 
 
 - **Explorer context menu** — right-click a file, folder, or multi-selection and select **Toolkit: Stage Changes**.
 
-Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once.
+Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once. In multi-root workspaces the selection can span repositories: targets are grouped and staged per repository.
 
 #### Compare with Branch
 
@@ -238,6 +265,7 @@ Manage NuGet packages for .NET projects directly from VS Code. Supports browsing
 
 - **Activity Bar** — click the NuGet icon in the sidebar to see all `.csproj` / `.fsproj` / `.vbproj` projects in the workspace. Click a project to open its package manager.
 - **Explorer context menu** — right-click a project file and select **Manage NuGet Packages**.
+- **Editor context menu** — right-click inside an open project file (also offers **NuGet Vulnerabilities**).
 - **Command Palette** — run **Toolkit: Manage NuGet Packages** to pick a project file.
 
 **Package Manager panel:**
@@ -264,6 +292,8 @@ Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution O
 | `toolkit.nuget.requestTimeout` | `10000` | HTTP timeout in milliseconds |
 | `toolkit.nuget.defaultPrerelease` | `false` | Include prerelease packages by default |
 
+> Security note: the `authorizationHeader` of a source is only ever sent to that source's own origin (scheme + host + port). Endpoint URLs advertised by the registry that point to a different host are fetched without credentials.
+
 #### NPM Package Manager
 
 Manage npm packages for Node.js projects directly from VS Code. Supports browsing, installing, updating, and uninstalling packages using the npm registry API. Automatically detects and uses the project's package manager — **npm**, **yarn**, or **pnpm** — based on the lock file present in the project directory.
@@ -272,6 +302,7 @@ Manage npm packages for Node.js projects directly from VS Code. Supports browsin
 
 - **Activity Bar** — click the npm icon in the sidebar to see all `package.json` projects in the workspace. Click a project to open its package manager.
 - **Explorer context menu** — right-click a `package.json` file and select **Manage npm Packages**.
+- **Editor context menu** — right-click inside an open `package.json` (also offers **npm Audit**).
 - **Command Palette** — run **Toolkit: Manage npm Packages** to pick a project.
 
 **Package Manager panel:**
@@ -322,6 +353,27 @@ Run **Toolkit: NPM Intellisense - Import Module** from the Command Palette to pi
 | `toolkit.npmIntellisense.importQuotes` | `'` | Quote style for the import command |
 | `toolkit.npmIntellisense.importLinebreak` | `;\n` | Line ending after the import statement |
 | `toolkit.npmIntellisense.importDeclarationType` | `const` | Declaration type for `require()` imports |
+
+#### Dependency Vulnerability Audit
+
+Check a project's dependencies for known vulnerabilities using each ecosystem's official tool — no extra services or accounts.
+
+| Command | Tool used |
+|---|---|
+| Toolkit: npm Audit | `npm audit` / `yarn audit` / `pnpm audit` (auto-detected from the lock file) |
+| Toolkit: NuGet Vulnerabilities | `dotnet list package --vulnerable --include-transitive` |
+
+**Access:**
+
+- **Explorer context menu** — right-click a `package.json`, a `.csproj`/`.fsproj`/`.vbproj`, or a **solution** (`.sln`/`.slnx`) to audit every project in it at once
+- **Editor context menu** — also available when right-clicking inside an open `package.json` or project file
+- **Command Palette** — run either command; with several projects in the workspace, a picker asks which one
+
+**Results:** findings are listed in a quick pick sorted by severity (critical → high → moderate → low), showing the affected range, whether it is a transitive dependency, and the concrete fix when the tool names one (e.g. `fix: mocha@11.0.0 (major)` — the direct dependency to update, which is what actually resolves transitive vulnerabilities). When auditing a solution, each finding is tagged with the project it belongs to — the same advisory in two projects shows once per project. Picking an entry opens its security advisory in the browser. A clean project shows a confirmation message instead.
+
+**Apply fixes:** for npm and pnpm projects, the first entry of the quick pick is **Apply fixes** — it runs the ecosystem's official remediation (`npm audit fix` / `pnpm audit --fix`) and re-audits so you can see what's left (fixes requiring a major bump are not applied automatically; update those from the package manager panel). yarn classic has no fix command, so the entry is not shown there. For NuGet there is no official auto-fix either — remediate by updating the affected package from the [NuGet panel](#nuget-package-manager).
+
+> Note: NuGet requires the project to be restored (`dotnet restore`) — the vulnerability data comes from the restore graph.
 
 ### Code Editing
 
@@ -429,7 +481,7 @@ import { search } from '../catalog/helpers'
 
 When the cursor is on an import line, a code action (lightbulb / `Ctrl+.`) offers the conversion in the appropriate direction — alias to relative or relative to alias.
 
-Works with `import ... from`, `export ... from`, `require()`, and dynamic `import()`. Supported languages: TypeScript, JavaScript, TSX, JSX, Vue, Svelte.
+Works with `import ... from`, `export ... from`, `require()`, and dynamic `import()`. Supported languages: TypeScript, JavaScript, TSX, JSX, Vue, Svelte. Both commands are available from the editor context menu in those languages, and from the Command Palette.
 
 #### Type-Only Imports
 
@@ -459,7 +511,7 @@ The whole declaration is flagged only when **every** imported binding (default, 
 
 It will **not** flag — even if part of the import looks type-only — when any binding appears as a value: `Foo()`, `new Foo()`, `class extends Foo`, `@Foo`, `<Foo />`, `typeof Foo === '...'` in an expression, property/element access. Already-`import type` declarations and side-effect imports (`import './setup'`) are ignored.
 
-Supported languages: TypeScript and TSX.
+Supported languages: TypeScript and TSX. **Analyze Type-Only Imports in Current File** (a verbose, on-demand pass) is available from the editor context menu in those languages.
 
 **Settings:**
 
@@ -573,6 +625,7 @@ Available from:
 
 - Operates on the lines touched by the current selection. Needs at least two selected lines.
 - Aligns by the **first** occurrence of the delimiter on each line.
+- Aligning by `=` skips compound operators (`==`, `===`, `+=`, `=>`, `??=`, …) — they are never split, and lines whose only `=` is part of one are left untouched.
 - Lines that don't contain the delimiter are left untouched.
 - Leading indentation and the suffix after the delimiter are preserved (leading whitespace on the suffix is normalized).
 
@@ -678,6 +731,10 @@ A toolbox of encode/decode and hash operations over the current selection. Avail
 | Hex Encode / Decode | UTF-8 ↔ hex string (case-insensitive on decode, accepts whitespace) |
 | MD5 / SHA-1 / SHA-256 / SHA-512 | Hex digest of the selection |
 | JWT Decode | Decode header + payload, open the result in a new editor |
+| JSON to YAML | Convert a JSON selection to YAML (2-space indentation) |
+| YAML to JSON | Convert a YAML selection to pretty-printed JSON |
+| JSON Prettify / Minify | Re-indent with 2 spaces / strip all whitespace |
+| JSON Sort Keys | Recursively sort object keys (pretty-printed output) |
 
 Available from:
 
@@ -687,9 +744,11 @@ Available from:
 **Behavior:**
 
 - All operations require a non-empty selection. Multi-selection is supported for string-to-string operations.
-- Invalid input (malformed Base64, non-hex characters, broken percent encoding, malformed JWT) triggers a warning and leaves the selection untouched.
+- Invalid input (malformed Base64, non-hex characters, broken percent encoding, malformed JWT, invalid JSON/YAML) triggers a warning and leaves the selection untouched.
 - Hashes always output lowercase hex.
 - JWT Decode opens a new untitled `jsonc` editor with the formatted header, payload and signature. The signature is **not** verified.
+- The JSON operations (Prettify / Minify / Sort Keys / JSON to YAML) also appear in the editor context menu of JSON files when text is selected; YAML to JSON appears in YAML files.
+- The YAML converter has no external dependencies and covers the block-style subset typical of config files, plus flow collections (`[a, b]` / `{k: v}`), quoted scalars, and comments. Unsupported YAML constructs — block scalars (`|`, `>`), anchors/aliases, tags, multiple documents — are rejected with a clear message instead of being converted incorrectly.
 
 #### Insert UUID / Timestamp / Random
 
@@ -749,7 +808,7 @@ Available from:
 | 10 digits (optionally signed) | Unix seconds |
 | 13 digits | Unix milliseconds |
 | 16 digits | Unix microseconds (rounded to ms) |
-| Other digit-only lengths | Unix milliseconds (best-effort) |
+| Other digit-only lengths | First plausible reading (seconds → ms → µs) whose date lands between 1971 and 2150 — e.g. 9-digit values are 1973–2001 epochs in seconds. Falls back to milliseconds |
 | ISO 8601-like (date with optional time / offset) | ISO |
 
 **Hover:**
@@ -765,6 +824,61 @@ Place the cursor over a 10-, 13- or 16-digit number anywhere in any file. If the
 | `toolkit.timestamp.hover.minYear` | `1990` | Lower bound for considering a number to be a timestamp |
 | `toolkit.timestamp.hover.maxYear` | `2100` | Upper bound for considering a number to be a timestamp |
 
+#### UUID / ULID Hover
+
+Hover any UUID or ULID — in logs, database dumps, JSON payloads, or code — to see what it is and, for time-ordered formats, **when it was created**.
+
+| Identifier | Hover shows |
+|---|---|
+| UUID v7 / ULID | Kind + embedded creation time (UTC, local, and relative — e.g. `2 years ago`) |
+| UUID v1 / v6 | Kind + creation time decoded from the Gregorian clock |
+| UUID v4 | "random" — no embedded timestamp |
+| UUID v3 / v5 | "name-based (MD5 / SHA-1)" |
+| Nil / non-RFC variants | Identified as such |
+
+**Behavior:**
+
+- Works in any file type; matching is case-insensitive and requires the identifier to stand alone (it won't trigger inside a longer token).
+- ULID detection is plausibility-checked: 26-character Base32 strings whose embedded date falls outside 2010–2120 are ignored, so random identifiers don't produce bogus hovers.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.uuidHover.enabled` | `true` | Toggle the UUID/ULID hover |
+| `toolkit.uuidHover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
+
+#### Format Markdown Table
+
+Align the pipes of Markdown tables so the source reads as cleanly as the rendered output.
+
+```markdown
+| Name | Age |
+|---|---|
+| Alice | 30 |
+| Bob | 9 |
+```
+
+→
+
+```markdown
+| Name  | Age |
+| ----- | --- |
+| Alice | 30  |
+| Bob   | 9   |
+```
+
+Run **Toolkit: Format Markdown Table** from the Command Palette or the editor context menu (Markdown files). With no selection it formats the table under the cursor; with a selection it formats every table the selection touches.
+
+The inverse also exists: **Toolkit: Compact Markdown Table** strips all alignment padding — single spaces around each cell and minimal separators (`---`, alignment colons kept). Renders identically, uses fewer characters, and keeps diffs clean: in an aligned table, widening one cell re-pads the whole column (the diff touches every row); in compact form each change touches only its own row.
+
+**Behavior:**
+
+- GFM alignment markers (`:--`, `:-:`, `--:`) are preserved and applied to the cell content — header included, like Prettier.
+- Escaped pipes (`\|`) and pipes inside inline code (`` `a|b` ``) don't break cells.
+- Rows with missing cells are padded with empty ones; leading indentation (tables inside lists) is preserved.
+- Tables with or without surrounding pipes are recognized; the output always uses surrounding pipes.
+
 #### JSON to TypeScript / C# Types
 
 Generate type definitions from a JSON sample. The source is the current selection if non-empty, otherwise the clipboard.
@@ -779,17 +893,14 @@ Generate type definitions from a JSON sample. The source is the current selectio
 | JSON to C# Record | `public record Root(int Id, string Name)` |
 | JSON to C# Class | `public class Root { public int Id { get; set; } }` |
 
-Available from:
-
-- **Editor context menu** — right-click and pick **Toolkit: JSON to Type...** (also works without a selection — reads from the clipboard)
-- **Command Palette** — any of the individual commands
+Available from the **Command Palette** — the dispatcher or any of the individual commands (they also work without a selection, reading the JSON from the clipboard) — and from the **editor context menu of JSON files**.
 
 **Behavior:**
 
 - Nested objects become their own named types, derived from the property key (singularized for array items).
 - Arrays of objects merge field shapes; fields missing in some samples are emitted as `?` (TS) or nullable (C#).
 - Numbers are inferred as integer or float; integers beyond `Int32.MaxValue` become `long` in C#.
-- The output replaces the JSON selection in place, or opens in a new editor when the JSON comes from the clipboard.
+- The output replaces the JSON selection in place, or opens in a new editor when the JSON comes from the clipboard. If the document changed (or was closed) while the name prompt was open, the result opens in a new editor instead of overwriting anything.
 
 **Example input:**
 
@@ -907,6 +1018,14 @@ When linked editing is active, this feature automatically steps aside for those 
 
 ### Workspace & Explorer
 
+#### All Features
+
+A searchable, runnable index of everything in this extension. Open it with `Shift+Alt+P` or run **Toolkit: All Features...** from the Command Palette.
+
+Every feature appears grouped by category with its shortcut and a one-line description — fuzzy search matches all three, so typing `curl`, `squash`, or `env` finds the right entry without knowing its exact name. Picking an entry **runs it**; automatic or context-bound features (hovers, themes, code actions — marked with a book icon) open the [feature cheat sheet](FEATURES.md) instead.
+
+The catalog is cross-checked against `FEATURES.md` by the test suite, so the launcher, the cheat sheet, and the actual commands cannot drift apart.
+
 #### Find File or Folder
 
 A quick-open picker similar to `Cmd+P`, but that also searches **folders** — not just files. Open it with `Opt+P` or from the Command Palette.
@@ -959,7 +1078,7 @@ Bulk format all files in the workspace or a specific folder using VS Code's buil
 | Format Files - From Glob | Prompt for a custom glob pattern |
 | Format Files - This Folder | Format files in a folder (right-click in explorer) |
 
-Shows progress with cancellation support. Each file is opened, formatted, saved, and closed sequentially.
+Shows progress with cancellation support. Files are formatted in memory through the language's formatting provider — no editors are opened or focused, so you can keep working while a batch runs.
 
 **Settings:**
 
@@ -1020,14 +1139,21 @@ Keep a list of recently-copied text snippets while VS Code is focused. Recall an
 | Command | Description |
 |---|---|
 | Show Clipboard History | Quick pick of recent entries; selecting one pastes it at the cursor |
-| Clear Clipboard History | Wipe the in-memory history (with confirmation) |
+| Clear Clipboard History | Wipe the in-memory history (with confirmation; pinned entries can be kept) |
 
 **How it works:**
 
 - VS Code does not expose a clipboard-change event, so the extension polls the clipboard while the window is focused (default every 1 s). Polling pauses when the window loses focus.
 - The history lives **in memory only** — nothing is persisted to disk, `globalState`, or `workspaceState`. Closing the window drops everything.
-- Duplicates are deduplicated: re-copying an existing entry just moves it to the top.
+- Duplicates are deduplicated: re-copying an existing entry just moves it to the top (a pinned entry stays pinned).
 - The current clipboard is captured on activation but not added as an entry; only subsequent changes appear.
+
+**Pinning:**
+
+- Every entry in the quick pick has a pin button — pinned entries move to a **Pinned** section at the top.
+- Pinned entries are exempt from the FIFO cap, so they stay available for the whole session no matter how much you copy.
+- **Clear Clipboard History** offers to keep them (`Clear unpinned`) or wipe everything.
+- Pins are session-only, like the rest of the history — nothing is ever written to disk.
 
 **Privacy:**
 
@@ -1057,6 +1183,8 @@ Pin specific lines in your code with an optional label and jump between them fro
 | Toggle Bookmark with Label... | `Shift+F7` | Add a bookmark, asking for a label |
 | Edit Bookmark Label... | — | Change (or clear) the label of the bookmark on the current line |
 | Show Bookmarks | `Ctrl+F7` | Quick pick of every bookmark in the workspace; selecting one navigates to it |
+| Next Bookmark | `Alt+F7` | Jump to the next bookmark in document order, crossing files, with wrap-around |
+| Previous Bookmark | `Shift+Alt+F7` | Jump to the previous bookmark, crossing files, with wrap-around |
 | Clear Bookmarks (Current File) | — | Remove all bookmarks in the active file |
 | Clear All Bookmarks | — | Remove every bookmark in the workspace (with confirmation) |
 
@@ -1071,6 +1199,7 @@ Pin specific lines in your code with an optional label and jump between them fro
 - Bookmarks live in the workspace state and survive across sessions.
 - Line numbers are auto-adjusted while you edit the document (insertions / deletions above a bookmark shift it accordingly).
 - Bookmarks placed inside a region that gets deleted are dropped.
+- Bookmarks follow file and folder renames, and are cleaned up when their file is deleted.
 
 **Settings:**
 
@@ -1079,6 +1208,29 @@ Pin specific lines in your code with an optional label and jump between them fro
 | `toolkit.bookmarks.gutterIcon` | `true` | Show the bookmark icon in the gutter |
 | `toolkit.bookmarks.highlightLine` | `false` | Highlight the full line with a subtle background |
 | `toolkit.bookmarks.highlightColor` | `rgba(255,200,0,0.15)` | CSS color used when `highlightLine` is enabled |
+
+#### .env Checker
+
+Keeps your local `.env` files in sync with the committed example (`.env.example`, `.env.sample`, `.env.template`, or `.env.dist` — first one found in the same folder).
+
+**Diagnostics (automatic, on open/save):**
+
+- Editing a `.env` (or `.env.local`, `.env.development`, …): a warning on the first line lists the keys declared in the example but **missing** from your file, and each key **not declared** in the example gets a hint on its line.
+- Editing the example: a warning lists the keys present in the sibling `.env` that are not declared in it (so new variables get documented).
+
+**Quick fix:** `Ctrl+.` on the missing-keys warning offers **Add missing keys** — appends them to your `.env` with the example's placeholder values.
+
+**Command:** run **Toolkit: Check .env Files** from the Command Palette — or the editor context menu of any `.env` file — to scan every `.env`/example pair in the workspace at once; out-of-sync files are listed in a quick pick (useful after a big pull).
+
+**Privacy:** only key *names* ever appear in messages — values from a real `.env` are secrets and are never shown or copied anywhere.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.envCheck.enabled` | `true` | Toggle the .env diagnostics |
+| `toolkit.envCheck.exampleNames` | `[.env.example, .env.sample, .env.template, .env.dist]` | File names recognized as the example, in lookup order |
+| `toolkit.envCheck.severity` | `warning` | Severity of the missing-keys diagnostic (undeclared keys are always hints) |
 
 #### TODO Tree
 
@@ -1109,8 +1261,8 @@ Tags must match a whole word — `// TODOLIST: foo` is not picked up.
 
 **Behavior:**
 
-- Initial scan runs in the background when the extension activates.
-- Saving a document re-scans only that file (fast).
+- The initial scan runs in the background the first time the TODOs view becomes visible (so startup pays nothing if you don't use it; the badge appears after that first scan).
+- Saving a document re-scans only that file (fast), honoring the include glob, the excluded folders, and `.gitignore`.
 - Changes to any `toolkit.todoTree.*` setting trigger a full re-scan.
 - The view shows a badge with the total number of detected TODOs.
 
@@ -1137,6 +1289,10 @@ Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send
 | Send Request | Run the request under the cursor (also exposed as a CodeLens above each request) |
 | Send All Requests | Run every request in the active file |
 | Cancel Pending Requests | Abort any requests currently in flight |
+| REST Client - Select Environment... | Pick the active environment from `http-client.env.json` (also via the status bar item) |
+| REST Client - Copy as curl | Copy the request under the cursor as a `curl` command, with all variables resolved (also a CodeLens next to each Send Request) |
+
+All of these are also available from the **editor context menu** when right-clicking inside a `.http` / `.rest` file.
 
 **File format:**
 
@@ -1162,6 +1318,26 @@ Authorization: Bearer {{token}}
 - `@name = value` defines a variable scoped to the file.
 - `{{name}}` interpolates a variable in the URL, headers or body.
 - Lines starting with a single `#` are comments.
+- Response bodies are capped at 50 MB; larger responses abort with an error.
+
+**Environments:**
+
+Point the same `.http` file at dev/staging/prod without editing it. Create an `http-client.env.json` (JetBrains-compatible) next to your `.http` files — or in any parent folder up to the workspace root; the nearest one wins:
+
+```json
+{
+  "dev":  { "baseUrl": "http://localhost:3000", "token": "dev-token" },
+  "prod": { "baseUrl": "https://api.example.com" }
+}
+```
+
+- An optional `http-client.private.env.json` (gitignore it) overlays the public file key by key — put secrets there.
+- Pick the active environment with **REST Client - Select Environment...** or by clicking the **globe item in the status bar** (visible while a `.http` file is active). The choice is remembered per workspace.
+- Resolution order for `{{...}}`: file `@vars` → private environment → public environment → built-ins. A file can therefore override an environment value locally.
+
+**Copy as curl:**
+
+The **Copy as curl** CodeLens next to each request's Send Request (or the command / context menu entry) builds the `curl` equivalent of the request — method, URL, headers and body, with every variable (environment included) already resolved and shell-quoted — and copies it to the clipboard. Handy for reproducing an issue in a terminal, attaching to a ticket, or sharing with someone without VS Code.
 
 **Built-in variables:**
 
@@ -1196,7 +1372,6 @@ X-Toolkit-Time: 234ms
 
 **Limitations (v1):**
 
-- No environments / `.env` files — the variables live in the `.http` file.
 - No syntax highlighting contributed — relies on whatever language is set (plaintext if none).
 - No request history, no diff between responses, no response → file forwarding.
 - No multipart uploads, file bodies (`< body.json`), WebSockets or gRPC.
@@ -1224,16 +1399,16 @@ A side panel where you can test regexes interactively. Pattern, flags, test inpu
 
 **Behavior:**
 
-- Matching runs in the extension host using JavaScript's `RegExp` — patterns work exactly as they do in Node.
+- Matching uses JavaScript's `RegExp` — patterns work exactly as they do in Node.
+- Evaluation runs in a **worker thread with a 1.5 s timeout**: a pattern with catastrophic backtracking shows a "Pattern timed out" error instead of freezing the editor.
 - Input is debounced (~120 ms) before being sent back for matching, so typing stays responsive.
-- The match cap (10 000) protects against zero-width loops; pathological patterns can still freeze the panel — close it and reopen.
+- The match cap (10 000) protects against runaway match lists.
 - Pattern, flags, input and replace persist across sessions in `globalState`.
 
 **Limitations (v1):**
 
 - No cheat sheet of regex tokens.
 - No save / load of named patterns (only the last state survives).
-- No protection against catastrophic backtracking — the panel stays in the UI thread.
 - No export of the pattern as a literal for other languages.
 
 ### Appearance & Viewers
@@ -1280,7 +1455,7 @@ The delimiter is auto-detected from the first lines of the file (`,`, `;`, `\t`,
 - Quote-aware parsing — `"a,b",c` is two columns, not three
 - Configurable line cap (default 5000) to keep huge files responsive
 
-Toggle with **Toolkit: Toggle CSV Rainbow** from the Command Palette.
+Toggle with **Toolkit: Toggle CSV Rainbow** from the Command Palette or the editor context menu of `.csv` / `.tsv` files.
 
 **Settings:**
 
@@ -1317,6 +1492,26 @@ Just open any `.pdf` file and it renders in an editor tab.
 | Setting | Default | Description |
 |---|---|---|
 | `toolkit.pdfViewer.scale` | `auto` | Default zoom level (`auto`, `page-actual`, `page-fit`, `page-width`, or a numeric value like `1.5`) |
+
+#### SVG Preview
+
+Render the active `.svg` file in a side panel that refreshes live as you edit the XML.
+
+**Access:**
+
+- **Editor title bar** — the preview icon when an `.svg` file is open
+- **Editor / Explorer context menu** — right-click inside an open `.svg` (or on the file in the Explorer) and pick **Toolkit: Preview SVG**
+- **Command Palette** — run **Toolkit: Preview SVG**
+
+**Features:**
+
+- **Live refresh** — the preview updates (debounced) as you type in the SVG source, without saving
+- **Zoom** — `+` / `−` buttons, click the percentage to reset, or `Ctrl`/`Cmd` + mouse wheel
+- **Background cycle** — checkerboard (transparency), light, and dark backgrounds
+- Shows the image's natural dimensions; invalid SVG shows a clear error instead of a blank panel
+- One panel per file, reused on subsequent invocations
+
+**Security:** the SVG is rendered through an `<img>` element with a `data:` URI — browsers never execute scripts nor load external resources for image-rendered SVGs, so a malicious file cannot run code in the preview.
 
 #### Generic Dark Theme
 

@@ -10,9 +10,10 @@ import { logError, logInfo } from '../utils/logger'
 
 /**
  * Format Files — bulk format all files in workspace or a specific folder.
- * Uses VS Code's built-in findFiles and formatDocument APIs (no external deps).
- * Follows the same flow as jbockle.format-files:
- *   open → show → organizeImports? → format → save → close
+ * Uses VS Code's built-in findFiles and provider APIs (no external deps).
+ * Flow per file: open (in memory) → organizeImports? → format → save.
+ * Everything is addressed by document, never via focus-dependent commands,
+ * so the user can keep working while a batch runs.
  */
 
 function buildExcludeGlob(): string | undefined {
@@ -77,6 +78,38 @@ async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Prom
   )
 }
 
+/** Runs the organize-imports code action on a document without focusing it. */
+async function organizeImports(doc: vscode.TextDocument): Promise<void> {
+  const fullRange = new vscode.Range(0, 0, doc.lineCount, 0)
+  const actions = await vscode.commands.executeCommand<(vscode.CodeAction | vscode.Command)[] | undefined>(
+    'vscode.executeCodeActionProvider',
+    doc.uri,
+    fullRange,
+    vscode.CodeActionKind.SourceOrganizeImports.value
+  )
+  for (const action of actions ?? []) {
+    if (action instanceof vscode.CodeAction) {
+      if (action.edit) {
+        await vscode.workspace.applyEdit(action.edit)
+      }
+      if (action.command) {
+        await vscode.commands.executeCommand(action.command.command, ...((action.command.arguments ?? []) as unknown[]))
+      }
+    } else {
+      await vscode.commands.executeCommand(action.command, ...((action.arguments ?? []) as unknown[]))
+    }
+  }
+}
+
+/** The same tab settings the regular Format Document command would use. */
+function formattingOptions(doc: vscode.TextDocument): vscode.FormattingOptions {
+  const editorConfig = vscode.workspace.getConfiguration('editor', { uri: doc.uri, languageId: doc.languageId })
+  return {
+    tabSize: editorConfig.get<number>('tabSize', 4),
+    insertSpaces: editorConfig.get<boolean>('insertSpaces', true)
+  }
+}
+
 async function formatWithProgress(
   files: vscode.Uri[],
   token: vscode.CancellationToken,
@@ -99,18 +132,25 @@ async function formatWithProgress(
 
     try {
       const doc = await vscode.workspace.openTextDocument(file)
-      await vscode.window.showTextDocument(doc, {
-        preview: false,
-        viewColumn: vscode.ViewColumn.One
-      })
 
       if (runOrganizeImports) {
-        await vscode.commands.executeCommand('editor.action.organizeImports')
+        await organizeImports(doc)
       }
 
-      await vscode.commands.executeCommand('editor.action.formatDocument')
-      await vscode.commands.executeCommand('workbench.action.files.save')
-      await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
+      const edits = await vscode.commands.executeCommand<vscode.TextEdit[] | undefined>(
+        'vscode.executeFormatDocumentProvider',
+        file,
+        formattingOptions(doc)
+      )
+      if (edits && edits.length > 0) {
+        const workspaceEdit = new vscode.WorkspaceEdit()
+        workspaceEdit.set(file, edits)
+        await vscode.workspace.applyEdit(workspaceEdit)
+      }
+
+      if (doc.isDirty) {
+        await doc.save()
+      }
 
       processed++
     } catch (err) {

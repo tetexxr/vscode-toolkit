@@ -12,7 +12,7 @@ export interface MatchInfo {
 export type CompileResult = { ok: true; re: RegExp } | { ok: false; error: string }
 
 const MAX_MATCHES = 10000
-const VALID_FLAGS = 'gimsuy'
+const VALID_FLAGS = 'dgimsuvy'
 
 /**
  * Validates flags and constructs a RegExp. Returns an error string on failure.
@@ -102,10 +102,32 @@ export function applyReplace(re: RegExp, input: string, replaceText: string): st
   return input.replace(re, replaceText)
 }
 
+export interface EvalResult {
+  error: string | null
+  matches: MatchInfo[]
+  highlightedHtml: string
+  replaceResult: string
+}
+
 /**
- * Sanitizes a string so it can be safely interpolated into a webview script.
- * Returns a JS string literal (with surrounding quotes).
+ * Full playground evaluation: compile, match, highlight, replace.
+ * Runs inside the regex worker thread so catastrophic backtracking
+ * cannot freeze the extension host.
  */
-export function jsStringLiteral(value: string): string {
-  return JSON.stringify(value)
+export function evaluatePattern(pattern: string, flags: string, input: string, replaceText: string): EvalResult {
+  const compiled = compileRegex(pattern, flags)
+  if (!compiled.ok) {
+    return { error: compiled.error, matches: [], highlightedHtml: '', replaceResult: '' }
+  }
+  const matches = findAllMatches(compiled.re, input)
+  const highlightedHtml = highlightMatches(input, matches)
+  let replaceResult = ''
+  try {
+    // Fresh RegExp because exec/matchAll above advances lastIndex on global regexes
+    const reFresh = compileRegex(pattern, flags) as { ok: true; re: RegExp }
+    replaceResult = applyReplace(reFresh.re, input, replaceText)
+  } catch (error) {
+    replaceResult = `Replace failed: ${(error as Error).message}`
+  }
+  return { error: null, matches, highlightedHtml, replaceResult }
 }

@@ -80,12 +80,12 @@ function renderPatch(raw: string): string {
   return html.join('\n')
 }
 
-function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string): string {
+function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, hasMore: boolean): string {
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style nonce="${nonce}">
     body {
@@ -172,16 +172,62 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string): s
       white-space: pre-wrap;
       word-break: break-all;
     }
+
+    #loadMore {
+      display: block;
+      margin: 16px auto;
+      padding: 6px 16px;
+      font-family: inherit;
+      font-size: inherit;
+      color: var(--vscode-button-foreground);
+      background: var(--vscode-button-background);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    #loadMore:hover { background: var(--vscode-button-hoverBackground); }
+    #loadMore:disabled { opacity: 0.5; cursor: default; }
   </style>
 </head>
 <body>
   <h1>History: ${escapeHtml(fileName)}</h1>
+  <div id="content">
   ${patchHtml}
+  </div>
+  <button id="loadMore"${hasMore ? '' : ' hidden'}>Load more</button>
+  <script nonce="${nonce}">
+    (function () {
+      const vscode = acquireVsCodeApi()
+      const btn = document.getElementById('loadMore')
+      btn.addEventListener('click', () => {
+        btn.disabled = true
+        vscode.postMessage({ type: 'loadMore' })
+      })
+      window.addEventListener('message', e => {
+        const msg = e.data
+        if (msg && msg.type === 'append') {
+          document.getElementById('content').insertAdjacentHTML('beforeend', msg.html)
+          btn.disabled = false
+          if (!msg.hasMore) {
+            btn.hidden = true
+          }
+        }
+      })
+    })()
+  </script>
 </body>
 </html>`
 }
 
 const panels = new Map<string, vscode.WebviewPanel>()
+
+/** Commits fetched per page; full `git log -p` output can blow past maxBuffer. */
+const PAGE_SIZE = 50
+
+function countCommits(raw: string): number {
+  return raw.split('---COMMIT---').length - 1
+}
 
 export function registerGitHistoryCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
@@ -213,7 +259,7 @@ export function registerGitHistoryCommands(context: vscode.ExtensionContext): vo
 
       let raw: string
       try {
-        raw = await getFileLogPatch(repoRoot, relativePath)
+        raw = await getFileLogPatch(repoRoot, relativePath, PAGE_SIZE)
       } catch {
         vscode.window.showErrorMessage('Could not retrieve git history for this file.')
         return
@@ -228,15 +274,33 @@ export function registerGitHistoryCommands(context: vscode.ExtensionContext): vo
         'toolkitGitHistory',
         `History: ${fileName}`,
         vscode.ViewColumn.One,
-        { enableFindWidget: true }
+        { enableFindWidget: true, enableScripts: true }
       )
 
       panels.set(filePath, panel)
       panel.onDidDispose(() => panels.delete(filePath))
 
+      let skip = PAGE_SIZE
+      panel.webview.onDidReceiveMessage(async (msg: unknown) => {
+        if (!msg || (msg as { type?: unknown }).type !== 'loadMore') {
+          return
+        }
+        try {
+          const more = await getFileLogPatch(repoRoot, relativePath, PAGE_SIZE, skip)
+          skip += PAGE_SIZE
+          void panel.webview.postMessage({
+            type: 'append',
+            html: renderPatch(more),
+            hasMore: countCommits(more) === PAGE_SIZE
+          })
+        } catch {
+          void panel.webview.postMessage({ type: 'append', html: '', hasMore: false })
+        }
+      })
+
       const nonce = createNonce()
       const patchHtml = renderPatch(raw)
-      panel.webview.html = buildWebviewHtml(fileName, patchHtml, nonce)
+      panel.webview.html = buildWebviewHtml(fileName, patchHtml, nonce, countCommits(raw) === PAGE_SIZE)
     })
   )
 }

@@ -131,35 +131,73 @@ export function registerClipboardHistoryCommands(context: vscode.ExtensionContex
 
   context.subscriptions.push({ dispose: () => watcher.dispose() })
 
+  type Item = vscode.QuickPickItem & { text?: string }
+
+  const PIN_BUTTON: vscode.QuickInputButton = { iconPath: new vscode.ThemeIcon('pin'), tooltip: 'Pin' }
+  const UNPIN_BUTTON: vscode.QuickInputButton = { iconPath: new vscode.ThemeIcon('pinned'), tooltip: 'Unpin' }
+
+  function buildPicks(): Item[] {
+    const now = Date.now()
+    const all = history.getAll()
+    const toItem = (item: (typeof all)[number]): Item => {
+      const f = formatItem(item, now)
+      const pick: Item = {
+        label: f.label,
+        description: f.description,
+        text: item.text,
+        buttons: [item.pinned ? UNPIN_BUTTON : PIN_BUTTON]
+      }
+      if (f.detail) {
+        pick.detail = f.detail
+      }
+      return pick
+    }
+    const pinned = all.filter(i => i.pinned).map(toItem)
+    const recent = all.filter(i => !i.pinned).map(toItem)
+    if (pinned.length === 0) {
+      return recent
+    }
+    return [
+      { label: 'Pinned', kind: vscode.QuickPickItemKind.Separator },
+      ...pinned,
+      { label: 'Recent', kind: vscode.QuickPickItemKind.Separator },
+      ...recent
+    ]
+  }
+
   context.subscriptions.push(
-    vscode.commands.registerCommand('toolkit.clipboardHistory.show', async () => {
-      const items = history.getAll()
-      if (items.length === 0) {
+    vscode.commands.registerCommand('toolkit.clipboardHistory.show', () => {
+      if (history.size() === 0) {
         vscode.window.showInformationMessage('Toolkit: clipboard history is empty.')
         return
       }
-      const now = Date.now()
-      type Item = vscode.QuickPickItem & { text: string }
-      const picks: Item[] = items.map(item => {
-        const f = formatItem(item, now)
-        const pick: Item = { label: f.label, description: f.description, text: item.text }
-        if (f.detail) {
-          pick.detail = f.detail
+      const quickPick = vscode.window.createQuickPick<Item>()
+      quickPick.items = buildPicks()
+      quickPick.matchOnDescription = true
+      quickPick.matchOnDetail = true
+      quickPick.placeholder = 'Pick a clipboard entry to paste at the cursor — 📌 keeps it for the whole session'
+
+      quickPick.onDidTriggerItemButton(event => {
+        if (event.item.text !== undefined) {
+          history.togglePin(event.item.text)
+          quickPick.items = buildPicks()
         }
-        return pick
       })
-      const picked = await vscode.window.showQuickPick(picks, {
-        matchOnDescription: true,
-        matchOnDetail: true,
-        placeHolder: 'Pick a clipboard entry to paste at the cursor'
+
+      quickPick.onDidAccept(async () => {
+        const picked = quickPick.selectedItems[0]
+        quickPick.hide()
+        if (!picked?.text) {
+          return
+        }
+        watcher.prime(picked.text)
+        await vscode.env.clipboard.writeText(picked.text)
+        history.add(picked.text)
+        await pasteText(picked.text)
       })
-      if (!picked) {
-        return
-      }
-      watcher.prime(picked.text)
-      await vscode.env.clipboard.writeText(picked.text)
-      history.add(picked.text)
-      await pasteText(picked.text)
+
+      quickPick.onDidHide(() => quickPick.dispose())
+      quickPick.show()
     })
   )
 
@@ -169,12 +207,28 @@ export function registerClipboardHistoryCommands(context: vscode.ExtensionContex
         vscode.window.showInformationMessage('Toolkit: clipboard history is already empty.')
         return
       }
+      const pinnedCount = history.pinnedCount()
+      const total = history.size()
+      if (pinnedCount === 0) {
+        const choice = await vscode.window.showWarningMessage(
+          `Clear clipboard history (${total} item${total === 1 ? '' : 's'})?`,
+          { modal: true },
+          'Clear'
+        )
+        if (choice === 'Clear') {
+          history.clear()
+        }
+        return
+      }
       const choice = await vscode.window.showWarningMessage(
-        `Clear clipboard history (${history.size()} item${history.size() === 1 ? '' : 's'})?`,
+        `Clear clipboard history? ${pinnedCount} of ${total} item${total === 1 ? '' : 's'} are pinned.`,
         { modal: true },
-        'Clear'
+        'Clear unpinned',
+        'Clear everything'
       )
-      if (choice === 'Clear') {
+      if (choice === 'Clear unpinned') {
+        history.clear(true)
+      } else if (choice === 'Clear everything') {
         history.clear()
       }
     })

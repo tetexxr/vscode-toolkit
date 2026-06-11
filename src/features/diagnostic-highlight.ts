@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { escapeMd } from '../utils/markdown'
 
 const DEFAULT_COLORS: Record<string, { background: string; border: string; ruler: string }> = {
   hint: {
@@ -69,7 +70,12 @@ export function registerDiagnosticHighlightCommands(context: vscode.ExtensionCon
       }
     }),
 
-    { dispose: () => disposeDecorationTypes() }
+    {
+      dispose: () => {
+        if (debounceTimer) clearTimeout(debounceTimer)
+        disposeDecorationTypes()
+      }
+    }
   )
 
   // Initial application
@@ -187,7 +193,12 @@ function splitRangePerLine(
 ): vscode.DecorationOptions[] {
   const doc = editor.document
   const startLine = range.start.line
-  const endLine = range.end.line
+  // Language servers may briefly report ranges from a longer, previous
+  // version of the document; lineAt would throw past the current end.
+  const endLine = Math.min(range.end.line, doc.lineCount - 1)
+  if (startLine > endLine) {
+    return []
+  }
 
   // Single-line range — use as-is
   if (startLine === endLine) {
@@ -214,14 +225,18 @@ function splitRangePerLine(
 
 function buildHover(diag: vscode.Diagnostic): vscode.MarkdownString {
   const md = new vscode.MarkdownString()
-  md.isTrusted = true
 
   const severityLabel = getSeverityLabel(diag.severity)
-  const source = diag.source ? ` [${diag.source}]` : ''
-  const code = diag.code ? (typeof diag.code === 'object' ? ` (${diag.code.value})` : ` (${diag.code})`) : ''
+  const source = diag.source ? ` ${escapeMd(`[${diag.source}]`)}` : ''
+  const code = diag.code ? ` (${escapeMd(String(typeof diag.code === 'object' ? diag.code.value : diag.code))})` : ''
 
   md.appendMarkdown(`**${severityLabel}**${source}${code}\n\n`)
-  md.appendMarkdown(diag.message)
+  md.appendMarkdown(
+    diag.message
+      .split(/\r?\n/)
+      .map(line => escapeMd(line))
+      .join('  \n')
+  )
 
   return md
 }

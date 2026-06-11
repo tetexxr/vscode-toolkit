@@ -1,6 +1,8 @@
 export interface ClipboardHistoryItem {
   text: string
   addedAt: number
+  /** Pinned entries are exempt from FIFO eviction and survive a soft clear. */
+  pinned?: boolean
 }
 
 export interface ClipboardHistoryLimits {
@@ -36,29 +38,57 @@ export class ClipboardHistory {
       return true
     }
     this.items.unshift({ text, addedAt: now })
-    while (this.items.length > this.limits.maxItems) {
-      this.items.pop()
-    }
+    this.evictOverflow()
     return true
+  }
+
+  /** Removes the oldest UNPINNED entries until the cap is respected. */
+  private evictOverflow(): void {
+    let unpinned = this.items.filter(item => !item.pinned).length
+    for (let i = this.items.length - 1; i >= 0 && unpinned > this.limits.maxItems; i--) {
+      if (!this.items[i].pinned) {
+        this.items.splice(i, 1)
+        unpinned--
+      }
+    }
+  }
+
+  /**
+   * Toggles the pinned state of the entry with this text.
+   * Returns the new state, or null when the entry doesn't exist.
+   */
+  togglePin(text: string): boolean | null {
+    const item = this.items.find(i => i.text === text)
+    if (!item) {
+      return null
+    }
+    item.pinned = !item.pinned
+    if (!item.pinned) {
+      this.evictOverflow()
+    }
+    return item.pinned
   }
 
   getAll(): ClipboardHistoryItem[] {
     return [...this.items]
   }
 
-  clear(): void {
-    this.items = []
+  /** Clears the history; with `keepPinned`, pinned entries survive. */
+  clear(keepPinned = false): void {
+    this.items = keepPinned ? this.items.filter(item => item.pinned) : []
   }
 
   size(): number {
     return this.items.length
   }
 
+  pinnedCount(): number {
+    return this.items.filter(item => item.pinned).length
+  }
+
   setLimits(limits: ClipboardHistoryLimits): void {
     this.limits = { ...limits }
-    while (this.items.length > this.limits.maxItems) {
-      this.items.pop()
-    }
+    this.evictOverflow()
   }
 }
 

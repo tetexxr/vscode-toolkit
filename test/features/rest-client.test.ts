@@ -1,5 +1,10 @@
 import { strict as assert } from 'assert'
 import {
+  buildCurl,
+  environmentNames,
+  mergeEnvironmentVariables,
+  parseEnvironmentFile,
+  shellQuote,
   parseHttpFile,
   interpolate,
   formatResponse,
@@ -220,5 +225,77 @@ describe('tryPrettyJson', () => {
 
   it('should return the input unchanged on parse error', () => {
     assert.equal(tryPrettyJson('not json'), 'not json')
+  })
+})
+
+describe('parseEnvironmentFile', () => {
+  it('should parse environments with string, number, and boolean values', () => {
+    const parsed = parseEnvironmentFile(
+      JSON.stringify({ dev: { baseUrl: 'http://localhost', port: 3000, debug: true } })
+    )
+    assert.deepEqual(parsed, { dev: { baseUrl: 'http://localhost', port: '3000', debug: 'true' } })
+  })
+
+  it('should skip non-object environments and non-scalar values', () => {
+    const parsed = parseEnvironmentFile(
+      JSON.stringify({ dev: { ok: 'yes', nested: { no: 1 } }, broken: 'not an object', list: [1] })
+    )
+    assert.deepEqual(parsed, { dev: { ok: 'yes' } })
+  })
+
+  it('should return null for invalid or non-object JSON', () => {
+    assert.equal(parseEnvironmentFile('not json'), null)
+    assert.equal(parseEnvironmentFile('[1,2]'), null)
+    assert.equal(parseEnvironmentFile('"str"'), null)
+  })
+})
+
+describe('environmentNames / mergeEnvironmentVariables', () => {
+  const pub = { dev: { a: '1', b: '2' }, prod: { a: '9' } }
+  const priv = { dev: { b: 'secret', c: '3' }, local: { x: '1' } }
+
+  it('should union names with public order first', () => {
+    assert.deepEqual(environmentNames(pub, priv), ['dev', 'prod', 'local'])
+    assert.deepEqual(environmentNames(null, priv), ['dev', 'local'])
+    assert.deepEqual(environmentNames(null, null), [])
+  })
+
+  it('should merge with the private file overriding key by key', () => {
+    assert.deepEqual(mergeEnvironmentVariables(pub, priv, 'dev'), { a: '1', b: 'secret', c: '3' })
+    assert.deepEqual(mergeEnvironmentVariables(pub, priv, 'prod'), { a: '9' })
+    assert.deepEqual(mergeEnvironmentVariables(pub, priv, 'missing'), {})
+  })
+})
+
+describe('buildCurl / shellQuote', () => {
+  it('should build a GET without -X', () => {
+    assert.equal(buildCurl({ method: 'GET', url: 'https://api.test/users', headers: [], body: '' }), "curl 'https://api.test/users'")
+  })
+
+  it('should include method, headers, and body', () => {
+    const curl = buildCurl({
+      method: 'POST',
+      url: 'https://api.test/users',
+      headers: [
+        { name: 'Content-Type', value: 'application/json' },
+        { name: 'Authorization', value: 'Bearer tok' }
+      ],
+      body: '{"name":"Alice"}'
+    })
+    assert.equal(
+      curl,
+      [
+        "curl -X POST 'https://api.test/users'",
+        "-H 'Content-Type: application/json'",
+        "-H 'Authorization: Bearer tok'",
+        `--data '{"name":"Alice"}'`
+      ].join(' \\\n  ')
+    )
+  })
+
+  it('should escape single quotes for the shell', () => {
+    assert.equal(shellQuote("it's"), "'it'\\''s'")
+    const curl = buildCurl({ method: 'POST', url: 'https://x.test', headers: [], body: "{'a':1}" })
+    assert.ok(curl.includes("--data '{'\\''a'\\'':1}'"))
   })
 })

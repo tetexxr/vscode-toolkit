@@ -7,6 +7,19 @@ export function parseScale(value: string): string {
   return 'auto'
 }
 
+/**
+ * Sanitizers for the zoom values remembered from webview messages — they are
+ * interpolated into the viewer's inline script, so they must never carry
+ * anything but a known preset or a number. Empty means "not set yet".
+ */
+export function sanitizeStoredScale(value: string): string {
+  return value === '' ? '' : parseScale(value)
+}
+
+export function sanitizeStoredScaleMode(value: string): string {
+  return VALID_PRESETS.includes(value) ? value : ''
+}
+
 export interface TemplateValues {
   pdfUri: string
   pdfJsUri: string

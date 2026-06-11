@@ -11,10 +11,26 @@ export function registerGitStageCommands(context: vscode.ExtensionContext) {
       }
 
       try {
-        const repoRoot = await getRepoRoot(path.dirname(targets[0].fsPath))
-        const relativePaths = targets.map(t => path.relative(repoRoot, t.fsPath))
-        await stageFile(repoRoot, ...relativePaths)
-        const label = relativePaths.length === 1 ? relativePaths[0] : `${relativePaths.length} items`
+        // Group targets by repository: a multi-select can span repos in a
+        // multi-root workspace, and paths from another repo would make the
+        // whole `git add` fail.
+        const byRepo = new Map<string, string[]>()
+        for (const target of targets) {
+          const repoRoot = await getRepoRoot(path.dirname(target.fsPath))
+          const rel = path.relative(repoRoot, target.fsPath).split(path.sep).join('/')
+          const list = byRepo.get(repoRoot)
+          if (list) {
+            list.push(rel)
+          } else {
+            byRepo.set(repoRoot, [rel])
+          }
+        }
+        const allPaths: string[] = []
+        for (const [repoRoot, relativePaths] of byRepo) {
+          await stageFile(repoRoot, ...relativePaths)
+          allPaths.push(...relativePaths)
+        }
+        const label = allPaths.length === 1 ? allPaths[0] : `${allPaths.length} items`
         vscode.window.showInformationMessage(`Staged: ${label}`)
       } catch (err) {
         vscode.window.showErrorMessage(`Failed to stage: ${err instanceof Error ? err.message : String(err)}`)

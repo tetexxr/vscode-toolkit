@@ -25,6 +25,53 @@ export const SELF_CLOSING_TAGS = new Set([
 
 export const TAG_NAME_RE = /^[!:\w$]((?![>/])[\S])*/
 
+// Sticky variant: matches a tag name at an exact offset without slicing the
+// document. The substring().match() pattern copies the rest of the text for
+// every probed `<`, turning scans quadratic on large files.
+const TAG_NAME_STICKY_RE = /[!:\w$]((?![>/])[\S])*/y
+
+/** Matches a tag name starting exactly at `offset`, with no string copies. */
+export function matchTagNameAt(text: string, offset: number): string | undefined {
+  TAG_NAME_STICKY_RE.lastIndex = offset
+  const match = TAG_NAME_STICKY_RE.exec(text)
+  return match ? match[0] : undefined
+}
+
+/**
+ * How far `getTagAtOffset` walks backward looking for `<`. Real tag names are
+ * tiny; without a bound, typing in a large file with no `<`/`>` before the
+ * cursor (the default activation covers all languages) scans to the start
+ * of the document on every keystroke.
+ */
+const MAX_TAG_NAME_SCAN = 256
+
+export interface ContentChangeLike {
+  /** Offset in the document as it was BEFORE the whole change event. */
+  rangeOffset: number
+  /** Length of the replaced range in the pre-event document. */
+  rangeLength: number
+  /** Inserted text. */
+  text: string
+}
+
+/**
+ * Translates each change's pre-event `rangeOffset` into an offset in the
+ * post-event document, pointing right after that change's inserted text.
+ * Multi-cursor typing delivers several changes in one event whose offsets
+ * all refer to the pre-event document; earlier insertions shift later ones.
+ * Results are returned in the same order as the input.
+ */
+export function postEventOffsets(changes: readonly ContentChangeLike[]): number[] {
+  const byOffset = changes.map((change, index) => ({ change, index })).sort((a, b) => a.change.rangeOffset - b.change.rangeOffset)
+  const out = new Array<number>(changes.length)
+  let delta = 0
+  for (const { change, index } of byOffset) {
+    out[index] = change.rangeOffset + delta + change.text.length
+    delta += change.text.length - change.rangeLength
+  }
+  return out
+}
+
 export interface TagInfo {
   isClosing: boolean
   tagNameStart: number
@@ -43,7 +90,8 @@ export interface TagRange {
  */
 export function getTagAtOffset(text: string, offset: number): TagInfo | undefined {
   let i = offset
-  while (i > 0) {
+  const lowerBound = Math.max(0, offset - MAX_TAG_NAME_SCAN)
+  while (i > lowerBound) {
     i--
     if (text[i] === '<') {
       break
@@ -60,13 +108,11 @@ export function getTagAtOffset(text: string, offset: number): TagInfo | undefine
   const isClosing = text[i + 1] === '/'
   const nameStart = isClosing ? i + 2 : i + 1
 
-  const remaining = text.substring(nameStart)
-  const match = remaining.match(TAG_NAME_RE)
-  if (!match) {
+  const tagName = matchTagNameAt(text, nameStart)
+  if (tagName === undefined) {
     return undefined
   }
 
-  const tagName = match[0]
   const nameEnd = nameStart + tagName.length
 
   if (offset < nameStart || offset > nameEnd) {
@@ -108,10 +154,8 @@ export function findMatchingClosingTag(text: string, startOffset: number, tagNam
 
     if (text[idx + 1] === '/') {
       const nameStart = idx + 2
-      const remaining = text.substring(nameStart)
-      const match = remaining.match(TAG_NAME_RE)
-      if (match) {
-        const name = match[0]
+      const name = matchTagNameAt(text, nameStart)
+      if (name !== undefined) {
         const nameEnd = nameStart + name.length
         if (name.toLowerCase() === tagName.toLowerCase()) {
           if (depth === 0) {
@@ -124,10 +168,8 @@ export function findMatchingClosingTag(text: string, startOffset: number, tagNam
       }
     } else if (text[idx + 1] !== '!' && text[idx + 1] !== '?') {
       const nameStart = idx + 1
-      const remaining = text.substring(nameStart)
-      const match = remaining.match(TAG_NAME_RE)
-      if (match) {
-        const name = match[0]
+      const name = matchTagNameAt(text, nameStart)
+      if (name !== undefined) {
         const nameEnd = nameStart + name.length
 
         if (name.toLowerCase() === tagName.toLowerCase()) {
@@ -141,6 +183,111 @@ export function findMatchingClosingTag(text: string, startOffset: number, tagNam
     }
 
     pos = idx + 1
+  }
+
+  return undefined
+}
+
+/**
+ * Finds the nearest unmatched closing tag scanning forward from startOffset.
+ * Uses a stack: opening tags push, closing tags pop. First closing tag at depth 0 wins.
+ */
+export function findNearestUnmatchedClosingTag(text: string, startOffset: number): TagRange | undefined {
+  let pos = startOffset
+  let depth = 0
+
+  while (pos < text.length) {
+    const idx = text.indexOf('<', pos)
+    if (idx === -1) {
+      break
+    }
+
+    if (text[idx + 1] === '/') {
+      const nameStart = idx + 2
+      const name = matchTagNameAt(text, nameStart)
+      if (name !== undefined) {
+        const nameEnd = nameStart + name.length
+        if (depth === 0) {
+          return { start: nameStart, end: nameEnd }
+        }
+        depth--
+        pos = nameEnd
+        continue
+      }
+    } else if (text[idx + 1] !== '!' && text[idx + 1] !== '?') {
+      const nameStart = idx + 1
+      const name = matchTagNameAt(text, nameStart)
+      if (name !== undefined) {
+        const nameEnd = nameStart + name.length
+        let j = nameEnd
+        while (j < text.length && text[j] !== '>') {
+          if (text[j] === '<') {
+            break
+          }
+          j++
+        }
+        const isSelfClosing = j < text.length && text[j] === '>' && text[j - 1] === '/'
+        if (!isSelfClosing && !SELF_CLOSING_TAGS.has(name.toLowerCase())) {
+          depth++
+        }
+        pos = nameEnd
+        continue
+      }
+    }
+
+    pos = idx + 1
+  }
+
+  return undefined
+}
+
+/**
+ * Finds the nearest unmatched opening tag scanning backward from startOffset.
+ * Uses a stack: closing tags push, opening tags pop. First opening tag at depth 0 wins.
+ */
+export function findNearestUnmatchedOpeningTag(text: string, startOffset: number): TagRange | undefined {
+  let pos = startOffset
+  let depth = 0
+
+  while (pos > 0) {
+    const idx = text.lastIndexOf('<', pos - 1)
+    if (idx === -1) {
+      break
+    }
+
+    if (text[idx + 1] === '/') {
+      const nameStart = idx + 2
+      const name = matchTagNameAt(text, nameStart)
+      if (name !== undefined) {
+        depth++
+      }
+      pos = idx
+      continue
+    }
+
+    if (text[idx + 1] !== '!' && text[idx + 1] !== '?') {
+      const nameStart = idx + 1
+      const name = matchTagNameAt(text, nameStart)
+      if (name !== undefined) {
+        const nameEnd = nameStart + name.length
+        let j = nameEnd
+        while (j < text.length && text[j] !== '>') {
+          if (text[j] === '<') {
+            break
+          }
+          j++
+        }
+        const isSelfClosing = j < text.length && text[j] === '>' && text[j - 1] === '/'
+        if (!isSelfClosing && !SELF_CLOSING_TAGS.has(name.toLowerCase())) {
+          if (depth === 0) {
+            return { start: nameStart, end: nameEnd }
+          }
+          depth--
+        }
+      }
+    }
+
+    pos = idx
   }
 
   return undefined
@@ -162,9 +309,8 @@ export function findMatchingOpeningTag(text: string, startOffset: number, tagNam
 
     if (text[idx + 1] === '/') {
       const nameStart = idx + 2
-      const remaining = text.substring(nameStart)
-      const match = remaining.match(TAG_NAME_RE)
-      if (match && match[0].toLowerCase() === tagName.toLowerCase()) {
+      const name = matchTagNameAt(text, nameStart)
+      if (name !== undefined && name.toLowerCase() === tagName.toLowerCase()) {
         depth++
       }
       pos = idx
@@ -173,10 +319,8 @@ export function findMatchingOpeningTag(text: string, startOffset: number, tagNam
 
     if (text[idx + 1] !== '!' && text[idx + 1] !== '?') {
       const nameStart = idx + 1
-      const remaining = text.substring(nameStart)
-      const match = remaining.match(TAG_NAME_RE)
-      if (match) {
-        const name = match[0]
+      const name = matchTagNameAt(text, nameStart)
+      if (name !== undefined) {
         const nameEnd = nameStart + name.length
 
         if (name.toLowerCase() === tagName.toLowerCase()) {

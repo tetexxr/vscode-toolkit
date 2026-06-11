@@ -11,6 +11,24 @@ const DEFAULT_OPTIONS: AlignOptions = {
 }
 
 /**
+ * A bare assignment `=`: not part of a compound/comparison operator
+ * (`==`, `===`, `!=`, `<=`, `>=`, `+=`, `&&=`, `??=`, `=>`, ...).
+ */
+const BARE_EQUALS_RE = /(?<![=!<>+\-*/%&|^?])=(?![=>])/
+
+/**
+ * Index of the first occurrence of `delimiter` to align by, or -1.
+ * For `=`, occurrences inside compound operators are skipped so aligning
+ * never rewrites `a += 1` into `a + = 1`.
+ */
+export function findDelimiterIndex(line: string, delimiter: string): number {
+  if (delimiter === '=') {
+    return line.search(BARE_EQUALS_RE)
+  }
+  return line.indexOf(delimiter)
+}
+
+/**
  * Aligns lines vertically by the first occurrence of `delimiter`.
  * Lines that don't contain the delimiter are returned untouched.
  * Indentation (leading whitespace) is preserved.
@@ -22,7 +40,7 @@ export function alignLines(lines: string[], delimiter: string, options: Partial<
 
   const { spacesBefore, spacesAfter } = { ...DEFAULT_OPTIONS, ...options }
 
-  const positions = lines.map(line => line.indexOf(delimiter))
+  const positions = lines.map(line => findDelimiterIndex(line, delimiter))
   const linesWithDelimiter = positions.filter(p => p >= 0).length
   if (linesWithDelimiter < 2) {
     return lines

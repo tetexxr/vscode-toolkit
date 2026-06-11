@@ -101,6 +101,14 @@ describe('compareSemVer', () => {
   })
 })
 
+describe('compareSemVer prerelease ASCII order', () => {
+  it('should order prerelease string segments by ASCII, not locale', () => {
+    // ASCII: 'Z' (90) < 'a' (97). Locale-aware comparison would invert this.
+    assert.ok(compareSemVer('1.0.0-Z', '1.0.0-a') < 0)
+    assert.ok(compareSemVer('1.0.0-a', '1.0.0-Z') > 0)
+  })
+})
+
 describe('isPrerelease', () => {
   it('should return false for stable version', () => {
     assert.equal(isPrerelease('1.0.0'), false)

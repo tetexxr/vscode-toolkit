@@ -109,13 +109,14 @@ const HTML_NAMED_ENTITIES: Record<string, string> = {
 
 export function htmlDecode(input: string): string {
   return input.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z][a-zA-Z0-9]*);/g, (match, body: string) => {
+    // fromCodePoint throws RangeError beyond 0x10FFFF — keep invalid refs as-is.
     if (body.startsWith('#x') || body.startsWith('#X')) {
       const code = parseInt(body.substring(2), 16)
-      return Number.isFinite(code) ? String.fromCodePoint(code) : match
+      return Number.isFinite(code) && code <= 0x10ffff ? String.fromCodePoint(code) : match
     }
     if (body.startsWith('#')) {
       const code = parseInt(body.substring(1), 10)
-      return Number.isFinite(code) ? String.fromCodePoint(code) : match
+      return Number.isFinite(code) && code <= 0x10ffff ? String.fromCodePoint(code) : match
     }
     const replacement = HTML_NAMED_ENTITIES[body]
     return replacement !== undefined ? replacement : match
@@ -194,4 +195,42 @@ export function formatDecodedJwt(decoded: DecodedJwt): string {
     '// Signature (not verified)',
     JSON.stringify(decoded.signature)
   ].join('\n')
+}
+
+/* -------------------------------------------------------------------------- */
+/*  JSON utilities                                                            */
+/* -------------------------------------------------------------------------- */
+
+function parseJsonStrict(input: string): unknown {
+  try {
+    return JSON.parse(input)
+  } catch (error) {
+    throw new TransformError(`Invalid JSON: ${(error as Error).message}`)
+  }
+}
+
+export function jsonPrettify(input: string): string {
+  return JSON.stringify(parseJsonStrict(input), null, 2)
+}
+
+export function jsonMinify(input: string): string {
+  return JSON.stringify(parseJsonStrict(input))
+}
+
+export function jsonSortKeys(input: string): string {
+  return JSON.stringify(sortKeysDeep(parseJsonStrict(input)), null, 2)
+}
+
+function sortKeysDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sortKeysDeep)
+  }
+  if (value !== null && typeof value === 'object') {
+    const sorted: Record<string, unknown> = {}
+    for (const key of Object.keys(value).sort()) {
+      sorted[key] = sortKeysDeep((value as Record<string, unknown>)[key])
+    }
+    return sorted
+  }
+  return value
 }

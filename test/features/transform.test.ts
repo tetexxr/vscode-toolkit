@@ -8,6 +8,9 @@ import {
   urlDecode,
   htmlEncode,
   htmlDecode,
+  jsonMinify,
+  jsonPrettify,
+  jsonSortKeys,
   hexEncode,
   hexDecode,
   hash,
@@ -105,6 +108,11 @@ describe('html encode/decode', () => {
     assert.equal(htmlDecode('it&apos;s'), "it's")
     assert.equal(htmlDecode('a &nbsp; b'), 'a   b')
     assert.equal(htmlDecode('caf&eacute;'), 'caf&eacute;') // unknown name is preserved
+  })
+
+  it('should preserve numeric references beyond the unicode range instead of throwing', () => {
+    assert.equal(htmlDecode('&#x110000;'), '&#x110000;')
+    assert.equal(htmlDecode('&#9999999999;'), '&#9999999999;')
   })
 
   it('should decode numeric and hex entities', () => {
@@ -213,6 +221,20 @@ describe('jwt decode', () => {
     assert.throws(() => decodeJwt('not_base64.eyJ9.x'), TransformError)
   })
 
+  it('should throw a TransformError for a token whose payload is not valid JSON', () => {
+    const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')
+    const payload = Buffer.from('not json at all').toString('base64url')
+    assert.throws(() => decodeJwt(`${header}.${payload}.sig`), /Could not parse JWT payload/)
+  })
+
+  it('should decode a token with an empty signature', () => {
+    const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64url')
+    const payload = Buffer.from(JSON.stringify({ sub: '42' })).toString('base64url')
+    const decoded = decodeJwt(`${header}.${payload}.`)
+    assert.equal(decoded.signature, '')
+    assert.deepEqual(decoded.payload, { sub: '42' })
+  })
+
   it('should format a decoded JWT as readable jsonc-style output', () => {
     const formatted = formatDecodedJwt(decodeJwt(SAMPLE_JWT))
     assert.ok(formatted.includes('// Header'))
@@ -220,5 +242,28 @@ describe('jwt decode', () => {
     assert.ok(formatted.includes('// Payload'))
     assert.ok(formatted.includes('"sub": "1234567890"'))
     assert.ok(formatted.includes('// Signature (not verified)'))
+  })
+})
+
+describe('json utilities', () => {
+  it('should prettify minified JSON with 2-space indentation', () => {
+    assert.equal(jsonPrettify('{"a":1,"b":[2,3]}'), '{\n  "a": 1,\n  "b": [\n    2,\n    3\n  ]\n}')
+  })
+
+  it('should minify pretty JSON', () => {
+    assert.equal(jsonMinify('{\n  "a": 1,\n  "b": [2, 3]\n}'), '{"a":1,"b":[2,3]}')
+  })
+
+  it('should sort object keys recursively', () => {
+    assert.equal(
+      jsonSortKeys('{"b":{"z":1,"a":2},"a":[{"y":1,"x":2}]}'),
+      JSON.stringify({ a: [{ x: 2, y: 1 }], b: { a: 2, z: 1 } }, null, 2)
+    )
+  })
+
+  it('should throw a TransformError for invalid JSON input', () => {
+    assert.throws(() => jsonPrettify('{oops}'), TransformError)
+    assert.throws(() => jsonMinify(''), TransformError)
+    assert.throws(() => jsonSortKeys('[1,'), TransformError)
   })
 })

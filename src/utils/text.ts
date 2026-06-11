@@ -178,7 +178,8 @@ export function toSlug(input: string, options: SlugOptions = {}): string {
 
   // Collapse consecutive separators
   const escapedSep = separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  result = result.replace(new RegExp(`${escapedSep}{2,}`, 'g'), separator)
+  // (?:...) so multi-character separators repeat as a unit, not just their last char
+  result = result.replace(new RegExp(`(?:${escapedSep}){2,}`, 'g'), separator)
 
   // Trim leading/trailing separator
   result = result.replace(new RegExp(`^${escapedSep}|${escapedSep}$`, 'g'), '')

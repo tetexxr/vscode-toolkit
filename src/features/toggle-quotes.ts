@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { dropOverlappingEdits } from '../utils/edits'
 import {
   convertQuote,
   findStringAt,
@@ -113,7 +114,7 @@ async function applyToggle(targetQuote?: QuoteChar): Promise<void> {
   }
 
   await editor.edit(builder => {
-    for (const e of edits) {
+    for (const e of dropOverlappingEdits(edits)) {
       builder.replace(e.range, e.replacement)
     }
   })

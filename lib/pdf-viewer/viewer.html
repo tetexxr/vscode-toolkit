@@ -273,6 +273,8 @@
           for (var a = 0; a < annotations.length; a++) {
             var ann = annotations[a];
             if (ann.subtype !== 'Link' || !ann.url) continue;
+            // PDF annotations are untrusted content: only web and mail links.
+            if (!/^(https?:\/\/|mailto:)/i.test(ann.url)) continue;
 
             var rect = ann.rect;
             var x1 = rect[0], y1 = rect[1], x2 = rect[2], y2 = rect[3];

@@ -44,6 +44,18 @@ describe('buildInstallArgs', () => {
   })
 })
 
+describe('buildInstallArgs version specs', () => {
+  it('should build the spec with range characters intact', () => {
+    const { args } = buildInstallArgs('npm', 'lodash', '^4.17.21', false)
+    assert.ok(args.includes('lodash@^4.17.21'))
+  })
+
+  it('should build scoped package specs with a version', () => {
+    const { args } = buildInstallArgs('yarn', '@scope/pkg', '1.0.0', true)
+    assert.deepEqual(args, ['add', '@scope/pkg@1.0.0', '--dev'])
+  })
+})
+
 describe('buildUninstallArgs', () => {
   it('should build an npm uninstall command when the manager is npm', () => {
     const { cmd, args } = buildUninstallArgs('npm', 'express')

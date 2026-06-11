@@ -1,17 +1,49 @@
 import * as vscode from 'vscode'
 import { randomUUID } from 'node:crypto'
+import * as path from 'node:path'
 import {
+  buildCurl,
+  environmentNames,
   findHeader,
   findRequestAtLine,
   formatResponse,
   inferLanguageFromContentType,
   interpolate,
+  mergeEnvironmentVariables,
+  parseEnvironmentFile,
   parseHttpFile,
+  type EnvironmentFile,
   type HttpRequest,
   type ParsedHttpFile
 } from './rest-client-utils'
 
 const FILE_GLOB = '**/*.{http,rest}'
+
+/** Hard cap on buffered response bodies (mirrors utils/http.ts). */
+const MAX_RESPONSE_BYTES = 50 * 1024 * 1024
+
+/** Reads the response body as text, aborting if it exceeds the cap. */
+async function readBodyCapped(response: Response): Promise<string> {
+  if (!response.body) {
+    return ''
+  }
+  const reader = response.body.getReader() as ReadableStreamDefaultReader<Uint8Array>
+  const chunks: Uint8Array[] = []
+  let received = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done || value === undefined) {
+      break
+    }
+    received += value.byteLength
+    if (received > MAX_RESPONSE_BYTES) {
+      await reader.cancel()
+      throw new Error(`Response body exceeded ${MAX_RESPONSE_BYTES / (1024 * 1024)} MB — request aborted.`)
+    }
+    chunks.push(value)
+  }
+  return Buffer.concat(chunks).toString('utf-8')
+}
 
 interface RestClientConfig {
   timeoutMs: number
@@ -42,6 +74,111 @@ function variablesAsRecord(parsed: ParsedHttpFile): Record<string, string> {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Environments                                                              */
+/* -------------------------------------------------------------------------- */
+
+const ENV_STATE_KEY = 'toolkit.restClient.environment'
+const ENV_FILE_NAME = 'http-client.env.json'
+const PRIVATE_ENV_FILE_NAME = 'http-client.private.env.json'
+
+let extensionContext: vscode.ExtensionContext | undefined
+let environmentStatusBar: vscode.StatusBarItem | undefined
+
+function selectedEnvironment(): string {
+  return extensionContext?.workspaceState.get<string>(ENV_STATE_KEY, '') ?? ''
+}
+
+async function readJsonIfExists(uri: vscode.Uri): Promise<EnvironmentFile | null> {
+  try {
+    return parseEnvironmentFile(Buffer.from(await vscode.workspace.fs.readFile(uri)).toString('utf8'))
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Finds http-client.env.json (+ private overlay) next to the .http file,
+ * walking up to the workspace folder root. The nearest directory containing
+ * either file wins; both files are read from that directory.
+ */
+async function findEnvironmentFiles(
+  documentUri: vscode.Uri
+): Promise<{ publicFile: EnvironmentFile | null; privateFile: EnvironmentFile | null }> {
+  const folder = vscode.workspace.getWorkspaceFolder(documentUri)
+  const stopAt = folder ? folder.uri.fsPath : path.dirname(documentUri.fsPath)
+  let dir = path.dirname(documentUri.fsPath)
+  for (;;) {
+    const publicFile = await readJsonIfExists(vscode.Uri.file(path.join(dir, ENV_FILE_NAME)))
+    const privateFile = await readJsonIfExists(vscode.Uri.file(path.join(dir, PRIVATE_ENV_FILE_NAME)))
+    if (publicFile || privateFile) {
+      return { publicFile, privateFile }
+    }
+    if (dir === stopAt || path.dirname(dir) === dir) {
+      return { publicFile: null, privateFile: null }
+    }
+    dir = path.dirname(dir)
+  }
+}
+
+async function loadEnvironmentVariables(documentUri: vscode.Uri): Promise<Record<string, string>> {
+  const environment = selectedEnvironment()
+  if (!environment) {
+    return {}
+  }
+  const { publicFile, privateFile } = await findEnvironmentFiles(documentUri)
+  return mergeEnvironmentVariables(publicFile, privateFile, environment)
+}
+
+function updateEnvironmentStatusBar(): void {
+  if (!environmentStatusBar) {
+    return
+  }
+  const editor = vscode.window.activeTextEditor
+  if (!editor || !isHttpFile(editor.document)) {
+    environmentStatusBar.hide()
+    return
+  }
+  const environment = selectedEnvironment()
+  environmentStatusBar.text = `$(globe) ${environment || 'No env'}`
+  environmentStatusBar.tooltip = environment
+    ? `REST Client environment: ${environment} — click to change`
+    : 'REST Client: no environment selected — click to choose one'
+  environmentStatusBar.show()
+}
+
+async function selectEnvironment(): Promise<void> {
+  const editor = vscode.window.activeTextEditor
+  if (!editor || !isHttpFile(editor.document)) {
+    vscode.window.showInformationMessage('Toolkit: open a .http or .rest file to select its environment.')
+    return
+  }
+  const { publicFile, privateFile } = await findEnvironmentFiles(editor.document.uri)
+  const names = environmentNames(publicFile, privateFile)
+  if (names.length === 0) {
+    vscode.window.showInformationMessage(
+      `Toolkit: no ${ENV_FILE_NAME} found next to this file (or in a parent folder up to the workspace root).`
+    )
+    return
+  }
+  type Item = vscode.QuickPickItem & { environment: string }
+  const current = selectedEnvironment()
+  const items: Item[] = [
+    { label: '$(circle-slash) No environment', environment: '' },
+    ...names.map(name => ({
+      label: `$(globe) ${name}`,
+      description: name === current ? 'current' : '',
+      environment: name
+    }))
+  ]
+  const picked = await vscode.window.showQuickPick(items, { placeHolder: 'REST Client environment' })
+  if (!picked) {
+    return
+  }
+  await extensionContext?.workspaceState.update(ENV_STATE_KEY, picked.environment)
+  updateEnvironmentStatusBar()
+}
+
+/* -------------------------------------------------------------------------- */
 /*  CodeLens                                                                  */
 /* -------------------------------------------------------------------------- */
 
@@ -51,13 +188,20 @@ class HttpCodeLensProvider implements vscode.CodeLensProvider {
       return []
     }
     const parsed = parseHttpFile(document.getText())
-    return parsed.requests.map((req, index) => {
+    return parsed.requests.flatMap((req, index) => {
       const range = new vscode.Range(req.startLine, 0, req.startLine, 0)
-      return new vscode.CodeLens(range, {
-        title: `$(play) Send Request${req.name && req.name !== `Request ${index + 1}` ? `: ${req.name}` : ''}`,
-        command: 'toolkit.restClient.sendByIndex',
-        arguments: [document.uri.toString(), index]
-      })
+      return [
+        new vscode.CodeLens(range, {
+          title: `$(play) Send Request${req.name && req.name !== `Request ${index + 1}` ? `: ${req.name}` : ''}`,
+          command: 'toolkit.restClient.sendByIndex',
+          arguments: [document.uri.toString(), index]
+        }),
+        new vscode.CodeLens(range, {
+          title: 'Copy as curl',
+          command: 'toolkit.restClient.copyAsCurlByIndex',
+          arguments: [document.uri.toString(), index]
+        })
+      ]
     })
   }
 }
@@ -101,7 +245,7 @@ async function executeRequest(
       signal: controller.signal,
       redirect: config.followRedirects ? 'follow' : 'manual'
     })
-    const text = await response.text()
+    const text = await readBodyCapped(response)
     const durationMs = Date.now() - start
     const responseHeaders: Array<{ name: string; value: string }> = []
     response.headers.forEach((value, name) => {
@@ -139,9 +283,14 @@ async function showResponse(
   await vscode.window.showTextDocument(doc, { preview: false, viewColumn: vscode.ViewColumn.Beside })
 }
 
-async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile): Promise<void> {
+async function composeVariables(parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<Record<string, string>> {
+  // File-level @vars win over environment variables.
+  return { ...(await loadEnvironmentVariables(documentUri)), ...variablesAsRecord(parsed) }
+}
+
+async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<void> {
   const config = readConfig()
-  const variables = variablesAsRecord(parsed)
+  const variables = await composeVariables(parsed, documentUri)
   try {
     const response = await vscode.window.withProgress(
       {
@@ -177,7 +326,7 @@ async function sendAtCursor(): Promise<void> {
     vscode.window.showInformationMessage('Toolkit: place the cursor inside a request block.')
     return
   }
-  await runAndShow(req, parsed)
+  await runAndShow(req, parsed, editor.document.uri)
 }
 
 async function sendByIndex(uriString: string, index: number): Promise<void> {
@@ -188,7 +337,46 @@ async function sendByIndex(uriString: string, index: number): Promise<void> {
   if (!req) {
     return
   }
-  await runAndShow(req, parsed)
+  await runAndShow(req, parsed, uri)
+}
+
+async function copyCurlFor(req: HttpRequest, parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<void> {
+  const variables = await composeVariables(parsed, documentUri)
+  const opts = { nextUuid: () => randomUUID() }
+  const curl = buildCurl({
+    method: req.method,
+    url: interpolate(req.url, variables, opts),
+    headers: req.headers.map(h => ({ name: h.name, value: interpolate(h.value, variables, opts) })),
+    body: interpolate(req.body, variables, opts)
+  })
+  await vscode.env.clipboard.writeText(curl)
+  vscode.window.showInformationMessage('Toolkit: curl command copied to the clipboard.')
+}
+
+async function copyAsCurl(): Promise<void> {
+  const editor = vscode.window.activeTextEditor
+  if (!editor || !isHttpFile(editor.document)) {
+    vscode.window.showInformationMessage('Toolkit: open a .http or .rest file first.')
+    return
+  }
+  const parsed = parseHttpFile(editor.document.getText())
+  const req = findRequestAtLine(parsed, editor.selection.active.line)
+  if (!req) {
+    vscode.window.showInformationMessage('Toolkit: place the cursor inside a request block.')
+    return
+  }
+  await copyCurlFor(req, parsed, editor.document.uri)
+}
+
+async function copyAsCurlByIndex(uriString: string, index: number): Promise<void> {
+  const uri = vscode.Uri.parse(uriString)
+  const document = await vscode.workspace.openTextDocument(uri)
+  const parsed = parseHttpFile(document.getText())
+  const req = parsed.requests[index]
+  if (!req) {
+    return
+  }
+  await copyCurlFor(req, parsed, uri)
 }
 
 async function sendAll(): Promise<void> {
@@ -203,7 +391,7 @@ async function sendAll(): Promise<void> {
     return
   }
   for (const req of parsed.requests) {
-    await runAndShow(req, parsed)
+    await runAndShow(req, parsed, editor.document.uri)
   }
 }
 
@@ -218,9 +406,19 @@ function cancelAll(): void {
 }
 
 export function registerRestClientCommands(context: vscode.ExtensionContext): void {
+  extensionContext = context
+
   context.subscriptions.push(
     vscode.languages.registerCodeLensProvider({ pattern: FILE_GLOB }, new HttpCodeLensProvider())
   )
+
+  environmentStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
+  environmentStatusBar.command = 'toolkit.restClient.selectEnvironment'
+  context.subscriptions.push(
+    environmentStatusBar,
+    vscode.window.onDidChangeActiveTextEditor(() => updateEnvironmentStatusBar())
+  )
+  updateEnvironmentStatusBar()
 
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.restClient.send', () => sendAtCursor()),
@@ -228,6 +426,11 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
       sendByIndex(uri, index)
     ),
     vscode.commands.registerCommand('toolkit.restClient.sendAll', () => sendAll()),
-    vscode.commands.registerCommand('toolkit.restClient.cancelAll', () => cancelAll())
+    vscode.commands.registerCommand('toolkit.restClient.cancelAll', () => cancelAll()),
+    vscode.commands.registerCommand('toolkit.restClient.selectEnvironment', () => selectEnvironment()),
+    vscode.commands.registerCommand('toolkit.restClient.copyAsCurl', () => copyAsCurl()),
+    vscode.commands.registerCommand('toolkit.restClient.copyAsCurlByIndex', (uri: string, index: number) =>
+      copyAsCurlByIndex(uri, index)
+    )
   )
 }

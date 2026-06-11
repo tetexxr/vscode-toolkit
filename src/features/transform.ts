@@ -11,10 +11,14 @@ import {
   hexEncode,
   htmlDecode,
   htmlEncode,
+  jsonMinify,
+  jsonPrettify,
+  jsonSortKeys,
   TransformError,
   urlDecode,
   urlEncode
 } from './transform-utils'
+import { jsonToYaml, yamlToJson } from './yaml-utils'
 
 type StringTransform = (input: string) => string
 
@@ -84,6 +88,36 @@ const TRANSFORMS: TransformDefinition[] = [
     label: 'SHA-512',
     description: 'SHA-512 hex digest',
     fn: input => hash(input, 'sha512')
+  },
+  {
+    command: 'toolkit.transform.jsonToYaml',
+    label: 'JSON to YAML',
+    description: 'Convert JSON to YAML',
+    fn: jsonToYaml
+  },
+  {
+    command: 'toolkit.transform.yamlToJson',
+    label: 'YAML to JSON',
+    description: 'Convert YAML to pretty-printed JSON',
+    fn: yamlToJson
+  },
+  {
+    command: 'toolkit.transform.jsonPrettify',
+    label: 'JSON Prettify',
+    description: 'Re-indent JSON with 2 spaces',
+    fn: jsonPrettify
+  },
+  {
+    command: 'toolkit.transform.jsonMinify',
+    label: 'JSON Minify',
+    description: 'Strip all whitespace from JSON',
+    fn: jsonMinify
+  },
+  {
+    command: 'toolkit.transform.jsonSortKeys',
+    label: 'JSON Sort Keys',
+    description: 'Recursively sort object keys (pretty-printed)',
+    fn: jsonSortKeys
   }
 ]
 

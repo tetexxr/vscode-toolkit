@@ -3,6 +3,8 @@
  */
 
 import { execFile } from 'child_process'
+import { existsSync } from 'fs'
+import * as path from 'path'
 
 function gitExec(cwd: string, args: string[], timeout = 5000, env?: Record<string, string>): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -62,18 +64,22 @@ export interface RemoteInfo {
   repo: string
 }
 
-export async function getFileLogPatch(cwd: string, relativePath: string): Promise<string> {
-  return gitExec(
-    cwd,
-    [
-      'log',
-      '-p',
-      '--format=%n---COMMIT---%ncommit %H%nAuthor: %an <%ae>%nDate:   %ar (%ai)%n%n    %s%n',
-      '--',
-      relativePath
-    ],
-    30000
-  )
+export async function getFileLogPatch(
+  cwd: string,
+  relativePath: string,
+  maxCount?: number,
+  skip?: number
+): Promise<string> {
+  const args = ['log', '-p', '--format=%n---COMMIT---%ncommit %H%nAuthor: %an <%ae>%nDate:   %ar (%ai)%n%n    %s%n']
+  // Paged: a file's full history with patches can blow past maxBuffer.
+  if (maxCount !== undefined) {
+    args.push(`--max-count=${maxCount}`)
+  }
+  if (skip !== undefined && skip > 0) {
+    args.push(`--skip=${skip}`)
+  }
+  args.push('--', relativePath)
+  return gitExec(cwd, args, 30000)
 }
 
 export interface BlameInfo {
@@ -144,29 +150,29 @@ export interface ChangedFile {
  */
 export function parseGitStatus(output: string): ChangedFile[] {
   const files: ChangedFile[] = []
-  for (const line of output.split('\n')) {
-    if (!line || line.length < 4) continue
-    const x = line[0]
-    const y = line[1]
+  const tokens = output.split('\0')
+  for (let i = 0; i < tokens.length; i++) {
+    const entry = tokens[i]
+    if (!entry || entry.length < 4) continue
+    const x = entry[0]
+    const y = entry[1]
+    const filePath = entry.substring(3)
+    // Renames/copies carry the original path as an extra NUL-separated
+    // field after the new path; consume it so it isn't read as an entry.
+    if (x === 'R' || x === 'C') i++
     // Skip deleted files
     if (x === 'D' || y === 'D') continue
     // Skip ignored files
     if (x === '!' || y === '!') continue
-    let filePath = line.substring(3)
-    // Handle renames: "R  old -> new" — take the new path
-    if (x === 'R') {
-      const arrow = filePath.indexOf(' -> ')
-      if (arrow !== -1) {
-        filePath = filePath.substring(arrow + 4)
-      }
-    }
     files.push({ status: `${x}${y}`.trim(), path: filePath })
   }
   return files
 }
 
 export async function getChangedFiles(cwd: string): Promise<ChangedFile[]> {
-  const output = await gitExec(cwd, ['status', '--porcelain'])
+  // -z: NUL-separated entries with unquoted paths, so names with accents,
+  // quotes, or " -> " parse correctly.
+  const output = await gitExec(cwd, ['status', '--porcelain', '-z'])
   return parseGitStatus(output)
 }
 
@@ -194,14 +200,41 @@ export function getChangedFileDirectories(filePaths: string[]): string[] {
 }
 
 export function parseRemoteUrl(url: string): RemoteInfo | undefined {
-  const match = url.match(/([\w-]+(?:\.[\w-]+)+)[:/]+([^/]+)\/(.*?)(?:\.git|\/)?$/)
-  if (!match) {
+  const trimmed = url.trim()
+  let host: string
+  let pathname: string
+
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) {
+    // Scheme form (ssh://, https://, git://...): URL handles user@ and :port.
+    try {
+      const parsed = new URL(trimmed)
+      host = parsed.hostname
+      pathname = parsed.pathname
+    } catch {
+      return undefined
+    }
+  } else {
+    // scp-like form: [user@]host:path
+    const match = trimmed.match(/^(?:[^@/]+@)?([^:/]+):(.+)$/)
+    if (!match) {
+      return undefined
+    }
+    host = match[1]
+    pathname = match[2]
+  }
+
+  const cleanPath = pathname
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '')
+    .replace(/\.git$/, '')
+  const slash = cleanPath.indexOf('/')
+  if (!host || slash <= 0 || slash === cleanPath.length - 1) {
     return undefined
   }
   return {
-    domain: match[1],
-    owner: match[2],
-    repo: match[3]
+    domain: host,
+    owner: cleanPath.slice(0, slash),
+    repo: cleanPath.slice(slash + 1)
   }
 }
 
@@ -212,8 +245,9 @@ export interface CommitLogEntry {
   date: string
 }
 
-export async function getCommitLog(cwd: string, count = 200): Promise<CommitLogEntry[]> {
-  const raw = await gitExec(cwd, ['log', `--max-count=${count}`, '--format=%H%x00%s%x00%an%x00%ar'], 30000)
+const LOG_FORMAT = '%H%x00%s%x00%an%x00%ar'
+
+function parseLogOutput(raw: string): CommitLogEntry[] {
   if (!raw) return []
   return raw
     .split('\n')
@@ -222,6 +256,40 @@ export async function getCommitLog(cwd: string, count = 200): Promise<CommitLogE
       const [hash, subject, author, date] = line.split('\x00')
       return { hash, subject, author, date }
     })
+}
+
+export async function getCommitLog(cwd: string, count = 200): Promise<CommitLogEntry[]> {
+  return parseLogOutput(await gitExec(cwd, ['log', `--max-count=${count}`, `--format=${LOG_FORMAT}`], 30000))
+}
+
+/**
+ * Commits on `branch` that HEAD doesn't have (cherry-pick candidates).
+ * --cherry-pick excludes patch-equivalent commits, so something already
+ * cherry-picked (same change, different hash) is not offered again.
+ */
+export async function getCommitsNotInHead(cwd: string, branch: string, count = 200): Promise<CommitLogEntry[]> {
+  return parseLogOutput(
+    await gitExec(
+      cwd,
+      ['log', '--cherry-pick', '--right-only', `HEAD...${branch}`, `--max-count=${count}`, `--format=${LOG_FORMAT}`],
+      30000
+    )
+  )
+}
+
+export async function listLocalBranches(cwd: string): Promise<string[]> {
+  const raw = await gitExec(cwd, ['for-each-ref', '--sort=-committerdate', 'refs/heads', '--format=%(refname:short)'])
+  return raw.split('\n').map(b => b.trim()).filter(Boolean)
+}
+
+export async function cherryPickCommit(cwd: string, hash: string): Promise<void> {
+  await gitExec(cwd, ['cherry-pick', hash], 30000)
+}
+
+/** Whether a cherry-pick stopped on conflicts and is waiting for resolution. */
+export async function isCherryPickInProgress(cwd: string): Promise<boolean> {
+  const raw = await gitExec(cwd, ['rev-parse', '--git-path', 'CHERRY_PICK_HEAD'])
+  return existsSync(path.resolve(cwd, raw.trim()))
 }
 
 export async function getCommitMessage(cwd: string, hash: string): Promise<string> {
@@ -249,21 +317,33 @@ export async function getCommitFiles(cwd: string, hash: string): Promise<CommitF
   const parents = await getCommitParents(cwd, hash)
   const nameStatusArgs =
     parents.length === 0
-      ? ['diff-tree', '--no-commit-id', '--root', '-r', '--name-status', hash]
-      : ['diff', '--name-status', parents[0], hash]
+      ? ['diff-tree', '--no-commit-id', '--root', '-r', '--name-status', '-z', hash]
+      : ['diff', '--name-status', '-z', parents[0], hash]
   const numstatArgs =
     parents.length === 0
-      ? ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', hash]
-      : ['diff', '--numstat', parents[0], hash]
+      ? ['diff-tree', '--no-commit-id', '--root', '-r', '--numstat', '-z', hash]
+      : ['diff', '--numstat', '-z', parents[0], hash]
   const [statusRaw, numstatRaw] = await Promise.all([
     gitExec(cwd, nameStatusArgs, 30000),
     gitExec(cwd, numstatArgs, 30000)
   ])
 
+  // --numstat -z: "add\tdel\tpath\0", except renames/copies, which come as
+  // "add\tdel\t\0src\0dst\0" (empty path field, then both paths as tokens).
+  // Keyed by the new path to match the name-status pass below.
   const stats = new Map<string, { additions: number; deletions: number; isBinary: boolean }>()
-  for (const line of numstatRaw.split('\n').filter(Boolean)) {
-    const [add, del, ...rest] = line.split('\t')
-    const filePath = rest.join('\t')
+  const numstatTokens = numstatRaw.split('\0')
+  for (let i = 0; i < numstatTokens.length; i++) {
+    const entry = numstatTokens[i]
+    if (!entry) continue
+    const match = entry.match(/^([0-9-]+)\t([0-9-]+)\t([\s\S]*)$/)
+    if (!match) continue
+    const [, add, del, pathField] = match
+    let filePath = pathField
+    if (filePath === '') {
+      filePath = numstatTokens[i + 2] ?? ''
+      i += 2
+    }
     const isBinary = add === '-' && del === '-'
     stats.set(filePath, {
       additions: isBinary ? 0 : parseInt(add, 10),
@@ -272,11 +352,20 @@ export async function getCommitFiles(cwd: string, hash: string): Promise<CommitF
     })
   }
 
+  // --name-status -z: "STATUS\0path\0", with two paths (src, dst) for R/C.
   const files: CommitFileInfo[] = []
-  for (const line of statusRaw.split('\n').filter(Boolean)) {
-    const [statusCode, ...pathParts] = line.split('\t')
-    const filePath = pathParts[pathParts.length - 1]
-    const status = statusCode.charAt(0)
+  const statusTokens = statusRaw.split('\0')
+  for (let i = 0; i < statusTokens.length; i++) {
+    const statusToken = statusTokens[i]
+    if (!statusToken) continue
+    const status = statusToken.charAt(0)
+    let filePath = statusTokens[i + 1] ?? ''
+    i++
+    if (status === 'R' || status === 'C') {
+      filePath = statusTokens[i + 1] ?? ''
+      i++
+    }
+    if (!filePath) continue
     const stat = stats.get(filePath) || { additions: 0, deletions: 0, isBinary: false }
     files.push({ status, path: filePath, ...stat })
   }
@@ -309,6 +398,15 @@ export async function hasUncommittedChanges(cwd: string): Promise<boolean> {
   return status.length > 0
 }
 
+/** Whether a rebase (interactive or am-based) is currently in progress. */
+export async function isRebaseInProgress(cwd: string): Promise<boolean> {
+  const raw = await gitExec(cwd, ['rev-parse', '--git-path', 'rebase-merge', '--git-path', 'rebase-apply'])
+  return raw
+    .split('\n')
+    .map(p => p.trim())
+    .some(p => p.length > 0 && existsSync(path.resolve(cwd, p)))
+}
+
 export async function editCommitMessage(
   cwd: string,
   hash: string,
@@ -333,12 +431,18 @@ export async function editCommitMessage(
     }
     await gitExec(cwd, args, 30000, dateEnv)
   } else {
+    // Checked before the dirty-tree guard: a conflicted rebase also makes the
+    // working tree dirty, and "rebase in progress" is the actionable error.
+    if (await isRebaseInProgress(cwd)) {
+      throw new Error(
+        'A rebase is already in progress in this repository. Finish or abort it before editing older commits.'
+      )
+    }
+
     const status = await gitExec(cwd, ['status', '--porcelain']).catch(() => '')
     if (status) {
       throw new Error('Working tree has uncommitted changes. Please commit or stash them before editing older commits.')
     }
-
-    await gitExec(cwd, ['rebase', '--abort']).catch(() => {})
 
     const shortHash = hash.substring(0, 7)
     const parentHash = await gitExec(cwd, ['rev-parse', `${hash}^`])
@@ -348,13 +452,76 @@ export async function editCommitMessage(
       amendArgs.push('--date', newDate)
     }
 
-    // --committer-date-is-author-date keeps later commits' committer date equal to
-    // their original author date instead of being reset to "now" by rebase --continue.
-    await gitExec(cwd, ['rebase', '-i', '--committer-date-is-author-date', parentHash], 60000, {
-      GIT_SEQUENCE_EDITOR: `sed -i '' 's/^pick ${shortHash}/edit ${shortHash}/'`
-    })
+    // Portable sequence editor: rewrites the rebase todo with Node instead of sed
+    // (BSD and GNU sed disagree on -i, and Windows has no sed). Git appends the
+    // todo path as the last argument. ELECTRON_RUN_AS_NODE makes VS Code's
+    // Electron binary behave as plain Node when process.execPath points at it.
+    const todoScript = `const fs=require("fs");const f=process.argv[1];fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/^pick ${shortHash}/m,"edit ${shortHash}"))`
 
-    await gitExec(cwd, amendArgs, 30000, dateEnv)
-    await gitExec(cwd, ['rebase', '--continue'], 30000)
+    try {
+      // --committer-date-is-author-date keeps later commits' committer date equal to
+      // their original author date instead of being reset to "now" by rebase --continue.
+      await gitExec(cwd, ['rebase', '-i', '--committer-date-is-author-date', parentHash], 60000, {
+        GIT_SEQUENCE_EDITOR: `"${process.execPath}" -e '${todoScript}'`,
+        ELECTRON_RUN_AS_NODE: '1'
+      })
+
+      await gitExec(cwd, amendArgs, 30000, dateEnv)
+      await gitExec(cwd, ['rebase', '--continue'], 30000)
+    } catch (err) {
+      // This rebase is ours (we checked none was running): roll it back so the
+      // repository is left exactly as it was.
+      await gitExec(cwd, ['rebase', '--abort']).catch(() => {})
+      const message = err instanceof Error ? err.message : String(err)
+      throw new Error(`Editing the commit failed and the rebase was rolled back: ${message}`)
+    }
+  }
+}
+
+/**
+ * Melds `hash` into its parent via an automated interactive rebase.
+ * 'fixup' keeps the parent's message; 'squash' keeps both, concatenated.
+ */
+export async function squashIntoParent(cwd: string, hash: string, mode: 'fixup' | 'squash'): Promise<void> {
+  if (await isRebaseInProgress(cwd)) {
+    throw new Error('A rebase is already in progress in this repository. Finish or abort it before squashing commits.')
+  }
+  const status = await gitExec(cwd, ['status', '--porcelain']).catch(() => '')
+  if (status) {
+    throw new Error('Working tree has uncommitted changes. Please commit or stash them before squashing commits.')
+  }
+  const parents = await getCommitParents(cwd, hash)
+  if (parents.length === 0) {
+    throw new Error('The root commit has no parent to squash into.')
+  }
+  if (parents.length > 1) {
+    throw new Error('Merge commits cannot be squashed into a parent.')
+  }
+
+  // The rebase must start at the parent's parent so the parent itself is in
+  // the todo; when the parent is the root commit, rebase from --root.
+  const grandParents = await getCommitParents(cwd, parents[0])
+  const baseArgs = grandParents.length === 0 ? ['--root'] : [`${parents[0]}^`]
+
+  const shortHash = hash.substring(0, 7)
+  const todoScript = `const fs=require("fs");const f=process.argv[1];fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/^pick ${shortHash}/m,"${mode} ${shortHash}"))`
+
+  const env: Record<string, string> = {
+    GIT_SEQUENCE_EDITOR: `"${process.execPath}" -e '${todoScript}'`,
+    ELECTRON_RUN_AS_NODE: '1'
+  }
+  if (mode === 'squash') {
+    // squash stops to edit the combined message — accept git's default
+    // (both messages concatenated) with a no-op editor.
+    env.GIT_EDITOR = `"${process.execPath}" -e ""`
+  }
+
+  try {
+    await gitExec(cwd, ['rebase', '-i', '--committer-date-is-author-date', ...baseArgs], 60000, env)
+  } catch (err) {
+    // This rebase is ours (we checked none was running): roll it back.
+    await gitExec(cwd, ['rebase', '--abort']).catch(() => {})
+    const message = err instanceof Error ? err.message : String(err)
+    throw new Error(`Squashing the commit failed and the rebase was rolled back: ${message}`)
   }
 }

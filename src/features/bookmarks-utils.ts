@@ -126,6 +126,51 @@ export class BookmarkStore {
   }
 
   /**
+   * Re-keys bookmarks after a file or folder rename. Matches the exact URI
+   * and everything under it (folder renames arrive as a single event for
+   * the folder). Returns the number of URIs that were moved.
+   */
+  renamePath(oldUri: string, newUri: string): number {
+    const oldPrefix = oldUri.endsWith('/') ? oldUri : oldUri + '/'
+    const newPrefix = newUri.endsWith('/') ? newUri : newUri + '/'
+    let moved = 0
+    for (const uri of Object.keys(this.data)) {
+      let target: string
+      if (uri === oldUri) {
+        target = newUri
+      } else if (uri.startsWith(oldPrefix)) {
+        target = newPrefix + uri.slice(oldPrefix.length)
+      } else {
+        continue
+      }
+      const merged = [...(this.data[target] ?? []), ...this.data[uri]]
+      const seen = new Set<number>()
+      const dedup = merged.filter(b => (seen.has(b.line) ? false : (seen.add(b.line), true)))
+      dedup.sort((a, b) => a.line - b.line)
+      delete this.data[uri]
+      this.data[target] = dedup
+      moved++
+    }
+    return moved
+  }
+
+  /**
+   * Removes bookmarks for a deleted file or folder (exact URI and everything
+   * under it). Returns the number of bookmarks removed.
+   */
+  deletePath(uri: string): number {
+    const prefix = uri.endsWith('/') ? uri : uri + '/'
+    let removed = 0
+    for (const key of Object.keys(this.data)) {
+      if (key === uri || key.startsWith(prefix)) {
+        removed += this.data[key].length
+        delete this.data[key]
+      }
+    }
+    return removed
+  }
+
+  /**
    * Re-aligns line numbers for the given URI after a document edit.
    * Returns the number of bookmarks that were dropped because their
    * lines were removed entirely.
@@ -206,6 +251,68 @@ export function adjustLineNumber(
     return startLine
   }
   return null
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Navigation                                                                */
+/* -------------------------------------------------------------------------- */
+
+export interface BookmarkLocation {
+  uri: string
+  line: number
+}
+
+function compareLocations(a: BookmarkLocation, b: BookmarkLocation): number {
+  if (a.uri !== b.uri) {
+    return a.uri < b.uri ? -1 : 1
+  }
+  return a.line - b.line
+}
+
+/**
+ * The next bookmark strictly after (currentUri, currentLine) in document
+ * order, wrapping around to the first one. With no current position
+ * (no active editor), returns the first bookmark. Undefined when empty.
+ */
+export function findNextBookmark(
+  locations: BookmarkLocation[],
+  currentUri: string | undefined,
+  currentLine: number
+): BookmarkLocation | undefined {
+  if (locations.length === 0) {
+    return undefined
+  }
+  const sorted = [...locations].sort(compareLocations)
+  if (currentUri === undefined) {
+    return sorted[0]
+  }
+  const current = { uri: currentUri, line: currentLine }
+  return sorted.find(loc => compareLocations(loc, current) > 0) ?? sorted[0]
+}
+
+/**
+ * The previous bookmark strictly before (currentUri, currentLine), wrapping
+ * around to the last one. With no current position, returns the last bookmark.
+ */
+export function findPreviousBookmark(
+  locations: BookmarkLocation[],
+  currentUri: string | undefined,
+  currentLine: number
+): BookmarkLocation | undefined {
+  if (locations.length === 0) {
+    return undefined
+  }
+  const sorted = [...locations].sort(compareLocations)
+  if (currentUri === undefined) {
+    return sorted[sorted.length - 1]
+  }
+  const current = { uri: currentUri, line: currentLine }
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    if (compareLocations(sorted[i], current) < 0) {
+      return sorted[i]
+    }
+  }
+  return sorted[sorted.length - 1]
 }
 
 /* -------------------------------------------------------------------------- */

@@ -4,6 +4,10 @@ import {
   isSelfClosingAt,
   findMatchingClosingTag,
   findMatchingOpeningTag,
+  findNearestUnmatchedClosingTag,
+  findNearestUnmatchedOpeningTag,
+  matchTagNameAt,
+  postEventOffsets,
   SELF_CLOSING_TAGS
 } from '../../src/utils/tags'
 
@@ -179,5 +183,125 @@ describe('SELF_CLOSING_TAGS', () => {
     assert.equal(SELF_CLOSING_TAGS.has('div'), false)
     assert.equal(SELF_CLOSING_TAGS.has('span'), false)
     assert.equal(SELF_CLOSING_TAGS.has('p'), false)
+  })
+})
+
+describe('matchTagNameAt', () => {
+  it('should match a tag name at the exact offset', () => {
+    assert.equal(matchTagNameAt('<div>', 1), 'div')
+  })
+
+  it('should not match at an offset where no tag name starts', () => {
+    assert.equal(matchTagNameAt('<div>', 4), undefined)
+    assert.equal(matchTagNameAt('< div>', 1), undefined)
+  })
+
+  it('should stop at > and / characters', () => {
+    assert.equal(matchTagNameAt('<div/>', 1), 'div')
+    assert.equal(matchTagNameAt('<div class="x">', 1), 'div')
+  })
+})
+
+describe('findNearestUnmatchedClosingTag', () => {
+  it('should find the closing tag of the edited opening tag', () => {
+    const text = '<divx>hello</div>'
+    const result = findNearestUnmatchedClosingTag(text, 6)
+    assert.deepEqual(result, { start: 13, end: 16 })
+  })
+
+  it('should skip balanced nested pairs', () => {
+    const text = '<outer><inner></inner></old>'
+    const result = findNearestUnmatchedClosingTag(text, 7)
+    assert.equal(text.slice(result!.start, result!.end), 'old')
+  })
+
+  it('should ignore self-closing and void tags while balancing', () => {
+    const text = '<a><br><img src="x"/></b>'
+    const result = findNearestUnmatchedClosingTag(text, 3)
+    assert.equal(text.slice(result!.start, result!.end), 'b')
+  })
+
+  it('should return undefined when no closing tag exists', () => {
+    assert.equal(findNearestUnmatchedClosingTag('<div>text', 5), undefined)
+  })
+})
+
+describe('findNearestUnmatchedOpeningTag', () => {
+  // Callers pass the offset of the closing tag's own '<' so the edited tag
+  // is excluded from the backward scan.
+  it('should find the opening tag of the edited closing tag', () => {
+    const text = '<div>hello</divx>'
+    const result = findNearestUnmatchedOpeningTag(text, text.indexOf('</'))
+    assert.deepEqual(result, { start: 1, end: 4 })
+  })
+
+  it('should skip balanced nested pairs scanning backward', () => {
+    const text = '<old><inner></inner></x>'
+    const result = findNearestUnmatchedOpeningTag(text, text.indexOf('</x>'))
+    assert.equal(text.slice(result!.start, result!.end), 'old')
+  })
+
+  it('should return undefined when no opening tag exists', () => {
+    assert.equal(findNearestUnmatchedOpeningTag('text</div>', 4), undefined)
+  })
+})
+
+describe('getTagAtOffset — bounded scan', () => {
+  it('should give up after the bounded backward scan in tag-less text', () => {
+    const text = 'a'.repeat(10000)
+    assert.equal(getTagAtOffset(text, 10000), undefined)
+  })
+
+  it('should still find a tag within the scan window', () => {
+    const text = 'x'.repeat(5000) + '<div'
+    const result = getTagAtOffset(text, text.length)
+    assert.equal(result?.tagName, 'div')
+  })
+})
+
+describe('postEventOffsets', () => {
+  it('should equal rangeOffset plus inserted length for a single change', () => {
+    const offsets = postEventOffsets([{ rangeOffset: 10, rangeLength: 0, text: 'x' }])
+    assert.deepEqual(offsets, [11])
+  })
+
+  it('should shift later changes by the net delta of earlier insertions', () => {
+    // Two cursors typing "x" at pre-event offsets 5 and 20
+    const offsets = postEventOffsets([
+      { rangeOffset: 5, rangeLength: 0, text: 'x' },
+      { rangeOffset: 20, rangeLength: 0, text: 'x' }
+    ])
+    assert.deepEqual(offsets, [6, 22])
+  })
+
+  it('should shift later changes negatively after earlier deletions', () => {
+    // Two cursors deleting one character at pre-event offsets 5 and 20
+    const offsets = postEventOffsets([
+      { rangeOffset: 5, rangeLength: 1, text: '' },
+      { rangeOffset: 20, rangeLength: 1, text: '' }
+    ])
+    assert.deepEqual(offsets, [5, 19])
+  })
+
+  it('should preserve the input order regardless of change ordering', () => {
+    // VS Code reports contentChanges in descending offset order
+    const offsets = postEventOffsets([
+      { rangeOffset: 20, rangeLength: 0, text: 'ab' },
+      { rangeOffset: 5, rangeLength: 0, text: 'ab' }
+    ])
+    assert.deepEqual(offsets, [24, 7])
+  })
+
+  it('should handle replacements that change length', () => {
+    // Replace 3 chars with 1 at offset 0, then a change at offset 10
+    const offsets = postEventOffsets([
+      { rangeOffset: 0, rangeLength: 3, text: 'x' },
+      { rangeOffset: 10, rangeLength: 0, text: 'y' }
+    ])
+    assert.deepEqual(offsets, [1, 9])
+  })
+
+  it('should return an empty array for no changes', () => {
+    assert.deepEqual(postEventOffsets([]), [])
   })
 })

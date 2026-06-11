@@ -1,6 +1,13 @@
 import * as vscode from 'vscode'
 import * as path from 'node:path'
-import { BookmarkStore, formatBookmark, type BookmarkData } from './bookmarks-utils'
+import {
+  BookmarkStore,
+  findNextBookmark,
+  findPreviousBookmark,
+  formatBookmark,
+  type BookmarkData,
+  type BookmarkLocation
+} from './bookmarks-utils'
 
 const STORAGE_KEY = 'toolkit.bookmarks.v1'
 
@@ -147,6 +154,37 @@ function relativeFor(uri: string): string {
   return path.basename(u.fsPath)
 }
 
+async function jumpTo(location: BookmarkLocation): Promise<void> {
+  try {
+    const doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(location.uri))
+    const editor = await vscode.window.showTextDocument(doc)
+    const line = Math.min(location.line, doc.lineCount - 1)
+    const position = new vscode.Position(line, 0)
+    editor.selection = new vscode.Selection(position, position)
+    editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenterIfOutsideViewport)
+  } catch {
+    vscode.window.showWarningMessage(`Toolkit: could not open ${relativeFor(location.uri)}.`)
+  }
+}
+
+async function jumpToBookmark(store: BookmarkStore, direction: 'next' | 'previous'): Promise<void> {
+  const locations = store.getAll().map(({ uri, bookmark }) => ({ uri, line: bookmark.line }))
+  if (locations.length === 0) {
+    vscode.window.showInformationMessage('Toolkit: no bookmarks yet.')
+    return
+  }
+  const editor = vscode.window.activeTextEditor
+  const currentUri = editor?.document.uri.toString()
+  const currentLine = editor?.selection.active.line ?? 0
+  const target =
+    direction === 'next'
+      ? findNextBookmark(locations, currentUri, currentLine)
+      : findPreviousBookmark(locations, currentUri, currentLine)
+  if (target) {
+    await jumpTo(target)
+  }
+}
+
 async function showBookmarks(store: BookmarkStore): Promise<void> {
   const all = store.getAll()
   if (all.length === 0) {
@@ -217,6 +255,25 @@ export function registerBookmarkCommands(context: vscode.ExtensionContext): void
         controller.applyToAllEditors()
       }
     }),
+    vscode.workspace.onDidRenameFiles(event => {
+      let moved = 0
+      for (const { oldUri, newUri } of event.files) {
+        moved += store.renamePath(oldUri.toString(), newUri.toString())
+      }
+      if (moved > 0) {
+        void controller.persist()
+        controller.applyToAllEditors()
+      }
+    }),
+    vscode.workspace.onDidDeleteFiles(event => {
+      let removed = 0
+      for (const uri of event.files) {
+        removed += store.deletePath(uri.toString())
+      }
+      if (removed > 0) {
+        void controller.persist()
+      }
+    }),
     vscode.workspace.onDidChangeTextDocument(event => {
       const uri = event.document.uri.toString()
       if (store.getForUri(uri).length === 0) {
@@ -244,6 +301,8 @@ export function registerBookmarkCommands(context: vscode.ExtensionContext): void
     ),
     vscode.commands.registerCommand('toolkit.bookmarks.editLabel', () => editLabel(controller, store)),
     vscode.commands.registerCommand('toolkit.bookmarks.show', () => showBookmarks(store)),
+    vscode.commands.registerCommand('toolkit.bookmarks.next', () => jumpToBookmark(store, 'next')),
+    vscode.commands.registerCommand('toolkit.bookmarks.previous', () => jumpToBookmark(store, 'previous')),
     vscode.commands.registerCommand('toolkit.bookmarks.clearFile', async () => {
       const editor = vscode.window.activeTextEditor
       if (!editor) {

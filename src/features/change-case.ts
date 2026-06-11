@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { dropOverlappingEdits } from '../utils/edits'
 import {
   toCamelCase,
   toSnakeCase,
@@ -83,7 +84,7 @@ function getWordRangeAtPosition(document: vscode.TextDocument, position: vscode.
  * Handles multi-selection, per-line transformation for multi-line selections,
  * and selection restoration with offset tracking.
  */
-function applyTransformation(fn: (input: string) => string): void {
+async function applyTransformation(fn: (input: string) => string): Promise<void> {
   const editor = vscode.window.activeTextEditor
   if (!editor) {
     return
@@ -116,12 +117,13 @@ function applyTransformation(fn: (input: string) => string): void {
     edits.push({ range, replacement: transformed })
   }
 
-  if (edits.length === 0) {
+  const distinct = dropOverlappingEdits(edits)
+  if (distinct.length === 0) {
     return
   }
 
-  editor.edit(editBuilder => {
-    for (const edit of edits) {
+  await editor.edit(editBuilder => {
+    for (const edit of distinct) {
       editBuilder.replace(edit.range, edit.replacement)
     }
   })
@@ -171,7 +173,7 @@ export function registerChangeCaseCommands(context: vscode.ExtensionContext): vo
       })
 
       if (picked) {
-        applyTransformation(picked.fn)
+        await applyTransformation(picked.fn)
       }
     })
   )

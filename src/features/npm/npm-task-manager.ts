@@ -19,14 +19,19 @@ interface QueueEntry {
 export class NpmTaskManager implements vscode.Disposable {
   private queue: QueueEntry[] = []
   private running = false
+  private current: vscode.TaskExecution | undefined
   private disposable: vscode.Disposable
 
   constructor() {
     this.disposable = vscode.tasks.onDidEndTaskProcess(e => {
-      if (e.execution.task.name !== TASK_NAME) {
+      // Correlate by execution identity: several manager instances (project
+      // panel, overview panel) listen to this global event, and all of their
+      // tasks share the same name — the name alone would match foreign tasks.
+      if (!this.current || e.execution !== this.current) {
         return
       }
 
+      this.current = undefined
       const entry = this.queue.shift()
       this.running = false
 
@@ -49,12 +54,27 @@ export class NpmTaskManager implements vscode.Disposable {
       return
     }
     this.running = true
-    vscode.tasks.executeTask(this.queue[0].task)
+    vscode.tasks.executeTask(this.queue[0].task).then(
+      execution => {
+        this.current = execution
+      },
+      () => {
+        // The task failed to start: report it and keep the queue moving.
+        const entry = this.queue.shift()
+        this.running = false
+        this.current = undefined
+        if (entry) {
+          void entry.callback(undefined)
+        }
+        this.runNext()
+      }
+    )
   }
 
   public dispose(): void {
     this.disposable.dispose()
     this.queue = []
+    this.current = undefined
   }
 
   // ── Task factory methods ───────────────────────────────

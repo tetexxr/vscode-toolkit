@@ -1,4 +1,5 @@
 import { formatRelative } from './timestamp-utils'
+import { escapeMd } from '../utils/markdown'
 
 export interface BlameInfo {
   sha: string
@@ -113,8 +114,4 @@ export function formatHover(blame: BlameInfo, options: FormatHoverOptions = {}):
     return PREFIX + [header, bodyFormatted, link].join('\n\n')
   }
   return PREFIX + `${header}  \n${link}`
-}
-
-function escapeMd(text: string): string {
-  return text.replace(/[\\`*_{}[\]()#+\-.!|]/g, m => `\\${m}`)
 }

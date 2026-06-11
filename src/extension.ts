@@ -9,6 +9,7 @@ import { registerNugetCommands } from './features/nuget/nuget'
 import { registerCSharpCommands } from './features/csharp/csharp'
 import { registerNpmIntellisenseCommands } from './features/npm-intellisense'
 import { registerPdfViewer } from './features/pdf-viewer/pdf-provider'
+import { registerSvgPreviewCommands } from './features/svg-preview'
 import { registerGitHistoryCommands } from './features/git-history'
 import { registerAddBracesCodeActions } from './features/add-braces'
 import { registerGitBlameCommands } from './features/git-blame'
@@ -29,6 +30,11 @@ import { registerToggleQuotesCommands } from './features/toggle-quotes'
 import { registerTransformCommands } from './features/transform'
 import { registerInsertCommands } from './features/insert'
 import { registerTimestampCommands } from './features/timestamp'
+import { registerUuidHover } from './features/uuid-hover'
+import { registerEnvCheckCommands } from './features/env-check'
+import { registerDependencyAuditCommands } from './features/dependency-audit'
+import { registerMarkdownTableCommands } from './features/markdown-table'
+import { registerFeatureLauncherCommands } from './features/feature-launcher'
 import { registerJsonToTypeCommands } from './features/json-to-type'
 import { registerPasteImageCommands } from './features/paste-image'
 import { registerClipboardHistoryCommands } from './features/clipboard-history'
@@ -40,6 +46,7 @@ import { registerCompareCommands } from './features/compare'
 import { registerPeekCommitCommands } from './features/peek-commit'
 
 export function activate(context: vscode.ExtensionContext) {
+  registerFeatureLauncherCommands(context)
   registerChangeCaseCommands(context)
   registerSlugCommands(context)
   // registerAutoRenameTag(context);
@@ -50,6 +57,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerCSharpCommands(context)
   registerNpmIntellisenseCommands(context)
   registerPdfViewer(context)
+  registerSvgPreviewCommands(context)
   registerGitHistoryCommands(context)
   registerAddBracesCodeActions(context)
   registerGitBlameCommands(context)
@@ -70,6 +78,10 @@ export function activate(context: vscode.ExtensionContext) {
   registerTransformCommands(context)
   registerInsertCommands(context)
   registerTimestampCommands(context)
+  registerUuidHover(context)
+  registerEnvCheckCommands(context)
+  registerDependencyAuditCommands(context)
+  registerMarkdownTableCommands(context)
   registerJsonToTypeCommands(context)
   registerPasteImageCommands(context)
   registerClipboardHistoryCommands(context)

@@ -91,10 +91,20 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     ]
   }
 
-  const watcher = vscode.workspace.createFileSystemWatcher('**/*')
-  context.subscriptions.push(watcher, watcher.onDidCreate(invalidateCache), watcher.onDidDelete(invalidateCache))
+  // The '**/*' watcher (the most expensive watcher there is) only exists to
+  // invalidate the QuickPick cache — create it on first use of the command,
+  // not on every window startup.
+  let watcher: vscode.FileSystemWatcher | undefined
+  function ensureWatcher(): void {
+    if (watcher) {
+      return
+    }
+    watcher = vscode.workspace.createFileSystemWatcher('**/*')
+    context.subscriptions.push(watcher, watcher.onDidCreate(invalidateCache), watcher.onDidDelete(invalidateCache))
+  }
 
   async function loadItems(): Promise<FileOrFolderItem[]> {
+    ensureWatcher()
     if (cachedItems) {
       return cachedItems
     }
@@ -120,6 +130,9 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
     const files: FileOrFolderItem[] = []
 
     for (const uri of found) {
+      // Resolve against the file's own workspace folder — hanging everything
+      // off the first folder builds nonexistent URIs in multi-root workspaces.
+      const baseUri = vscode.workspace.getWorkspaceFolder(uri)?.uri ?? workspaceFolders[0].uri
       const relPath = vscode.workspace.asRelativePath(uri, false)
       const parts = relPath.split('/')
 
@@ -132,12 +145,13 @@ export function registerFindFileOrFolderCommands(context: vscode.ExtensionContex
 
       for (let i = 1; i < parts.length; i++) {
         const folderRelPath = parts.slice(0, i).join('/')
-        if (!folderSet.has(folderRelPath)) {
-          folderSet.add(folderRelPath)
+        const folderKey = `${baseUri.toString()}/${folderRelPath}`
+        if (!folderSet.has(folderKey)) {
+          folderSet.add(folderKey)
           folders.push({
             label: `$(folder) ${parts[i - 1]}`,
             description: folderRelPath,
-            uri: vscode.Uri.joinPath(workspaceFolders[0].uri, folderRelPath),
+            uri: vscode.Uri.joinPath(baseUri, folderRelPath),
             isDirectory: true
           })
         }

@@ -16,9 +16,16 @@ import {
   editCommitMessage,
   resetToCommit,
   stageFile,
+  getChangedFiles,
   getChangedFileDirectories,
   countCommitsBetween,
-  hasUncommittedChanges
+  hasUncommittedChanges,
+  isRebaseInProgress,
+  squashIntoParent,
+  getCommitsNotInHead,
+  cherryPickCommit,
+  isCherryPickInProgress,
+  listLocalBranches
 } from '../../src/utils/git'
 
 describe('getFileLogPatch', () => {
@@ -45,6 +52,20 @@ describe('getFileLogPatch', () => {
 
   it('should reject for an invalid cwd', async () => {
     await assert.rejects(() => getFileLogPatch('/nonexistent-dir', 'file.txt'))
+  })
+
+  it('should limit the number of commits with maxCount', async () => {
+    const result = await getFileLogPatch(repoRoot, 'package.json', 1)
+    assert.equal(result.split('---COMMIT---').length - 1, 1)
+  })
+
+  it('should return the next page with skip', async () => {
+    const firstTwo = await getFileLogPatch(repoRoot, 'package.json', 2)
+    const second = await getFileLogPatch(repoRoot, 'package.json', 1, 1)
+    const firstTwoHashes = [...firstTwo.matchAll(/^commit ([0-9a-f]{40})$/gm)].map(m => m[1])
+    const secondHashes = [...second.matchAll(/^commit ([0-9a-f]{40})$/gm)].map(m => m[1])
+    assert.equal(firstTwoHashes.length, 2)
+    assert.deepEqual(secondHashes, [firstTwoHashes[1]])
   })
 })
 
@@ -83,8 +104,9 @@ describe('getFileBlame', () => {
 })
 
 describe('parseGitStatus', () => {
+  // Input mirrors `git status --porcelain -z`: NUL-separated, unquoted paths.
   it('should parse modified files', () => {
-    const output = ' M src/utils/git.ts\n M README.md'
+    const output = ' M src/utils/git.ts\0 M README.md\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 2)
     assert.equal(result[0].path, 'src/utils/git.ts')
@@ -93,7 +115,7 @@ describe('parseGitStatus', () => {
   })
 
   it('should parse staged modified files', () => {
-    const output = 'M  src/utils/git.ts'
+    const output = 'M  src/utils/git.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/utils/git.ts')
@@ -101,7 +123,7 @@ describe('parseGitStatus', () => {
   })
 
   it('should parse added files', () => {
-    const output = 'A  src/features/new-feature.ts'
+    const output = 'A  src/features/new-feature.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/features/new-feature.ts')
@@ -109,7 +131,7 @@ describe('parseGitStatus', () => {
   })
 
   it('should parse untracked files', () => {
-    const output = '?? src/new-file.ts'
+    const output = '?? src/new-file.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/new-file.ts')
@@ -117,24 +139,41 @@ describe('parseGitStatus', () => {
   })
 
   it('should skip deleted files', () => {
-    const output = 'D  src/old-file.ts\n M src/utils/git.ts'
+    const output = 'D  src/old-file.ts\0 M src/utils/git.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/utils/git.ts')
   })
 
   it('should skip worktree-deleted files', () => {
-    const output = ' D src/old-file.ts'
+    const output = ' D src/old-file.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 0)
   })
 
   it('should handle renames by using the new path', () => {
-    const output = 'R  src/old-name.ts -> src/new-name.ts'
+    const output = 'R  src/new-name.ts\0src/old-name.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/new-name.ts')
     assert.equal(result[0].status, 'R')
+  })
+
+  it('should not parse the original path of a rename as a separate entry', () => {
+    const output = 'R  src/new-name.ts\0src/old-name.ts\0?? src/other.ts\0'
+    const result = parseGitStatus(output)
+    assert.deepEqual(
+      result.map(f => f.path),
+      ['src/new-name.ts', 'src/other.ts']
+    )
+  })
+
+  it('should handle copies by using the new path', () => {
+    const output = 'C  src/copy.ts\0src/original.ts\0'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'src/copy.ts')
+    assert.equal(result[0].status, 'C')
   })
 
   it('should handle mixed statuses', () => {
@@ -144,8 +183,9 @@ describe('parseGitStatus', () => {
       'A  src/c.ts',
       'D  src/d.ts',
       '?? src/e.ts',
-      'R  src/f.ts -> src/g.ts'
-    ].join('\n')
+      'R  src/g.ts',
+      'src/f.ts'
+    ].join('\0')
     const result = parseGitStatus(output)
     assert.equal(result.length, 5)
     const paths = result.map(f => f.path)
@@ -157,16 +197,70 @@ describe('parseGitStatus', () => {
   })
 
   it('should skip ignored files', () => {
-    const output = '!! ignored-file.log'
+    const output = '!! ignored-file.log\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 0)
   })
 
   it('should handle files in deeply nested directories', () => {
-    const output = ' M src/features/nuget/nuget-api.ts'
+    const output = ' M src/features/nuget/nuget-api.ts\0'
     const result = parseGitStatus(output)
     assert.equal(result.length, 1)
     assert.equal(result[0].path, 'src/features/nuget/nuget-api.ts')
+  })
+
+  it('should preserve paths with accents and special characters', () => {
+    const output = ' M café.txt\0?? with"quote.txt\0 M docs/año 2026/niño.md\0'
+    const result = parseGitStatus(output)
+    assert.deepEqual(
+      result.map(f => f.path),
+      ['café.txt', 'with"quote.txt', 'docs/año 2026/niño.md']
+    )
+  })
+
+  it('should preserve paths containing a literal arrow', () => {
+    const output = ' M notes -> draft.md\0'
+    const result = parseGitStatus(output)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'notes -> draft.md')
+  })
+})
+
+describe('getChangedFiles', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should return changed files with non-ASCII names unquoted', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'café.txt'), 'hola')
+    fs.writeFileSync(path.join(tmpRepo, 'plain.txt'), 'plain')
+    const result = await getChangedFiles(tmpRepo)
+    const paths = result.map(f => f.path).sort()
+    assert.deepEqual(paths, ['café.txt', 'plain.txt'])
+  })
+
+  it('should report the new path for renamed files', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'old.txt'), 'content')
+    git('add', 'old.txt')
+    git('commit', '-m', 'add file')
+    git('mv', 'old.txt', 'new.txt')
+    const result = await getChangedFiles(tmpRepo)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'new.txt')
+    assert.equal(result[0].status, 'R')
   })
 })
 
@@ -207,6 +301,37 @@ describe('parseRemoteUrl', () => {
 
   it('should return undefined for an empty string', () => {
     assert.equal(parseRemoteUrl(''), undefined)
+  })
+
+  it('should ignore the port in ssh:// URLs', () => {
+    const result = parseRemoteUrl('ssh://git@github.corp.com:2222/owner/repo.git')
+    assert.deepEqual(result, { domain: 'github.corp.com', owner: 'owner', repo: 'repo' })
+  })
+
+  it('should ignore the port in https:// URLs', () => {
+    const result = parseRemoteUrl('https://github.corp.com:8443/owner/repo.git')
+    assert.deepEqual(result, { domain: 'github.corp.com', owner: 'owner', repo: 'repo' })
+  })
+
+  it('should parse hosts without dots', () => {
+    const result = parseRemoteUrl('ssh://git@gitserver/owner/repo.git')
+    assert.deepEqual(result, { domain: 'gitserver', owner: 'owner', repo: 'repo' })
+  })
+
+  it('should keep nested group paths in the repo segment', () => {
+    const result = parseRemoteUrl('git@gitlab.com:group/subgroup/project.git')
+    assert.deepEqual(result, { domain: 'gitlab.com', owner: 'group', repo: 'subgroup/project' })
+  })
+
+  it('should return undefined for local filesystem paths', () => {
+    assert.equal(parseRemoteUrl('/srv/git/repo.git'), undefined)
+    assert.equal(parseRemoteUrl('../sibling/repo'), undefined)
+    assert.equal(parseRemoteUrl('C:\\repos\\project'), undefined)
+  })
+
+  it('should handle a trailing slash', () => {
+    const result = parseRemoteUrl('https://github.com/owner/repo/')
+    assert.deepEqual(result, { domain: 'github.com', owner: 'owner', repo: 'repo' })
   })
 })
 
@@ -334,6 +459,54 @@ describe('getCommitFiles', () => {
 
   it('should reject for an invalid hash', async () => {
     await assert.rejects(() => getCommitFiles(tmpRepo, 'invalid-hash'))
+  })
+
+  it('should report stats for a renamed file with modifications under the new path', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'lines.txt'), 'a\nb\nc\nd\ne\nf\ng\nh\ni\nj\n')
+    git('add', 'lines.txt')
+    git('commit', '-m', 'add lines')
+    // Rename + small edit in one commit (similarity stays high enough for R detection)
+    fs.renameSync(path.join(tmpRepo, 'lines.txt'), path.join(tmpRepo, 'renamed.txt'))
+    fs.writeFileSync(path.join(tmpRepo, 'renamed.txt'), 'a\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\n')
+    git('add', '-A')
+    git('commit', '-m', 'rename and edit')
+    const headHash = git('rev-parse', 'HEAD')
+    const files = await getCommitFiles(tmpRepo, headHash)
+    const renamed = files.find(f => f.path === 'renamed.txt')
+    assert.ok(renamed, 'expected renamed.txt in commit files')
+    assert.equal(renamed!.status, 'R')
+    assert.equal(renamed!.additions, 2)
+    assert.equal(renamed!.deletions, 0)
+    assert.ok(!files.some(f => f.path === 'lines.txt'), 'old path should not appear as an entry')
+  })
+
+  it('should mark a renamed binary file as binary', async () => {
+    const binaryContent = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01, 0x02, 0x03])
+    fs.writeFileSync(path.join(tmpRepo, 'image.png'), binaryContent)
+    git('add', 'image.png')
+    git('commit', '-m', 'add binary')
+    git('mv', 'image.png', 'logo.png')
+    // A pure rename has no content change; touch a byte so numstat emits an entry
+    fs.appendFileSync(path.join(tmpRepo, 'logo.png'), Buffer.from([0xff]))
+    git('add', '-A')
+    git('commit', '-m', 'rename binary')
+    const headHash = git('rev-parse', 'HEAD')
+    const files = await getCommitFiles(tmpRepo, headHash)
+    const logo = files.find(f => f.path === 'logo.png')
+    assert.ok(logo, 'expected logo.png in commit files')
+    assert.equal(logo!.status, 'R')
+    assert.equal(logo!.isBinary, true)
+  })
+
+  it('should handle file names with accents and spaces', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'año café.txt'), 'uno\ndos\n')
+    git('add', '-A')
+    git('commit', '-m', 'add accented file')
+    const headHash = git('rev-parse', 'HEAD')
+    const files = await getCommitFiles(tmpRepo, headHash)
+    const accented = files.find(f => f.path === 'año café.txt')
+    assert.ok(accented, `expected unquoted path, got: ${files.map(f => f.path).join(', ')}`)
+    assert.equal(accented!.additions, 2)
   })
 
   it('should return files brought in by a merge commit relative to the target branch', async () => {
@@ -521,6 +694,33 @@ describe('editCommitMessage', () => {
     assert.ok(newDate.includes('2020-01-15'))
   })
 
+  function startConflictedRebase(): void {
+    const mainBranch = git('branch', '--show-current')
+    git('checkout', '-b', 'feature', 'HEAD~2')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'conflicting change')
+    git('add', 'file.txt')
+    git('commit', '-m', 'feature commit')
+    let stopped = false
+    try {
+      git('rebase', mainBranch)
+    } catch {
+      stopped = true // expected: rebase stops with a conflict and stays in progress
+    }
+    assert.ok(stopped, 'rebase should have stopped on a conflict')
+  }
+
+  it('should reject when a rebase is already in progress and editing non-HEAD', async () => {
+    startConflictedRebase()
+    const targetHash = git('log', '--format=%H', '--skip=1', '-1')
+    await assert.rejects(() => editCommitMessage(tmpRepo, targetHash, 'should fail'), /rebase is already in progress/)
+  })
+
+  it("should not abort the user's in-progress rebase when rejecting", async () => {
+    startConflictedRebase()
+    const targetHash = git('log', '--format=%H', '--skip=1', '-1')
+    await editCommitMessage(tmpRepo, targetHash, 'should fail').catch(() => {})
+    assert.equal(await isRebaseInProgress(tmpRepo), true, 'the user rebase must still be in progress')
+  })
   it('should reword a non-HEAD commit with a new date via rebase', async () => {
     const secondHash = git('log', '--format=%H', '--skip=1', '-1')
     await editCommitMessage(tmpRepo, secondHash, 'second commit', '2019-06-20 14:00:00')
@@ -567,6 +767,61 @@ describe('editCommitMessage', () => {
       thirdCommitterBefore,
       'third commit committer date should be preserved (not reset to rebase time)'
     )
+  })
+})
+
+describe('isRebaseInProgress', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'one')
+    git('add', 'file.txt')
+    git('commit', '-m', 'first')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'two')
+    git('add', 'file.txt')
+    git('commit', '-m', 'second')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  function startConflictedRebase(): void {
+    const mainBranch = git('branch', '--show-current')
+    git('checkout', '-b', 'feature', 'HEAD~1')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'conflict')
+    git('add', 'file.txt')
+    git('commit', '-m', 'feature change')
+    let stopped = false
+    try {
+      git('rebase', mainBranch)
+    } catch {
+      stopped = true // expected: rebase stops with a conflict and stays in progress
+    }
+    assert.ok(stopped, 'rebase should have stopped on a conflict')
+  }
+
+  it('should return false in a repository with no rebase in progress', async () => {
+    assert.equal(await isRebaseInProgress(tmpRepo), false)
+  })
+
+  it('should return true while a conflicted rebase is in progress', async () => {
+    startConflictedRebase()
+    assert.equal(await isRebaseInProgress(tmpRepo), true)
+  })
+
+  it('should return false again after the rebase is aborted', async () => {
+    startConflictedRebase()
+    git('rebase', '--abort')
+    assert.equal(await isRebaseInProgress(tmpRepo), false)
   })
 })
 
@@ -892,5 +1147,151 @@ describe('getChangedFileDirectories', () => {
   it('should handle files with mixed depths', () => {
     const result = getChangedFileDirectories(['README.md', 'src/extension.ts', 'src/features/expand-changed.ts'])
     assert.deepEqual(result, ['src', 'src/features'])
+  })
+})
+
+describe('squashIntoParent', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'one')
+    git('add', 'file.txt')
+    git('commit', '-m', 'first commit')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'two')
+    git('add', 'file.txt')
+    git('commit', '-m', 'second commit')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'three')
+    git('add', 'file.txt')
+    git('commit', '-m', 'third commit')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should fixup HEAD into its parent keeping the parent message', async () => {
+    await squashIntoParent(tmpRepo, git('rev-parse', 'HEAD'), 'fixup')
+    assert.equal(git('rev-list', '--count', 'HEAD'), '2')
+    assert.equal(git('log', '-1', '--format=%s'), 'second commit')
+    assert.equal(fs.readFileSync(path.join(tmpRepo, 'file.txt'), 'utf8'), 'three')
+  })
+
+  it('should squash HEAD into its parent combining both messages', async () => {
+    await squashIntoParent(tmpRepo, git('rev-parse', 'HEAD'), 'squash')
+    assert.equal(git('rev-list', '--count', 'HEAD'), '2')
+    const message = git('log', '-1', '--format=%B')
+    assert.ok(message.includes('second commit'), `message was: ${message}`)
+    assert.ok(message.includes('third commit'), `message was: ${message}`)
+  })
+
+  it('should squash a commit whose parent is the root commit', async () => {
+    const secondHash = git('log', '--format=%H', '--skip=1', '-1')
+    await squashIntoParent(tmpRepo, secondHash, 'fixup')
+    assert.equal(git('rev-list', '--count', 'HEAD'), '2')
+    assert.equal(git('log', '--format=%s', '--skip=1', '-1'), 'first commit')
+    assert.equal(git('log', '-1', '--format=%s'), 'third commit')
+    assert.equal(fs.readFileSync(path.join(tmpRepo, 'file.txt'), 'utf8'), 'three')
+  })
+
+  it('should reject squashing the root commit', async () => {
+    const rootHash = git('rev-list', '--max-parents=0', 'HEAD')
+    await assert.rejects(() => squashIntoParent(tmpRepo, rootHash, 'fixup'), /root commit/)
+  })
+
+  it('should reject when the working tree is dirty', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'dirty')
+    await assert.rejects(() => squashIntoParent(tmpRepo, git('rev-parse', 'HEAD'), 'fixup'), /uncommitted changes/)
+  })
+
+  it('should reject merge commits', async () => {
+    const mainBranch = git('branch', '--show-current')
+    git('checkout', '-b', 'feature', 'HEAD~1')
+    fs.writeFileSync(path.join(tmpRepo, 'other.txt'), 'feature')
+    git('add', 'other.txt')
+    git('commit', '-m', 'feature commit')
+    git('checkout', mainBranch)
+    git('merge', '--no-ff', 'feature', '-m', 'merge feature')
+    await assert.rejects(() => squashIntoParent(tmpRepo, git('rev-parse', 'HEAD'), 'fixup'), /Merge commits/)
+  })
+})
+
+describe('getCommitsNotInHead / cherryPickCommit', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'base')
+    git('add', 'file.txt')
+    git('commit', '-m', 'base commit')
+    git('checkout', '-b', 'feature')
+    fs.writeFileSync(path.join(tmpRepo, 'feature.txt'), 'feature content')
+    git('add', 'feature.txt')
+    git('commit', '-m', 'add feature file')
+    git('checkout', '-')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should list commits the branch has and HEAD does not', async () => {
+    const commits = await getCommitsNotInHead(tmpRepo, 'feature')
+    assert.equal(commits.length, 1)
+    assert.equal(commits[0].subject, 'add feature file')
+  })
+
+  it('should cherry-pick a commit from another branch', async () => {
+    const [commit] = await getCommitsNotInHead(tmpRepo, 'feature')
+    await cherryPickCommit(tmpRepo, commit.hash)
+    assert.equal(fs.readFileSync(path.join(tmpRepo, 'feature.txt'), 'utf8'), 'feature content')
+    assert.equal(git('rev-list', '--count', 'HEAD'), '2')
+  })
+
+  it('should not offer patch-equivalent commits again after cherry-picking', async () => {
+    const [commit] = await getCommitsNotInHead(tmpRepo, 'feature')
+    await cherryPickCommit(tmpRepo, commit.hash)
+    assert.deepEqual(await getCommitsNotInHead(tmpRepo, 'feature'), [])
+  })
+
+  it('should reject on conflicts and leave the cherry-pick in progress', async () => {
+    git('checkout', 'feature')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'feature change')
+    git('add', 'file.txt')
+    git('commit', '-m', 'conflicting change')
+    git('checkout', '-')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'main change')
+    git('add', 'file.txt')
+    git('commit', '-m', 'main change')
+
+    const commits = await getCommitsNotInHead(tmpRepo, 'feature')
+    const conflicting = commits.find(c => c.subject === 'conflicting change')!
+    await assert.rejects(() => cherryPickCommit(tmpRepo, conflicting.hash))
+    assert.equal(await isCherryPickInProgress(tmpRepo), true)
+    git('cherry-pick', '--abort')
+    assert.equal(await isCherryPickInProgress(tmpRepo), false)
+  })
+})
+
+describe('listLocalBranches', () => {
+  it('should list branches of this repository', async () => {
+    const repoRoot = path.resolve(__dirname, '../..')
+    const branches = await listLocalBranches(repoRoot)
+    assert.ok(branches.length > 0)
+    assert.ok(branches.every(b => b.length > 0))
   })
 })
