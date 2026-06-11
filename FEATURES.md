@@ -1,0 +1,86 @@
+# Toolkit — Feature Cheat Sheet
+
+One line per feature. Full details in [README.md](README.md).
+
+## Git
+
+| Feature | Shortcut | What it does |
+|---|---|---|
+| Open in GitHub | — | Open/copy GitHub URLs for the file, repo, blame, history, or a permalink |
+| Git File History | — | Commit history + diffs for a file in a panel, paged with Load more |
+| Git Blame | — | Toggle JetBrains-style inline blame annotations on every line |
+| Commit History view | — | SCM sidebar: edit message/date, reset HEAD (soft/mixed/hard), squash/fixup into parent, cherry-pick from branch |
+| Compare with Branch | — | Diff the file, a folder, or the whole project against another local branch |
+| Expand Changed Files | — | Expand only the explorer folders containing git changes |
+| Stage Changes | — | Stage files/folders from the explorer (multi-select, multi-repo) |
+| Peek Last Commit | — | Hover any line to see the commit that last touched it |
+
+## Packages
+
+| Feature | Shortcut | What it does |
+|---|---|---|
+| NuGet Package Manager | — | Browse/install/update/uninstall NuGet packages; solution-wide overview |
+| npm Package Manager | — | Same for npm/yarn/pnpm; workspace-wide overview |
+| NPM Intellisense | — | Autocomplete package names in import/require |
+| Dependency Audit | — | npm audit / dotnet vulnerable packages, sorted by severity, with apply-fixes |
+
+## Editing
+
+| Feature | Shortcut | What it does |
+|---|---|---|
+| Change Case | — | Convert selection between 13 case formats (live preview) |
+| Slugify | — | Turn text into a clean URL slug |
+| Move Symbol Up/Down | `Cmd+Shift+↑/↓` | Move the function/method under the cursor past its siblings |
+| Add / Remove Braces | `Cmd+.` | Code action: wrap/unwrap single-statement blocks |
+| Convert Import Paths | — | Alias ⇄ relative imports using tsconfig paths |
+| Type-Only Imports | — | Flags imports usable as `import type`, with one-click fix |
+| Lines | — | Sort, dedupe, shuffle, reverse, trim the selected lines |
+| Align by Character | — | Vertically align lines by `=`, `:`, `,`, `=>`, `//`, or custom |
+| Toggle Quotes | — | Cycle `'` → `"` → `` ` `` on the string under the cursor |
+| Transform Selection | — | Base64/URL/HTML/hex encode-decode, hashes, JWT decode, JSON ⇄ YAML, JSON prettify/minify/sort |
+| Sum Numbers | — | Sum the leading number of each selected line |
+| Insert | — | UUID v4/v7, ULID, timestamps, random hex/base64 at each cursor |
+| Timestamp Converter & Hover | — | Convert epoch ⇄ ISO; hover any epoch number to decode it |
+| UUID / ULID Hover | — | Hover an id to see its kind and embedded creation time |
+| Format / Compact Markdown Table | — | Align table pipes — or strip the padding for clean diffs |
+| JSON to Type | — | Generate TypeScript/C# types from a JSON sample |
+
+## Code Generation
+
+| Feature | Shortcut | What it does |
+|---|---|---|
+| New C# File | — | Explorer submenu: class, record, controller, Blazor, tests... with namespace detection |
+| C# Code Actions | `Cmd+.` | Generate (expression-bodied) constructor from properties |
+| Auto Rename Tag | — | Rename the matching HTML/XML tag pair (disabled by default) |
+
+## Workspace
+
+| Feature | Shortcut | What it does |
+|---|---|---|
+| Find File or Folder | `Opt+P` | Quick-open that also finds folders; recents, AND terms, `-` negation |
+| Expand / Collapse Recursively | — | Expand or collapse a whole explorer subtree |
+| Format Files | — | Bulk-format workspace/folder/glob in memory, without stealing focus |
+| Paste Image | — | Save the clipboard image to disk and insert the link |
+| Clipboard History | — | Recall recent copies; pin the ones you need all session |
+| Bookmarks | `F7` toggle · `Shift+F7` label · `Ctrl+F7` list · `Alt+F7`/`Shift+Alt+F7` next/prev | Pin lines, label them, jump between them across files |
+| .env Checker | — | Diagnostics when .env drifts from .env.example, with quick fix |
+| TODO Tree | — | TODO/FIXME/HACK... comments in a sidebar tree, grouped by tag or file |
+| REST Client | — | Run .http requests; environments (env.json), variables, copy as curl |
+| Regex Playground | — | Live regex tester in a panel, safe against catastrophic backtracking |
+
+## Viewers & Appearance
+
+| Feature | Shortcut | What it does |
+|---|---|---|
+| Diagnostic Highlight | — | Make hint/info diagnostics actually visible (colored underlines) |
+| CSV Rainbow | — | Color each CSV/TSV column; hover shows the column header |
+| PDF Viewer | — | Open PDFs in a tab: search, outline, thumbnails, zoom, text selection |
+| SVG Preview | — | Live side-panel preview with zoom and background toggle |
+| Generic Dark Theme | — | Dark+ base with JetBrains-style syntax colors per language |
+| JetBrains Dark Icons | — | File/folder icon theme inspired by the JetBrains New UI |
+
+## Where to find things
+
+- Most actions live in the **right-click menus** — the editor menu shows the actions for that file type (`.http`, `.json`, `.md`, `package.json`, `.csproj`...), the explorer menu the file/folder ones.
+- Tree views (Commit History, TODOs, NuGet, npm) have **inline icons** on hover.
+- Everything is also in the **Command Palette** under `Toolkit:`.

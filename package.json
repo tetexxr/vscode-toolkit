@@ -4,6 +4,10 @@
   "description": "All-in-one VS Code utility extension.",
   "version": "1.13.6",
   "publisher": "tete",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tetexxr/vscode-toolkit.git"
+  },
   "engines": {
     "vscode": "^1.120.0"
   },

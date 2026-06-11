@@ -2,6 +2,8 @@
 
 All-in-one VS Code utility extension.
 
+> In a hurry? See the [feature cheat sheet](FEATURES.md) — one line per feature, with shortcuts.
+
 ## Table of Contents
 
 - [Features](#features)
