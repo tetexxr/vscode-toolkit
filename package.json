@@ -376,6 +376,15 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "toolkit.gitCommitList.squashInto",
+        "title": "Toolkit: Squash into Parent..."
+      },
+      {
+        "command": "toolkit.gitCommitList.cherryPickFromBranch",
+        "title": "Toolkit: Cherry-pick from Branch...",
+        "icon": "$(git-pull-request-create)"
+      },
+      {
         "command": "toolkit.git.stageChanges",
         "title": "Toolkit: Stage Changes"
       },
@@ -850,7 +859,12 @@
         {
           "command": "toolkit.gitCommitList.refresh",
           "when": "view == toolkitCommitList",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.gitCommitList.cherryPickFromBranch",
+          "when": "view == toolkitCommitList",
+          "group": "navigation@2"
         },
         {
           "command": "toolkit.nuget.solutionOverview",
@@ -895,6 +909,11 @@
           "command": "toolkit.gitCommitList.editMessage",
           "when": "view == toolkitCommitList && (viewItem == commit || viewItem == commitHead)",
           "group": "inline@2"
+        },
+        {
+          "command": "toolkit.gitCommitList.squashInto",
+          "when": "view == toolkitCommitList && (viewItem == commit || viewItem == commitHead)",
+          "group": "1_modify@1"
         },
         {
           "command": "toolkit.todoTree.excludeFolder",
@@ -1076,6 +1095,14 @@
         {
           "command": "toolkit.peekCommit.showFull",
           "when": "false"
+        },
+        {
+          "command": "toolkit.gitCommitList.squashInto",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitCommitList.cherryPickFromBranch",
+          "when": "gitOpenRepositoryCount != 0"
         },
         {
           "command": "toolkit.compareFolderWithBranch",

@@ -8,10 +8,16 @@ import {
   getCommitFiles,
   getCommitDiff,
   getCommitDateIso,
+  getCommitsNotInHead,
+  getCurrentBranch,
   editCommitMessage,
   resetToCommit,
   countCommitsBetween,
-  hasUncommittedChanges
+  hasUncommittedChanges,
+  squashIntoParent,
+  cherryPickCommit,
+  isCherryPickInProgress,
+  listLocalBranches
 } from '../utils/git'
 import { renderFileList, renderDiffContent, renderDiffPlaceholders, pickRepoRoot } from './git-edit-commit-utils'
 import { escapeHtml, createNonce } from '../utils/html'
@@ -735,6 +741,102 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
 
     vscode.commands.registerCommand('toolkit.gitCommitList.refresh', () => {
       provider.refresh()
+    }),
+
+    vscode.commands.registerCommand('toolkit.gitCommitList.squashInto', async (item?: CommitTreeItem) => {
+      if (!item) return
+      const repoRoot = await provider.getRepoRoot()
+      if (!repoRoot) return
+
+      const shortHash = item.commit.hash.substring(0, 8)
+      type ModeItem = vscode.QuickPickItem & { mode: 'fixup' | 'squash' }
+      const modeItems: ModeItem[] = [
+        { label: 'Fixup', description: "Meld into the parent, keep the parent's message", mode: 'fixup' },
+        { label: 'Squash', description: 'Meld into the parent, combine both messages', mode: 'squash' }
+      ]
+      const picked = await vscode.window.showQuickPick(modeItems, {
+        placeHolder: `Meld ${shortHash} "${item.commit.subject}" into its parent`
+      })
+      if (!picked) return
+
+      const confirm = await vscode.window.showWarningMessage(
+        `${picked.label} commit ${shortHash} into its parent?\n\nThis rewrites history — if the commit was already pushed, a force push will be required.`,
+        { modal: true },
+        picked.label
+      )
+      if (confirm !== picked.label) return
+
+      try {
+        await vscode.window.withProgress(
+          { location: vscode.ProgressLocation.Notification, title: 'Melding commit into its parent...' },
+          () => squashIntoParent(repoRoot, item.commit.hash, picked.mode)
+        )
+        provider.refresh()
+        vscode.window.showInformationMessage(`Toolkit: ${shortHash} melded into its parent.`)
+      } catch (err) {
+        vscode.window.showErrorMessage(`Squash failed: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    }),
+
+    vscode.commands.registerCommand('toolkit.gitCommitList.cherryPickFromBranch', async () => {
+      const repoRoot = await provider.getRepoRoot()
+      if (!repoRoot) return
+
+      let currentBranch: string
+      let branches: string[]
+      try {
+        ;[currentBranch, branches] = await Promise.all([getCurrentBranch(repoRoot), listLocalBranches(repoRoot)])
+      } catch (err) {
+        vscode.window.showErrorMessage(`Git error: ${err instanceof Error ? err.message : String(err)}`)
+        return
+      }
+      const candidates = branches.filter(b => b !== currentBranch)
+      if (candidates.length === 0) {
+        vscode.window.showInformationMessage('Toolkit: no other local branches to cherry-pick from.')
+        return
+      }
+
+      type BranchItem = vscode.QuickPickItem & { branch: string }
+      const branchItems: BranchItem[] = candidates.map(b => ({ label: `$(git-branch) ${b}`, branch: b }))
+      const pickedBranch = await vscode.window.showQuickPick(branchItems, {
+        placeHolder: 'Cherry-pick from which branch?'
+      })
+      if (!pickedBranch) return
+
+      const commits = await getCommitsNotInHead(repoRoot, pickedBranch.branch).catch(() => [])
+      if (commits.length === 0) {
+        vscode.window.showInformationMessage(
+          `Toolkit: "${pickedBranch.branch}" has no commits that are not already in the current branch.`
+        )
+        return
+      }
+
+      type CommitItem = vscode.QuickPickItem & { hash: string }
+      const commitItems: CommitItem[] = commits.map(c => ({
+        label: c.subject,
+        description: `${c.hash.substring(0, 8)} · ${c.author} · ${c.date}`,
+        hash: c.hash
+      }))
+      const pickedCommit = await vscode.window.showQuickPick(commitItems, {
+        matchOnDescription: true,
+        placeHolder: `Cherry-pick which commit from "${pickedBranch.branch}"?`
+      })
+      if (!pickedCommit) return
+
+      try {
+        await cherryPickCommit(repoRoot, pickedCommit.hash)
+        provider.refresh()
+        vscode.window.showInformationMessage(`Toolkit: cherry-picked ${pickedCommit.hash.substring(0, 8)}.`)
+      } catch (err) {
+        if (await isCherryPickInProgress(repoRoot)) {
+          provider.refresh()
+          vscode.window.showWarningMessage(
+            'Toolkit: cherry-pick stopped on conflicts — resolve them and commit, or run "git cherry-pick --abort".'
+          )
+          return
+        }
+        vscode.window.showErrorMessage(`Cherry-pick failed: ${err instanceof Error ? err.message : String(err)}`)
+      }
     }),
 
     vscode.commands.registerCommand('toolkit.gitCommitList.editMessage', async (item?: CommitTreeItem) => {

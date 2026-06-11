@@ -245,8 +245,9 @@ export interface CommitLogEntry {
   date: string
 }
 
-export async function getCommitLog(cwd: string, count = 200): Promise<CommitLogEntry[]> {
-  const raw = await gitExec(cwd, ['log', `--max-count=${count}`, '--format=%H%x00%s%x00%an%x00%ar'], 30000)
+const LOG_FORMAT = '%H%x00%s%x00%an%x00%ar'
+
+function parseLogOutput(raw: string): CommitLogEntry[] {
   if (!raw) return []
   return raw
     .split('\n')
@@ -255,6 +256,40 @@ export async function getCommitLog(cwd: string, count = 200): Promise<CommitLogE
       const [hash, subject, author, date] = line.split('\x00')
       return { hash, subject, author, date }
     })
+}
+
+export async function getCommitLog(cwd: string, count = 200): Promise<CommitLogEntry[]> {
+  return parseLogOutput(await gitExec(cwd, ['log', `--max-count=${count}`, `--format=${LOG_FORMAT}`], 30000))
+}
+
+/**
+ * Commits on `branch` that HEAD doesn't have (cherry-pick candidates).
+ * --cherry-pick excludes patch-equivalent commits, so something already
+ * cherry-picked (same change, different hash) is not offered again.
+ */
+export async function getCommitsNotInHead(cwd: string, branch: string, count = 200): Promise<CommitLogEntry[]> {
+  return parseLogOutput(
+    await gitExec(
+      cwd,
+      ['log', '--cherry-pick', '--right-only', `HEAD...${branch}`, `--max-count=${count}`, `--format=${LOG_FORMAT}`],
+      30000
+    )
+  )
+}
+
+export async function listLocalBranches(cwd: string): Promise<string[]> {
+  const raw = await gitExec(cwd, ['for-each-ref', '--sort=-committerdate', 'refs/heads', '--format=%(refname:short)'])
+  return raw.split('\n').map(b => b.trim()).filter(Boolean)
+}
+
+export async function cherryPickCommit(cwd: string, hash: string): Promise<void> {
+  await gitExec(cwd, ['cherry-pick', hash], 30000)
+}
+
+/** Whether a cherry-pick stopped on conflicts and is waiting for resolution. */
+export async function isCherryPickInProgress(cwd: string): Promise<boolean> {
+  const raw = await gitExec(cwd, ['rev-parse', '--git-path', 'CHERRY_PICK_HEAD'])
+  return existsSync(path.resolve(cwd, raw.trim()))
 }
 
 export async function getCommitMessage(cwd: string, hash: string): Promise<string> {
@@ -440,5 +475,53 @@ export async function editCommitMessage(
       const message = err instanceof Error ? err.message : String(err)
       throw new Error(`Editing the commit failed and the rebase was rolled back: ${message}`)
     }
+  }
+}
+
+/**
+ * Melds `hash` into its parent via an automated interactive rebase.
+ * 'fixup' keeps the parent's message; 'squash' keeps both, concatenated.
+ */
+export async function squashIntoParent(cwd: string, hash: string, mode: 'fixup' | 'squash'): Promise<void> {
+  if (await isRebaseInProgress(cwd)) {
+    throw new Error('A rebase is already in progress in this repository. Finish or abort it before squashing commits.')
+  }
+  const status = await gitExec(cwd, ['status', '--porcelain']).catch(() => '')
+  if (status) {
+    throw new Error('Working tree has uncommitted changes. Please commit or stash them before squashing commits.')
+  }
+  const parents = await getCommitParents(cwd, hash)
+  if (parents.length === 0) {
+    throw new Error('The root commit has no parent to squash into.')
+  }
+  if (parents.length > 1) {
+    throw new Error('Merge commits cannot be squashed into a parent.')
+  }
+
+  // The rebase must start at the parent's parent so the parent itself is in
+  // the todo; when the parent is the root commit, rebase from --root.
+  const grandParents = await getCommitParents(cwd, parents[0])
+  const baseArgs = grandParents.length === 0 ? ['--root'] : [`${parents[0]}^`]
+
+  const shortHash = hash.substring(0, 7)
+  const todoScript = `const fs=require("fs");const f=process.argv[1];fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/^pick ${shortHash}/m,"${mode} ${shortHash}"))`
+
+  const env: Record<string, string> = {
+    GIT_SEQUENCE_EDITOR: `"${process.execPath}" -e '${todoScript}'`,
+    ELECTRON_RUN_AS_NODE: '1'
+  }
+  if (mode === 'squash') {
+    // squash stops to edit the combined message — accept git's default
+    // (both messages concatenated) with a no-op editor.
+    env.GIT_EDITOR = `"${process.execPath}" -e ""`
+  }
+
+  try {
+    await gitExec(cwd, ['rebase', '-i', '--committer-date-is-author-date', ...baseArgs], 60000, env)
+  } catch (err) {
+    // This rebase is ours (we checked none was running): roll it back.
+    await gitExec(cwd, ['rebase', '--abort']).catch(() => {})
+    const message = err instanceof Error ? err.message : String(err)
+    throw new Error(`Squashing the commit failed and the rebase was rolled back: ${message}`)
   }
 }

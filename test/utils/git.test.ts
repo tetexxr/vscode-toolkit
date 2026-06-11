@@ -20,7 +20,12 @@ import {
   getChangedFileDirectories,
   countCommitsBetween,
   hasUncommittedChanges,
-  isRebaseInProgress
+  isRebaseInProgress,
+  squashIntoParent,
+  getCommitsNotInHead,
+  cherryPickCommit,
+  isCherryPickInProgress,
+  listLocalBranches
 } from '../../src/utils/git'
 
 describe('getFileLogPatch', () => {
@@ -1142,5 +1147,151 @@ describe('getChangedFileDirectories', () => {
   it('should handle files with mixed depths', () => {
     const result = getChangedFileDirectories(['README.md', 'src/extension.ts', 'src/features/expand-changed.ts'])
     assert.deepEqual(result, ['src', 'src/features'])
+  })
+})
+
+describe('squashIntoParent', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'one')
+    git('add', 'file.txt')
+    git('commit', '-m', 'first commit')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'two')
+    git('add', 'file.txt')
+    git('commit', '-m', 'second commit')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'three')
+    git('add', 'file.txt')
+    git('commit', '-m', 'third commit')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should fixup HEAD into its parent keeping the parent message', async () => {
+    await squashIntoParent(tmpRepo, git('rev-parse', 'HEAD'), 'fixup')
+    assert.equal(git('rev-list', '--count', 'HEAD'), '2')
+    assert.equal(git('log', '-1', '--format=%s'), 'second commit')
+    assert.equal(fs.readFileSync(path.join(tmpRepo, 'file.txt'), 'utf8'), 'three')
+  })
+
+  it('should squash HEAD into its parent combining both messages', async () => {
+    await squashIntoParent(tmpRepo, git('rev-parse', 'HEAD'), 'squash')
+    assert.equal(git('rev-list', '--count', 'HEAD'), '2')
+    const message = git('log', '-1', '--format=%B')
+    assert.ok(message.includes('second commit'), `message was: ${message}`)
+    assert.ok(message.includes('third commit'), `message was: ${message}`)
+  })
+
+  it('should squash a commit whose parent is the root commit', async () => {
+    const secondHash = git('log', '--format=%H', '--skip=1', '-1')
+    await squashIntoParent(tmpRepo, secondHash, 'fixup')
+    assert.equal(git('rev-list', '--count', 'HEAD'), '2')
+    assert.equal(git('log', '--format=%s', '--skip=1', '-1'), 'first commit')
+    assert.equal(git('log', '-1', '--format=%s'), 'third commit')
+    assert.equal(fs.readFileSync(path.join(tmpRepo, 'file.txt'), 'utf8'), 'three')
+  })
+
+  it('should reject squashing the root commit', async () => {
+    const rootHash = git('rev-list', '--max-parents=0', 'HEAD')
+    await assert.rejects(() => squashIntoParent(tmpRepo, rootHash, 'fixup'), /root commit/)
+  })
+
+  it('should reject when the working tree is dirty', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'dirty')
+    await assert.rejects(() => squashIntoParent(tmpRepo, git('rev-parse', 'HEAD'), 'fixup'), /uncommitted changes/)
+  })
+
+  it('should reject merge commits', async () => {
+    const mainBranch = git('branch', '--show-current')
+    git('checkout', '-b', 'feature', 'HEAD~1')
+    fs.writeFileSync(path.join(tmpRepo, 'other.txt'), 'feature')
+    git('add', 'other.txt')
+    git('commit', '-m', 'feature commit')
+    git('checkout', mainBranch)
+    git('merge', '--no-ff', 'feature', '-m', 'merge feature')
+    await assert.rejects(() => squashIntoParent(tmpRepo, git('rev-parse', 'HEAD'), 'fixup'), /Merge commits/)
+  })
+})
+
+describe('getCommitsNotInHead / cherryPickCommit', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'base')
+    git('add', 'file.txt')
+    git('commit', '-m', 'base commit')
+    git('checkout', '-b', 'feature')
+    fs.writeFileSync(path.join(tmpRepo, 'feature.txt'), 'feature content')
+    git('add', 'feature.txt')
+    git('commit', '-m', 'add feature file')
+    git('checkout', '-')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should list commits the branch has and HEAD does not', async () => {
+    const commits = await getCommitsNotInHead(tmpRepo, 'feature')
+    assert.equal(commits.length, 1)
+    assert.equal(commits[0].subject, 'add feature file')
+  })
+
+  it('should cherry-pick a commit from another branch', async () => {
+    const [commit] = await getCommitsNotInHead(tmpRepo, 'feature')
+    await cherryPickCommit(tmpRepo, commit.hash)
+    assert.equal(fs.readFileSync(path.join(tmpRepo, 'feature.txt'), 'utf8'), 'feature content')
+    assert.equal(git('rev-list', '--count', 'HEAD'), '2')
+  })
+
+  it('should not offer patch-equivalent commits again after cherry-picking', async () => {
+    const [commit] = await getCommitsNotInHead(tmpRepo, 'feature')
+    await cherryPickCommit(tmpRepo, commit.hash)
+    assert.deepEqual(await getCommitsNotInHead(tmpRepo, 'feature'), [])
+  })
+
+  it('should reject on conflicts and leave the cherry-pick in progress', async () => {
+    git('checkout', 'feature')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'feature change')
+    git('add', 'file.txt')
+    git('commit', '-m', 'conflicting change')
+    git('checkout', '-')
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'main change')
+    git('add', 'file.txt')
+    git('commit', '-m', 'main change')
+
+    const commits = await getCommitsNotInHead(tmpRepo, 'feature')
+    const conflicting = commits.find(c => c.subject === 'conflicting change')!
+    await assert.rejects(() => cherryPickCommit(tmpRepo, conflicting.hash))
+    assert.equal(await isCherryPickInProgress(tmpRepo), true)
+    git('cherry-pick', '--abort')
+    assert.equal(await isCherryPickInProgress(tmpRepo), false)
+  })
+})
+
+describe('listLocalBranches', () => {
+  it('should list branches of this repository', async () => {
+    const repoRoot = path.resolve(__dirname, '../..')
+    const branches = await listLocalBranches(repoRoot)
+    assert.ok(branches.length > 0)
+    assert.ok(branches.every(b => b.length > 0))
   })
 })
