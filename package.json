@@ -1149,92 +1149,172 @@
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.changeCase",
+          "command": "toolkit.typeOnlyImports.analyzeCurrentFile",
           "group": "0_toolkit@2",
+          "when": "editorLangId =~ /^(typescript|typescriptreact)$/"
+        },
+        {
+          "command": "toolkit.changeCase",
+          "group": "0_toolkit@3",
           "when": "editorHasSelection"
         },
         {
+          "command": "toolkit.envCheck.checkWorkspace",
+          "group": "0_toolkit@4",
+          "when": "resourceFilename =~ /^\\.env/"
+        },
+        {
           "command": "toolkit.markdown.compactTable",
-          "group": "0_toolkit@3",
+          "group": "0_toolkit@5",
           "when": "editorLangId == markdown"
         },
         {
           "command": "toolkit.compareWithBranch",
-          "group": "0_toolkit@4",
+          "group": "0_toolkit@6",
           "when": "gitOpenRepositoryCount != 0"
         },
         {
+          "command": "toolkit.convertImportsToAlias",
+          "group": "0_toolkit@7",
+          "when": "editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/"
+        },
+        {
+          "command": "toolkit.convertImportsToRelative",
+          "group": "0_toolkit@8",
+          "when": "editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/"
+        },
+        {
           "command": "toolkit.timestamp.convert",
-          "group": "0_toolkit@5",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.markdown.formatTable",
-          "group": "0_toolkit@6",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "toolkit.gitHistory",
-          "group": "0_toolkit@7"
-        },
-        {
-          "command": "toolkit.insert",
-          "group": "0_toolkit@8"
-        },
-        {
-          "command": "toolkit.lines",
           "group": "0_toolkit@9",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@10"
+          "command": "toolkit.markdown.formatTable",
+          "group": "0_toolkit@10",
+          "when": "editorLangId == markdown"
         },
         {
-          "command": "toolkit.pasteImage",
+          "command": "toolkit.gitHistory",
           "group": "0_toolkit@11"
         },
         {
+          "command": "toolkit.insert",
+          "group": "0_toolkit@12"
+        },
+        {
+          "command": "toolkit.jsonToType",
+          "group": "0_toolkit@13",
+          "when": "editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.lines",
+          "group": "0_toolkit@14",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.npm.managePackages",
+          "group": "0_toolkit@15",
+          "when": "resourceFilename == package.json"
+        },
+        {
+          "command": "toolkit.nuget.managePackages",
+          "group": "0_toolkit@16",
+          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj"
+        },
+        {
+          "command": "toolkit.npm.audit",
+          "group": "0_toolkit@17",
+          "when": "resourceFilename == package.json"
+        },
+        {
+          "command": "toolkit.nuget.vulnerabilities",
+          "group": "0_toolkit@18",
+          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj"
+        },
+        {
+          "command": "toolkit.openInGitHub.file",
+          "group": "0_toolkit@19"
+        },
+        {
+          "command": "toolkit.pasteImage",
+          "group": "0_toolkit@20"
+        },
+        {
+          "command": "toolkit.svgPreview.open",
+          "group": "0_toolkit@21",
+          "when": "resourceExtname == .svg"
+        },
+        {
           "command": "toolkit.restClient.copyAsCurl",
-          "group": "0_toolkit@12",
+          "group": "0_toolkit@22",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
           "command": "toolkit.restClient.selectEnvironment",
-          "group": "0_toolkit@13",
+          "group": "0_toolkit@23",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
           "command": "toolkit.restClient.sendAll",
-          "group": "0_toolkit@14",
+          "group": "0_toolkit@24",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
           "command": "toolkit.restClient.send",
-          "group": "0_toolkit@15",
+          "group": "0_toolkit@25",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@16",
+          "group": "0_toolkit@26",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.sumNumbers",
-          "group": "0_toolkit@17",
+          "group": "0_toolkit@27",
           "when": "editorHasSelection"
         },
         {
+          "command": "toolkit.toggleCsvRainbow",
+          "group": "0_toolkit@28",
+          "when": "resourceExtname == .csv || resourceExtname == .tsv"
+        },
+        {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@18"
+          "group": "0_toolkit@29"
         },
         {
           "command": "toolkit.toggleQuotes",
-          "group": "0_toolkit@19"
+          "group": "0_toolkit@30"
+        },
+        {
+          "command": "toolkit.transform.jsonMinify",
+          "group": "0_toolkit@31",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.jsonPrettify",
+          "group": "0_toolkit@32",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.jsonSortKeys",
+          "group": "0_toolkit@33",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.jsonToYaml",
+          "group": "0_toolkit@34",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.yamlToJson",
+          "group": "0_toolkit@35",
+          "when": "editorHasSelection && editorLangId == yaml"
         },
         {
           "command": "toolkit.transform",
-          "group": "0_toolkit@20",
+          "group": "0_toolkit@36",
           "when": "editorHasSelection"
         }
       ]

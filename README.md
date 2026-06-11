@@ -262,6 +262,7 @@ Manage NuGet packages for .NET projects directly from VS Code. Supports browsing
 
 - **Activity Bar** — click the NuGet icon in the sidebar to see all `.csproj` / `.fsproj` / `.vbproj` projects in the workspace. Click a project to open its package manager.
 - **Explorer context menu** — right-click a project file and select **Manage NuGet Packages**.
+- **Editor context menu** — right-click inside an open project file (also offers **NuGet Vulnerabilities**).
 - **Command Palette** — run **Toolkit: Manage NuGet Packages** to pick a project file.
 
 **Package Manager panel:**
@@ -298,6 +299,7 @@ Manage npm packages for Node.js projects directly from VS Code. Supports browsin
 
 - **Activity Bar** — click the npm icon in the sidebar to see all `package.json` projects in the workspace. Click a project to open its package manager.
 - **Explorer context menu** — right-click a `package.json` file and select **Manage npm Packages**.
+- **Editor context menu** — right-click inside an open `package.json` (also offers **npm Audit**).
 - **Command Palette** — run **Toolkit: Manage npm Packages** to pick a project.
 
 **Package Manager panel:**
@@ -361,6 +363,7 @@ Check a project's dependencies for known vulnerabilities using each ecosystem's 
 **Access:**
 
 - **Explorer context menu** — right-click a `package.json`, a `.csproj`/`.fsproj`/`.vbproj`, or a **solution** (`.sln`/`.slnx`) to audit every project in it at once
+- **Editor context menu** — also available when right-clicking inside an open `package.json` or project file
 - **Command Palette** — run either command; with several projects in the workspace, a picker asks which one
 
 **Results:** findings are listed in a quick pick sorted by severity (critical → high → moderate → low), showing the affected range, whether it is a transitive dependency, and the concrete fix when the tool names one (e.g. `fix: mocha@11.0.0 (major)` — the direct dependency to update, which is what actually resolves transitive vulnerabilities). When auditing a solution, each finding is tagged with the project it belongs to — the same advisory in two projects shows once per project. Picking an entry opens its security advisory in the browser. A clean project shows a confirmation message instead.
@@ -475,7 +478,7 @@ import { search } from '../catalog/helpers'
 
 When the cursor is on an import line, a code action (lightbulb / `Ctrl+.`) offers the conversion in the appropriate direction — alias to relative or relative to alias.
 
-Works with `import ... from`, `export ... from`, `require()`, and dynamic `import()`. Supported languages: TypeScript, JavaScript, TSX, JSX, Vue, Svelte.
+Works with `import ... from`, `export ... from`, `require()`, and dynamic `import()`. Supported languages: TypeScript, JavaScript, TSX, JSX, Vue, Svelte. Both commands are available from the editor context menu in those languages, and from the Command Palette.
 
 #### Type-Only Imports
 
@@ -505,7 +508,7 @@ The whole declaration is flagged only when **every** imported binding (default, 
 
 It will **not** flag — even if part of the import looks type-only — when any binding appears as a value: `Foo()`, `new Foo()`, `class extends Foo`, `@Foo`, `<Foo />`, `typeof Foo === '...'` in an expression, property/element access. Already-`import type` declarations and side-effect imports (`import './setup'`) are ignored.
 
-Supported languages: TypeScript and TSX.
+Supported languages: TypeScript and TSX. **Analyze Type-Only Imports in Current File** (a verbose, on-demand pass) is available from the editor context menu in those languages.
 
 **Settings:**
 
@@ -741,6 +744,7 @@ Available from:
 - Invalid input (malformed Base64, non-hex characters, broken percent encoding, malformed JWT, invalid JSON/YAML) triggers a warning and leaves the selection untouched.
 - Hashes always output lowercase hex.
 - JWT Decode opens a new untitled `jsonc` editor with the formatted header, payload and signature. The signature is **not** verified.
+- The JSON operations (Prettify / Minify / Sort Keys / JSON to YAML) also appear in the editor context menu of JSON files when text is selected; YAML to JSON appears in YAML files.
 - The YAML converter has no external dependencies and covers the block-style subset typical of config files, plus flow collections (`[a, b]` / `{k: v}`), quoted scalars, and comments. Unsupported YAML constructs — block scalars (`|`, `>`), anchors/aliases, tags, multiple documents — are rejected with a clear message instead of being converted incorrectly.
 
 #### Insert UUID / Timestamp / Random
@@ -886,7 +890,7 @@ Generate type definitions from a JSON sample. The source is the current selectio
 | JSON to C# Record | `public record Root(int Id, string Name)` |
 | JSON to C# Class | `public class Root { public int Id { get; set; } }` |
 
-Available from the **Command Palette** — the dispatcher or any of the individual commands (they also work without a selection, reading the JSON from the clipboard).
+Available from the **Command Palette** — the dispatcher or any of the individual commands (they also work without a selection, reading the JSON from the clipboard) — and from the **editor context menu of JSON files**.
 
 **Behavior:**
 
@@ -1205,7 +1209,7 @@ Keeps your local `.env` files in sync with the committed example (`.env.example`
 
 **Quick fix:** `Ctrl+.` on the missing-keys warning offers **Add missing keys** — appends them to your `.env` with the example's placeholder values.
 
-**Command:** run **Toolkit: Check .env Files** from the Command Palette to scan every `.env`/example pair in the workspace at once; out-of-sync files are listed in a quick pick (useful after a big pull).
+**Command:** run **Toolkit: Check .env Files** from the Command Palette — or the editor context menu of any `.env` file — to scan every `.env`/example pair in the workspace at once; out-of-sync files are listed in a quick pick (useful after a big pull).
 
 **Privacy:** only key *names* ever appear in messages — values from a real `.env` are secrets and are never shown or copied anywhere.
 
@@ -1440,7 +1444,7 @@ The delimiter is auto-detected from the first lines of the file (`,`, `;`, `\t`,
 - Quote-aware parsing — `"a,b",c` is two columns, not three
 - Configurable line cap (default 5000) to keep huge files responsive
 
-Toggle with **Toolkit: Toggle CSV Rainbow** from the Command Palette.
+Toggle with **Toolkit: Toggle CSV Rainbow** from the Command Palette or the editor context menu of `.csv` / `.tsv` files.
 
 **Settings:**
 
@@ -1485,7 +1489,7 @@ Render the active `.svg` file in a side panel that refreshes live as you edit th
 **Access:**
 
 - **Editor title bar** — the preview icon when an `.svg` file is open
-- **Explorer context menu** — right-click an `.svg` file and pick **Toolkit: Preview SVG**
+- **Editor / Explorer context menu** — right-click inside an open `.svg` (or on the file in the Explorer) and pick **Toolkit: Preview SVG**
 - **Command Palette** — run **Toolkit: Preview SVG**
 
 **Features:**
