@@ -82,6 +82,11 @@ export async function getFileLogPatch(
   return gitExec(cwd, args, 30000)
 }
 
+export async function getFileCommitCount(cwd: string, relativePath: string): Promise<number> {
+  const out = await gitExec(cwd, ['rev-list', '--count', 'HEAD', '--', relativePath])
+  return parseInt(out, 10)
+}
+
 export interface BlameInfo {
   hash: string
   author: string

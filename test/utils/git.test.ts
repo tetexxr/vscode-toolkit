@@ -6,6 +6,7 @@ import { execFileSync } from 'child_process'
 import {
   parseRemoteUrl,
   getFileLogPatch,
+  getFileCommitCount,
   getFileBlame,
   parseGitStatus,
   getCommitLog,
@@ -66,6 +67,25 @@ describe('getFileLogPatch', () => {
     const secondHashes = [...second.matchAll(/^commit ([0-9a-f]{40})$/gm)].map(m => m[1])
     assert.equal(firstTwoHashes.length, 2)
     assert.deepEqual(secondHashes, [firstTwoHashes[1]])
+  })
+})
+
+describe('getFileCommitCount', () => {
+  const repoRoot = path.resolve(__dirname, '../..')
+
+  it('should match the number of commits in the full log', async () => {
+    const count = await getFileCommitCount(repoRoot, 'package.json')
+    const log = await getFileLogPatch(repoRoot, 'package.json')
+    assert.equal(count, log.split('---COMMIT---').length - 1)
+  })
+
+  it('should return 0 for an untracked file', async () => {
+    const count = await getFileCommitCount(repoRoot, 'nonexistent-file-that-does-not-exist.txt')
+    assert.equal(count, 0)
+  })
+
+  it('should reject for an invalid cwd', async () => {
+    await assert.rejects(() => getFileCommitCount('/nonexistent-dir', 'file.txt'))
   })
 })
 
