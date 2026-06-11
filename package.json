@@ -804,6 +804,10 @@
       {
         "command": "toolkit.markdown.formatTable",
         "title": "Toolkit: Format Markdown Table"
+      },
+      {
+        "command": "toolkit.markdown.compactTable",
+        "title": "Toolkit: Compact Markdown Table"
       }
     ],
     "keybindings": [
@@ -1130,62 +1134,67 @@
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.compareWithBranch",
+          "command": "toolkit.markdown.compactTable",
           "group": "0_toolkit@3",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "toolkit.compareWithBranch",
+          "group": "0_toolkit@4",
           "when": "gitOpenRepositoryCount != 0"
         },
         {
           "command": "toolkit.timestamp.convert",
-          "group": "0_toolkit@4",
+          "group": "0_toolkit@5",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.markdown.formatTable",
-          "group": "0_toolkit@5",
+          "group": "0_toolkit@6",
           "when": "editorLangId == markdown"
         },
         {
           "command": "toolkit.gitHistory",
-          "group": "0_toolkit@6"
-        },
-        {
-          "command": "toolkit.insert",
           "group": "0_toolkit@7"
         },
         {
+          "command": "toolkit.insert",
+          "group": "0_toolkit@8"
+        },
+        {
           "command": "toolkit.lines",
-          "group": "0_toolkit@8",
+          "group": "0_toolkit@9",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@9"
-        },
-        {
-          "command": "toolkit.pasteImage",
           "group": "0_toolkit@10"
         },
         {
-          "command": "toolkit.slugify",
-          "group": "0_toolkit@11",
-          "when": "editorHasSelection"
+          "command": "toolkit.pasteImage",
+          "group": "0_toolkit@11"
         },
         {
-          "command": "toolkit.sumNumbers",
+          "command": "toolkit.slugify",
           "group": "0_toolkit@12",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@13"
+          "command": "toolkit.sumNumbers",
+          "group": "0_toolkit@13",
+          "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleQuotes",
+          "command": "toolkit.toggleGitBlame",
           "group": "0_toolkit@14"
         },
         {
+          "command": "toolkit.toggleQuotes",
+          "group": "0_toolkit@15"
+        },
+        {
           "command": "toolkit.transform",
-          "group": "0_toolkit@15",
+          "group": "0_toolkit@16",
           "when": "editorHasSelection"
         }
       ]

@@ -135,3 +135,31 @@ describe('formatMarkdownTables', () => {
     assert.equal(formatMarkdownTables(input), input)
   })
 })
+
+describe('formatTable — compact mode', () => {
+  it('should strip alignment padding down to single spaces', () => {
+    const result = formatTable(['| Name  | Age |', '| ----- | --- |', '| Alice | 30  |'], 'compact')
+    assert.deepEqual(result, ['| Name | Age |', '| --- | --- |', '| Alice | 30 |'])
+  })
+
+  it('should keep minimal alignment markers in the separator', () => {
+    const result = formatTable(['| L   |  C  |   R |', '| :-- | :-: | --: |', '| a   |  b  |   c |'], 'compact')
+    assert.deepEqual(result, ['| L | C | R |', '| :-- | :-: | --: |', '| a | b | c |'])
+  })
+
+  it('should preserve indentation and pad missing cells', () => {
+    const result = formatTable(['  | a    | b   |', '  | ---- | --- |', '  | only |     |'], 'compact')
+    assert.deepEqual(result, ['  | a | b |', '  | --- | --- |', '  | only |  |'])
+  })
+
+  it('should be the inverse of align (round-trip stable)', () => {
+    const aligned = ['| Name  | Age |', '| ----- | --- |', '| Alice | 30  |']
+    const compacted = formatTable(aligned, 'compact')
+    assert.deepEqual(formatTable(compacted, 'align'), aligned)
+  })
+
+  it('should format every table in compact mode via formatMarkdownTables', () => {
+    const input = '| a    | b   |\n| ---- | --- |\n| long | 2   |'
+    assert.equal(formatMarkdownTables(input, 'compact'), '| a | b |\n| --- | --- |\n| long | 2 |')
+  })
+})

@@ -863,6 +863,8 @@ Align the pipes of Markdown tables so the source reads as cleanly as the rendere
 
 Run **Toolkit: Format Markdown Table** from the Command Palette or the editor context menu (Markdown files). With no selection it formats the table under the cursor; with a selection it formats every table the selection touches.
 
+The inverse also exists: **Toolkit: Compact Markdown Table** strips all alignment padding — single spaces around each cell and minimal separators (`---`, alignment colons kept). Renders identically, uses fewer characters, and keeps diffs clean: in an aligned table, widening one cell re-pads the whole column (the diff touches every row); in compact form each change touches only its own row.
+
 **Behavior:**
 
 - GFM alignment markers (`:--`, `:-:`, `--:`) are preserved and applied to the cell content — header included, like Prettier.

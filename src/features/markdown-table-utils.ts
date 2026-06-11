@@ -134,13 +134,31 @@ export function findTableBlocks(lines: string[]): TableBlock[] {
   return blocks
 }
 
-/** Formats the lines of a single table, preserving the leading indentation. */
-export function formatTable(lines: string[]): string[] {
+export type TableFormatMode = 'align' | 'compact'
+
+/**
+ * Formats the lines of a single table, preserving the leading indentation.
+ * 'align' pads every column to its widest cell; 'compact' strips all
+ * alignment padding (minimal separators, single spaces) — same rendering,
+ * fewer characters, and diffs that only touch the row that changed.
+ */
+export function formatTable(lines: string[], mode: TableFormatMode = 'align'): string[] {
   const indent = /^\s*/.exec(lines[0])![0]
   const rows = lines.map(splitRow)
   const separatorCells = rows[1]
   const alignments = separatorCells.map(parseAlignment)
   const columnCount = Math.max(...rows.map(r => r.length))
+
+  if (mode === 'compact') {
+    const MINIMAL: Record<Alignment, string> = { none: '---', left: ':--', right: '--:', center: ':-:' }
+    return rows.map((cells, rowIndex) => {
+      const formatted: string[] = []
+      for (let col = 0; col < columnCount; col++) {
+        formatted.push(rowIndex === 1 ? MINIMAL[alignments[col] ?? 'none'] : (cells[col] ?? ''))
+      }
+      return `${indent}| ${formatted.join(' | ')} |`
+    })
+  }
 
   // Column width: widest content cell (separator excluded), minimum 3.
   const widths: number[] = []
@@ -170,11 +188,11 @@ export function formatTable(lines: string[]): string[] {
 }
 
 /** Formats every table found in `text`, leaving everything else untouched. */
-export function formatMarkdownTables(text: string): string {
+export function formatMarkdownTables(text: string, mode: TableFormatMode = 'align'): string {
   const eol = text.includes('\r\n') ? '\r\n' : '\n'
   const lines = text.split(/\r?\n/)
   for (const block of findTableBlocks(lines)) {
-    const formatted = formatTable(lines.slice(block.start, block.end + 1))
+    const formatted = formatTable(lines.slice(block.start, block.end + 1), mode)
     lines.splice(block.start, formatted.length, ...formatted)
   }
   return lines.join(eol)

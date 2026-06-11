@@ -1,12 +1,13 @@
 import * as vscode from 'vscode'
-import { findTableBlocks, formatTable, tableBlockAtLine } from './markdown-table-utils'
+import { findTableBlocks, formatTable, tableBlockAtLine, type TableFormatMode } from './markdown-table-utils'
 
 /**
- * Markdown table formatter — aligns the pipes of the table under the cursor
- * (or every table inside the selection), honoring GFM alignment markers.
+ * Markdown table formatter — aligns (or compacts) the pipes of the table
+ * under the cursor or every table inside the selection, honoring GFM
+ * alignment markers.
  */
 
-async function formatMarkdownTable(): Promise<void> {
+async function formatMarkdownTable(mode: TableFormatMode): Promise<void> {
   const editor = vscode.window.activeTextEditor
   if (!editor) {
     return
@@ -33,7 +34,7 @@ async function formatMarkdownTable(): Promise<void> {
   const eol = document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n'
   await editor.edit(builder => {
     for (const block of blocks) {
-      const formatted = formatTable(allLines.slice(block.start, block.end + 1))
+      const formatted = formatTable(allLines.slice(block.start, block.end + 1), mode)
       const range = new vscode.Range(block.start, 0, block.end, allLines[block.end].length)
       builder.replace(range, formatted.join(eol))
     }
@@ -42,6 +43,7 @@ async function formatMarkdownTable(): Promise<void> {
 
 export function registerMarkdownTableCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('toolkit.markdown.formatTable', () => formatMarkdownTable())
+    vscode.commands.registerCommand('toolkit.markdown.formatTable', () => formatMarkdownTable('align')),
+    vscode.commands.registerCommand('toolkit.markdown.compactTable', () => formatMarkdownTable('compact'))
   )
 }
