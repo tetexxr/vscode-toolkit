@@ -51,6 +51,15 @@ describe('parseNpmAuditJson (v2 format)', () => {
     assert.equal(lodash.transitive, false)
   })
 
+  it('should extract the concrete fix when npm names one', () => {
+    const findings = parseNpmAuditJson(V2)
+    const minimist = findings.find(f => f.package === 'minimist')!
+    assert.equal(minimist.fixAvailable, true)
+    assert.equal(minimist.fix, 'mocha@10.0.0 (major)')
+    // plain `true` has no concrete fix to name
+    assert.equal(findings.find(f => f.package === 'lodash')!.fix, undefined)
+  })
+
   it('should mark indirect packages as transitive and honor fixAvailable=false', () => {
     const findings = parseNpmAuditJson(V2)
     const dep = findings.find(f => f.package === 'dep-of-dep')!

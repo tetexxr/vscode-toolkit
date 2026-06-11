@@ -19,6 +19,8 @@ export interface VulnerabilityFinding {
   /** Affected range or resolved version, depending on the source. */
   range: string
   fixAvailable?: boolean
+  /** Concrete remediation when the tool names one, e.g. "mocha@11.0.0 (major)". */
+  fix?: string
   transitive?: boolean
   /** Project name, when the report covers several (e.g. a .NET solution). */
   project?: string
@@ -119,6 +121,19 @@ export function parseNpmAuditJson(stdout: string): VulnerabilityFinding[] {
       // `via` mixes advisory objects and plain strings (names of vulnerable deps).
       const advisories = via.filter((v): v is NpmV2Via => typeof v === 'object' && v !== null)
       const first = advisories[0]
+
+      // fixAvailable is true, false, or { name, version, isSemVerMajor }:
+      // the object names the direct dependency to update (and to what).
+      let fix: string | undefined
+      if (typeof raw.fixAvailable === 'object' && raw.fixAvailable !== null) {
+        const fixInfo = raw.fixAvailable as Record<string, unknown>
+        const fixName = asString(fixInfo.name)
+        const fixVersion = asString(fixInfo.version)
+        if (fixName && fixVersion) {
+          fix = `${fixName}@${fixVersion}${fixInfo.isSemVerMajor === true ? ' (major)' : ''}`
+        }
+      }
+
       findings.push({
         package: name,
         severity: normalizeSeverity(raw.severity),
@@ -126,6 +141,7 @@ export function parseNpmAuditJson(stdout: string): VulnerabilityFinding[] {
         url: typeof first?.url === 'string' ? first.url : null,
         range: asString(raw.range),
         fixAvailable: raw.fixAvailable !== false && raw.fixAvailable !== undefined,
+        ...(fix ? { fix } : {}),
         transitive: !(raw.isDirect === true)
       })
     }

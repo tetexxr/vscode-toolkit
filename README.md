@@ -347,7 +347,9 @@ Check a project's dependencies for known vulnerabilities using each ecosystem's 
 - **Explorer context menu** — right-click a `package.json`, a `.csproj`/`.fsproj`/`.vbproj`, or a **solution** (`.sln`/`.slnx`) to audit every project in it at once
 - **Command Palette** — run either command; with several projects in the workspace, a picker asks which one
 
-**Results:** findings are listed in a quick pick sorted by severity (critical → high → moderate → low), showing the affected range, whether it is a transitive dependency, and whether a fix is available. When auditing a solution, each finding is tagged with the project it belongs to — the same advisory in two projects shows once per project. Picking an entry opens its security advisory in the browser. A clean project shows a confirmation message instead.
+**Results:** findings are listed in a quick pick sorted by severity (critical → high → moderate → low), showing the affected range, whether it is a transitive dependency, and the concrete fix when the tool names one (e.g. `fix: mocha@11.0.0 (major)` — the direct dependency to update, which is what actually resolves transitive vulnerabilities). When auditing a solution, each finding is tagged with the project it belongs to — the same advisory in two projects shows once per project. Picking an entry opens its security advisory in the browser. A clean project shows a confirmation message instead.
+
+**Apply fixes:** for npm and pnpm projects, the first entry of the quick pick is **Apply fixes** — it runs the ecosystem's official remediation (`npm audit fix` / `pnpm audit --fix`) and re-audits so you can see what's left (fixes requiring a major bump are not applied automatically; update those from the package manager panel). yarn classic has no fix command, so the entry is not shown there. For NuGet there is no official auto-fix either — remediate by updating the affected package from the [NuGet panel](#nuget-package-manager).
 
 > Note: NuGet requires the project to be restored (`dotnet restore`) — the vulnerability data comes from the restore graph.
 
