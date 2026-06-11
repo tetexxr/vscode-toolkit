@@ -33,6 +33,7 @@ import { registerTimestampCommands } from './features/timestamp'
 import { registerUuidHover } from './features/uuid-hover'
 import { registerEnvCheckCommands } from './features/env-check'
 import { registerDependencyAuditCommands } from './features/dependency-audit'
+import { registerMarkdownTableCommands } from './features/markdown-table'
 import { registerJsonToTypeCommands } from './features/json-to-type'
 import { registerPasteImageCommands } from './features/paste-image'
 import { registerClipboardHistoryCommands } from './features/clipboard-history'
@@ -78,6 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerUuidHover(context)
   registerEnvCheckCommands(context)
   registerDependencyAuditCommands(context)
+  registerMarkdownTableCommands(context)
   registerJsonToTypeCommands(context)
   registerPasteImageCommands(context)
   registerClipboardHistoryCommands(context)

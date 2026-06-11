@@ -35,6 +35,7 @@ All-in-one VS Code utility extension.
     - [Insert UUID / Timestamp / Random](#insert-uuid--timestamp--random)
     - [Timestamp Converter & Hover](#timestamp-converter--hover)
     - [UUID / ULID Hover](#uuid--ulid-hover)
+    - [Format Markdown Table](#format-markdown-table)
     - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
@@ -839,6 +840,35 @@ Hover any UUID or ULID — in logs, database dumps, JSON payloads, or code — t
 |---|---|---|
 | `toolkit.uuidHover.enabled` | `true` | Toggle the UUID/ULID hover |
 | `toolkit.uuidHover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
+
+#### Format Markdown Table
+
+Align the pipes of Markdown tables so the source reads as cleanly as the rendered output.
+
+```markdown
+| Name | Age |
+|---|---|
+| Alice | 30 |
+| Bob | 9 |
+```
+
+→
+
+```markdown
+| Name  | Age |
+| ----- | --- |
+| Alice | 30  |
+| Bob   | 9   |
+```
+
+Run **Toolkit: Format Markdown Table** from the Command Palette or the editor context menu (Markdown files). With no selection it formats the table under the cursor; with a selection it formats every table the selection touches.
+
+**Behavior:**
+
+- GFM alignment markers (`:--`, `:-:`, `--:`) are preserved and applied to the cell content — header included, like Prettier.
+- Escaped pipes (`\|`) and pipes inside inline code (`` `a|b` ``) don't break cells.
+- Rows with missing cells are padded with empty ones; leading indentation (tables inside lists) is preserved.
+- Tables with or without surrounding pipes are recognized; the output always uses surrounding pipes.
 
 #### JSON to TypeScript / C# Types
 
