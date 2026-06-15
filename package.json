@@ -2427,10 +2427,15 @@
           "default": "panel",
           "description": "Where a freshly-sent request (Send Request) shows its response."
         },
-        "toolkit.restClient.historySize": {
+        "toolkit.restClient.historySizePerRequest": {
           "type": "number",
           "default": 30,
-          "description": "How many recent responses to keep in the per-workspace history (0 disables history)."
+          "description": "How many recent responses to keep per request (method + URL) in the per-workspace history, so a busy endpoint doesn't evict the others (0 disables history)."
+        },
+        "toolkit.restClient.historySize": {
+          "type": "number",
+          "default": 500,
+          "description": "Overall safety cap on the total number of responses kept across all requests (0 disables history)."
         },
         "toolkit.restClient.history.storeRequest": {
           "type": "boolean",

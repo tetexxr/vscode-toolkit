@@ -1407,13 +1407,13 @@ The **Copy as curl** CodeLens next to each request's Send Request (or the comman
 
 **Response history:**
 
-Every request you send is kept in a per-workspace history (newest first, capped by `toolkit.restClient.historySize`). This includes HTTP error responses (4xx/5xx are normal responses) **and** requests that never got a response at all — DNS failures, refused connections, timeouts — which are recorded as *Failed* entries with the error message as their body.
+Every request you send is kept in a per-workspace history (newest first). Each request (method + URL) keeps its own most-recent responses — up to `toolkit.restClient.historySizePerRequest` (default 30) — so a busy endpoint never evicts the others; `toolkit.restClient.historySize` (default 500) is an overall safety cap. This includes HTTP error responses (4xx/5xx are normal responses) **and** requests that never got a response at all — DNS failures, refused connections, timeouts — which are recorded as *Failed* entries with the error message as their body.
 
 - **REST Client - Response History...** lists recent requests — each showing method, URL, status (or the failure), duration and how long ago it ran. A 4xx/5xx is flagged with a warning icon and a network failure with an error icon. Pick one to reopen it in an editor.
 - **REST Client - Diff Two Responses...** lets you pick two entries and opens them side by side in a diff editor (oldest → newest), so you can spot what changed between two runs of the same request.
 - **REST Client - Clear Response History** empties it.
 
-Bodies are stored capped at ~1 MB per entry to keep the workspace state small; entries whose body was clipped are marked *body truncated*. Set `historySize` to `0` to disable history entirely. (Requests you cancel yourself are not recorded.)
+Bodies are stored capped at ~1 MB per entry to keep the workspace state small; entries whose body was clipped are marked *body truncated*. Set `historySizePerRequest` (or `historySize`) to `0` to disable history entirely. (Requests you cancel yourself are not recorded.)
 
 **Response format:**
 
@@ -1437,7 +1437,8 @@ X-Toolkit-Time: 234ms
 | `toolkit.restClient.timeout` | `30000` | Request timeout in ms (0 disables). On timeout the request is reported as failed and recorded in the history — distinct from a cancellation, which is silent |
 | `toolkit.restClient.followRedirects` | `true` | Follow 3xx redirects |
 | `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` |
-| `toolkit.restClient.historySize` | `30` | Recent responses kept per workspace (0 disables history) |
+| `toolkit.restClient.historySizePerRequest` | `30` | Recent responses kept per request — method + URL (0 disables history) |
+| `toolkit.restClient.historySize` | `500` | Overall safety cap on total responses kept across all requests (0 disables history) |
 
 **Limitations:**
 

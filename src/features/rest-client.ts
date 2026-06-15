@@ -218,8 +218,14 @@ const HISTORY_SCHEME = 'toolkit-rest-history'
 /** Per-entry body cap stored in workspace state (~1 MB) so history stays small. */
 const MAX_HISTORY_BODY_CHARS = 1_000_000
 
+/** Max responses kept per request (method + URL). */
+function historySizePerRequest(): number {
+  return Math.max(0, vscode.workspace.getConfiguration('toolkit.restClient').get<number>('historySizePerRequest', 30))
+}
+
+/** Overall safety cap across all requests. */
 function historySize(): number {
-  return Math.max(0, vscode.workspace.getConfiguration('toolkit.restClient').get<number>('historySize', 30))
+  return Math.max(0, vscode.workspace.getConfiguration('toolkit.restClient').get<number>('historySize', 500))
 }
 
 function getHistory(): ResponseHistoryEntry[] {
@@ -227,11 +233,15 @@ function getHistory(): ResponseHistoryEntry[] {
 }
 
 async function pushHistory(entry: ResponseHistoryEntry): Promise<void> {
-  const max = historySize()
-  if (max <= 0) {
+  const perRequest = historySizePerRequest()
+  const globalMax = historySize()
+  if (perRequest <= 0 || globalMax <= 0) {
     return
   }
-  await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, addHistoryEntry(getHistory(), entry, max))
+  await extensionContext?.workspaceState.update(
+    HISTORY_STATE_KEY,
+    addHistoryEntry(getHistory(), entry, perRequest, globalMax)
+  )
   historyProvider?.refresh()
 }
 

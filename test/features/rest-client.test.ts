@@ -429,19 +429,45 @@ describe('response history', () => {
     ...over
   })
 
-  it('should prepend newest-first and cap at max', () => {
+  it('should prepend newest-first and cap per request', () => {
     let list: ResponseHistoryEntry[] = []
-    list = addHistoryEntry(list, entry('a', 1), 2)
-    list = addHistoryEntry(list, entry('b', 2), 2)
-    list = addHistoryEntry(list, entry('c', 3), 2)
+    list = addHistoryEntry(list, entry('a', 1), 2, 100)
+    list = addHistoryEntry(list, entry('b', 2), 2, 100)
+    list = addHistoryEntry(list, entry('c', 3), 2, 100)
+    // Same endpoint (default url), per-request cap 2 → oldest 'a' evicted.
     assert.deepEqual(
       list.map(e => e.id),
       ['c', 'b']
     )
   })
 
-  it('should return an empty list when max is 0 (history disabled)', () => {
-    assert.deepEqual(addHistoryEntry([entry('a', 1)], entry('b', 2), 0), [])
+  it('should keep each request capped independently', () => {
+    let list: ResponseHistoryEntry[] = []
+    list = addHistoryEntry(list, entry('a1', 1, { url: 'https://api.test/a' }), 2, 100)
+    list = addHistoryEntry(list, entry('b1', 2, { url: 'https://api.test/b' }), 2, 100)
+    list = addHistoryEntry(list, entry('a2', 3, { url: 'https://api.test/a' }), 2, 100)
+    list = addHistoryEntry(list, entry('a3', 4, { url: 'https://api.test/a' }), 2, 100)
+    // /a keeps its 2 newest (a3, a2); /b is untouched by /a's churn.
+    assert.deepEqual(
+      list.map(e => e.id),
+      ['a3', 'a2', 'b1']
+    )
+  })
+
+  it('should enforce the global safety cap across requests', () => {
+    let list: ResponseHistoryEntry[] = []
+    list = addHistoryEntry(list, entry('a', 1, { url: 'https://api.test/a' }), 30, 2)
+    list = addHistoryEntry(list, entry('b', 2, { url: 'https://api.test/b' }), 30, 2)
+    list = addHistoryEntry(list, entry('c', 3, { url: 'https://api.test/c' }), 30, 2)
+    assert.deepEqual(
+      list.map(e => e.id),
+      ['c', 'b']
+    )
+  })
+
+  it('should return an empty list when either cap is 0 (history disabled)', () => {
+    assert.deepEqual(addHistoryEntry([entry('a', 1)], entry('b', 2), 0, 100), [])
+    assert.deepEqual(addHistoryEntry([entry('a', 1)], entry('b', 2), 30, 0), [])
   })
 
   it('should truncate a body past the cap and flag it', () => {

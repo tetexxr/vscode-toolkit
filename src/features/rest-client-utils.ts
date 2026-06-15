@@ -580,16 +580,36 @@ export function truncateForHistory(body: string, maxChars: number): { body: stri
   return { body: body.slice(0, maxChars), truncated: true }
 }
 
-/** Prepends an entry to the history list and caps it at `max` (newest first). */
+/**
+ * Prepends an entry and caps the history two ways (newest first): at most
+ * `perRequestMax` entries per request (method + URL), so a busy endpoint can't
+ * evict every other endpoint's history, and at most `globalMax` overall as a
+ * storage safety net. Either limit at 0 disables history.
+ */
 export function addHistoryEntry(
   list: ResponseHistoryEntry[],
   entry: ResponseHistoryEntry,
-  max: number
+  perRequestMax: number,
+  globalMax: number
 ): ResponseHistoryEntry[] {
-  if (max <= 0) {
+  if (perRequestMax <= 0 || globalMax <= 0) {
     return []
   }
-  return [entry, ...list].slice(0, max)
+  const counts = new Map<string, number>()
+  const kept: ResponseHistoryEntry[] = []
+  for (const candidate of [entry, ...list]) {
+    const key = `${candidate.method} ${candidate.url}`
+    const seen = counts.get(key) ?? 0
+    if (seen >= perRequestMax) {
+      continue
+    }
+    counts.set(key, seen + 1)
+    kept.push(candidate)
+    if (kept.length >= globalMax) {
+      break
+    }
+  }
+  return kept
 }
 
 /** Human-readable status for an entry: `200 OK`, or `Failed: <error>` for a request that never responded. */
