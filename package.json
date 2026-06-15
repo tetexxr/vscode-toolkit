@@ -19,7 +19,7 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "languages": [
       {
@@ -2446,10 +2446,11 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run copy-pdfjs && npm run compile",
+    "vscode:prepublish": "npm run copy-pdfjs && npm run check-types && node esbuild.js --production",
     "copy-pdfjs": "mkdir -p lib/pdf-viewer && cp node_modules/pdfjs-dist/legacy/build/pdf.min.mjs node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs lib/pdf-viewer/",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "check-types": "tsc --noEmit -p ./",
+    "compile": "npm run check-types && node esbuild.js",
+    "watch": "node esbuild.js --watch",
     "lint": "eslint src",
     "package": "vsce package",
     "test": "mocha --require tsx 'test/**/*.test.ts'"
@@ -2462,6 +2463,7 @@
     "@types/node": "^25.9.3",
     "@types/vscode": "^1.120.0",
     "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.28.1",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
     "mocha": "^11.7.6",
