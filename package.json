@@ -2474,6 +2474,11 @@
           "default": true,
           "description": "Store the resolved request (method, URL, headers and body) alongside each response so it can be re-sent and copied as curl. Disable to avoid persisting request headers such as Authorization in the workspace storage — re-send then falls back to re-running the request from its source .http file."
         },
+        "toolkit.restClient.maxResponseSizeMB": {
+          "type": "number",
+          "default": 100,
+          "description": "Responses up to this size (MB) render normally (rich panel / formatted). Larger ones open as plain text in an editor. The hard cap is 256 MB; above that the request is aborted."
+        },
         "toolkit.restClient.history.clickAction": {
           "type": "string",
           "enum": [

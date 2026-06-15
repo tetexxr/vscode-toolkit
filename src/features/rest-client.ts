@@ -42,8 +42,13 @@ import {
 
 const FILE_GLOB = '**/*.{http,rest}'
 
-/** Hard cap on buffered response bodies (mirrors utils/http.ts). */
-const MAX_RESPONSE_BYTES = 50 * 1024 * 1024
+/**
+ * Hard cap on buffered response bodies. Kept under V8's ~512 MB max string size
+ * so the body can still be held as a single string (and saved/searched). Bodies
+ * above `maxResponseSizeMB` (but under this) render as plain text instead of the
+ * rich panel.
+ */
+const MAX_RESPONSE_BYTES = 256 * 1024 * 1024
 
 /** Reads the response body as text, aborting if it exceeds the cap. */
 async function readBodyCapped(response: Response): Promise<string> {
@@ -78,6 +83,8 @@ interface RestClientConfig {
   storeRequest: boolean
   /** What clicking a history entry opens. */
   historyClickAction: 'editor' | 'panel'
+  /** Responses larger than this (MB) open as plain text instead of the rich/formatted view. */
+  maxResponseSizeMB: number
 }
 
 function readConfig(): RestClientConfig {
@@ -88,7 +95,8 @@ function readConfig(): RestClientConfig {
     previewResponseAs: config.get<'auto' | 'raw' | 'json'>('previewResponseAs', 'auto'),
     previewResponseIn: config.get<'editor' | 'panel'>('previewResponseIn', 'panel'),
     storeRequest: config.get<boolean>('history.storeRequest', true),
-    historyClickAction: config.get<'editor' | 'panel'>('history.clickAction', 'editor')
+    historyClickAction: config.get<'editor' | 'panel'>('history.clickAction', 'editor'),
+    maxResponseSizeMB: Math.max(1, config.get<number>('maxResponseSizeMB', 100))
   }
 }
 
@@ -1199,15 +1207,19 @@ interface ShowResponseOptions {
    * active column stable so the side column (and its preview tab) is reused.
    */
   preserveFocus?: boolean
+  /** Force plain text with no JSON pretty-printing — for very large responses. */
+  forcePlain?: boolean
 }
 
 async function showResponse(
   response: FetchResult,
   options: ShowResponseOptions
 ): Promise<void> {
-  const formatted = formatResponse(response)
+  const formatted = formatResponse(response, !options.forcePlain)
   let language: string
-  if (options.previewResponseAs === 'raw') {
+  if (options.forcePlain) {
+    language = 'plaintext'
+  } else if (options.previewResponseAs === 'raw') {
     language = 'http'
   } else if (options.previewResponseAs === 'json') {
     language = 'json'
@@ -1308,7 +1320,7 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
 /**
  * How a freshly-sent response is shown:
  * - `live` opens the full response as text (used by Send Request — immediate,
- *   not body-capped, with native highlighting/find).
+ *   with native highlighting/find).
  * - `preferred` opens the recorded entry per the history click action (panel or
  *   editor), so re-sending from the history reuses the same surface.
  */
@@ -1345,7 +1357,18 @@ async function sendResolved(
       (_progress, token) => performFetch(resolved, config, token)
     )
     const entry = await recordHistory(response, resolved, source, config)
-    if (showInPanel) {
+    const bytes = Buffer.byteLength(response.body, 'utf-8')
+    if (bytes > config.maxResponseSizeMB * 1024 * 1024) {
+      // Too big for the rich panel / pretty-printing: show the full body as plain
+      // text in an editor (which handles large files far better than a webview).
+      if (detailPanel && detailEntryId === undefined) {
+        detailPanel.dispose() // drop the now-stale pending panel
+      }
+      await showResponse(response, { previewResponseAs: config.previewResponseAs, forcePlain: true })
+      vscode.window.showInformationMessage(
+        `Toolkit: large response (${formatBytes(bytes)}) shown as plain text.`
+      )
+    } else if (showInPanel) {
       showDetailPanel(entry)
     } else if (display === 'preferred') {
       // Re-send into the editor (history click action is "editor").

@@ -391,7 +391,7 @@ export function findHeader(headers: HttpHeader[], name: string): string | undefi
   return undefined
 }
 
-export function formatResponse(response: ResponseLike): string {
+export function formatResponse(response: ResponseLike, prettyJson = true): string {
   const httpVersion = response.httpVersion ?? 'HTTP/1.1'
   const lines: string[] = [`${httpVersion} ${response.status} ${response.statusText}`.trimEnd()]
   for (const h of response.headers) {
@@ -403,7 +403,8 @@ export function formatResponse(response: ResponseLike): string {
   const contentType = findHeader(response.headers, 'content-type') ?? ''
   const lang = inferLanguageFromContentType(contentType)
   let body = response.body
-  if (lang === 'json' && body.trim().length > 0) {
+  // Pretty-printing buffers a second copy and re-parses; skip it for huge bodies.
+  if (prettyJson && lang === 'json' && body.trim().length > 0) {
     body = tryPrettyJson(body)
   }
   lines.push(body)

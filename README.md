@@ -1350,7 +1350,7 @@ Authorization: Bearer {{token}}
 - `@name = value` defines a variable scoped to the file.
 - `{{name}}` interpolates a variable in the URL, headers or body.
 - Lines starting with a single `#` (or `//`) are comments.
-- Response bodies are capped at 50 MB; larger responses abort with an error.
+- Responses up to `toolkit.restClient.maxResponseSizeMB` (default 100 MB) render normally; larger ones open as plain text in an editor. The hard cap is 256 MB — beyond that the request is aborted.
 
 **File bodies:**
 
@@ -1367,7 +1367,7 @@ Content-Type: application/json
 - `< path` sends the file's raw bytes — no interpolation.
 - `<@ path` interpolates `{{variables}}` inside the file before sending.
 - `<@encoding path` decodes the file with an explicit encoding (`utf-8`, `latin1`, `ascii`, `utf16le`, `base64`, `hex`); defaults to `utf-8`.
-- Body files are capped at 50 MB. **Copy as curl** maps a raw `< path` body to curl's `--data @path`.
+- Body files are capped at 256 MB. **Copy as curl** maps a raw `< path` body to curl's `--data @path`.
 
 > Runnable examples live in [`examples/sample.http`](examples/sample.http) (mirrors the docs above, against httpbin.org) and [`examples/playground.http`](examples/playground.http) (against the more reliable postman-echo.com / httpbingo.org, including error and slow-response requests). Both share [`examples/payload.json`](examples/payload.json) for the file-body requests — open one and click **Send Request**.
 
@@ -1438,6 +1438,7 @@ X-Toolkit-Time: 234ms
 | `toolkit.restClient.followRedirects` | `true` | Follow 3xx redirects |
 | `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` (language used when a response is shown as text) |
 | `toolkit.restClient.previewResponseIn` | `panel` | Where Send Request shows its response: the rich `panel`, or a text `editor` |
+| `toolkit.restClient.maxResponseSizeMB` | `100` | Responses larger than this open as plain text instead of the rich/formatted view (hard cap 256 MB) |
 | `toolkit.restClient.history.clickAction` | `panel` | What selecting a history entry opens: the `panel` or a text `editor` |
 | `toolkit.restClient.history.storeRequest` | `true` | Store the resolved request (incl. headers/body) so it can be re-sent and copied as curl |
 | `toolkit.restClient.historySizePerRequest` | `30` | Recent responses kept per request — method + URL (0 disables history) |
