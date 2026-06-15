@@ -832,8 +832,8 @@ const DETAIL_STYLES = `
   .topbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 14px 0 10px; z-index: 1; }
   .reqline { font-family: var(--vscode-editor-font-family); font-size: 13px; word-break: break-all; margin-bottom: 8px; }
   .method { display: inline-block; font-weight: 600; font-size: 11px; margin-right: 8px; padding: 3px 8px; border-radius: 4px; color: #fff; background: var(--vscode-badge-background, #4d4d4d); vertical-align: middle; }
-  .method-POST { background: var(--vscode-charts-green, #2ea043); }
-  .method-PUT { background: var(--vscode-charts-orange, #d18616); }
+  .method-POST { background: #6a9955; color: #000; }
+  .method-PUT { background: #d9822b; }
   .method-PATCH { background: var(--vscode-charts-yellow, #cca700); color: #000; }
   .method-DELETE { background: var(--vscode-charts-red, #f14c4c); }
   .method-OPTIONS { background: var(--vscode-charts-blue, #3794ff); }
