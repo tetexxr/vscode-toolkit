@@ -68,6 +68,8 @@ interface RestClientConfig {
   timeoutMs: number
   followRedirects: boolean
   previewResponseAs: 'auto' | 'raw' | 'json'
+  /** Where a freshly-sent response (Send Request) is shown. */
+  previewResponseIn: 'editor' | 'panel'
   /** When false, request headers/body are not kept in history (re-send falls back to source). */
   storeRequest: boolean
   /** What clicking a history entry opens. */
@@ -80,6 +82,7 @@ function readConfig(): RestClientConfig {
     timeoutMs: Math.max(0, config.get<number>('timeout', 30000)),
     followRedirects: config.get<boolean>('followRedirects', true),
     previewResponseAs: config.get<'auto' | 'raw' | 'json'>('previewResponseAs', 'auto'),
+    previewResponseIn: config.get<'editor' | 'panel'>('previewResponseIn', 'panel'),
     storeRequest: config.get<boolean>('history.storeRequest', true),
     historyClickAction: config.get<'editor' | 'panel'>('history.clickAction', 'editor')
   }
@@ -1129,8 +1132,12 @@ async function sendResolved(
     )
     const entry = await recordHistory(response, resolved, source, config)
     if (display === 'preferred') {
+      // Re-send: reuse whatever surface the history click action prefers.
       await openEntryPreferred(entry)
+    } else if (config.previewResponseIn === 'panel') {
+      showDetailPanel(entry)
     } else {
+      // Editor mode: show the live, full (non-capped) response with native highlighting.
       await showResponse(response, { previewResponseAs: config.previewResponseAs })
     }
   } catch (error) {
@@ -1145,6 +1152,8 @@ async function sendResolved(
     vscode.window.showWarningMessage(`Toolkit: request failed — ${message}`)
     if (display === 'preferred') {
       await openEntryPreferred(entry)
+    } else if (config.previewResponseIn === 'panel') {
+      showDetailPanel(entry)
     }
   }
 }

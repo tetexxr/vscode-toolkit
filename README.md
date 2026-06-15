@@ -1280,7 +1280,7 @@ Tags must match a whole word — `// TODOLIST: foo` is not picked up.
 
 #### REST Client
 
-Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send Request** code lens; the response opens in a new tab with the right syntax highlighting and a pretty-printed body when it's JSON.
+Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send Request** code lens; the response opens in the **detail panel** by default (status badge, headers, body) — set `toolkit.restClient.previewResponseIn` to `editor` to show it as text instead, with the right syntax highlighting and a pretty-printed body when it's JSON.
 
 `.http` / `.rest` files get their own **syntax highlighting**: request methods, URLs, header names, `@variable` definitions, `### section` separators, `#` / `//` comments and `{{interpolations}}` (built-in `$vars` included) are all colored.
 

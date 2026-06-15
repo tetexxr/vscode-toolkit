@@ -2325,7 +2325,20 @@
             "json"
           ],
           "default": "auto",
-          "description": "Editor language used to render the response. 'auto' picks one from the Content-Type."
+          "description": "Editor language used to render the response when shown as text. 'auto' picks one from the Content-Type."
+        },
+        "toolkit.restClient.previewResponseIn": {
+          "type": "string",
+          "enum": [
+            "editor",
+            "panel"
+          ],
+          "enumDescriptions": [
+            "Show the full response as text in a reused editor (native highlighting and find).",
+            "Show the response in the rich detail panel (status, headers, body)."
+          ],
+          "default": "panel",
+          "description": "Where a freshly-sent request (Send Request) shows its response."
         },
         "toolkit.restClient.historySize": {
           "type": "number",
