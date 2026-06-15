@@ -112,11 +112,21 @@
       ],
       "rest-client": [
         {
+          "id": "toolkitRestFiles",
+          "name": "Requests"
+        },
+        {
           "id": "toolkitRestHistory",
           "name": "Response History"
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "toolkitRestFiles",
+        "contents": "No .http or .rest files were found in this workspace.\n[New Request File](command:toolkit.restClient.files.create)"
+      }
+    ],
     "customEditors": [
       {
         "viewType": "toolkit.pdfPreview",
@@ -892,6 +902,31 @@
         "title": "Toolkit: REST Client - Go to Source Request"
       },
       {
+        "command": "toolkit.restClient.files.refresh",
+        "title": "Toolkit: REST Client - Refresh Requests",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.restClient.files.create",
+        "title": "Toolkit: REST Client - New Request File",
+        "icon": "$(add)"
+      },
+      {
+        "command": "toolkit.restClient.files.sendRequest",
+        "title": "Toolkit: REST Client - Send Request",
+        "icon": "$(run)"
+      },
+      {
+        "command": "toolkit.restClient.files.copyCurl",
+        "title": "Toolkit: REST Client - Copy as curl",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "toolkit.restClient.files.sendAll",
+        "title": "Toolkit: REST Client - Send All Requests in File",
+        "icon": "$(run-all)"
+      },
+      {
         "command": "toolkit.regexPlayground.open",
         "title": "Toolkit: Open Regex Playground"
       },
@@ -1044,6 +1079,16 @@
           "group": "navigation@3"
         },
         {
+          "command": "toolkit.restClient.files.create",
+          "when": "view == toolkitRestFiles",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.restClient.files.refresh",
+          "when": "view == toolkitRestFiles",
+          "group": "navigation@2"
+        },
+        {
           "command": "toolkit.restClient.history.filter",
           "when": "view == toolkitRestHistory && !toolkitRestHistoryFiltered",
           "group": "navigation@0"
@@ -1101,6 +1146,21 @@
           "command": "toolkit.todoTree.excludeFolder",
           "when": "view == toolkitTodoTree && (viewItem == file || viewItem == todo)",
           "group": "1_modify@1"
+        },
+        {
+          "command": "toolkit.restClient.files.sendRequest",
+          "when": "view == toolkitRestFiles && viewItem == restRequest",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.restClient.files.copyCurl",
+          "when": "view == toolkitRestFiles && viewItem == restRequest",
+          "group": "inline@2"
+        },
+        {
+          "command": "toolkit.restClient.files.sendAll",
+          "when": "view == toolkitRestFiles && viewItem == restFile",
+          "group": "inline@1"
         },
         {
           "command": "toolkit.restClient.history.resend",
@@ -1166,6 +1226,21 @@
           "command": "toolkit.restClient.history.deleteEntry",
           "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
           "group": "9_danger@1"
+        },
+        {
+          "command": "toolkit.restClient.files.sendRequest",
+          "when": "view == toolkitRestFiles && viewItem == restRequest",
+          "group": "1_run@1"
+        },
+        {
+          "command": "toolkit.restClient.files.copyCurl",
+          "when": "view == toolkitRestFiles && viewItem == restRequest",
+          "group": "1_run@2"
+        },
+        {
+          "command": "toolkit.restClient.files.sendAll",
+          "when": "view == toolkitRestFiles && viewItem == restFile",
+          "group": "1_run@1"
         }
       ],
       "toolkit.csharp.new": [
@@ -1429,6 +1504,18 @@
         },
         {
           "command": "toolkit.restClient.history.goToSource",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.files.sendRequest",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.files.copyCurl",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.files.sendAll",
           "when": "false"
         }
       ],

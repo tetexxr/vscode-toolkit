@@ -704,6 +704,15 @@ export function summarizeGroupStatuses(entries: ResponseHistoryEntry[]): string 
   return [...counts.entries()].map(([status, count]) => `${count}×${status}`).join(' ')
 }
 
+/** Tree label + description for a request node in the Requests view. */
+export function describeRequestNode(request: HttpRequest): { label: string; description: string } {
+  // The parser names unnamed blocks "Request N"; for those, lead with method+URL.
+  if (/^Request \d+$/.test(request.name)) {
+    return { label: `${request.method} ${request.url}`, description: '' }
+  }
+  return { label: request.name, description: `${request.method} ${request.url}` }
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Detail panel (webview) HTML                                               */
 /* -------------------------------------------------------------------------- */

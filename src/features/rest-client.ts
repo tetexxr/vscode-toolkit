@@ -9,6 +9,7 @@ import {
   findHeader,
   findRequestAtLine,
   buildResponseDetailHtml,
+  describeRequestNode,
   filterHistory,
   formatBytes,
   formatResponse,
@@ -857,6 +858,113 @@ async function diffHistoryWithPrevious(node: HistoryNode | undefined): Promise<v
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Requests — workspace .http/.rest files tree (sidebar)                     */
+/* -------------------------------------------------------------------------- */
+
+const FILES_VIEW_ID = 'toolkitRestFiles'
+/** Folders never worth scanning for .http files. */
+const FILES_EXCLUDE_GLOB = '**/{node_modules,.git,dist,out,build,bin,obj,.vs,.next,coverage}/**'
+
+/** A discovered .http/.rest file, or one of the requests parsed from it. */
+type FileNode =
+  | { kind: 'file'; uri: vscode.Uri }
+  | { kind: 'request'; uri: vscode.Uri; index: number; request: HttpRequest }
+
+class RestFilesTreeProvider implements vscode.TreeDataProvider<FileNode> {
+  private emitter = new vscode.EventEmitter<FileNode | undefined | null | void>()
+  readonly onDidChangeTreeData = this.emitter.event
+  private files: vscode.Uri[] = []
+
+  setFiles(files: vscode.Uri[]): void {
+    this.files = files
+    this.emitter.fire()
+  }
+
+  /** Re-render (children are re-parsed lazily on expand). */
+  refresh(): void {
+    this.emitter.fire()
+  }
+
+  getTreeItem(node: FileNode): vscode.TreeItem {
+    if (node.kind === 'file') {
+      const item = new vscode.TreeItem(path.basename(node.uri.fsPath), vscode.TreeItemCollapsibleState.Collapsed)
+      const rel = vscode.workspace.asRelativePath(node.uri, false)
+      const dir = path.dirname(rel)
+      item.description = dir === '.' ? '' : dir
+      item.resourceUri = node.uri
+      item.iconPath = vscode.ThemeIcon.File
+      item.tooltip = node.uri.fsPath
+      item.command = { title: 'Open', command: 'vscode.open', arguments: [node.uri] }
+      item.contextValue = 'restFile'
+      return item
+    }
+    const { label, description } = describeRequestNode(node.request)
+    const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None)
+    item.description = description
+    item.iconPath = new vscode.ThemeIcon('symbol-method')
+    item.tooltip = new vscode.MarkdownString(`**${node.request.method}** \`${node.request.url}\``)
+    // Open the file with the request block selected.
+    item.command = {
+      title: 'Open Request',
+      command: 'vscode.open',
+      arguments: [
+        node.uri,
+        { selection: new vscode.Range(node.request.startLine, 0, node.request.startLine, 0) }
+      ] as [vscode.Uri, vscode.TextDocumentShowOptions]
+    }
+    item.contextValue = 'restRequest'
+    return item
+  }
+
+  async getChildren(node?: FileNode): Promise<FileNode[]> {
+    if (!node) {
+      return this.files.map<FileNode>(uri => ({ kind: 'file', uri }))
+    }
+    if (node.kind === 'file') {
+      try {
+        const document = await vscode.workspace.openTextDocument(node.uri)
+        const parsed = parseHttpFile(document.getText())
+        return parsed.requests.map<FileNode>((request, index) => ({ kind: 'request', uri: node.uri, index, request }))
+      } catch {
+        return []
+      }
+    }
+    return []
+  }
+}
+
+let filesProvider: RestFilesTreeProvider | undefined
+
+/** Discovers workspace .http/.rest files (sorted by path) and feeds the tree. */
+async function scanRestFiles(): Promise<void> {
+  const found = await vscode.workspace.findFiles(FILE_GLOB, FILES_EXCLUDE_GLOB)
+  found.sort((a, b) =>
+    vscode.workspace.asRelativePath(a, false).localeCompare(vscode.workspace.asRelativePath(b, false))
+  )
+  filesProvider?.setFiles(found)
+}
+
+/** Runs every request in a file (used by the file node's "Send All" action). */
+async function sendAllInFile(uri: vscode.Uri): Promise<void> {
+  const document = await vscode.workspace.openTextDocument(uri)
+  const parsed = parseHttpFile(document.getText())
+  if (parsed.requests.length === 0) {
+    vscode.window.showInformationMessage('Toolkit: no requests found in this file.')
+    return
+  }
+  for (const req of parsed.requests) {
+    await runAndShow(req, parsed, uri)
+  }
+}
+
+/** Opens a new untitled .http file with a starter request (from the empty-state button). */
+async function createRequestFile(): Promise<void> {
+  const content = ['### New request', 'GET https://postman-echo.com/get', 'Accept: application/json', ''].join('\n')
+  const document = await vscode.workspace.openTextDocument({ language: 'http', content })
+  await vscode.window.showTextDocument(document)
+}
+
+/* -------------------------------------------------------------------------- */
 /*  CodeLens                                                                  */
 /* -------------------------------------------------------------------------- */
 
@@ -1299,6 +1407,38 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
   // Restore the persisted filter (context key + banner) on activation.
   void setHistoryFilter(historyFilter())
 
+  // Requests view: discover workspace .http/.rest files. Scanning is deferred
+  // until the view is first shown, and kept in sync with a file-system watcher.
+  filesProvider = new RestFilesTreeProvider()
+  const filesView = vscode.window.createTreeView<FileNode>(FILES_VIEW_ID, { treeDataProvider: filesProvider })
+  const filesWatcher = vscode.workspace.createFileSystemWatcher(FILE_GLOB)
+  context.subscriptions.push(
+    filesView,
+    filesWatcher,
+    filesWatcher.onDidCreate(() => scanRestFiles()),
+    filesWatcher.onDidDelete(() => scanRestFiles()),
+    // A save can add/remove/rename request blocks inside a file — re-render so the
+    // expanded children re-parse.
+    vscode.workspace.onDidSaveTextDocument(doc => {
+      if (isHttpFile(doc)) {
+        filesProvider?.refresh()
+      }
+    })
+  )
+  let filesScanned = false
+  const runFilesScan = () => {
+    if (filesScanned) {
+      return
+    }
+    filesScanned = true
+    void scanRestFiles()
+  }
+  if (filesView.visible) {
+    runFilesScan()
+  } else {
+    context.subscriptions.push(filesView.onDidChangeVisibility(e => e.visible && runFilesScan()))
+  }
+
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.restClient.send', () => sendAtCursor()),
     vscode.commands.registerCommand('toolkit.restClient.sendByIndex', (uri: string, index: number) =>
@@ -1359,6 +1499,26 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
     vscode.commands.registerCommand('toolkit.restClient.history.goToSource', (node?: HistoryNode) => {
       const entry = nodeEntry(node)
       return entry ? goToHistorySource(entry) : undefined
+    }),
+    vscode.commands.registerCommand('toolkit.restClient.files.refresh', () => scanRestFiles()),
+    vscode.commands.registerCommand('toolkit.restClient.files.create', () => createRequestFile()),
+    vscode.commands.registerCommand('toolkit.restClient.files.sendRequest', (node?: FileNode) => {
+      if (node?.kind === 'request') {
+        return sendByIndex(node.uri.toString(), node.index)
+      }
+      return undefined
+    }),
+    vscode.commands.registerCommand('toolkit.restClient.files.copyCurl', (node?: FileNode) => {
+      if (node?.kind === 'request') {
+        return copyAsCurlByIndex(node.uri.toString(), node.index)
+      }
+      return undefined
+    }),
+    vscode.commands.registerCommand('toolkit.restClient.files.sendAll', (node?: FileNode) => {
+      if (node?.kind === 'file') {
+        return sendAllInFile(node.uri)
+      }
+      return undefined
     }),
     {
       dispose: () => {

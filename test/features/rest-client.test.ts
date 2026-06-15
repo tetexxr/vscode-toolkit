@@ -25,6 +25,7 @@ import {
   escapeHtml,
   embedJsonInScript,
   buildResponseDetailHtml,
+  describeRequestNode,
   type ResponseHistoryEntry
 } from '../../src/features/rest-client-utils'
 
@@ -620,5 +621,32 @@ describe('response history', () => {
   it('embedJsonInScript should escape < and line separators', () => {
     assert.equal(embedJsonInScript('a</b>'), '"a\\u003c/b>"')
     assert.equal(embedJsonInScript('x y z'), '"x\\u2028y\\u2029z"')
+  })
+})
+
+describe('describeRequestNode', () => {
+  const req = (over) => ({
+    name: 'Request 1',
+    method: 'GET',
+    url: 'https://api.test/x',
+    headers: [],
+    body: '',
+    startLine: 0,
+    endLine: 0,
+    ...over
+  })
+
+  it('should lead with method + URL for unnamed requests', () => {
+    assert.deepEqual(describeRequestNode(req({ name: 'Request 2', method: 'POST', url: 'https://a/b' })), {
+      label: 'POST https://a/b',
+      description: ''
+    })
+  })
+
+  it('should lead with the name for named requests', () => {
+    assert.deepEqual(describeRequestNode(req({ name: 'Create user', method: 'POST', url: 'https://a/b' })), {
+      label: 'Create user',
+      description: 'POST https://a/b'
+    })
   })
 })

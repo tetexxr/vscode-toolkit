@@ -1299,6 +1299,15 @@ Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send
 
 All of these are also available from the **editor context menu** when right-clicking inside a `.http` / `.rest` file.
 
+**Requests view:**
+
+The **REST Client** container in the activity bar has a **Requests** section that auto-discovers every `.http` / `.rest` file in the workspace (build folders like `node_modules` are skipped; updates live as files change).
+
+- **Click a file** to open it in the editor; **expand it** to list its requests.
+- **Click a request** to jump to its block in the file.
+- **Inline icons** (on hover): **▶ Send** a request (or **Send All** on a file) and **Copy as curl** — sending records the result in the history below.
+- Empty workspace? A **New Request File** button creates a starter `.http`.
+
 **Response History view:**
 
 The **REST Client** container in the activity bar holds a **Response History** tree — a more visual alternative to the picker. By default responses are **grouped by request** (method + final URL), so repeated calls to the same endpoint collapse together instead of appearing interleaved; the just-used endpoint floats to the top. Each group shows a status breakdown (`2×200 1×500`), and each response shows a **color-coded status icon** (green 2xx, blue 3xx, yellow 4xx, red 5xx / failed), its duration, size and a relative timestamp.
