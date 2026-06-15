@@ -1312,65 +1312,65 @@
         },
         {
           "command": "toolkit.restClient.showHistory",
-          "group": "0_toolkit@25b",
+          "group": "0_toolkit@26",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
           "command": "toolkit.restClient.diffHistory",
-          "group": "0_toolkit@25c",
+          "group": "0_toolkit@27",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@26",
+          "group": "0_toolkit@28",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.sumNumbers",
-          "group": "0_toolkit@27",
+          "group": "0_toolkit@29",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.toggleCsvRainbow",
-          "group": "0_toolkit@28",
+          "group": "0_toolkit@30",
           "when": "resourceExtname == .csv || resourceExtname == .tsv"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@29"
+          "group": "0_toolkit@31"
         },
         {
           "command": "toolkit.toggleQuotes",
-          "group": "0_toolkit@30"
+          "group": "0_toolkit@32"
         },
         {
           "command": "toolkit.transform.jsonMinify",
-          "group": "0_toolkit@31",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
-        },
-        {
-          "command": "toolkit.transform.jsonPrettify",
-          "group": "0_toolkit@32",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
-        },
-        {
-          "command": "toolkit.transform.jsonSortKeys",
           "group": "0_toolkit@33",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.jsonToYaml",
+          "command": "toolkit.transform.jsonPrettify",
           "group": "0_toolkit@34",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.yamlToJson",
+          "command": "toolkit.transform.jsonSortKeys",
           "group": "0_toolkit@35",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.jsonToYaml",
+          "group": "0_toolkit@36",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.yamlToJson",
+          "group": "0_toolkit@37",
           "when": "editorHasSelection && editorLangId == yaml"
         },
         {
           "command": "toolkit.transform",
-          "group": "0_toolkit@36",
+          "group": "0_toolkit@38",
           "when": "editorHasSelection"
         }
       ]
