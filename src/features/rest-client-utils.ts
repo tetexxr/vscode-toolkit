@@ -787,6 +787,7 @@ const DETAIL_STYLES = `
   .meta { color: var(--vscode-descriptionForeground); font-size: 12px; margin: 6px 0 10px; }
   .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .actions.pending { margin-top: 12px; }
+  .elapsed { color: var(--vscode-descriptionForeground); font-size: 12px; margin-left: 8px; font-variant-numeric: tabular-nums; }
   button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; }
   button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
   button:hover { background: var(--vscode-button-hoverBackground); }
@@ -899,9 +900,11 @@ export interface PendingRequest {
  * is true it renders a terminal "Cancelled" state (no timer, no Cancel button).
  */
 export function buildPendingDetailHtml(request: PendingRequest, opts: DetailHtmlOptions, cancelled = false): string {
+  // The elapsed time lives outside the badge so the badge keeps a fixed width as
+  // the counter ticks (otherwise the number changing would resize the badge).
   const badge = cancelled
     ? `<span class="badge failed">Cancelled</span>`
-    : `<span class="badge pending"><span class="dot">●</span> Sending… <span id="elapsed">0.0s</span></span>`
+    : `<span class="badge pending"><span class="dot">●</span> Sending…</span><span class="elapsed" id="elapsed">0.0s</span>`
   const actions = cancelled ? '' : `<div class="actions pending"><button id="cancel">Cancel</button></div>`
 
   const bodyHtml = `  <div class="topbar">
