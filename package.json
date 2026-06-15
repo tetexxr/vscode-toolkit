@@ -2319,8 +2319,8 @@
             "Open the response as text in a reused preview editor.",
             "Open the response in the rich detail panel (status, headers, body)."
           ],
-          "default": "editor",
-          "description": "What clicking a response in the Response History view does."
+          "default": "panel",
+          "description": "What selecting a response (from the Response History view or the picker) does."
         },
         "toolkit.peekCommit.hover.enabled": {
           "type": "boolean",

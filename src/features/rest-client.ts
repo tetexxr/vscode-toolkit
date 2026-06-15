@@ -425,12 +425,7 @@ async function showHistory(): Promise<void> {
   if (!picked) {
     return
   }
-  await showResponse(picked.entry, {
-    previewResponseAs: readConfig().previewResponseAs,
-    stableKey: picked.entry.id,
-    preview: true,
-    preserveFocus: true
-  })
+  await openEntryPreferred(picked.entry)
 }
 
 async function diffHistory(): Promise<void> {
@@ -599,17 +594,22 @@ async function openHistoryAsText(entry: ResponseHistoryEntry): Promise<void> {
   })
 }
 
-/** Click handler: opens the entry per the configured action (text editor or detail panel). */
-async function openHistoryEntry(id: string): Promise<void> {
-  const entry = entryById(id)
-  if (!entry) {
-    return
-  }
+/** Opens an entry per the configured action (detail panel by default, or text editor). */
+async function openEntryPreferred(entry: ResponseHistoryEntry): Promise<void> {
   if (readConfig().historyClickAction === 'panel') {
     showDetailPanel(entry)
   } else {
     await openHistoryAsText(entry)
   }
+}
+
+/** Click handler from the tree: opens the entry (looked up by id) per the setting. */
+async function openHistoryEntry(id: string): Promise<void> {
+  const entry = entryById(id)
+  if (!entry) {
+    return
+  }
+  await openEntryPreferred(entry)
 }
 
 /* ---- Re-send -------------------------------------------------------------- */
