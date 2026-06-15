@@ -19,6 +19,10 @@ import {
   describeHistoryEntry,
   groupHistoryByRequest,
   historyStatusKind,
+  formatBytes,
+  summarizeGroupStatuses,
+  escapeHtml,
+  buildResponseDetailHtml,
   type ResponseHistoryEntry
 } from '../../src/features/rest-client-utils'
 
@@ -495,5 +499,62 @@ describe('response history', () => {
     assert.equal(historyStatusKind(entry('a', 1, { status: 404 })), 'clientError')
     assert.equal(historyStatusKind(entry('a', 1, { status: 500 })), 'serverError')
     assert.equal(historyStatusKind(entry('a', 1, { status: 0, error: 'ENOTFOUND' })), 'failed')
+  })
+
+  it('should format byte sizes in human units', () => {
+    assert.equal(formatBytes(undefined), '')
+    assert.equal(formatBytes(-1), '')
+    assert.equal(formatBytes(0), '0 B')
+    assert.equal(formatBytes(820), '820 B')
+    assert.equal(formatBytes(1536), '1.5 KB')
+    assert.equal(formatBytes(1024 * 1024 * 3), '3 MB')
+    assert.equal(formatBytes(1024 * 20), '20 KB')
+  })
+
+  it('should summarize a group as a status breakdown', () => {
+    const entries = [
+      entry('c', 3, { status: 200 }),
+      entry('b', 2, { status: 200 }),
+      entry('a', 1, { status: 500 })
+    ]
+    assert.equal(summarizeGroupStatuses(entries), '2×200 1×500')
+  })
+
+  it('should mark failed entries as ERR in the breakdown', () => {
+    const entries = [entry('a', 1, { status: 0, error: 'boom' }), entry('b', 2, { status: 200 })]
+    assert.equal(summarizeGroupStatuses(entries), '1×ERR 1×200')
+  })
+
+  it('should escape HTML special characters', () => {
+    assert.equal(escapeHtml(`<a href="x">&'</a>`), '&lt;a href=&quot;x&quot;&gt;&amp;&#39;&lt;/a&gt;')
+  })
+
+  it('should build a detail HTML document with status, url, body and nonce-gated script', () => {
+    const e = entry('a', 1_000, {
+      method: 'POST',
+      url: 'https://api.test/users',
+      status: 201,
+      statusText: 'Created',
+      headers: [{ name: 'Content-Type', value: 'application/json' }],
+      body: '{"id":1}',
+      bodyBytes: 8
+    })
+    const html = buildResponseDetailHtml(e, { cspSource: 'vscode-resource:', nonce: 'abc123' })
+    assert.ok(html.includes('POST'))
+    assert.ok(html.includes('https://api.test/users'))
+    assert.ok(html.includes('201 Created'))
+    assert.ok(html.includes('Content-Type'))
+    // JSON body is pretty-printed in the embedded data.
+    assert.ok(html.includes('nonce="abc123"'))
+    assert.ok(html.includes('Content-Security-Policy'))
+    // The injected URL must not break out of the attribute/script context.
+    assert.ok(!html.includes('<script>alert'))
+  })
+
+  it('should escape a malicious URL in the detail HTML', () => {
+    const e = entry('a', 1_000, { url: 'https://x/"><script>alert(1)</script>' })
+    const html = buildResponseDetailHtml(e, { cspSource: 'vscode-resource:', nonce: 'n' })
+    assert.ok(!html.includes('<script>alert(1)</script>'))
+    assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'))
   })
 })

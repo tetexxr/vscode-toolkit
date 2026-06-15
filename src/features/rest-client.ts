@@ -8,6 +8,8 @@ import {
   environmentNames,
   findHeader,
   findRequestAtLine,
+  buildResponseDetailHtml,
+  formatBytes,
   formatResponse,
   groupHistoryByRequest,
   historyEntryTiming,
@@ -20,6 +22,7 @@ import {
   parseDotenv,
   parseEnvironmentFile,
   parseHttpFile,
+  summarizeGroupStatuses,
   truncateForHistory,
   type BodyFileRef,
   type EnvironmentFile,
@@ -28,6 +31,7 @@ import {
   type InterpolateOptions,
   type ParsedHttpFile,
   type RequestGroup,
+  type ResolvedRequest,
   type ResponseHistoryEntry
 } from './rest-client-utils'
 
@@ -63,6 +67,10 @@ interface RestClientConfig {
   timeoutMs: number
   followRedirects: boolean
   previewResponseAs: 'auto' | 'raw' | 'json'
+  /** When false, request headers/body are not kept in history (re-send falls back to source). */
+  storeRequest: boolean
+  /** What clicking a history entry opens. */
+  historyClickAction: 'editor' | 'panel'
 }
 
 function readConfig(): RestClientConfig {
@@ -70,7 +78,9 @@ function readConfig(): RestClientConfig {
   return {
     timeoutMs: Math.max(0, config.get<number>('timeout', 30000)),
     followRedirects: config.get<boolean>('followRedirects', true),
-    previewResponseAs: config.get<'auto' | 'raw' | 'json'>('previewResponseAs', 'auto')
+    previewResponseAs: config.get<'auto' | 'raw' | 'json'>('previewResponseAs', 'auto'),
+    storeRequest: config.get<boolean>('history.storeRequest', true),
+    historyClickAction: config.get<'editor' | 'panel'>('history.clickAction', 'editor')
   }
 }
 
@@ -218,11 +228,33 @@ async function pushHistory(entry: ResponseHistoryEntry): Promise<void> {
   historyProvider?.refresh()
 }
 
-async function recordHistory(response: Awaited<ReturnType<typeof executeRequest>>, method: string): Promise<void> {
+interface HistorySource {
+  uri: string
+  name: string
+}
+
+/** The request fields to persist, honoring the storeRequest privacy setting. */
+function storedRequestFields(
+  request: ResolvedRequest,
+  config: RestClientConfig
+): Pick<ResponseHistoryEntry, 'requestHeaders' | 'requestBody'> {
+  if (!config.storeRequest) {
+    return {}
+  }
+  const { body } = truncateForHistory(request.body ?? '', MAX_HISTORY_BODY_CHARS)
+  return { requestHeaders: request.headers, requestBody: request.body !== undefined ? body : undefined }
+}
+
+async function recordHistory(
+  response: FetchResult,
+  request: ResolvedRequest,
+  source: HistorySource,
+  config: RestClientConfig
+): Promise<void> {
   const { body, truncated } = truncateForHistory(response.body, MAX_HISTORY_BODY_CHARS)
   await pushHistory({
     id: randomUUID(),
-    method,
+    method: request.method,
     url: response.url,
     status: response.status,
     statusText: response.statusText,
@@ -230,16 +262,25 @@ async function recordHistory(response: Awaited<ReturnType<typeof executeRequest>
     timestamp: Date.now(),
     headers: response.headers,
     body,
-    bodyTruncated: truncated
+    bodyTruncated: truncated,
+    bodyBytes: Buffer.byteLength(response.body, 'utf-8'),
+    source,
+    ...storedRequestFields(request, config)
   })
 }
 
 /** Records a request that never got an HTTP response (network error / timeout). */
-async function recordFailure(method: string, url: string, durationMs: number, message: string): Promise<void> {
+async function recordFailure(
+  request: ResolvedRequest,
+  source: HistorySource,
+  durationMs: number,
+  message: string,
+  config: RestClientConfig
+): Promise<void> {
   await pushHistory({
     id: randomUUID(),
-    method,
-    url,
+    method: request.method,
+    url: request.url,
     status: 0,
     statusText: 'Request failed',
     durationMs,
@@ -247,6 +288,8 @@ async function recordFailure(method: string, url: string, durationMs: number, me
     headers: [],
     body: message,
     bodyTruncated: false,
+    source,
+    ...storedRequestFields(request, config),
     error: message
   })
 }
@@ -480,26 +523,27 @@ class RestHistoryTreeProvider implements vscode.TreeDataProvider<HistoryNode> {
     if (node.kind === 'group') {
       const { method, url, entries } = node.group
       const item = new vscode.TreeItem(`${method} ${url}`, vscode.TreeItemCollapsibleState.Expanded)
-      const latest = entries[0]
-      item.description = `${entries.length}× · ${historyStatusLabel(latest)} · ${historyEntryTiming(latest)}`
+      item.description = `${entries.length}× · ${summarizeGroupStatuses(entries)}`
       item.iconPath = new vscode.ThemeIcon('globe')
-      item.tooltip = new vscode.MarkdownString(`**${method}** \`${url}\`\n\n${entries.length} response(s) recorded`)
+      item.tooltip = new vscode.MarkdownString(
+        `**${method}** \`${url}\`\n\n${entries.length} response(s) — ${summarizeGroupStatuses(entries)}`
+      )
       item.contextValue = 'restHistoryGroup'
       return item
     }
     const { entry, showRequest } = node
     const kind = historyStatusKind(entry)
     const { icon, color } = STATUS_ICON[kind]
+    const size = formatBytes(entry.bodyBytes)
+    const timing = size ? `${historyEntryTiming(entry)} · ${size}` : historyEntryTiming(entry)
     const item = new vscode.TreeItem(
       showRequest ? `${entry.method} ${entry.url}` : historyStatusLabel(entry),
       vscode.TreeItemCollapsibleState.None
     )
-    item.description = showRequest
-      ? `${historyStatusLabel(entry)} · ${historyEntryTiming(entry)}`
-      : historyEntryTiming(entry)
+    item.description = showRequest ? `${historyStatusLabel(entry)} · ${timing}` : timing
     item.iconPath = new vscode.ThemeIcon(icon, new vscode.ThemeColor(color))
     item.tooltip = new vscode.MarkdownString(
-      `**${entry.method}** \`${entry.url}\`\n\n${historyStatusLabel(entry)} · ${historyEntryTiming(entry)}`
+      `**${entry.method}** \`${entry.url}\`\n\n${historyStatusLabel(entry)} · ${timing}`
     )
     item.command = {
       title: 'Open Response',
@@ -532,15 +576,21 @@ class RestHistoryTreeProvider implements vscode.TreeDataProvider<HistoryNode> {
 
 let historyProvider: RestHistoryTreeProvider | undefined
 
-/** Reopens a stored response (looked up by id) in a read-only preview tab. */
-async function openHistoryEntry(id: string): Promise<void> {
-  const entry = getHistory().find(e => e.id === id)
-  if (!entry) {
-    return
-  }
-  // Stable key (the entry id) + preview mode: clicking around the history reuses
-  // a single preview tab instead of stacking a new tab per click. Reopening the
-  // same entry refocuses its tab; double-click pins it (native behavior).
+function entryById(id: string): ResponseHistoryEntry | undefined {
+  return getHistory().find(e => e.id === id)
+}
+
+/** The entry behind a tree node (commands invoked from the tree receive the node). */
+function nodeEntry(node: HistoryNode | undefined): ResponseHistoryEntry | undefined {
+  return node && node.kind === 'entry' ? node.entry : undefined
+}
+
+/**
+ * Opens the entry in a read-only preview tab. Stable key (the entry id) + preview
+ * mode + preserved focus means clicking around the history reuses a single side
+ * tab instead of stacking one per click; double-click pins it (native behavior).
+ */
+async function openHistoryAsText(entry: ResponseHistoryEntry): Promise<void> {
   await showResponse(entry, {
     previewResponseAs: readConfig().previewResponseAs,
     stableKey: entry.id,
@@ -549,12 +599,175 @@ async function openHistoryEntry(id: string): Promise<void> {
   })
 }
 
-/** Deletes one entry from the history (invoked from the tree's inline trash icon). */
-async function deleteHistoryEntry(node: HistoryNode | undefined): Promise<void> {
-  if (!node || node.kind !== 'entry') {
+/** Click handler: opens the entry per the configured action (text editor or detail panel). */
+async function openHistoryEntry(id: string): Promise<void> {
+  const entry = entryById(id)
+  if (!entry) {
     return
   }
-  const remaining = getHistory().filter(e => e.id !== node.entry.id)
+  if (readConfig().historyClickAction === 'panel') {
+    showDetailPanel(entry)
+  } else {
+    await openHistoryAsText(entry)
+  }
+}
+
+/* ---- Re-send -------------------------------------------------------------- */
+
+/** Rebuilds the resolved request stored alongside an entry, if any. */
+function resolvedFromEntry(entry: ResponseHistoryEntry): ResolvedRequest | undefined {
+  if (entry.requestHeaders === undefined && entry.requestBody === undefined) {
+    return undefined
+  }
+  return { method: entry.method, url: entry.url, headers: entry.requestHeaders ?? [], body: entry.requestBody }
+}
+
+/** Re-runs a request from history: replays the stored request, or re-runs from source. */
+async function resendEntry(entry: ResponseHistoryEntry): Promise<void> {
+  const resolved = resolvedFromEntry(entry)
+  if (resolved) {
+    const source: HistorySource = entry.source ?? { uri: '', name: entry.method }
+    await sendResolved(resolved, source, readConfig())
+    return
+  }
+  // No stored request (storeRequest disabled, or a pre-upgrade entry): re-run the
+  // original request from its source file, which re-interpolates current values.
+  if (!entry.source?.uri) {
+    vscode.window.showWarningMessage(
+      'Toolkit: no stored request to re-send. Enable "toolkit.restClient.history.storeRequest" and send again.'
+    )
+    return
+  }
+  const req = await findSourceRequest(entry)
+  if (!req) {
+    vscode.window.showWarningMessage('Toolkit: could not find the original request to re-send.')
+    return
+  }
+  await runAndShow(req.request, req.parsed, req.uri)
+}
+
+/** Locates the request that produced an entry, by name (falling back to method). */
+async function findSourceRequest(
+  entry: ResponseHistoryEntry
+): Promise<{ request: HttpRequest; parsed: ParsedHttpFile; uri: vscode.Uri } | undefined> {
+  if (!entry.source?.uri) {
+    return undefined
+  }
+  try {
+    const uri = vscode.Uri.parse(entry.source.uri)
+    const document = await vscode.workspace.openTextDocument(uri)
+    const parsed = parseHttpFile(document.getText())
+    const request =
+      parsed.requests.find(r => r.name === entry.source?.name) ??
+      parsed.requests.find(r => r.method === entry.method)
+    return request ? { request, parsed, uri } : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/* ---- Quick actions -------------------------------------------------------- */
+
+async function copyHistoryCurl(entry: ResponseHistoryEntry): Promise<void> {
+  const curl = buildCurl({
+    method: entry.method,
+    url: entry.url,
+    headers: entry.requestHeaders ?? [],
+    body: entry.requestBody ?? ''
+  })
+  await vscode.env.clipboard.writeText(curl)
+  vscode.window.showInformationMessage('Toolkit: curl command copied to the clipboard.')
+}
+
+async function copyHistoryBody(entry: ResponseHistoryEntry): Promise<void> {
+  await vscode.env.clipboard.writeText(entry.body)
+  vscode.window.showInformationMessage('Toolkit: response body copied to the clipboard.')
+}
+
+async function copyHistoryUrl(entry: ResponseHistoryEntry): Promise<void> {
+  await vscode.env.clipboard.writeText(entry.url)
+  vscode.window.showInformationMessage('Toolkit: request URL copied to the clipboard.')
+}
+
+async function saveHistoryBody(entry: ResponseHistoryEntry): Promise<void> {
+  const target = await vscode.window.showSaveDialog({
+    saveLabel: 'Save response body',
+    defaultUri: vscode.Uri.file(`response-${entry.status || 'failed'}.${historyExtension(entry)}`)
+  })
+  if (!target) {
+    return
+  }
+  await vscode.workspace.fs.writeFile(target, Buffer.from(entry.body, 'utf-8'))
+  vscode.window.showInformationMessage('Toolkit: response body saved.')
+}
+
+async function goToHistorySource(entry: ResponseHistoryEntry): Promise<void> {
+  const found = await findSourceRequest(entry)
+  if (!found) {
+    vscode.window.showInformationMessage('Toolkit: the original request could not be located.')
+    return
+  }
+  const line = found.request.startLine
+  await vscode.window.showTextDocument(found.uri, { selection: new vscode.Range(line, 0, line, 0) })
+}
+
+/* ---- Detail panel (webview) ----------------------------------------------- */
+
+const DETAIL_VIEW_TYPE = 'toolkit.restResponseDetail'
+let detailPanel: vscode.WebviewPanel | undefined
+/** Entry currently shown in the panel, so its buttons act on the right response. */
+let detailEntryId: string | undefined
+
+/** Opens (or reuses) the response detail webview for an entry. */
+function showDetailPanel(entry: ResponseHistoryEntry): void {
+  detailEntryId = entry.id
+  if (!detailPanel) {
+    detailPanel = vscode.window.createWebviewPanel(
+      DETAIL_VIEW_TYPE,
+      'REST Response',
+      { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
+      { enableScripts: true, retainContextWhenHidden: true }
+    )
+    detailPanel.onDidDispose(() => {
+      detailPanel = undefined
+      detailEntryId = undefined
+    })
+    detailPanel.webview.onDidReceiveMessage(async (msg: { command?: string }) => {
+      const current = detailEntryId ? entryById(detailEntryId) : undefined
+      if (!current) {
+        return
+      }
+      switch (msg.command) {
+        case 'resend':
+          await resendEntry(current)
+          break
+        case 'copyCurl':
+          await copyHistoryCurl(current)
+          break
+        case 'copyBody':
+          await copyHistoryBody(current)
+          break
+        case 'openText':
+          await openHistoryAsText(current)
+          break
+      }
+    })
+  }
+  detailPanel.title = `${entry.method} ${entry.error ? 'ERR' : entry.status}`
+  detailPanel.webview.html = buildResponseDetailHtml(entry, {
+    cspSource: detailPanel.webview.cspSource,
+    nonce: randomUUID().replace(/-/g, '')
+  })
+  detailPanel.reveal(vscode.ViewColumn.Beside, true)
+}
+
+/** Deletes one entry from the history (invoked from the tree's inline trash icon). */
+async function deleteHistoryEntry(node: HistoryNode | undefined): Promise<void> {
+  const entry = nodeEntry(node)
+  if (!entry) {
+    return
+  }
+  const remaining = getHistory().filter(e => e.id !== entry.id)
   await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, remaining)
   historyProvider?.refresh()
 }
@@ -626,27 +839,38 @@ class HttpCodeLensProvider implements vscode.CodeLensProvider {
 
 const inflight: Set<AbortController> = new Set()
 
-async function executeRequest(
-  req: HttpRequest,
-  variables: Record<string, string>,
-  config: RestClientConfig,
-  baseDir: string,
-  opts: InterpolateOptions,
-  token?: vscode.CancellationToken
-): Promise<{
+interface FetchResult {
   status: number
   statusText: string
   headers: Array<{ name: string; value: string }>
   body: string
   durationMs: number
   url: string
-}> {
+}
+
+/** Interpolates a parsed request into a concrete one ready to send (or store). */
+async function resolveRequest(
+  req: HttpRequest,
+  variables: Record<string, string>,
+  opts: InterpolateOptions,
+  baseDir: string
+): Promise<ResolvedRequest> {
   const url = interpolate(req.url, variables, opts)
-  const headers: Record<string, string> = {}
-  for (const h of req.headers) {
-    headers[h.name] = interpolate(h.value, variables, opts)
-  }
+  const headers = req.headers.map(h => ({ name: h.name, value: interpolate(h.value, variables, opts) }))
   const { body } = await resolveBody(req, variables, opts, baseDir)
+  return { method: req.method, url, headers, body }
+}
+
+/** Sends an already-resolved request, honoring the timeout / cancellation contract. */
+async function performFetch(
+  request: ResolvedRequest,
+  config: RestClientConfig,
+  token?: vscode.CancellationToken
+): Promise<FetchResult> {
+  const headers: Record<string, string> = {}
+  for (const h of request.headers) {
+    headers[h.name] = h.value
+  }
 
   const controller = new AbortController()
   inflight.add(controller)
@@ -664,10 +888,10 @@ async function executeRequest(
   const cancelSub = token?.onCancellationRequested(() => controller.abort())
   const start = Date.now()
   try {
-    const response = await fetch(url, {
-      method: req.method,
+    const response = await fetch(request.url, {
+      method: request.method,
       headers,
-      body,
+      body: request.body,
       signal: controller.signal,
       redirect: config.followRedirects ? 'follow' : 'manual'
     })
@@ -683,7 +907,7 @@ async function executeRequest(
       headers: responseHeaders,
       body: text,
       durationMs,
-      url
+      url: request.url
     }
   } catch (error) {
     // Turn a timeout abort into a clear, non-abort error so callers report it
@@ -722,7 +946,7 @@ interface ShowResponseOptions {
 }
 
 async function showResponse(
-  response: Awaited<ReturnType<typeof executeRequest>>,
+  response: FetchResult,
   options: ShowResponseOptions
 ): Promise<void> {
   const formatted = formatResponse(response)
@@ -814,17 +1038,38 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
   const variables = await composeVariables(parsed, documentUri)
   const opts = await buildInterpolateOptions(documentUri)
   const baseDir = path.dirname(documentUri.fsPath)
+  const source: HistorySource = { uri: documentUri.toString(), name: req.name }
+  let resolved: ResolvedRequest
+  try {
+    resolved = await resolveRequest(req, variables, opts, baseDir)
+  } catch (error) {
+    vscode.window.showWarningMessage(`Toolkit: could not build request — ${(error as Error).message}`)
+    return
+  }
+  await sendResolved(resolved, source, config)
+}
+
+/**
+ * Sends a resolved request with a progress notification, records it (success or
+ * failure) in the history, and opens the response. Shared by the initial send
+ * and by re-send from the history.
+ */
+async function sendResolved(
+  resolved: ResolvedRequest,
+  source: HistorySource,
+  config: RestClientConfig
+): Promise<void> {
   const start = Date.now()
   try {
     const response = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `${req.method} ${req.url}`,
+        title: `${resolved.method} ${resolved.url}`,
         cancellable: true
       },
-      (_progress, token) => executeRequest(req, variables, config, baseDir, opts, token)
+      (_progress, token) => performFetch(resolved, config, token)
     )
-    await recordHistory(response, req.method)
+    await recordHistory(response, resolved, source, config)
     await showResponse(response, { previewResponseAs: config.previewResponseAs })
   } catch (error) {
     const message = (error as Error).message
@@ -834,7 +1079,7 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
     }
     // A failed request (DNS, refused, timeout, …) is still worth keeping in the
     // history so it can be reviewed or diffed later.
-    await recordFailure(req.method, interpolate(req.url, variables, opts), Date.now() - start, message)
+    await recordFailure(resolved, source, Date.now() - start, message, config)
     vscode.window.showWarningMessage(`Toolkit: request failed — ${message}`)
   }
 }
@@ -1002,6 +1247,45 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
     ),
     vscode.commands.registerCommand('toolkit.restClient.history.diffWithPrevious', (node?: HistoryNode) =>
       diffHistoryWithPrevious(node)
-    )
+    ),
+    vscode.commands.registerCommand('toolkit.restClient.history.resend', (node?: HistoryNode) => {
+      const entry = nodeEntry(node)
+      return entry ? resendEntry(entry) : undefined
+    }),
+    vscode.commands.registerCommand('toolkit.restClient.history.openPanel', (node?: HistoryNode) => {
+      const entry = nodeEntry(node)
+      if (entry) {
+        showDetailPanel(entry)
+      }
+    }),
+    vscode.commands.registerCommand('toolkit.restClient.history.openText', (node?: HistoryNode) => {
+      const entry = nodeEntry(node)
+      return entry ? openHistoryAsText(entry) : undefined
+    }),
+    vscode.commands.registerCommand('toolkit.restClient.history.copyCurl', (node?: HistoryNode) => {
+      const entry = nodeEntry(node)
+      return entry ? copyHistoryCurl(entry) : undefined
+    }),
+    vscode.commands.registerCommand('toolkit.restClient.history.copyBody', (node?: HistoryNode) => {
+      const entry = nodeEntry(node)
+      return entry ? copyHistoryBody(entry) : undefined
+    }),
+    vscode.commands.registerCommand('toolkit.restClient.history.copyUrl', (node?: HistoryNode) => {
+      const entry = nodeEntry(node)
+      return entry ? copyHistoryUrl(entry) : undefined
+    }),
+    vscode.commands.registerCommand('toolkit.restClient.history.saveBody', (node?: HistoryNode) => {
+      const entry = nodeEntry(node)
+      return entry ? saveHistoryBody(entry) : undefined
+    }),
+    vscode.commands.registerCommand('toolkit.restClient.history.goToSource', (node?: HistoryNode) => {
+      const entry = nodeEntry(node)
+      return entry ? goToHistorySource(entry) : undefined
+    }),
+    {
+      dispose: () => {
+        detailPanel?.dispose()
+      }
+    }
   )
 }

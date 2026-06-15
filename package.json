@@ -848,6 +848,40 @@
         "icon": "$(git-compare)"
       },
       {
+        "command": "toolkit.restClient.history.resend",
+        "title": "Toolkit: REST Client - Re-send Request",
+        "icon": "$(run)"
+      },
+      {
+        "command": "toolkit.restClient.history.openPanel",
+        "title": "Toolkit: REST Client - Open Response in Panel",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "toolkit.restClient.history.openText",
+        "title": "Toolkit: REST Client - Open Response as Text"
+      },
+      {
+        "command": "toolkit.restClient.history.copyCurl",
+        "title": "Toolkit: REST Client - Copy as curl"
+      },
+      {
+        "command": "toolkit.restClient.history.copyBody",
+        "title": "Toolkit: REST Client - Copy Response Body"
+      },
+      {
+        "command": "toolkit.restClient.history.copyUrl",
+        "title": "Toolkit: REST Client - Copy Request URL"
+      },
+      {
+        "command": "toolkit.restClient.history.saveBody",
+        "title": "Toolkit: REST Client - Save Response Body to File..."
+      },
+      {
+        "command": "toolkit.restClient.history.goToSource",
+        "title": "Toolkit: REST Client - Go to Source Request"
+      },
+      {
         "command": "toolkit.regexPlayground.open",
         "title": "Toolkit: Open Regex Playground"
       },
@@ -1049,14 +1083,69 @@
           "group": "1_modify@1"
         },
         {
+          "command": "toolkit.restClient.history.resend",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "inline@1"
+        },
+        {
           "command": "toolkit.restClient.history.diffWithPrevious",
           "when": "view == toolkitRestHistory && viewItem == restHistoryEntryWithPrevious",
-          "group": "inline@1"
+          "group": "inline@2"
         },
         {
           "command": "toolkit.restClient.history.deleteEntry",
           "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
-          "group": "inline@2"
+          "group": "inline@3"
+        },
+        {
+          "command": "toolkit.restClient.history.openPanel",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "1_open@1"
+        },
+        {
+          "command": "toolkit.restClient.history.openText",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "1_open@2"
+        },
+        {
+          "command": "toolkit.restClient.history.resend",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "1_open@3"
+        },
+        {
+          "command": "toolkit.restClient.history.goToSource",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "1_open@4"
+        },
+        {
+          "command": "toolkit.restClient.history.copyCurl",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "2_copy@1"
+        },
+        {
+          "command": "toolkit.restClient.history.copyBody",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "2_copy@2"
+        },
+        {
+          "command": "toolkit.restClient.history.copyUrl",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "2_copy@3"
+        },
+        {
+          "command": "toolkit.restClient.history.saveBody",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "2_copy@4"
+        },
+        {
+          "command": "toolkit.restClient.history.diffWithPrevious",
+          "when": "view == toolkitRestHistory && viewItem == restHistoryEntryWithPrevious",
+          "group": "2_copy@5"
+        },
+        {
+          "command": "toolkit.restClient.history.deleteEntry",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "9_danger@1"
         }
       ],
       "toolkit.csharp.new": [
@@ -1280,6 +1369,38 @@
         },
         {
           "command": "toolkit.restClient.history.groupByFlat",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.resend",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.openPanel",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.openText",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.copyCurl",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.copyBody",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.copyUrl",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.saveBody",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.goToSource",
           "when": "false"
         }
       ],
@@ -2182,6 +2303,24 @@
           "type": "number",
           "default": 30,
           "description": "How many recent responses to keep in the per-workspace history (0 disables history)."
+        },
+        "toolkit.restClient.history.storeRequest": {
+          "type": "boolean",
+          "default": true,
+          "description": "Store the resolved request (method, URL, headers and body) alongside each response so it can be re-sent and copied as curl. Disable to avoid persisting request headers such as Authorization in the workspace storage — re-send then falls back to re-running the request from its source .http file."
+        },
+        "toolkit.restClient.history.clickAction": {
+          "type": "string",
+          "enum": [
+            "editor",
+            "panel"
+          ],
+          "enumDescriptions": [
+            "Open the response as text in a reused preview editor.",
+            "Open the response in the rich detail panel (status, headers, body)."
+          ],
+          "default": "editor",
+          "description": "What clicking a response in the Response History view does."
         },
         "toolkit.peekCommit.hover.enabled": {
           "type": "boolean",

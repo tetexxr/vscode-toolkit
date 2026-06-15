@@ -537,12 +537,28 @@ export interface ResponseHistoryEntry {
   body: string
   /** True when the stored body was clipped to keep workspace state small. */
   bodyTruncated: boolean
+  /** Total response body size in bytes (before any storage truncation). */
+  bodyBytes?: number
+  /** Resolved request headers actually sent, when history is set to store the request. */
+  requestHeaders?: HttpHeader[]
+  /** Resolved request body actually sent, when stored. */
+  requestBody?: string
+  /** Origin of the request, for "go to source" and source-based re-send. */
+  source?: { uri: string; name: string }
   /**
    * Set when the request never produced an HTTP response (DNS failure, refused
    * connection, timeout, …). HTTP error statuses (4xx/5xx) are normal responses
    * and do NOT set this — they carry their real status instead.
    */
   error?: string
+}
+
+/** A fully interpolated request, ready to send (or replay from history). */
+export interface ResolvedRequest {
+  method: string
+  url: string
+  headers: HttpHeader[]
+  body?: string
 }
 
 /** Clips a body to `maxChars` so history never bloats the workspace state. */
@@ -638,4 +654,169 @@ export function historyStatusKind(entry: ResponseHistoryEntry): HistoryStatusKin
     return 'redirect'
   }
   return 'success'
+}
+
+/** Human-readable byte size: `820 B`, `1.2 KB`, `3 MB`. Empty string for unknown sizes. */
+export function formatBytes(bytes: number | undefined): string {
+  if (bytes === undefined || !Number.isFinite(bytes) || bytes < 0) {
+    return ''
+  }
+  if (bytes < 1024) {
+    return `${bytes} B`
+  }
+  const units = ['KB', 'MB', 'GB', 'TB']
+  let value = bytes / 1024
+  let i = 0
+  while (value >= 1024 && i < units.length - 1) {
+    value /= 1024
+    i++
+  }
+  // One decimal under 10 (1.5 KB), whole numbers above (20 KB); drop a trailing .0.
+  const rounded = value < 10 ? Number(value.toFixed(1)) : Math.round(value)
+  return `${rounded} ${units[i]}`
+}
+
+/** Per-group status breakdown, newest status first: e.g. `2×200 1×500` (`ERR` for failures). */
+export function summarizeGroupStatuses(entries: ResponseHistoryEntry[]): string {
+  const counts = new Map<string, number>()
+  for (const entry of entries) {
+    const key = entry.error || entry.status === 0 ? 'ERR' : String(entry.status)
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return [...counts.entries()].map(([status, count]) => `${count}×${status}`).join(' ')
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Detail panel (webview) HTML                                               */
+/* -------------------------------------------------------------------------- */
+
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;'
+}
+
+export function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, ch => HTML_ESCAPES[ch])
+}
+
+export interface DetailHtmlOptions {
+  /** Webview `cspSource` for the Content-Security-Policy. */
+  cspSource: string
+  /** Per-render nonce allowing the single inline <script>. */
+  nonce: string
+}
+
+function headerRows(headers: HttpHeader[]): string {
+  if (headers.length === 0) {
+    return '<tr><td colspan="2" class="muted">— none —</td></tr>'
+  }
+  return headers
+    .map(h => `<tr><td class="hname">${escapeHtml(h.name)}</td><td class="hval">${escapeHtml(h.value)}</td></tr>`)
+    .join('')
+}
+
+/**
+ * Builds the standalone HTML document for the response detail panel. Pure so it
+ * can be unit-tested; all VS Code-specific values (CSP source, nonce) are passed
+ * in. Colors come from the editor theme via CSS variables.
+ */
+export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: DetailHtmlOptions): string {
+  const kind = historyStatusKind(entry)
+  const statusText = entry.error ? `Failed — ${entry.error}` : historyStatusLabel(entry)
+  const contentType = findHeader(entry.headers, 'content-type') ?? ''
+  const isJson = inferLanguageFromContentType(contentType) === 'json'
+  const pretty = isJson ? tryPrettyJson(entry.body) : entry.body
+  const size = formatBytes(entry.bodyBytes)
+  const meta = [
+    `${entry.durationMs} ms`,
+    size,
+    entry.bodyTruncated ? 'body truncated' : '',
+    new Date(entry.timestamp).toLocaleString()
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  const hasRequest = (entry.requestHeaders?.length ?? 0) > 0 || (entry.requestBody?.length ?? 0) > 0
+  const requestSection = hasRequest
+    ? `<details><summary>Request headers</summary><table>${headerRows(entry.requestHeaders ?? [])}</table></details>`
+    : ''
+
+  const bodyData = JSON.stringify({ pretty, raw: entry.body })
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${opts.cspSource} 'unsafe-inline'; script-src 'nonce-${opts.nonce}';">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 16px 24px; }
+  .topbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 14px 0 10px; z-index: 1; }
+  .reqline { font-family: var(--vscode-editor-font-family); font-size: 13px; word-break: break-all; margin-bottom: 8px; }
+  .method { font-weight: 600; margin-right: 6px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 12px; color: #fff; }
+  .badge.success { background: var(--vscode-testing-iconPassed, #2ea043); }
+  .badge.redirect { background: var(--vscode-charts-blue, #3794ff); }
+  .badge.clientError { background: var(--vscode-charts-yellow, #cca700); color: #000; }
+  .badge.serverError, .badge.failed { background: var(--vscode-charts-red, #f14c4c); }
+  .meta { color: var(--vscode-descriptionForeground); font-size: 12px; margin: 6px 0 10px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; }
+  button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
+  button:hover { background: var(--vscode-button-hoverBackground); }
+  h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 18px 0 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  td { padding: 3px 8px; border-bottom: 1px solid var(--vscode-panel-border); vertical-align: top; }
+  .hname { color: var(--vscode-symbolIcon-keywordForeground, var(--vscode-foreground)); white-space: nowrap; font-family: var(--vscode-editor-font-family); }
+  .hval { font-family: var(--vscode-editor-font-family); word-break: break-all; }
+  .muted { color: var(--vscode-descriptionForeground); }
+  details { margin-top: 6px; }
+  summary { cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 14px 0 4px; }
+  pre { background: var(--vscode-textCodeBlock-background); padding: 10px; border-radius: 4px; overflow: auto; font-family: var(--vscode-editor-font-family); font-size: var(--vscode-editor-font-size); }
+  pre.wrap { white-space: pre-wrap; word-break: break-word; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="reqline"><span class="method">${escapeHtml(entry.method)}</span>${escapeHtml(entry.url)}</div>
+    <span class="badge ${kind}">${escapeHtml(statusText)}</span>
+    <div class="meta">${escapeHtml(meta)}</div>
+    <div class="actions">
+      <button id="resend">▶ Re-send</button>
+      <button id="copyCurl" class="secondary">Copy as curl</button>
+      <button id="copyBody" class="secondary">Copy body</button>
+      <button id="openText" class="secondary">Open as text</button>
+      <button id="toggleWrap" class="secondary">Toggle wrap</button>
+      <button id="toggleRaw" class="secondary">Show raw</button>
+    </div>
+  </div>
+  <h3>Response headers</h3>
+  <table>${headerRows(entry.headers)}</table>
+  ${requestSection}
+  <h3>Body</h3>
+  <pre id="body"></pre>
+  <script nonce="${opts.nonce}">
+    const vscode = acquireVsCodeApi();
+    const data = ${bodyData};
+    const bodyEl = document.getElementById('body');
+    let raw = false;
+    const render = () => { bodyEl.textContent = raw ? data.raw : data.pretty; };
+    render();
+    document.getElementById('toggleRaw').addEventListener('click', () => {
+      raw = !raw;
+      document.getElementById('toggleRaw').textContent = raw ? 'Show pretty' : 'Show raw';
+      render();
+    });
+    document.getElementById('toggleWrap').addEventListener('click', () => bodyEl.classList.toggle('wrap'));
+    const post = cmd => () => vscode.postMessage({ command: cmd });
+    document.getElementById('resend').addEventListener('click', post('resend'));
+    document.getElementById('copyCurl').addEventListener('click', post('copyCurl'));
+    document.getElementById('copyBody').addEventListener('click', post('copyBody'));
+    document.getElementById('openText').addEventListener('click', post('openText'));
+  </script>
+</body>
+</html>`
 }
