@@ -1253,16 +1253,21 @@ async function showResponse(response: FetchResult, options: ShowResponseOptions)
   })
 }
 
-/** Writes a large response to a temp file (plain text) and opens it — real files have no 50 MB cap. */
+/**
+ * Writes a large response to a temp file and opens it via the `vscode.open`
+ * command. We deliberately avoid `openTextDocument`/`showTextDocument`: those
+ * sync the document to the extension host, which VS Code refuses above ~50 MB.
+ * `vscode.open` shows the file in the editor (with its own large-file handling)
+ * without that sync, so big bodies open fine.
+ */
 async function openResponseInTempFile(content: string, options: ShowResponseOptions): Promise<void> {
   const file = vscode.Uri.file(path.join(os.tmpdir(), `toolkit-rest-${randomUUID()}.txt`))
   await vscode.workspace.fs.writeFile(file, Buffer.from(content, 'utf-8'))
-  const doc = await vscode.workspace.openTextDocument(file)
-  await vscode.window.showTextDocument(doc, {
+  await vscode.commands.executeCommand('vscode.open', file, {
+    viewColumn: vscode.ViewColumn.Beside,
     preview: options.preview ?? false,
-    preserveFocus: options.preserveFocus ?? false,
-    viewColumn: vscode.ViewColumn.Beside
-  })
+    preserveFocus: options.preserveFocus ?? false
+  } satisfies vscode.TextDocumentShowOptions)
 }
 
 async function composeVariables(parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<Record<string, string>> {
