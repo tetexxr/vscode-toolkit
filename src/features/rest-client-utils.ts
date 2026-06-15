@@ -537,12 +537,39 @@ export interface ResponseHistoryEntry {
   body: string
   /** True when the stored body was clipped to keep workspace state small. */
   bodyTruncated: boolean
+  /** Total response body size in bytes (before any storage truncation). */
+  bodyBytes?: number
+  /** Resolved request headers actually sent, when history is set to store the request. */
+  requestHeaders?: HttpHeader[]
+  /** Resolved request body actually sent, when stored. */
+  requestBody?: string
+  /** Origin of the request, for "go to source" and source-based re-send. */
+  source?: { uri: string; name: string }
   /**
    * Set when the request never produced an HTTP response (DNS failure, refused
    * connection, timeout, …). HTTP error statuses (4xx/5xx) are normal responses
    * and do NOT set this — they carry their real status instead.
    */
   error?: string
+  /** True when the failure was a timeout — surfaces the "retry with longer timeout" actions. */
+  timedOut?: boolean
+}
+
+/** Preset timeouts offered for retrying a request that timed out. */
+export const RETRY_TIMEOUT_PRESETS: ReadonlyArray<{ label: string; ms: number }> = [
+  { label: '1 min', ms: 60_000 },
+  { label: '2 min', ms: 120_000 },
+  { label: '5 min', ms: 300_000 },
+  { label: '10 min', ms: 600_000 },
+  { label: '30 min', ms: 1_800_000 }
+]
+
+/** A fully interpolated request, ready to send (or replay from history). */
+export interface ResolvedRequest {
+  method: string
+  url: string
+  headers: HttpHeader[]
+  body?: string
 }
 
 /** Clips a body to `maxChars` so history never bloats the workspace state. */
@@ -553,16 +580,49 @@ export function truncateForHistory(body: string, maxChars: number): { body: stri
   return { body: body.slice(0, maxChars), truncated: true }
 }
 
-/** Prepends an entry to the history list and caps it at `max` (newest first). */
+/**
+ * Prepends an entry and caps the history two ways (newest first): at most
+ * `perRequestMax` entries per request (method + URL), so a busy endpoint can't
+ * evict every other endpoint's history, and at most `globalMax` overall as a
+ * storage safety net. Either limit at 0 disables history.
+ */
 export function addHistoryEntry(
   list: ResponseHistoryEntry[],
   entry: ResponseHistoryEntry,
-  max: number
+  perRequestMax: number,
+  globalMax: number
 ): ResponseHistoryEntry[] {
-  if (max <= 0) {
+  if (perRequestMax <= 0 || globalMax <= 0) {
     return []
   }
-  return [entry, ...list].slice(0, max)
+  const counts = new Map<string, number>()
+  const kept: ResponseHistoryEntry[] = []
+  for (const candidate of [entry, ...list]) {
+    const key = `${candidate.method} ${candidate.url}`
+    const seen = counts.get(key) ?? 0
+    if (seen >= perRequestMax) {
+      continue
+    }
+    counts.set(key, seen + 1)
+    kept.push(candidate)
+    if (kept.length >= globalMax) {
+      break
+    }
+  }
+  return kept
+}
+
+/** Human-readable status for an entry: `200 OK`, or `Failed: <error>` for a request that never responded. */
+export function historyStatusLabel(entry: ResponseHistoryEntry): string {
+  return entry.error
+    ? `Failed: ${entry.error}`
+    : `${entry.status}${entry.statusText ? ` ${entry.statusText}` : ''}`
+}
+
+/** Timing + relative-time suffix for an entry (e.g. `123ms · 2 minutes ago · body truncated`). */
+export function historyEntryTiming(entry: ResponseHistoryEntry, now: number = Date.now()): string {
+  const when = formatRelative(new Date(entry.timestamp), new Date(now))
+  return `${entry.durationMs}ms · ${when}${entry.bodyTruncated ? ' · body truncated' : ''}`
 }
 
 /** Quick-pick label + description for a history entry (e.g. `200 OK · 123ms · 2 minutes ago`). */
@@ -570,12 +630,350 @@ export function describeHistoryEntry(
   entry: ResponseHistoryEntry,
   now: number = Date.now()
 ): { label: string; description: string } {
-  const when = formatRelative(new Date(entry.timestamp), new Date(now))
-  const status = entry.error
-    ? `Failed: ${entry.error}`
-    : `${entry.status}${entry.statusText ? ` ${entry.statusText}` : ''}`
   return {
     label: `${entry.method} ${entry.url}`,
-    description: `${status} · ${entry.durationMs}ms · ${when}${entry.bodyTruncated ? ' · body truncated' : ''}`
+    description: `${historyStatusLabel(entry)} · ${historyEntryTiming(entry, now)}`
   }
+}
+
+/** One endpoint (method + final URL) with all of its responses, newest first. */
+export interface RequestGroup {
+  /** Stable group key: `${method} ${url}`. */
+  key: string
+  method: string
+  url: string
+  entries: ResponseHistoryEntry[]
+}
+
+/**
+ * Groups history entries by request (method + final URL) so repeated calls to
+ * the same endpoint collapse together instead of appearing interleaved. The input
+ * is assumed newest-first; each group keeps that order, and the groups themselves
+ * are ordered by their most-recent entry (so the just-used endpoint floats to the
+ * top).
+ */
+export function groupHistoryByRequest(history: ResponseHistoryEntry[]): RequestGroup[] {
+  const groups: RequestGroup[] = []
+  const byKey = new Map<string, RequestGroup>()
+  for (const entry of history) {
+    const key = `${entry.method} ${entry.url}`
+    let group = byKey.get(key)
+    if (!group) {
+      group = { key, method: entry.method, url: entry.url, entries: [] }
+      byKey.set(key, group)
+      groups.push(group)
+    }
+    group.entries.push(entry)
+  }
+  return groups
+}
+
+/** Coarse status bucket used to pick an icon and color for a history entry. */
+export type HistoryStatusKind = 'success' | 'redirect' | 'clientError' | 'serverError' | 'failed'
+
+export function historyStatusKind(entry: ResponseHistoryEntry): HistoryStatusKind {
+  if (entry.error || entry.status === 0) {
+    return 'failed'
+  }
+  if (entry.status >= 500) {
+    return 'serverError'
+  }
+  if (entry.status >= 400) {
+    return 'clientError'
+  }
+  if (entry.status >= 300) {
+    return 'redirect'
+  }
+  return 'success'
+}
+
+/** Human-readable byte size: `820 B`, `1.2 KB`, `3 MB`. Empty string for unknown sizes. */
+export function formatBytes(bytes: number | undefined): string {
+  if (bytes === undefined || !Number.isFinite(bytes) || bytes < 0) {
+    return ''
+  }
+  if (bytes < 1024) {
+    return `${bytes} B`
+  }
+  const units = ['KB', 'MB', 'GB', 'TB']
+  let value = bytes / 1024
+  let i = 0
+  while (value >= 1024 && i < units.length - 1) {
+    value /= 1024
+    i++
+  }
+  // One decimal under 10 (1.5 KB), whole numbers above (20 KB); drop a trailing .0.
+  const rounded = value < 10 ? Number(value.toFixed(1)) : Math.round(value)
+  return `${rounded} ${units[i]}`
+}
+
+/**
+ * Filters history by a free-text query matched against `method url status`.
+ * Whitespace-separated terms are AND-ed (case-insensitive), so `POST users` keeps
+ * POST calls whose URL contains "users", and `500` keeps server errors. An empty
+ * query returns the list unchanged.
+ */
+export function filterHistory(history: ResponseHistoryEntry[], query: string): ResponseHistoryEntry[] {
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  if (terms.length === 0) {
+    return history
+  }
+  return history.filter(entry => {
+    const status = entry.error ? `failed ${entry.error}` : `${entry.status} ${entry.statusText}`
+    const haystack = `${entry.method} ${entry.url} ${status}`.toLowerCase()
+    return terms.every(term => haystack.includes(term))
+  })
+}
+
+/** Per-group status breakdown, newest status first: e.g. `2×200 1×500` (`ERR` for failures). */
+export function summarizeGroupStatuses(entries: ResponseHistoryEntry[]): string {
+  const counts = new Map<string, number>()
+  for (const entry of entries) {
+    const key = entry.error || entry.status === 0 ? 'ERR' : String(entry.status)
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return [...counts.entries()].map(([status, count]) => `${count}×${status}`).join(' ')
+}
+
+/** Tree label + description for a request node in the Requests view. */
+export function describeRequestNode(request: HttpRequest): { label: string; description: string } {
+  // The parser names unnamed blocks "Request N"; for those, lead with method+URL.
+  if (/^Request \d+$/.test(request.name)) {
+    return { label: `${request.method} ${request.url}`, description: '' }
+  }
+  return { label: request.name, description: `${request.method} ${request.url}` }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Detail panel (webview) HTML                                               */
+/* -------------------------------------------------------------------------- */
+
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;'
+}
+
+export function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, ch => HTML_ESCAPES[ch])
+}
+
+/**
+ * Serializes a value to JSON safe to embed inside an inline `<script>`. Escapes
+ * `<` (so a body containing `</script>` or `<!--` can't break out) and the line
+ * separators that are invalid in JS string literals.
+ */
+export function embedJsonInScript(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+}
+
+export interface DetailHtmlOptions {
+  /** Webview `cspSource` for the Content-Security-Policy. */
+  cspSource: string
+  /** Per-render nonce allowing the single inline <script>. */
+  nonce: string
+}
+
+function headerRows(headers: HttpHeader[]): string {
+  if (headers.length === 0) {
+    return '<tr><td colspan="2" class="muted">— none —</td></tr>'
+  }
+  return headers
+    .map(h => `<tr><td class="hname">${escapeHtml(h.name)}</td><td class="hval">${escapeHtml(h.value)}</td></tr>`)
+    .join('')
+}
+
+/** The collapsible "Request" section (headers + body). Empty string when there's nothing to show. */
+function requestSectionHtml(headers: HttpHeader[] | undefined, body: string | undefined, open: boolean): string {
+  const hasHeaders = (headers?.length ?? 0) > 0
+  const hasBody = (body?.length ?? 0) > 0
+  if (!hasHeaders && !hasBody) {
+    return ''
+  }
+  const inner = `${hasHeaders ? `<table>${headerRows(headers ?? [])}</table>` : ''}${
+    hasBody ? `<pre class="reqbody">${escapeHtml(body ?? '')}</pre>` : ''
+  }`
+  return `<details${open ? ' open' : ''}><summary>Request</summary>${inner}</details>`
+}
+
+/** Shared stylesheet for the detail/pending panels (theme-driven colors). */
+const DETAIL_STYLES = `
+  body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 16px 24px; }
+  .topbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 14px 0 10px; z-index: 1; }
+  .reqline { font-family: var(--vscode-editor-font-family); font-size: 13px; word-break: break-all; margin-bottom: 8px; }
+  .method { font-weight: 600; margin-right: 6px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 12px; color: #fff; }
+  .badge.success { background: var(--vscode-testing-iconPassed, #2ea043); }
+  .badge.redirect { background: var(--vscode-charts-blue, #3794ff); }
+  .badge.clientError { background: var(--vscode-charts-yellow, #cca700); color: #000; }
+  .badge.serverError, .badge.failed { background: var(--vscode-charts-red, #f14c4c); }
+  .badge.pending { background: var(--vscode-charts-blue, #3794ff); }
+  .dot { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+  .meta { color: var(--vscode-descriptionForeground); font-size: 12px; margin: 6px 0 10px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .actions.pending { margin-top: 12px; }
+  .retry-row { margin-top: 8px; align-items: center; }
+  .retry-label { color: var(--vscode-descriptionForeground); font-size: 12px; margin-right: 2px; }
+  .elapsed { color: var(--vscode-descriptionForeground); font-size: 12px; margin-left: 8px; font-variant-numeric: tabular-nums; }
+  button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; }
+  button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
+  button:hover { background: var(--vscode-button-hoverBackground); }
+  button:disabled { opacity: .5; cursor: default; }
+  h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 18px 0 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  td { padding: 3px 8px; border-bottom: 1px solid var(--vscode-panel-border); vertical-align: top; }
+  .hname { color: var(--vscode-symbolIcon-keywordForeground, var(--vscode-foreground)); white-space: nowrap; font-family: var(--vscode-editor-font-family); }
+  .hval { font-family: var(--vscode-editor-font-family); word-break: break-all; }
+  .muted { color: var(--vscode-descriptionForeground); }
+  details { margin-top: 6px; }
+  summary { cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 14px 0 4px; }
+  pre { background: var(--vscode-textCodeBlock-background); padding: 10px; border-radius: 4px; overflow: auto; font-family: var(--vscode-editor-font-family); font-size: var(--vscode-editor-font-size); }
+  pre.wrap { white-space: pre-wrap; word-break: break-word; }
+`
+
+/** Wraps body + an inline (nonce-gated) script into a complete CSP'd HTML document. */
+function detailDocument(opts: DetailHtmlOptions, bodyHtml: string, scriptBody: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${opts.cspSource} 'unsafe-inline'; script-src 'nonce-${opts.nonce}';">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>${DETAIL_STYLES}</style>
+</head>
+<body>
+${bodyHtml}
+<script nonce="${opts.nonce}">${scriptBody}</script>
+</body>
+</html>`
+}
+
+/**
+ * Builds the standalone HTML document for the response detail panel. Pure so it
+ * can be unit-tested; all VS Code-specific values (CSP source, nonce) are passed
+ * in. Colors come from the editor theme via CSS variables.
+ */
+export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: DetailHtmlOptions): string {
+  const kind = historyStatusKind(entry)
+  const statusText = entry.error ? `Failed — ${entry.error}` : historyStatusLabel(entry)
+  const contentType = findHeader(entry.headers, 'content-type') ?? ''
+  const isJson = inferLanguageFromContentType(contentType) === 'json'
+  const pretty = isJson ? tryPrettyJson(entry.body) : entry.body
+  const size = formatBytes(entry.bodyBytes)
+  const meta = [
+    `${entry.durationMs} ms`,
+    size,
+    entry.bodyTruncated ? 'body truncated' : '',
+    new Date(entry.timestamp).toLocaleString()
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  const bodyData = embedJsonInScript({ pretty, raw: entry.body })
+
+  // On timeout, offer one-click retries at preset timeouts (no incremental ramp).
+  const retryRow = entry.timedOut
+    ? `<div class="actions retry-row"><span class="retry-label">Retry with:</span>${RETRY_TIMEOUT_PRESETS.map(
+        p => `<button class="retry secondary" data-ms="${p.ms}">${escapeHtml(p.label)}</button>`
+      ).join('')}</div>`
+    : ''
+
+  const bodyHtml = `  <div class="topbar">
+    <div class="reqline"><span class="method">${escapeHtml(entry.method)}</span>${escapeHtml(entry.url)}</div>
+    <span class="badge ${kind}">${escapeHtml(statusText)}</span>
+    <div class="meta">${escapeHtml(meta)}</div>
+    <div class="actions">
+      <button id="resend">▶ Re-send</button>
+      <button id="copyCurl" class="secondary">Copy as curl</button>
+      <button id="copyBody" class="secondary">Copy body</button>
+      <button id="openText" class="secondary">Open as text</button>
+      <button id="toggleWrap" class="secondary">Toggle wrap</button>
+      <button id="toggleRaw" class="secondary">Show raw</button>
+    </div>
+    ${retryRow}
+  </div>
+  <h3>Response headers</h3>
+  <table>${headerRows(entry.headers)}</table>
+  ${requestSectionHtml(entry.requestHeaders, entry.requestBody, false)}
+  <h3>Body</h3>
+  <pre id="body"></pre>`
+
+  const scriptBody = `
+    const vscode = acquireVsCodeApi();
+    const data = ${bodyData};
+    const bodyEl = document.getElementById('body');
+    let raw = false;
+    const render = () => { bodyEl.textContent = raw ? data.raw : data.pretty; };
+    render();
+    document.getElementById('toggleRaw').addEventListener('click', () => {
+      raw = !raw;
+      document.getElementById('toggleRaw').textContent = raw ? 'Show pretty' : 'Show raw';
+      render();
+    });
+    document.getElementById('toggleWrap').addEventListener('click', () => bodyEl.classList.toggle('wrap'));
+    const post = cmd => () => vscode.postMessage({ command: cmd });
+    document.getElementById('resend').addEventListener('click', post('resend'));
+    document.getElementById('copyCurl').addEventListener('click', post('copyCurl'));
+    document.getElementById('copyBody').addEventListener('click', post('copyBody'));
+    document.getElementById('openText').addEventListener('click', post('openText'));
+    document.querySelectorAll('.retry').forEach(b =>
+      b.addEventListener('click', () => vscode.postMessage({ command: 'retry', timeoutMs: Number(b.dataset.ms) }))
+    );
+  `
+
+  return detailDocument(opts, bodyHtml, scriptBody)
+}
+
+/** A request being sent (for the live execution view). */
+export interface PendingRequest {
+  method: string
+  url: string
+  headers: HttpHeader[]
+  body?: string
+}
+
+/**
+ * Builds the "executing" view shown the instant a request is sent: the request we
+ * already know, a live elapsed-time counter and a Cancel button. When `cancelled`
+ * is true it renders a terminal "Cancelled" state (no timer, no Cancel button).
+ */
+export function buildPendingDetailHtml(request: PendingRequest, opts: DetailHtmlOptions, cancelled = false): string {
+  // The elapsed time lives outside the badge so the badge keeps a fixed width as
+  // the counter ticks (otherwise the number changing would resize the badge).
+  const badge = cancelled
+    ? `<span class="badge failed">Cancelled</span>`
+    : `<span class="badge pending"><span class="dot">●</span> Sending…</span><span class="elapsed" id="elapsed">0.0s</span>`
+  const actions = cancelled ? '' : `<div class="actions pending"><button id="cancel">Cancel</button></div>`
+
+  const bodyHtml = `  <div class="topbar">
+    <div class="reqline"><span class="method">${escapeHtml(request.method)}</span>${escapeHtml(request.url)}</div>
+    ${badge}
+    ${actions}
+  </div>
+  ${requestSectionHtml(request.headers, request.body, true)}`
+
+  // Timer runs entirely client-side; Cancel just signals the extension.
+  const scriptBody = cancelled
+    ? ''
+    : `
+    const vscode = acquireVsCodeApi();
+    const el = document.getElementById('elapsed');
+    const t0 = performance.now();
+    const timer = setInterval(() => { el.textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's'; }, 100);
+    const cancel = document.getElementById('cancel');
+    cancel.addEventListener('click', () => {
+      vscode.postMessage({ command: 'cancel' });
+      clearInterval(timer);
+      cancel.disabled = true;
+      cancel.textContent = 'Cancelling…';
+    });
+  `
+
+  return detailDocument(opts, bodyHtml, scriptBody)
 }

@@ -1,11 +1,16 @@
 .vscode/**
 .vscode-test/**
+.claude/**
 src/**
+out/**
+esbuild.js
 node_modules/**
 !node_modules/typescript/lib/**
 !node_modules/typescript/package.json
 .gitignore
 tsconfig.json
+eslint.config.mjs
+.prettierrc
 **/*.map
 **/*.ts
 *.vsix

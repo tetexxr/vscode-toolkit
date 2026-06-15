@@ -17,6 +17,16 @@ import {
   addHistoryEntry,
   truncateForHistory,
   describeHistoryEntry,
+  groupHistoryByRequest,
+  historyStatusKind,
+  formatBytes,
+  filterHistory,
+  summarizeGroupStatuses,
+  escapeHtml,
+  embedJsonInScript,
+  buildResponseDetailHtml,
+  buildPendingDetailHtml,
+  describeRequestNode,
   type ResponseHistoryEntry
 } from '../../src/features/rest-client-utils'
 
@@ -419,19 +429,45 @@ describe('response history', () => {
     ...over
   })
 
-  it('should prepend newest-first and cap at max', () => {
+  it('should prepend newest-first and cap per request', () => {
     let list: ResponseHistoryEntry[] = []
-    list = addHistoryEntry(list, entry('a', 1), 2)
-    list = addHistoryEntry(list, entry('b', 2), 2)
-    list = addHistoryEntry(list, entry('c', 3), 2)
+    list = addHistoryEntry(list, entry('a', 1), 2, 100)
+    list = addHistoryEntry(list, entry('b', 2), 2, 100)
+    list = addHistoryEntry(list, entry('c', 3), 2, 100)
+    // Same endpoint (default url), per-request cap 2 → oldest 'a' evicted.
     assert.deepEqual(
       list.map(e => e.id),
       ['c', 'b']
     )
   })
 
-  it('should return an empty list when max is 0 (history disabled)', () => {
-    assert.deepEqual(addHistoryEntry([entry('a', 1)], entry('b', 2), 0), [])
+  it('should keep each request capped independently', () => {
+    let list: ResponseHistoryEntry[] = []
+    list = addHistoryEntry(list, entry('a1', 1, { url: 'https://api.test/a' }), 2, 100)
+    list = addHistoryEntry(list, entry('b1', 2, { url: 'https://api.test/b' }), 2, 100)
+    list = addHistoryEntry(list, entry('a2', 3, { url: 'https://api.test/a' }), 2, 100)
+    list = addHistoryEntry(list, entry('a3', 4, { url: 'https://api.test/a' }), 2, 100)
+    // /a keeps its 2 newest (a3, a2); /b is untouched by /a's churn.
+    assert.deepEqual(
+      list.map(e => e.id),
+      ['a3', 'a2', 'b1']
+    )
+  })
+
+  it('should enforce the global safety cap across requests', () => {
+    let list: ResponseHistoryEntry[] = []
+    list = addHistoryEntry(list, entry('a', 1, { url: 'https://api.test/a' }), 30, 2)
+    list = addHistoryEntry(list, entry('b', 2, { url: 'https://api.test/b' }), 30, 2)
+    list = addHistoryEntry(list, entry('c', 3, { url: 'https://api.test/c' }), 30, 2)
+    assert.deepEqual(
+      list.map(e => e.id),
+      ['c', 'b']
+    )
+  })
+
+  it('should return an empty list when either cap is 0 (history disabled)', () => {
+    assert.deepEqual(addHistoryEntry([entry('a', 1)], entry('b', 2), 0, 100), [])
+    assert.deepEqual(addHistoryEntry([entry('a', 1)], entry('b', 2), 30, 0), [])
   })
 
   it('should truncate a body past the cap and flag it', () => {
@@ -459,5 +495,254 @@ describe('response history', () => {
       now
     )
     assert.equal(d.description, 'Failed: getaddrinfo ENOTFOUND · 5ms · just now')
+  })
+
+  it('should group entries by method + url, keeping each group newest-first', () => {
+    const history = [
+      entry('c', 3, { method: 'GET', url: 'https://api.test/users' }),
+      entry('b', 2, { method: 'POST', url: 'https://api.test/users' }),
+      entry('a', 1, { method: 'GET', url: 'https://api.test/users' })
+    ]
+    const groups = groupHistoryByRequest(history)
+    assert.equal(groups.length, 2)
+    // Groups are ordered by their most-recent entry: GET (c, newest) before POST (b).
+    assert.equal(groups[0].key, 'GET https://api.test/users')
+    assert.deepEqual(
+      groups[0].entries.map(e => e.id),
+      ['c', 'a']
+    )
+    assert.equal(groups[1].key, 'POST https://api.test/users')
+    assert.deepEqual(
+      groups[1].entries.map(e => e.id),
+      ['b']
+    )
+  })
+
+  it('should return no groups for an empty history', () => {
+    assert.deepEqual(groupHistoryByRequest([]), [])
+  })
+
+  it('should bucket a status into the right kind for icon/color', () => {
+    assert.equal(historyStatusKind(entry('a', 1, { status: 200 })), 'success')
+    assert.equal(historyStatusKind(entry('a', 1, { status: 204 })), 'success')
+    assert.equal(historyStatusKind(entry('a', 1, { status: 301 })), 'redirect')
+    assert.equal(historyStatusKind(entry('a', 1, { status: 404 })), 'clientError')
+    assert.equal(historyStatusKind(entry('a', 1, { status: 500 })), 'serverError')
+    assert.equal(historyStatusKind(entry('a', 1, { status: 0, error: 'ENOTFOUND' })), 'failed')
+  })
+
+  it('should format byte sizes in human units', () => {
+    assert.equal(formatBytes(undefined), '')
+    assert.equal(formatBytes(-1), '')
+    assert.equal(formatBytes(0), '0 B')
+    assert.equal(formatBytes(820), '820 B')
+    assert.equal(formatBytes(1536), '1.5 KB')
+    assert.equal(formatBytes(1024 * 1024 * 3), '3 MB')
+    assert.equal(formatBytes(1024 * 20), '20 KB')
+  })
+
+  it('should summarize a group as a status breakdown', () => {
+    const entries = [
+      entry('c', 3, { status: 200 }),
+      entry('b', 2, { status: 200 }),
+      entry('a', 1, { status: 500 })
+    ]
+    assert.equal(summarizeGroupStatuses(entries), '2×200 1×500')
+  })
+
+  it('should mark failed entries as ERR in the breakdown', () => {
+    const entries = [entry('a', 1, { status: 0, error: 'boom' }), entry('b', 2, { status: 200 })]
+    assert.equal(summarizeGroupStatuses(entries), '1×ERR 1×200')
+  })
+
+  it('should escape HTML special characters', () => {
+    assert.equal(escapeHtml(`<a href="x">&'</a>`), '&lt;a href=&quot;x&quot;&gt;&amp;&#39;&lt;/a&gt;')
+  })
+
+  it('should build a detail HTML document with status, url, body and nonce-gated script', () => {
+    const e = entry('a', 1_000, {
+      method: 'POST',
+      url: 'https://api.test/users',
+      status: 201,
+      statusText: 'Created',
+      headers: [{ name: 'Content-Type', value: 'application/json' }],
+      body: '{"id":1}',
+      bodyBytes: 8
+    })
+    const html = buildResponseDetailHtml(e, { cspSource: 'vscode-resource:', nonce: 'abc123' })
+    assert.ok(html.includes('POST'))
+    assert.ok(html.includes('https://api.test/users'))
+    assert.ok(html.includes('201 Created'))
+    assert.ok(html.includes('Content-Type'))
+    // JSON body is pretty-printed in the embedded data.
+    assert.ok(html.includes('nonce="abc123"'))
+    assert.ok(html.includes('Content-Security-Policy'))
+    // The injected URL must not break out of the attribute/script context.
+    assert.ok(!html.includes('<script>alert'))
+  })
+
+  it('should escape a malicious URL in the detail HTML', () => {
+    const e = entry('a', 1_000, { url: 'https://x/"><script>alert(1)</script>' })
+    const html = buildResponseDetailHtml(e, { cspSource: 'vscode-resource:', nonce: 'n' })
+    assert.ok(!html.includes('<script>alert(1)</script>'))
+    assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'))
+  })
+
+  it('should neutralize a </script> in the body so it cannot break out of the inline script', () => {
+    const e = entry('a', 1_000, { body: 'before</script><script>alert(1)</script>after' })
+    const html = buildResponseDetailHtml(e, { cspSource: 'vscode-resource:', nonce: 'n' })
+    // The only real closing tag is our own script's; the body's are escaped.
+    assert.equal(html.split('</script>').length, 2)
+    assert.ok(!html.includes('<script>alert(1)'))
+  })
+
+  describe('filterHistory', () => {
+    const list = [
+      entry('a', 3, { method: 'GET', url: 'https://api.test/users', status: 200, statusText: 'OK' }),
+      entry('b', 2, { method: 'POST', url: 'https://api.test/users', status: 201, statusText: 'Created' }),
+      entry('c', 1, { method: 'GET', url: 'https://api.test/orders', status: 500, statusText: 'Server Error' }),
+      entry('d', 0, { method: 'DELETE', url: 'https://api.test/orders/9', status: 0, error: 'ENOTFOUND' })
+    ]
+
+    it('should return the list unchanged for an empty query', () => {
+      assert.equal(filterHistory(list, ''), list)
+      assert.equal(filterHistory(list, '   ').length, 4)
+    })
+
+    it('should match by URL substring', () => {
+      assert.deepEqual(
+        filterHistory(list, 'users').map(e => e.id),
+        ['a', 'b']
+      )
+    })
+
+    it('should match by status code', () => {
+      assert.deepEqual(
+        filterHistory(list, '500').map(e => e.id),
+        ['c']
+      )
+    })
+
+    it('should AND space-separated terms', () => {
+      assert.deepEqual(
+        filterHistory(list, 'post users').map(e => e.id),
+        ['b']
+      )
+    })
+
+    it('should match failed requests by their error text', () => {
+      assert.deepEqual(
+        filterHistory(list, 'enotfound').map(e => e.id),
+        ['d']
+      )
+    })
+
+    it('should be case-insensitive', () => {
+      assert.deepEqual(
+        filterHistory(list, 'GET ORDERS').map(e => e.id),
+        ['c']
+      )
+    })
+  })
+
+  it('embedJsonInScript should escape < and line separators', () => {
+    assert.equal(embedJsonInScript('a</b>'), '"a\\u003c/b>"')
+    assert.equal(embedJsonInScript('x y z'), '"x\\u2028y\\u2029z"')
+  })
+})
+
+describe('describeRequestNode', () => {
+  const req = (over) => ({
+    name: 'Request 1',
+    method: 'GET',
+    url: 'https://api.test/x',
+    headers: [],
+    body: '',
+    startLine: 0,
+    endLine: 0,
+    ...over
+  })
+
+  it('should lead with method + URL for unnamed requests', () => {
+    assert.deepEqual(describeRequestNode(req({ name: 'Request 2', method: 'POST', url: 'https://a/b' })), {
+      label: 'POST https://a/b',
+      description: ''
+    })
+  })
+
+  it('should lead with the name for named requests', () => {
+    assert.deepEqual(describeRequestNode(req({ name: 'Create user', method: 'POST', url: 'https://a/b' })), {
+      label: 'Create user',
+      description: 'POST https://a/b'
+    })
+  })
+})
+
+describe('buildPendingDetailHtml', () => {
+  const req = { method: 'POST', url: 'https://api.test/users', headers: [{ name: 'Accept', value: '*/*' }], body: '{"a":1}' }
+
+  it('should render the executing view with timer and cancel button', () => {
+    const html = buildPendingDetailHtml(req, { cspSource: 'vscode-resource:', nonce: 'n1' })
+    assert.ok(html.includes('POST'))
+    assert.ok(html.includes('https://api.test/users'))
+    assert.ok(html.includes('Sending'))
+    assert.ok(html.includes('id="elapsed"'))
+    assert.ok(html.includes('id="cancel"'))
+    assert.ok(html.includes('nonce="n1"'))
+    assert.ok(html.includes('Content-Security-Policy'))
+    // Request data we already have is shown.
+    assert.ok(html.includes('Accept'))
+  })
+
+  it('should render a terminal cancelled state without timer or cancel button', () => {
+    const html = buildPendingDetailHtml(req, { cspSource: 'vscode-resource:', nonce: 'n2' }, true)
+    assert.ok(html.includes('Cancelled'))
+    assert.ok(!html.includes('id="elapsed"'))
+    assert.ok(!html.includes('id="cancel"'))
+    assert.ok(!html.includes('setInterval'))
+  })
+
+  it('should escape a malicious URL', () => {
+    const html = buildPendingDetailHtml(
+      { method: 'GET', url: 'https://x/"><script>alert(1)</script>', headers: [], body: undefined },
+      { cspSource: 'vscode-resource:', nonce: 'n3' }
+    )
+    assert.ok(!html.includes('<script>alert(1)</script>'))
+    assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'))
+  })
+})
+
+describe('buildResponseDetailHtml — timeout retries', () => {
+  const base = {
+    id: 'a',
+    method: 'GET',
+    url: 'https://api.test/slow',
+    status: 0,
+    statusText: 'Request failed',
+    durationMs: 2000,
+    timestamp: 1_000_000,
+    headers: [],
+    body: 'Request timed out after 2000 ms',
+    bodyTruncated: false,
+    error: 'Request timed out after 2000 ms'
+  }
+
+  it('should render preset retry buttons for a timed-out entry', () => {
+    const html = buildResponseDetailHtml({ ...base, timedOut: true }, { cspSource: 'vscode-resource:', nonce: 'n' })
+    assert.ok(html.includes('retry-row'))
+    assert.ok(html.includes('Retry with:'))
+    assert.ok(html.includes('data-ms="60000"'))
+    assert.ok(html.includes('data-ms="1800000"'))
+    assert.ok(html.includes("command: 'retry'"))
+  })
+
+  it('should NOT render retry buttons for a non-timeout failure', () => {
+    const html = buildResponseDetailHtml(
+      { ...base, timedOut: false, error: 'getaddrinfo ENOTFOUND' },
+      { cspSource: 'vscode-resource:', nonce: 'n' }
+    )
+    // The .retry-row class lives in the stylesheet; the actual buttons (data-ms / label) must not.
+    assert.ok(!html.includes('data-ms='))
+    assert.ok(!html.includes('Retry with:'))
   })
 })

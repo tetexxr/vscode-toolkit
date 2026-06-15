@@ -1280,7 +1280,7 @@ Tags must match a whole word — `// TODOLIST: foo` is not picked up.
 
 #### REST Client
 
-Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send Request** code lens; the response opens in a new tab with the right syntax highlighting and a pretty-printed body when it's JSON.
+Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send Request** code lens; the response opens in the **detail panel** by default (status badge, headers, body) — set `toolkit.restClient.previewResponseIn` to `editor` to show it as text instead, with the right syntax highlighting and a pretty-printed body when it's JSON.
 
 `.http` / `.rest` files get their own **syntax highlighting**: request methods, URLs, header names, `@variable` definitions, `### section` separators, `#` / `//` comments and `{{interpolations}}` (built-in `$vars` included) are all colored.
 
@@ -1298,6 +1298,33 @@ Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send
 | REST Client - Clear Response History | Empty the per-workspace history |
 
 All of these are also available from the **editor context menu** when right-clicking inside a `.http` / `.rest` file.
+
+**Requests view:**
+
+The **REST Client** container in the activity bar has a **Requests** section that auto-discovers every `.http` / `.rest` file in the workspace (build folders like `node_modules` are skipped; updates live as files change).
+
+- **Click a file** to open it in the editor; **expand it** to list its requests.
+- **Click a request** to jump to its block in the file.
+- **Inline icons** (on hover): **▶ Send** a request (or **Send All** on a file) and **Copy as curl** — sending records the result in the history below.
+- Empty workspace? A **New Request File** button creates a starter `.http`.
+
+**Response History view:**
+
+The **REST Client** container in the activity bar holds a **Response History** tree — a more visual alternative to the picker. By default responses are **grouped by request** (method + final URL), so repeated calls to the same endpoint collapse together instead of appearing interleaved; the just-used endpoint floats to the top. Each group shows a status breakdown (`2×200 1×500`), and each response shows a **color-coded status icon** (green 2xx, blue 3xx, yellow 4xx, red 5xx / failed), its duration, size and a relative timestamp.
+
+- **Click** a response to open it in the **detail panel** (the default; switch to a reused text editor with `toolkit.restClient.history.clickAction`). The picker (**Response History...**) opens the same way.
+- **Inline icons** (on hover): re-send the request, diff against the previous call to the same endpoint, or delete the entry.
+- **Right-click** for more: open in the detail panel or as text, **re-send**, **go to source request**, **copy as curl / body / URL**, or **save the body to a file**.
+- **Filter** (funnel icon in the view title): type method / URL / status terms (space-separated terms are AND-ed, e.g. `POST users` or `500`); a banner shows the active filter and the funnel turns filled — click it to clear. The filter is remembered per workspace.
+- **View title buttons**: filter, toggle between *grouped by request* and a flat *timeline*, refresh, or clear all history.
+
+**Detail panel:** a reused webview showing a colored status badge, the request line, timing and size, the request (headers + body) and response **header tables**, and the response body with **pretty/raw** and **wrap** toggles — plus buttons to re-send, copy as curl, copy the body, or open it as text. Re-sending updates the same panel; deleting the shown entry (or clearing history) closes it.
+
+While a request is in flight (in panel mode) the panel shows a live **executing** view: the request being sent, a running **elapsed-time counter**, and a **Cancel** button — then it swaps to the response when it completes.
+
+The request timeout is set by `toolkit.restClient.timeout` (default 30 s). When a request **times out**, the detail panel shows **preset retry buttons** — *Retry with 1 / 2 / 5 / 10 / 30 min* — so you can re-send straight away with as much time as that particular query needs (no incremental ramp). In editor mode the same presets are offered via the timeout warning's **Retry…** action.
+
+**Re-send:** replays the stored request (method, URL, headers and body) and records a fresh entry, so you can diff it against the previous one. Set `toolkit.restClient.history.storeRequest` to `false` to avoid persisting request headers (e.g. `Authorization`) in workspace storage — re-send then falls back to re-running the request from its source `.http` file.
 
 **File format:**
 
@@ -1380,13 +1407,13 @@ The **Copy as curl** CodeLens next to each request's Send Request (or the comman
 
 **Response history:**
 
-Every request you send is kept in a per-workspace history (newest first, capped by `toolkit.restClient.historySize`). This includes HTTP error responses (4xx/5xx are normal responses) **and** requests that never got a response at all — DNS failures, refused connections, timeouts — which are recorded as *Failed* entries with the error message as their body.
+Every request you send is kept in a per-workspace history (newest first). Each request (method + URL) keeps its own most-recent responses — up to `toolkit.restClient.historySizePerRequest` (default 30) — so a busy endpoint never evicts the others; `toolkit.restClient.historySize` (default 500) is an overall safety cap. This includes HTTP error responses (4xx/5xx are normal responses) **and** requests that never got a response at all — DNS failures, refused connections, timeouts — which are recorded as *Failed* entries with the error message as their body.
 
 - **REST Client - Response History...** lists recent requests — each showing method, URL, status (or the failure), duration and how long ago it ran. A 4xx/5xx is flagged with a warning icon and a network failure with an error icon. Pick one to reopen it in an editor.
 - **REST Client - Diff Two Responses...** lets you pick two entries and opens them side by side in a diff editor (oldest → newest), so you can spot what changed between two runs of the same request.
 - **REST Client - Clear Response History** empties it.
 
-Bodies are stored capped at ~1 MB per entry to keep the workspace state small; entries whose body was clipped are marked *body truncated*. Set `historySize` to `0` to disable history entirely. (Requests you cancel yourself are not recorded.)
+Bodies are stored capped at ~1 MB per entry to keep the workspace state small; entries whose body was clipped are marked *body truncated*. Set `historySizePerRequest` (or `historySize`) to `0` to disable history entirely. (Requests you cancel yourself are not recorded.)
 
 **Response format:**
 
@@ -1409,8 +1436,12 @@ X-Toolkit-Time: 234ms
 |---|---|---|
 | `toolkit.restClient.timeout` | `30000` | Request timeout in ms (0 disables). On timeout the request is reported as failed and recorded in the history — distinct from a cancellation, which is silent |
 | `toolkit.restClient.followRedirects` | `true` | Follow 3xx redirects |
-| `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` |
-| `toolkit.restClient.historySize` | `30` | Recent responses kept per workspace (0 disables history) |
+| `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` (language used when a response is shown as text) |
+| `toolkit.restClient.previewResponseIn` | `panel` | Where Send Request shows its response: the rich `panel`, or a text `editor` |
+| `toolkit.restClient.history.clickAction` | `panel` | What selecting a history entry opens: the `panel` or a text `editor` |
+| `toolkit.restClient.history.storeRequest` | `true` | Store the resolved request (incl. headers/body) so it can be re-sent and copied as curl |
+| `toolkit.restClient.historySizePerRequest` | `30` | Recent responses kept per request — method + URL (0 disables history) |
+| `toolkit.restClient.historySize` | `500` | Overall safety cap on total responses kept across all requests (0 disables history) |
 
 **Limitations:**
 

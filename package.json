@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.15.0",
+  "version": "1.15.1",
   "publisher": "tete",
   "repository": {
     "type": "git",
@@ -19,7 +19,7 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "languages": [
       {
@@ -73,6 +73,11 @@
           "id": "toolkit-todo",
           "title": "TODOs",
           "icon": "themes/icons/todo-tree.svg"
+        },
+        {
+          "id": "rest-client",
+          "title": "REST Client",
+          "icon": "themes/icons/rest-client.svg"
         }
       ]
     },
@@ -104,8 +109,24 @@
           "id": "toolkitTodoTree",
           "name": "TODOs"
         }
+      ],
+      "rest-client": [
+        {
+          "id": "toolkitRestFiles",
+          "name": "Requests"
+        },
+        {
+          "id": "toolkitRestHistory",
+          "name": "Response History"
+        }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "toolkitRestFiles",
+        "contents": "No .http or .rest files were found in this workspace.\n[New Request File](command:toolkit.restClient.files.create)"
+      }
+    ],
     "customEditors": [
       {
         "viewType": "toolkit.pdfPreview",
@@ -779,6 +800,10 @@
         "title": "Toolkit: Send All Requests"
       },
       {
+        "command": "toolkit.restClient.sendByIndex",
+        "title": "Toolkit: Send Request (internal)"
+      },
+      {
         "command": "toolkit.restClient.cancelAll",
         "title": "Toolkit: Cancel Pending Requests"
       },
@@ -804,7 +829,106 @@
       },
       {
         "command": "toolkit.restClient.clearHistory",
-        "title": "Toolkit: REST Client - Clear Response History"
+        "title": "Toolkit: REST Client - Clear Response History",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "toolkit.restClient.history.open",
+        "title": "Toolkit: REST Client - Open Response"
+      },
+      {
+        "command": "toolkit.restClient.history.refresh",
+        "title": "Toolkit: REST Client - Refresh History",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.restClient.history.groupByRequest",
+        "title": "Toolkit: REST Client - Group History by Request",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "toolkit.restClient.history.groupByFlat",
+        "title": "Toolkit: REST Client - Show History as Timeline",
+        "icon": "$(list-flat)"
+      },
+      {
+        "command": "toolkit.restClient.history.filter",
+        "title": "Toolkit: REST Client - Filter History...",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "toolkit.restClient.history.clearFilter",
+        "title": "Toolkit: REST Client - Clear History Filter",
+        "icon": "$(filter-filled)"
+      },
+      {
+        "command": "toolkit.restClient.history.deleteEntry",
+        "title": "Toolkit: REST Client - Delete Response",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "toolkit.restClient.history.diffWithPrevious",
+        "title": "Toolkit: REST Client - Diff with Previous Response",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "toolkit.restClient.history.resend",
+        "title": "Toolkit: REST Client - Re-send Request",
+        "icon": "$(run)"
+      },
+      {
+        "command": "toolkit.restClient.history.openPanel",
+        "title": "Toolkit: REST Client - Open Response in Panel",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "toolkit.restClient.history.openText",
+        "title": "Toolkit: REST Client - Open Response as Text"
+      },
+      {
+        "command": "toolkit.restClient.history.copyCurl",
+        "title": "Toolkit: REST Client - Copy as curl"
+      },
+      {
+        "command": "toolkit.restClient.history.copyBody",
+        "title": "Toolkit: REST Client - Copy Response Body"
+      },
+      {
+        "command": "toolkit.restClient.history.copyUrl",
+        "title": "Toolkit: REST Client - Copy Request URL"
+      },
+      {
+        "command": "toolkit.restClient.history.saveBody",
+        "title": "Toolkit: REST Client - Save Response Body to File..."
+      },
+      {
+        "command": "toolkit.restClient.history.goToSource",
+        "title": "Toolkit: REST Client - Go to Source Request"
+      },
+      {
+        "command": "toolkit.restClient.files.refresh",
+        "title": "Toolkit: REST Client - Refresh Requests",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.restClient.files.create",
+        "title": "Toolkit: REST Client - New Request File",
+        "icon": "$(add)"
+      },
+      {
+        "command": "toolkit.restClient.files.sendRequest",
+        "title": "Toolkit: REST Client - Send Request",
+        "icon": "$(run)"
+      },
+      {
+        "command": "toolkit.restClient.files.copyCurl",
+        "title": "Toolkit: REST Client - Copy as curl",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "toolkit.restClient.files.sendAll",
+        "title": "Toolkit: REST Client - Send All Requests in File",
+        "icon": "$(run-all)"
       },
       {
         "command": "toolkit.regexPlayground.open",
@@ -957,6 +1081,46 @@
           "command": "toolkit.todoTree.refresh",
           "when": "view == toolkitTodoTree",
           "group": "navigation@3"
+        },
+        {
+          "command": "toolkit.restClient.files.create",
+          "when": "view == toolkitRestFiles",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.restClient.files.refresh",
+          "when": "view == toolkitRestFiles",
+          "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.restClient.history.filter",
+          "when": "view == toolkitRestHistory && !toolkitRestHistoryFiltered",
+          "group": "navigation@0"
+        },
+        {
+          "command": "toolkit.restClient.history.clearFilter",
+          "when": "view == toolkitRestHistory && toolkitRestHistoryFiltered",
+          "group": "navigation@0"
+        },
+        {
+          "command": "toolkit.restClient.history.groupByRequest",
+          "when": "view == toolkitRestHistory && toolkitRestHistoryGroupBy != request",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.restClient.history.groupByFlat",
+          "when": "view == toolkitRestHistory && toolkitRestHistoryGroupBy != flat",
+          "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.restClient.history.refresh",
+          "when": "view == toolkitRestHistory",
+          "group": "navigation@3"
+        },
+        {
+          "command": "toolkit.restClient.clearHistory",
+          "when": "view == toolkitRestHistory",
+          "group": "navigation@4"
         }
       ],
       "editor/title": [
@@ -986,6 +1150,101 @@
           "command": "toolkit.todoTree.excludeFolder",
           "when": "view == toolkitTodoTree && (viewItem == file || viewItem == todo)",
           "group": "1_modify@1"
+        },
+        {
+          "command": "toolkit.restClient.files.sendRequest",
+          "when": "view == toolkitRestFiles && viewItem == restRequest",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.restClient.files.copyCurl",
+          "when": "view == toolkitRestFiles && viewItem == restRequest",
+          "group": "inline@2"
+        },
+        {
+          "command": "toolkit.restClient.files.sendAll",
+          "when": "view == toolkitRestFiles && viewItem == restFile",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.restClient.history.resend",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.restClient.history.diffWithPrevious",
+          "when": "view == toolkitRestHistory && viewItem == restHistoryEntryWithPrevious",
+          "group": "inline@2"
+        },
+        {
+          "command": "toolkit.restClient.history.deleteEntry",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "inline@3"
+        },
+        {
+          "command": "toolkit.restClient.history.openPanel",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "1_open@1"
+        },
+        {
+          "command": "toolkit.restClient.history.openText",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "1_open@2"
+        },
+        {
+          "command": "toolkit.restClient.history.resend",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "1_open@3"
+        },
+        {
+          "command": "toolkit.restClient.history.goToSource",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "1_open@4"
+        },
+        {
+          "command": "toolkit.restClient.history.copyCurl",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "2_copy@1"
+        },
+        {
+          "command": "toolkit.restClient.history.copyBody",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "2_copy@2"
+        },
+        {
+          "command": "toolkit.restClient.history.copyUrl",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "2_copy@3"
+        },
+        {
+          "command": "toolkit.restClient.history.saveBody",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "2_copy@4"
+        },
+        {
+          "command": "toolkit.restClient.history.diffWithPrevious",
+          "when": "view == toolkitRestHistory && viewItem == restHistoryEntryWithPrevious",
+          "group": "2_copy@5"
+        },
+        {
+          "command": "toolkit.restClient.history.deleteEntry",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
+          "group": "9_danger@1"
+        },
+        {
+          "command": "toolkit.restClient.files.sendRequest",
+          "when": "view == toolkitRestFiles && viewItem == restRequest",
+          "group": "1_run@1"
+        },
+        {
+          "command": "toolkit.restClient.files.copyCurl",
+          "when": "view == toolkitRestFiles && viewItem == restRequest",
+          "group": "1_run@2"
+        },
+        {
+          "command": "toolkit.restClient.files.sendAll",
+          "when": "view == toolkitRestFiles && viewItem == restFile",
+          "group": "1_run@1"
         }
       ],
       "toolkit.csharp.new": [
@@ -1186,6 +1445,82 @@
         {
           "command": "toolkit.restClient.sendByIndex",
           "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.open",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.deleteEntry",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.diffWithPrevious",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.refresh",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.groupByRequest",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.groupByFlat",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.filter",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.clearFilter",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.resend",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.openPanel",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.openText",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.copyCurl",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.copyBody",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.copyUrl",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.saveBody",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.goToSource",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.files.sendRequest",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.files.copyCurl",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.files.sendAll",
+          "when": "false"
         }
       ],
       "editor/context": [
@@ -1296,27 +1631,27 @@
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.selectEnvironment",
+          "command": "toolkit.restClient.diffHistory",
           "group": "0_toolkit@23",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.sendAll",
+          "command": "toolkit.restClient.showHistory",
           "group": "0_toolkit@24",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.send",
+          "command": "toolkit.restClient.selectEnvironment",
           "group": "0_toolkit@25",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.showHistory",
+          "command": "toolkit.restClient.sendAll",
           "group": "0_toolkit@26",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.diffHistory",
+          "command": "toolkit.restClient.send",
           "group": "0_toolkit@27",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
@@ -2081,12 +2416,48 @@
             "json"
           ],
           "default": "auto",
-          "description": "Editor language used to render the response. 'auto' picks one from the Content-Type."
+          "description": "Editor language used to render the response when shown as text. 'auto' picks one from the Content-Type."
+        },
+        "toolkit.restClient.previewResponseIn": {
+          "type": "string",
+          "enum": [
+            "editor",
+            "panel"
+          ],
+          "enumDescriptions": [
+            "Show the full response as text in a reused editor (native highlighting and find).",
+            "Show the response in the rich detail panel (status, headers, body)."
+          ],
+          "default": "panel",
+          "description": "Where a freshly-sent request (Send Request) shows its response."
+        },
+        "toolkit.restClient.historySizePerRequest": {
+          "type": "number",
+          "default": 30,
+          "description": "How many recent responses to keep per request (method + URL) in the per-workspace history, so a busy endpoint doesn't evict the others (0 disables history)."
         },
         "toolkit.restClient.historySize": {
           "type": "number",
-          "default": 30,
-          "description": "How many recent responses to keep in the per-workspace history (0 disables history)."
+          "default": 500,
+          "description": "Overall safety cap on the total number of responses kept across all requests (0 disables history)."
+        },
+        "toolkit.restClient.history.storeRequest": {
+          "type": "boolean",
+          "default": true,
+          "description": "Store the resolved request (method, URL, headers and body) alongside each response so it can be re-sent and copied as curl. Disable to avoid persisting request headers such as Authorization in the workspace storage — re-send then falls back to re-running the request from its source .http file."
+        },
+        "toolkit.restClient.history.clickAction": {
+          "type": "string",
+          "enum": [
+            "editor",
+            "panel"
+          ],
+          "enumDescriptions": [
+            "Open the response as text in a reused preview editor.",
+            "Open the response in the rich detail panel (status, headers, body)."
+          ],
+          "default": "panel",
+          "description": "What selecting a response (from the Response History view or the picker) does."
         },
         "toolkit.peekCommit.hover.enabled": {
           "type": "boolean",
@@ -2184,10 +2555,11 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run copy-pdfjs && npm run compile",
+    "vscode:prepublish": "npm run copy-pdfjs && npm run check-types && node esbuild.js --production",
     "copy-pdfjs": "mkdir -p lib/pdf-viewer && cp node_modules/pdfjs-dist/legacy/build/pdf.min.mjs node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs lib/pdf-viewer/",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "check-types": "tsc --noEmit -p ./",
+    "compile": "npm run check-types && node esbuild.js",
+    "watch": "node esbuild.js --watch",
     "lint": "eslint src",
     "package": "vsce package",
     "test": "mocha --require tsx 'test/**/*.test.ts'"
@@ -2200,6 +2572,7 @@
     "@types/node": "^25.9.3",
     "@types/vscode": "^1.120.0",
     "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.28.1",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
     "mocha": "^11.7.6",
