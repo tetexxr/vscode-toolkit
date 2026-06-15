@@ -807,6 +807,12 @@ const DETAIL_STYLES = `
   .topbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 14px 0 10px; z-index: 1; }
   .reqline { font-family: var(--vscode-editor-font-family); font-size: 13px; word-break: break-all; margin-bottom: 8px; }
   .method { font-weight: 600; margin-right: 6px; }
+  .method-POST { color: var(--vscode-charts-green, #89d185); }
+  .method-PUT { color: var(--vscode-charts-orange, #d18616); }
+  .method-PATCH { color: var(--vscode-charts-yellow, #cca700); }
+  .method-DELETE { color: var(--vscode-charts-red, #f14c4c); }
+  .method-OPTIONS { color: var(--vscode-charts-blue, #3794ff); }
+  .method-HEAD { color: var(--vscode-charts-blue, #3794ff); }
   .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 12px; color: #fff; }
   .badge.success { background: var(--vscode-testing-iconPassed, #2ea043); }
   .badge.redirect { background: var(--vscode-charts-blue, #3794ff); }
@@ -885,7 +891,7 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
     : ''
 
   const bodyHtml = `  <div class="topbar">
-    <div class="reqline"><span class="method">${escapeHtml(entry.method)}</span>${escapeHtml(entry.url)}</div>
+    <div class="reqline"><span class="method method-${escapeHtml(entry.method)}">${escapeHtml(entry.method)}</span>${escapeHtml(entry.url)}</div>
     <span class="badge ${kind}">${escapeHtml(statusText)}</span>
     <div class="meta">${escapeHtml(meta)}</div>
     <div class="actions">
@@ -952,7 +958,7 @@ export function buildPendingDetailHtml(request: PendingRequest, opts: DetailHtml
   const actions = cancelled ? '' : `<div class="actions pending"><button id="cancel">Cancel</button></div>`
 
   const bodyHtml = `  <div class="topbar">
-    <div class="reqline"><span class="method">${escapeHtml(request.method)}</span>${escapeHtml(request.url)}</div>
+    <div class="reqline"><span class="method method-${escapeHtml(request.method)}">${escapeHtml(request.method)}</span>${escapeHtml(request.url)}</div>
     ${badge}
     ${actions}
   </div>

@@ -746,3 +746,27 @@ describe('buildResponseDetailHtml — timeout retries', () => {
     assert.ok(!html.includes('Retry with:'))
   })
 })
+
+describe('buildResponseDetailHtml — method color', () => {
+  const make = (method) =>
+    buildResponseDetailHtml(
+      {
+        id: 'a', method, url: 'https://api.test/x', status: 200, statusText: 'OK',
+        durationMs: 1, timestamp: 1, headers: [], body: '', bodyTruncated: false
+      },
+      { cspSource: 'vscode-resource:', nonce: 'n' }
+    )
+
+  it('should tag the method span with a per-method class', () => {
+    assert.ok(make('POST').includes('class="method method-POST"'))
+    assert.ok(make('DELETE').includes('class="method method-DELETE"'))
+    assert.ok(make('GET').includes('class="method method-GET"'))
+  })
+
+  it('should define color rules for the common methods', () => {
+    const html = make('GET')
+    for (const m of ['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']) {
+      assert.ok(html.includes(`.method-${m} {`), `missing color rule for ${m}`)
+    }
+  })
+})
