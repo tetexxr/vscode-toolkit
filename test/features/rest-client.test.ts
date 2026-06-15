@@ -27,6 +27,7 @@ import {
   buildResponseDetailHtml,
   buildPendingDetailHtml,
   describeRequestNode,
+  directoryChildren,
   type ResponseHistoryEntry
 } from '../../src/features/rest-client-utils'
 
@@ -768,5 +769,38 @@ describe('buildResponseDetailHtml — method color', () => {
     for (const m of ['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']) {
       assert.ok(html.includes(`.method-${m} {`), `missing color rule for ${m}`)
     }
+  })
+})
+
+describe('directoryChildren', () => {
+  const paths = [
+    'http/adevinta/fotocasa.http',
+    'http/adevinta/search.http',
+    'http/last-app/requests.http',
+    'http/readme.http',
+    'top.http'
+  ]
+
+  it('should list top-level dirs and files at the root', () => {
+    const { dirs, files } = directoryChildren(paths, '')
+    assert.deepEqual(dirs, ['http'])
+    assert.deepEqual(files, ['top.http'])
+  })
+
+  it('should list immediate children of a sub-directory', () => {
+    const { dirs, files } = directoryChildren(paths, 'http')
+    assert.deepEqual(dirs, ['http/adevinta', 'http/last-app'])
+    assert.deepEqual(files, ['http/readme.http'])
+  })
+
+  it('should list files inside a leaf directory', () => {
+    const { dirs, files } = directoryChildren(paths, 'http/adevinta')
+    assert.deepEqual(dirs, [])
+    assert.deepEqual(files, ['http/adevinta/fotocasa.http', 'http/adevinta/search.http'])
+  })
+
+  it('should not match sibling prefixes', () => {
+    const { files } = directoryChildren(['app/a.http', 'app-2/b.http'], 'app')
+    assert.deepEqual(files, ['app/a.http'])
   })
 })

@@ -11,6 +11,7 @@ import {
   buildPendingDetailHtml,
   buildResponseDetailHtml,
   describeRequestNode,
+  directoryChildren,
   filterHistory,
   formatBytes,
   formatResponse,
@@ -918,9 +919,25 @@ async function diffHistoryWithPrevious(node: HistoryNode | undefined): Promise<v
 const FILES_VIEW_ID = 'toolkitRestFiles'
 /** Folders never worth scanning for .http files. */
 const FILES_EXCLUDE_GLOB = '**/{node_modules,.git,dist,out,build,bin,obj,.vs,.next,coverage}/**'
+const FILES_GROUP_BY_KEY = 'toolkit.restClient.files.groupBy'
+const FILES_GROUP_BY_CONTEXT = 'toolkitRestFilesGroupBy'
 
-/** A discovered .http/.rest file, or one of the requests parsed from it. */
+/** `flat` is a plain file list; `tree` mirrors the folder structure. */
+type FilesGroupBy = 'flat' | 'tree'
+
+function filesGroupBy(): FilesGroupBy {
+  return extensionContext?.workspaceState.get<FilesGroupBy>(FILES_GROUP_BY_KEY, 'flat') ?? 'flat'
+}
+
+async function setFilesGroupBy(mode: FilesGroupBy): Promise<void> {
+  await extensionContext?.workspaceState.update(FILES_GROUP_BY_KEY, mode)
+  await vscode.commands.executeCommand('setContext', FILES_GROUP_BY_CONTEXT, mode)
+  filesProvider?.refresh()
+}
+
+/** A folder (tree mode), a discovered .http/.rest file, or a request parsed from one. */
 type FileNode =
+  | { kind: 'dir'; relPath: string }
   | { kind: 'file'; uri: vscode.Uri }
   | { kind: 'request'; uri: vscode.Uri; index: number; request: HttpRequest }
 
@@ -928,9 +945,12 @@ class RestFilesTreeProvider implements vscode.TreeDataProvider<FileNode> {
   private emitter = new vscode.EventEmitter<FileNode | undefined | null | void>()
   readonly onDidChangeTreeData = this.emitter.event
   private files: vscode.Uri[] = []
+  /** workspace-relative path → file URI, for folder-tree lookups. */
+  private byRelPath = new Map<string, vscode.Uri>()
 
   setFiles(files: vscode.Uri[]): void {
     this.files = files
+    this.byRelPath = new Map(files.map(uri => [vscode.workspace.asRelativePath(uri, false), uri]))
     this.emitter.fire()
   }
 
@@ -940,11 +960,19 @@ class RestFilesTreeProvider implements vscode.TreeDataProvider<FileNode> {
   }
 
   getTreeItem(node: FileNode): vscode.TreeItem {
+    if (node.kind === 'dir') {
+      const item = new vscode.TreeItem(path.basename(node.relPath), vscode.TreeItemCollapsibleState.Expanded)
+      item.resourceUri = vscode.Uri.file(node.relPath)
+      item.iconPath = vscode.ThemeIcon.Folder
+      item.contextValue = 'restDir'
+      return item
+    }
     if (node.kind === 'file') {
       const item = new vscode.TreeItem(path.basename(node.uri.fsPath), vscode.TreeItemCollapsibleState.Collapsed)
+      // In flat mode the folder is the useful hint; in tree mode it's redundant.
       const rel = vscode.workspace.asRelativePath(node.uri, false)
       const dir = path.dirname(rel)
-      item.description = dir === '.' ? '' : dir
+      item.description = filesGroupBy() === 'flat' && dir !== '.' ? dir : ''
       item.resourceUri = node.uri
       item.iconPath = vscode.ThemeIcon.File
       item.tooltip = node.uri.fsPath
@@ -972,7 +1000,10 @@ class RestFilesTreeProvider implements vscode.TreeDataProvider<FileNode> {
 
   async getChildren(node?: FileNode): Promise<FileNode[]> {
     if (!node) {
-      return this.files.map<FileNode>(uri => ({ kind: 'file', uri }))
+      return filesGroupBy() === 'tree' ? this.dirChildren('') : this.files.map<FileNode>(uri => ({ kind: 'file', uri }))
+    }
+    if (node.kind === 'dir') {
+      return this.dirChildren(node.relPath)
     }
     if (node.kind === 'file') {
       try {
@@ -984,6 +1015,15 @@ class RestFilesTreeProvider implements vscode.TreeDataProvider<FileNode> {
       }
     }
     return []
+  }
+
+  /** Folders then files immediately under `prefix` (tree mode). */
+  private dirChildren(prefix: string): FileNode[] {
+    const { dirs, files } = directoryChildren([...this.byRelPath.keys()], prefix)
+    return [
+      ...dirs.map<FileNode>(relPath => ({ kind: 'dir', relPath })),
+      ...files.map<FileNode>(rel => ({ kind: 'file', uri: this.byRelPath.get(rel) as vscode.Uri }))
+    ]
   }
 }
 
@@ -1519,6 +1559,7 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
   // until the view is first shown, and kept in sync with a file-system watcher.
   filesProvider = new RestFilesTreeProvider()
   const filesView = vscode.window.createTreeView<FileNode>(FILES_VIEW_ID, { treeDataProvider: filesProvider })
+  void vscode.commands.executeCommand('setContext', FILES_GROUP_BY_CONTEXT, filesGroupBy())
   const filesWatcher = vscode.workspace.createFileSystemWatcher(FILE_GLOB)
   context.subscriptions.push(
     filesView,
@@ -1609,6 +1650,8 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
       return entry ? goToHistorySource(entry) : undefined
     }),
     vscode.commands.registerCommand('toolkit.restClient.files.refresh', () => scanRestFiles()),
+    vscode.commands.registerCommand('toolkit.restClient.files.groupByFlat', () => setFilesGroupBy('flat')),
+    vscode.commands.registerCommand('toolkit.restClient.files.groupByTree', () => setFilesGroupBy('tree')),
     vscode.commands.registerCommand('toolkit.restClient.files.create', () => createRequestFile()),
     vscode.commands.registerCommand('toolkit.restClient.files.sendRequest', (node?: FileNode) => {
       if (node?.kind === 'request') {

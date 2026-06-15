@@ -911,6 +911,16 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "toolkit.restClient.files.groupByFlat",
+        "title": "Toolkit: REST Client - Show Requests as Flat List",
+        "icon": "$(list-flat)"
+      },
+      {
+        "command": "toolkit.restClient.files.groupByTree",
+        "title": "Toolkit: REST Client - Show Requests as Folder Tree",
+        "icon": "$(list-tree)"
+      },
+      {
         "command": "toolkit.restClient.files.create",
         "title": "Toolkit: REST Client - New Request File",
         "icon": "$(add)"
@@ -1083,14 +1093,24 @@
           "group": "navigation@3"
         },
         {
+          "command": "toolkit.restClient.files.groupByTree",
+          "when": "view == toolkitRestFiles && toolkitRestFilesGroupBy != tree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.restClient.files.groupByFlat",
+          "when": "view == toolkitRestFiles && toolkitRestFilesGroupBy != flat",
+          "group": "navigation@1"
+        },
+        {
           "command": "toolkit.restClient.files.create",
           "when": "view == toolkitRestFiles",
-          "group": "navigation@1"
+          "group": "navigation@2"
         },
         {
           "command": "toolkit.restClient.files.refresh",
           "when": "view == toolkitRestFiles",
-          "group": "navigation@2"
+          "group": "navigation@3"
         },
         {
           "command": "toolkit.restClient.history.filter",
@@ -1520,6 +1540,14 @@
         },
         {
           "command": "toolkit.restClient.files.sendAll",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.files.groupByFlat",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.files.groupByTree",
           "when": "false"
         }
       ],

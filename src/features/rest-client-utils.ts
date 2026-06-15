@@ -735,6 +735,30 @@ export function summarizeGroupStatuses(entries: ResponseHistoryEntry[]): string 
   return [...counts.entries()].map(([status, count]) => `${count}×${status}`).join(' ')
 }
 
+/**
+ * Immediate children of a directory within a flat list of workspace-relative
+ * file paths, for the Requests view's folder-tree mode. `prefix` is the parent
+ * directory ('' for the root). Returns the immediate sub-directory paths and the
+ * file paths that sit directly in `prefix`, both sorted.
+ */
+export function directoryChildren(relPaths: string[], prefix: string): { dirs: string[]; files: string[] } {
+  const prefixSegs = prefix ? prefix.split('/') : []
+  const dirs = new Set<string>()
+  const files: string[] = []
+  for (const rel of relPaths) {
+    if (prefix && !rel.startsWith(prefix + '/')) {
+      continue
+    }
+    const rest = rel.split('/').slice(prefixSegs.length)
+    if (rest.length === 1) {
+      files.push(rel)
+    } else if (rest.length > 1) {
+      dirs.add([...prefixSegs, rest[0]].join('/'))
+    }
+  }
+  return { dirs: [...dirs].sort(), files: files.sort() }
+}
+
 /** Tree label + description for a request node in the Requests view. */
 export function describeRequestNode(request: HttpRequest): { label: string; description: string } {
   // The parser names unnamed blocks "Request N"; for those, lead with method+URL.
