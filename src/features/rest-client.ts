@@ -282,6 +282,68 @@ class HistoryContentProvider implements vscode.TextDocumentContentProvider {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/*  Response preview (read-only virtual docs — no "save?" prompt on close)    */
+/* -------------------------------------------------------------------------- */
+
+const RESPONSE_SCHEME = 'toolkit-rest-response'
+const RESPONSE_CACHE_MAX = 50
+
+/**
+ * Serves formatted responses as read-only virtual documents. Unlike an untitled
+ * document seeded with content, these are never "dirty", so closing the tab
+ * doesn't prompt to save. Content is cached per URI with bounded FIFO eviction.
+ */
+class ResponsePreviewProvider implements vscode.TextDocumentContentProvider {
+  private cache = new Map<string, string>()
+  private emitter = new vscode.EventEmitter<vscode.Uri>()
+  readonly onDidChange = this.emitter.event
+
+  set(uri: vscode.Uri, content: string): void {
+    const key = uri.toString()
+    this.cache.delete(key)
+    this.cache.set(key, content)
+    while (this.cache.size > RESPONSE_CACHE_MAX) {
+      const oldest = this.cache.keys().next().value
+      if (oldest === undefined) {
+        break
+      }
+      this.cache.delete(oldest)
+    }
+    this.emitter.fire(uri)
+  }
+
+  provideTextDocumentContent(uri: vscode.Uri): string {
+    return this.cache.get(uri.toString()) ?? ''
+  }
+}
+
+const responsePreviewProvider = new ResponsePreviewProvider()
+/** Monotonic id so each opened response gets its own virtual URI (no collisions). */
+let responsePreviewSeq = 0
+
+/** File extension matching an editor language, for the preview tab title. */
+function extensionForLanguage(language: string): string {
+  switch (language) {
+    case 'json':
+      return 'json'
+    case 'xml':
+      return 'xml'
+    case 'html':
+      return 'html'
+    case 'javascript':
+      return 'js'
+    case 'css':
+      return 'css'
+    case 'csv':
+      return 'csv'
+    case 'http':
+      return 'http'
+    default:
+      return 'txt'
+  }
+}
+
 type HistoryItem = vscode.QuickPickItem & { entry: ResponseHistoryEntry }
 
 function historyIcon(entry: ResponseHistoryEntry): string {
@@ -396,7 +458,8 @@ async function executeRequest(
   variables: Record<string, string>,
   config: RestClientConfig,
   baseDir: string,
-  opts: InterpolateOptions
+  opts: InterpolateOptions,
+  token?: vscode.CancellationToken
 ): Promise<{
   status: number
   statusText: string
@@ -414,7 +477,18 @@ async function executeRequest(
 
   const controller = new AbortController()
   inflight.add(controller)
-  const timer = config.timeoutMs > 0 ? setTimeout(() => controller.abort(), config.timeoutMs) : null
+  // A timeout and a user cancellation both abort the same controller; the flag
+  // lets the catch below tell them apart (timeouts are surfaced and recorded;
+  // cancellations are silent).
+  let timedOut = false
+  const timer =
+    config.timeoutMs > 0
+      ? setTimeout(() => {
+          timedOut = true
+          controller.abort()
+        }, config.timeoutMs)
+      : null
+  const cancelSub = token?.onCancellationRequested(() => controller.abort())
   const start = Date.now()
   try {
     const response = await fetch(url, {
@@ -438,10 +512,18 @@ async function executeRequest(
       durationMs,
       url
     }
+  } catch (error) {
+    // Turn a timeout abort into a clear, non-abort error so callers report it
+    // as a real failure (and record it) instead of a silent cancellation.
+    if (timedOut) {
+      throw new Error(`Request timed out after ${config.timeoutMs} ms`)
+    }
+    throw error
   } finally {
     if (timer) {
       clearTimeout(timer)
     }
+    cancelSub?.dispose()
     inflight.delete(controller)
   }
 }
@@ -459,7 +541,17 @@ async function showResponse(
   } else {
     language = inferLanguageFromContentType(findHeader(response.headers, 'content-type'))
   }
-  const doc = await vscode.workspace.openTextDocument({ content: formatted, language })
+  // Read-only virtual document: never dirty, so closing it won't prompt to save.
+  const uri = vscode.Uri.from({
+    scheme: RESPONSE_SCHEME,
+    path: `/${response.status} ${response.statusText}`.trimEnd() + `.${extensionForLanguage(language)}`,
+    query: String(responsePreviewSeq++)
+  })
+  responsePreviewProvider.set(uri, formatted)
+  const doc = await vscode.workspace.openTextDocument(uri)
+  if (doc.languageId !== language) {
+    await vscode.languages.setTextDocumentLanguage(doc, language)
+  }
   await vscode.window.showTextDocument(doc, { preview: false, viewColumn: vscode.ViewColumn.Beside })
 }
 
@@ -529,9 +621,9 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
       {
         location: vscode.ProgressLocation.Notification,
         title: `${req.method} ${req.url}`,
-        cancellable: false
+        cancellable: true
       },
-      () => executeRequest(req, variables, config, baseDir, opts)
+      (_progress, token) => executeRequest(req, variables, config, baseDir, opts, token)
     )
     await recordHistory(response, req.method)
     await showResponse(response, config.previewResponseAs)
@@ -668,7 +760,8 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
 
   context.subscriptions.push(
     vscode.languages.registerCodeLensProvider({ pattern: FILE_GLOB }, new HttpCodeLensProvider()),
-    vscode.workspace.registerTextDocumentContentProvider(HISTORY_SCHEME, new HistoryContentProvider())
+    vscode.workspace.registerTextDocumentContentProvider(HISTORY_SCHEME, new HistoryContentProvider()),
+    vscode.workspace.registerTextDocumentContentProvider(RESPONSE_SCHEME, responsePreviewProvider)
   )
 
   environmentStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)

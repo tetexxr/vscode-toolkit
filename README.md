@@ -1290,7 +1290,7 @@ Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send
 |---|---|
 | Send Request | Run the request under the cursor (also exposed as a CodeLens above each request) |
 | Send All Requests | Run every request in the active file |
-| Cancel Pending Requests | Abort any requests currently in flight |
+| Cancel Pending Requests | Abort any requests currently in flight (a single in-flight request can also be cancelled from its progress notification) |
 | REST Client - Select Environment... | Pick the active environment from `http-client.env.json` (also via the status bar item) |
 | REST Client - Copy as curl | Copy the request under the cursor as a `curl` command, with all variables resolved (also a CodeLens next to each Send Request) |
 | REST Client - Response History... | Pick a recent response to reopen it in an editor |
@@ -1407,7 +1407,7 @@ X-Toolkit-Time: 234ms
 
 | Setting | Default | Description |
 |---|---|---|
-| `toolkit.restClient.timeout` | `30000` | Request timeout in ms (0 disables) |
+| `toolkit.restClient.timeout` | `30000` | Request timeout in ms (0 disables). On timeout the request is reported as failed and recorded in the history — distinct from a cancellation, which is silent |
 | `toolkit.restClient.followRedirects` | `true` | Follow 3xx redirects |
 | `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` |
 | `toolkit.restClient.historySize` | `30` | Recent responses kept per workspace (0 disables history) |
