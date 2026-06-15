@@ -1319,8 +1319,27 @@ Authorization: Bearer {{token}}
 - `### name` separates request blocks (name optional).
 - `@name = value` defines a variable scoped to the file.
 - `{{name}}` interpolates a variable in the URL, headers or body.
-- Lines starting with a single `#` are comments.
+- Lines starting with a single `#` (or `//`) are comments.
 - Response bodies are capped at 50 MB; larger responses abort with an error.
+
+**File bodies:**
+
+Instead of inlining the body, point a request at a file (resolved relative to the `.http` file, or an absolute path):
+
+```http
+### Upload a payload from disk
+POST {{baseUrl}}/import
+Content-Type: application/json
+
+< ./payload.json
+```
+
+- `< path` sends the file's raw bytes — no interpolation.
+- `<@ path` interpolates `{{variables}}` inside the file before sending.
+- `<@encoding path` decodes the file with an explicit encoding (`utf-8`, `latin1`, `ascii`, `utf16le`, `base64`, `hex`); defaults to `utf-8`.
+- Body files are capped at 50 MB. **Copy as curl** maps a raw `< path` body to curl's `--data @path`.
+
+> A runnable example lives in [`examples/sample.http`](examples/sample.http) (with [`examples/payload.json`](examples/payload.json) for the file-body requests) — open it and click **Send Request**.
 
 **Environments:**
 
@@ -1346,8 +1365,15 @@ The **Copy as curl** CodeLens next to each request's Send Request (or the comman
 | Placeholder | Value |
 |---|---|
 | `{{$timestamp}}` | Current Unix epoch in seconds |
+| `{{$timestamp -1 d}}` | Epoch with an offset — units `s`, `m`, `h`, `d`, `w`, `M`, `y` (signed amount) |
 | `{{$randomUUID}}` | Fresh UUID v4 |
+| `{{$randomInt 1 100}}` | Random integer in `[min, max]` (defaults to `0 1000`) |
 | `{{$datetime iso8601}}` | Current time in ISO 8601 |
+| `{{$datetime rfc1123}}` | Current time as an RFC 1123 string (e.g. `Fri, 15 Mar 2024 12:34:56 GMT`) |
+| `{{$datetime unix}}` | Current time as Unix epoch seconds |
+| `{{$datetime iso8601 -2 h}}` | Any `$datetime` format accepts the same trailing offset |
+| `{{$processEnv NAME}}` | Value of the `NAME` environment variable (empty if unset) |
+| `{{$dotenv NAME}}` | Value of `NAME` from a `.env` file next to the `.http` file |
 
 **Response format:**
 
@@ -1375,7 +1401,7 @@ X-Toolkit-Time: 234ms
 **Limitations (v1):**
 
 - No request history, no diff between responses, no response → file forwarding.
-- No multipart uploads, file bodies (`< body.json`), WebSockets or gRPC.
+- No multipart uploads, WebSockets or gRPC.
 - No built-in auth helpers (Basic, OAuth, AWS Sig) — set the headers manually.
 - No request chaining (`> name`) or cookie persistence between requests.
 

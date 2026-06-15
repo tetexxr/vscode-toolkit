@@ -1,0 +1,6 @@
+{
+  "source": "payload.json",
+  "requestId": "{{$randomUUID}}",
+  "token": "{{token}}",
+  "items": [1, 2, 3]
+}
