@@ -382,7 +382,12 @@ async function showHistory(): Promise<void> {
   if (!picked) {
     return
   }
-  await showResponse(picked.entry, readConfig().previewResponseAs)
+  await showResponse(picked.entry, {
+    previewResponseAs: readConfig().previewResponseAs,
+    stableKey: picked.entry.id,
+    preview: true,
+    preserveFocus: true
+  })
 }
 
 async function diffHistory(): Promise<void> {
@@ -533,7 +538,15 @@ async function openHistoryEntry(id: string): Promise<void> {
   if (!entry) {
     return
   }
-  await showResponse(entry, readConfig().previewResponseAs)
+  // Stable key (the entry id) + preview mode: clicking around the history reuses
+  // a single preview tab instead of stacking a new tab per click. Reopening the
+  // same entry refocuses its tab; double-click pins it (native behavior).
+  await showResponse(entry, {
+    previewResponseAs: readConfig().previewResponseAs,
+    stableKey: entry.id,
+    preview: true,
+    preserveFocus: true
+  })
 }
 
 /** Deletes one entry from the history (invoked from the tree's inline trash icon). */
@@ -688,15 +701,35 @@ async function executeRequest(
   }
 }
 
+interface ShowResponseOptions {
+  previewResponseAs: 'auto' | 'raw' | 'json'
+  /**
+   * Stable identity for the preview URI. Reopening with the same key reuses the
+   * same virtual document (and tab) instead of spawning a new one. Defaults to a
+   * fresh sequence number, so every call opens its own tab.
+   */
+  stableKey?: string
+  /** Open as a preview tab (italic, replaced by the next preview) rather than a pinned one. */
+  preview?: boolean
+  /**
+   * Keep focus where it is (e.g. the history tree) instead of moving it to the
+   * opened response. This matters with `Beside`: if focus jumped to the response,
+   * its column would become active and the next `Beside` open would land one
+   * column further right — a new tab every click. Preserving focus keeps the
+   * active column stable so the side column (and its preview tab) is reused.
+   */
+  preserveFocus?: boolean
+}
+
 async function showResponse(
   response: Awaited<ReturnType<typeof executeRequest>>,
-  previewResponseAs: 'auto' | 'raw' | 'json'
+  options: ShowResponseOptions
 ): Promise<void> {
   const formatted = formatResponse(response)
   let language: string
-  if (previewResponseAs === 'raw') {
+  if (options.previewResponseAs === 'raw') {
     language = 'http'
-  } else if (previewResponseAs === 'json') {
+  } else if (options.previewResponseAs === 'json') {
     language = 'json'
   } else {
     language = inferLanguageFromContentType(findHeader(response.headers, 'content-type'))
@@ -705,14 +738,20 @@ async function showResponse(
   const uri = vscode.Uri.from({
     scheme: RESPONSE_SCHEME,
     path: `/${response.status} ${response.statusText}`.trimEnd() + `.${extensionForLanguage(language)}`,
-    query: String(responsePreviewSeq++)
+    query: options.stableKey ?? String(responsePreviewSeq++)
   })
   responsePreviewProvider.set(uri, formatted)
   const doc = await vscode.workspace.openTextDocument(uri)
   if (doc.languageId !== language) {
     await vscode.languages.setTextDocumentLanguage(doc, language)
   }
-  await vscode.window.showTextDocument(doc, { preview: false, viewColumn: vscode.ViewColumn.Beside })
+  // Beside keeps the response next to the .http file; a single side column is
+  // reused across calls (it isn't re-split per open).
+  await vscode.window.showTextDocument(doc, {
+    preview: options.preview ?? false,
+    preserveFocus: options.preserveFocus ?? false,
+    viewColumn: vscode.ViewColumn.Beside
+  })
 }
 
 async function composeVariables(parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<Record<string, string>> {
@@ -786,7 +825,7 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
       (_progress, token) => executeRequest(req, variables, config, baseDir, opts, token)
     )
     await recordHistory(response, req.method)
-    await showResponse(response, config.previewResponseAs)
+    await showResponse(response, { previewResponseAs: config.previewResponseAs })
   } catch (error) {
     const message = (error as Error).message
     if ((error as Error).name === 'AbortError') {
