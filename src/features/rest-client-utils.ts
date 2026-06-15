@@ -839,10 +839,10 @@ const DETAIL_STYLES = `
   .method-OPTIONS { background: var(--vscode-charts-blue, #3794ff); }
   .method-HEAD { background: var(--vscode-charts-blue, #3794ff); }
   .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 12px; color: #fff; }
-  .badge.success { background: var(--vscode-testing-iconPassed, #2ea043); }
+  .badge.success { background: #82b541; }
   .badge.redirect { background: var(--vscode-charts-blue, #3794ff); }
   .badge.clientError { background: var(--vscode-charts-yellow, #cca700); color: #000; }
-  .badge.serverError, .badge.failed { background: var(--vscode-charts-red, #f14c4c); }
+  .badge.serverError, .badge.failed { background: #d9605a; }
   .badge.pending { background: var(--vscode-charts-blue, #3794ff); }
   .dot { animation: pulse 1s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
