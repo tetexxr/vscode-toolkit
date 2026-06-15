@@ -1412,7 +1412,7 @@ X-Toolkit-Time: 234ms
 | `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` |
 | `toolkit.restClient.historySize` | `30` | Recent responses kept per workspace (0 disables history) |
 
-**Limitations (v1):**
+**Limitations:**
 
 - No response → file forwarding (`>> file`).
 - No multipart uploads, WebSockets or gRPC.
@@ -1446,7 +1446,7 @@ A side panel where you can test regexes interactively. Pattern, flags, test inpu
 - The match cap (10 000) protects against runaway match lists.
 - Pattern, flags, input and replace persist across sessions in `globalState`.
 
-**Limitations (v1):**
+**Limitations:**
 
 - No cheat sheet of regex tokens.
 - No save / load of named patterns (only the last state survives).
