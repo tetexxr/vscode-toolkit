@@ -676,6 +676,24 @@ export function formatBytes(bytes: number | undefined): string {
   return `${rounded} ${units[i]}`
 }
 
+/**
+ * Filters history by a free-text query matched against `method url status`.
+ * Whitespace-separated terms are AND-ed (case-insensitive), so `POST users` keeps
+ * POST calls whose URL contains "users", and `500` keeps server errors. An empty
+ * query returns the list unchanged.
+ */
+export function filterHistory(history: ResponseHistoryEntry[], query: string): ResponseHistoryEntry[] {
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  if (terms.length === 0) {
+    return history
+  }
+  return history.filter(entry => {
+    const status = entry.error ? `failed ${entry.error}` : `${entry.status} ${entry.statusText}`
+    const haystack = `${entry.method} ${entry.url} ${status}`.toLowerCase()
+    return terms.every(term => haystack.includes(term))
+  })
+}
+
 /** Per-group status breakdown, newest status first: e.g. `2×200 1×500` (`ERR` for failures). */
 export function summarizeGroupStatuses(entries: ResponseHistoryEntry[]): string {
   const counts = new Map<string, number>()

@@ -9,6 +9,7 @@ import {
   findHeader,
   findRequestAtLine,
   buildResponseDetailHtml,
+  filterHistory,
   formatBytes,
   formatResponse,
   groupHistoryByRequest,
@@ -497,6 +498,40 @@ async function setHistoryGroupBy(mode: HistoryGroupBy): Promise<void> {
   historyProvider?.refresh()
 }
 
+const HISTORY_FILTER_KEY = 'toolkit.restClient.history.filter'
+/** Context key driving the filter/clear-filter view-title buttons' `when` clauses. */
+const HISTORY_FILTER_CONTEXT = 'toolkitRestHistoryFiltered'
+let historyView: vscode.TreeView<HistoryNode> | undefined
+
+function historyFilter(): string {
+  return extensionContext?.workspaceState.get<string>(HISTORY_FILTER_KEY, '') ?? ''
+}
+
+/** Stores the active filter, reflects it in a context key + a banner, and refreshes the tree. */
+async function setHistoryFilter(value: string): Promise<void> {
+  const filter = value.trim()
+  await extensionContext?.workspaceState.update(HISTORY_FILTER_KEY, filter)
+  await vscode.commands.executeCommand('setContext', HISTORY_FILTER_CONTEXT, filter.length > 0)
+  if (historyView) {
+    historyView.message = filter ? `Filter: ${filter}` : undefined
+  }
+  historyProvider?.refresh()
+}
+
+/** Prompts for a filter (method / URL / status terms, AND-ed). */
+async function promptHistoryFilter(): Promise<void> {
+  const value = await vscode.window.showInputBox({
+    title: 'Filter response history',
+    prompt: 'Match by method, URL or status — space-separated terms are combined (e.g. "POST users" or "500").',
+    value: historyFilter(),
+    placeHolder: 'e.g. POST users · 404 · api.example.com'
+  })
+  if (value === undefined) {
+    return
+  }
+  await setHistoryFilter(value)
+}
+
 /** A request group (parent) or a single response (leaf). */
 type HistoryNode =
   | { kind: 'group'; group: RequestGroup }
@@ -558,7 +593,7 @@ class RestHistoryTreeProvider implements vscode.TreeDataProvider<HistoryNode> {
 
   getChildren(parent?: HistoryNode): HistoryNode[] {
     if (!parent) {
-      const history = getHistory()
+      const history = filterHistory(getHistory(), historyFilter())
       if (history.length === 0) {
         return []
       }
@@ -1247,11 +1282,13 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
   updateEnvironmentStatusBar()
 
   historyProvider = new RestHistoryTreeProvider()
-  const historyView = vscode.window.createTreeView<HistoryNode>(HISTORY_VIEW_ID, {
+  historyView = vscode.window.createTreeView<HistoryNode>(HISTORY_VIEW_ID, {
     treeDataProvider: historyProvider
   })
   context.subscriptions.push(historyView)
   void vscode.commands.executeCommand('setContext', HISTORY_GROUP_BY_CONTEXT, historyGroupBy())
+  // Restore the persisted filter (context key + banner) on activation.
+  void setHistoryFilter(historyFilter())
 
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.restClient.send', () => sendAtCursor()),
@@ -1272,6 +1309,8 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
     vscode.commands.registerCommand('toolkit.restClient.history.refresh', () => historyProvider?.refresh()),
     vscode.commands.registerCommand('toolkit.restClient.history.groupByRequest', () => setHistoryGroupBy('request')),
     vscode.commands.registerCommand('toolkit.restClient.history.groupByFlat', () => setHistoryGroupBy('flat')),
+    vscode.commands.registerCommand('toolkit.restClient.history.filter', () => promptHistoryFilter()),
+    vscode.commands.registerCommand('toolkit.restClient.history.clearFilter', () => setHistoryFilter('')),
     vscode.commands.registerCommand('toolkit.restClient.history.deleteEntry', (node?: HistoryNode) =>
       deleteHistoryEntry(node)
     ),

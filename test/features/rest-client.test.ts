@@ -20,6 +20,7 @@ import {
   groupHistoryByRequest,
   historyStatusKind,
   formatBytes,
+  filterHistory,
   summarizeGroupStatuses,
   escapeHtml,
   embedJsonInScript,
@@ -565,6 +566,55 @@ describe('response history', () => {
     // The only real closing tag is our own script's; the body's are escaped.
     assert.equal(html.split('</script>').length, 2)
     assert.ok(!html.includes('<script>alert(1)'))
+  })
+
+  describe('filterHistory', () => {
+    const list = [
+      entry('a', 3, { method: 'GET', url: 'https://api.test/users', status: 200, statusText: 'OK' }),
+      entry('b', 2, { method: 'POST', url: 'https://api.test/users', status: 201, statusText: 'Created' }),
+      entry('c', 1, { method: 'GET', url: 'https://api.test/orders', status: 500, statusText: 'Server Error' }),
+      entry('d', 0, { method: 'DELETE', url: 'https://api.test/orders/9', status: 0, error: 'ENOTFOUND' })
+    ]
+
+    it('should return the list unchanged for an empty query', () => {
+      assert.equal(filterHistory(list, ''), list)
+      assert.equal(filterHistory(list, '   ').length, 4)
+    })
+
+    it('should match by URL substring', () => {
+      assert.deepEqual(
+        filterHistory(list, 'users').map(e => e.id),
+        ['a', 'b']
+      )
+    })
+
+    it('should match by status code', () => {
+      assert.deepEqual(
+        filterHistory(list, '500').map(e => e.id),
+        ['c']
+      )
+    })
+
+    it('should AND space-separated terms', () => {
+      assert.deepEqual(
+        filterHistory(list, 'post users').map(e => e.id),
+        ['b']
+      )
+    })
+
+    it('should match failed requests by their error text', () => {
+      assert.deepEqual(
+        filterHistory(list, 'enotfound').map(e => e.id),
+        ['d']
+      )
+    })
+
+    it('should be case-insensitive', () => {
+      assert.deepEqual(
+        filterHistory(list, 'GET ORDERS').map(e => e.id),
+        ['c']
+      )
+    })
   })
 
   it('embedJsonInScript should escape < and line separators', () => {

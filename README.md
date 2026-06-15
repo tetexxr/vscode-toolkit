@@ -1306,7 +1306,8 @@ The **REST Client** container in the activity bar holds a **Response History** t
 - **Click** a response to open it in the **detail panel** (the default; switch to a reused text editor with `toolkit.restClient.history.clickAction`). The picker (**Response History...**) opens the same way.
 - **Inline icons** (on hover): re-send the request, diff against the previous call to the same endpoint, or delete the entry.
 - **Right-click** for more: open in the detail panel or as text, **re-send**, **go to source request**, **copy as curl / body / URL**, or **save the body to a file**.
-- **View title buttons**: toggle between *grouped by request* and a flat *timeline*, refresh, or clear all history.
+- **Filter** (funnel icon in the view title): type method / URL / status terms (space-separated terms are AND-ed, e.g. `POST users` or `500`); a banner shows the active filter and the funnel turns filled — click it to clear. The filter is remembered per workspace.
+- **View title buttons**: filter, toggle between *grouped by request* and a flat *timeline*, refresh, or clear all history.
 
 **Detail panel:** a reused webview showing a colored status badge, the request line, timing and size, the request (headers + body) and response **header tables**, and the response body with **pretty/raw** and **wrap** toggles — plus buttons to re-send, copy as curl, copy the body, or open it as text. Re-sending updates the same panel; deleting the shown entry (or clearing history) closes it.
 

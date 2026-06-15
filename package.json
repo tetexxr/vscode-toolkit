@@ -838,6 +838,16 @@
         "icon": "$(list-flat)"
       },
       {
+        "command": "toolkit.restClient.history.filter",
+        "title": "Toolkit: REST Client - Filter History...",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "toolkit.restClient.history.clearFilter",
+        "title": "Toolkit: REST Client - Clear History Filter",
+        "icon": "$(filter-filled)"
+      },
+      {
         "command": "toolkit.restClient.history.deleteEntry",
         "title": "Toolkit: REST Client - Delete Response",
         "icon": "$(trash)"
@@ -1032,6 +1042,16 @@
           "command": "toolkit.todoTree.refresh",
           "when": "view == toolkitTodoTree",
           "group": "navigation@3"
+        },
+        {
+          "command": "toolkit.restClient.history.filter",
+          "when": "view == toolkitRestHistory && !toolkitRestHistoryFiltered",
+          "group": "navigation@0"
+        },
+        {
+          "command": "toolkit.restClient.history.clearFilter",
+          "when": "view == toolkitRestHistory && toolkitRestHistoryFiltered",
+          "group": "navigation@0"
         },
         {
           "command": "toolkit.restClient.history.groupByRequest",
@@ -1369,6 +1389,14 @@
         },
         {
           "command": "toolkit.restClient.history.groupByFlat",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.filter",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.clearFilter",
           "when": "false"
         },
         {
