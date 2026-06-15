@@ -451,4 +451,13 @@ describe('response history', () => {
     const d = describeHistoryEntry(entry('a', now, { bodyTruncated: true }), now)
     assert.ok(d.description.includes('body truncated'))
   })
+
+  it('should describe a failed request with its error instead of a status', () => {
+    const now = 1_000_000
+    const d = describeHistoryEntry(
+      entry('a', now, { status: 0, statusText: 'Request failed', durationMs: 5, error: 'getaddrinfo ENOTFOUND' }),
+      now
+    )
+    assert.equal(d.description, 'Failed: getaddrinfo ENOTFOUND · 5ms · just now')
+  })
 })

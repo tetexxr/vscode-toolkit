@@ -203,13 +203,17 @@ function getHistory(): ResponseHistoryEntry[] {
   return extensionContext?.workspaceState.get<ResponseHistoryEntry[]>(HISTORY_STATE_KEY, []) ?? []
 }
 
-async function recordHistory(response: Awaited<ReturnType<typeof executeRequest>>, method: string): Promise<void> {
+async function pushHistory(entry: ResponseHistoryEntry): Promise<void> {
   const max = historySize()
   if (max <= 0) {
     return
   }
+  await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, addHistoryEntry(getHistory(), entry, max))
+}
+
+async function recordHistory(response: Awaited<ReturnType<typeof executeRequest>>, method: string): Promise<void> {
   const { body, truncated } = truncateForHistory(response.body, MAX_HISTORY_BODY_CHARS)
-  const entry: ResponseHistoryEntry = {
+  await pushHistory({
     id: randomUUID(),
     method,
     url: response.url,
@@ -220,8 +224,24 @@ async function recordHistory(response: Awaited<ReturnType<typeof executeRequest>
     headers: response.headers,
     body,
     bodyTruncated: truncated
-  }
-  await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, addHistoryEntry(getHistory(), entry, max))
+  })
+}
+
+/** Records a request that never got an HTTP response (network error / timeout). */
+async function recordFailure(method: string, url: string, durationMs: number, message: string): Promise<void> {
+  await pushHistory({
+    id: randomUUID(),
+    method,
+    url,
+    status: 0,
+    statusText: 'Request failed',
+    durationMs,
+    timestamp: Date.now(),
+    headers: [],
+    body: message,
+    bodyTruncated: false,
+    error: message
+  })
 }
 
 /** Maps a content-type to a file extension so the diff editor highlights the body. */
@@ -264,10 +284,20 @@ class HistoryContentProvider implements vscode.TextDocumentContentProvider {
 
 type HistoryItem = vscode.QuickPickItem & { entry: ResponseHistoryEntry }
 
+function historyIcon(entry: ResponseHistoryEntry): string {
+  if (entry.error) {
+    return '$(error)'
+  }
+  if (entry.status >= 400) {
+    return '$(warning)'
+  }
+  return '$(arrow-small-right)'
+}
+
 function historyQuickPickItems(history: ResponseHistoryEntry[]): HistoryItem[] {
   return history.map(entry => {
     const { label, description } = describeHistoryEntry(entry)
-    return { label: `$(arrow-small-right) ${label}`, description, entry }
+    return { label: `${historyIcon(entry)} ${label}`, description, entry }
   })
 }
 
@@ -493,6 +523,7 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
   const variables = await composeVariables(parsed, documentUri)
   const opts = await buildInterpolateOptions(documentUri)
   const baseDir = path.dirname(documentUri.fsPath)
+  const start = Date.now()
   try {
     const response = await vscode.window.withProgress(
       {
@@ -505,11 +536,15 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
     await recordHistory(response, req.method)
     await showResponse(response, config.previewResponseAs)
   } catch (error) {
+    const message = (error as Error).message
     if ((error as Error).name === 'AbortError') {
       vscode.window.showWarningMessage('Toolkit: request aborted.')
       return
     }
-    vscode.window.showWarningMessage(`Toolkit: request failed — ${(error as Error).message}`)
+    // A failed request (DNS, refused, timeout, …) is still worth keeping in the
+    // history so it can be reviewed or diffed later.
+    await recordFailure(req.method, interpolate(req.url, variables, opts), Date.now() - start, message)
+    vscode.window.showWarningMessage(`Toolkit: request failed — ${message}`)
   }
 }
 

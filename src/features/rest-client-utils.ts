@@ -537,6 +537,12 @@ export interface ResponseHistoryEntry {
   body: string
   /** True when the stored body was clipped to keep workspace state small. */
   bodyTruncated: boolean
+  /**
+   * Set when the request never produced an HTTP response (DNS failure, refused
+   * connection, timeout, …). HTTP error statuses (4xx/5xx) are normal responses
+   * and do NOT set this — they carry their real status instead.
+   */
+  error?: string
 }
 
 /** Clips a body to `maxChars` so history never bloats the workspace state. */
@@ -565,7 +571,9 @@ export function describeHistoryEntry(
   now: number = Date.now()
 ): { label: string; description: string } {
   const when = formatRelative(new Date(entry.timestamp), new Date(now))
-  const status = `${entry.status}${entry.statusText ? ` ${entry.statusText}` : ''}`
+  const status = entry.error
+    ? `Failed: ${entry.error}`
+    : `${entry.status}${entry.statusText ? ` ${entry.statusText}` : ''}`
   return {
     label: `${entry.method} ${entry.url}`,
     description: `${status} · ${entry.durationMs}ms · ${when}${entry.bodyTruncated ? ' · body truncated' : ''}`
