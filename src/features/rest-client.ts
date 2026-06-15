@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { randomUUID } from 'node:crypto'
+import * as os from 'node:os'
 import * as path from 'node:path'
 import {
   addHistoryEntry,
@@ -1226,6 +1227,12 @@ async function showResponse(
   } else {
     language = inferLanguageFromContentType(findHeader(response.headers, 'content-type'))
   }
+  // VS Code can't sync an extension-provided virtual document above ~50 MB, so
+  // for large bodies write a real temp file and open that instead (no such cap).
+  if (Buffer.byteLength(formatted, 'utf-8') >= VIRTUAL_DOC_MAX_BYTES) {
+    await openResponseInTempFile(formatted, extensionForLanguage(language), options)
+    return
+  }
   // Read-only virtual document: never dirty, so closing it won't prompt to save.
   const uri = vscode.Uri.from({
     scheme: RESPONSE_SCHEME,
@@ -1239,6 +1246,21 @@ async function showResponse(
   }
   // Beside keeps the response next to the .http file; a single side column is
   // reused across calls (it isn't re-split per open).
+  await vscode.window.showTextDocument(doc, {
+    preview: options.preview ?? false,
+    preserveFocus: options.preserveFocus ?? false,
+    viewColumn: vscode.ViewColumn.Beside
+  })
+}
+
+/** Below VS Code's ~50 MB limit for extension-synchronized documents (with margin). */
+const VIRTUAL_DOC_MAX_BYTES = 48 * 1024 * 1024
+
+/** Writes a large response to a temp file and opens it — real files have no 50 MB cap. */
+async function openResponseInTempFile(content: string, ext: string, options: ShowResponseOptions): Promise<void> {
+  const file = vscode.Uri.file(path.join(os.tmpdir(), `toolkit-rest-${randomUUID()}.${ext}`))
+  await vscode.workspace.fs.writeFile(file, Buffer.from(content, 'utf-8'))
+  const doc = await vscode.workspace.openTextDocument(file)
   await vscode.window.showTextDocument(doc, {
     preview: options.preview ?? false,
     preserveFocus: options.preserveFocus ?? false,
