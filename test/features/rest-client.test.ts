@@ -13,7 +13,11 @@ import {
   findRequestAtLine,
   tryPrettyJson,
   parseBodyFileRef,
-  parseDotenv
+  parseDotenv,
+  addHistoryEntry,
+  truncateForHistory,
+  describeHistoryEntry,
+  type ResponseHistoryEntry
 } from '../../src/features/rest-client-utils'
 
 describe('parseHttpFile — basic', () => {
@@ -397,5 +401,54 @@ describe('buildCurl / shellQuote', () => {
       bodyFile: '/abs/path/body.json'
     })
     assert.ok(curl.includes("--data '@/abs/path/body.json'"))
+  })
+})
+
+describe('response history', () => {
+  const entry = (id: string, timestamp: number, over: Partial<ResponseHistoryEntry> = {}): ResponseHistoryEntry => ({
+    id,
+    method: 'GET',
+    url: 'https://api.test/x',
+    status: 200,
+    statusText: 'OK',
+    durationMs: 12,
+    timestamp,
+    headers: [],
+    body: '',
+    bodyTruncated: false,
+    ...over
+  })
+
+  it('should prepend newest-first and cap at max', () => {
+    let list: ResponseHistoryEntry[] = []
+    list = addHistoryEntry(list, entry('a', 1), 2)
+    list = addHistoryEntry(list, entry('b', 2), 2)
+    list = addHistoryEntry(list, entry('c', 3), 2)
+    assert.deepEqual(
+      list.map(e => e.id),
+      ['c', 'b']
+    )
+  })
+
+  it('should return an empty list when max is 0 (history disabled)', () => {
+    assert.deepEqual(addHistoryEntry([entry('a', 1)], entry('b', 2), 0), [])
+  })
+
+  it('should truncate a body past the cap and flag it', () => {
+    assert.deepEqual(truncateForHistory('abcdef', 3), { body: 'abc', truncated: true })
+    assert.deepEqual(truncateForHistory('ab', 3), { body: 'ab', truncated: false })
+  })
+
+  it('should describe an entry with status, duration and relative time', () => {
+    const now = 1_000_000
+    const d = describeHistoryEntry(entry('a', now - 60_000, { method: 'POST', durationMs: 42 }), now)
+    assert.equal(d.label, 'POST https://api.test/x')
+    assert.equal(d.description, '200 OK · 42ms · 1 minute ago')
+  })
+
+  it('should note a truncated body in the description', () => {
+    const now = 1_000_000
+    const d = describeHistoryEntry(entry('a', now, { bodyTruncated: true }), now)
+    assert.ok(d.description.includes('body truncated'))
   })
 })

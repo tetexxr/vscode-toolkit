@@ -1293,6 +1293,9 @@ Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send
 | Cancel Pending Requests | Abort any requests currently in flight |
 | REST Client - Select Environment... | Pick the active environment from `http-client.env.json` (also via the status bar item) |
 | REST Client - Copy as curl | Copy the request under the cursor as a `curl` command, with all variables resolved (also a CodeLens next to each Send Request) |
+| REST Client - Response History... | Pick a recent response to reopen it in an editor |
+| REST Client - Diff Two Responses... | Pick two recent responses and open them in a diff editor |
+| REST Client - Clear Response History | Empty the per-workspace history |
 
 All of these are also available from the **editor context menu** when right-clicking inside a `.http` / `.rest` file.
 
@@ -1375,6 +1378,16 @@ The **Copy as curl** CodeLens next to each request's Send Request (or the comman
 | `{{$processEnv NAME}}` | Value of the `NAME` environment variable (empty if unset) |
 | `{{$dotenv NAME}}` | Value of `NAME` from a `.env` file next to the `.http` file |
 
+**Response history:**
+
+Every successful response is kept in a per-workspace history (newest first, capped by `toolkit.restClient.historySize`):
+
+- **REST Client - Response History...** lists recent responses — each showing method, URL, status, duration and how long ago it ran. Pick one to reopen it in an editor.
+- **REST Client - Diff Two Responses...** lets you pick two entries and opens them side by side in a diff editor (oldest → newest), so you can spot what changed between two runs of the same request.
+- **REST Client - Clear Response History** empties it.
+
+Bodies are stored capped at ~1 MB per entry to keep the workspace state small; entries whose body was clipped are marked *body truncated*. Set `historySize` to `0` to disable history entirely.
+
 **Response format:**
 
 The response opens in a new editor with the language inferred from `Content-Type` (JSON, XML, HTML, JavaScript, CSS, CSV — otherwise plaintext). The header block at the top looks like:
@@ -1397,10 +1410,11 @@ X-Toolkit-Time: 234ms
 | `toolkit.restClient.timeout` | `30000` | Request timeout in ms (0 disables) |
 | `toolkit.restClient.followRedirects` | `true` | Follow 3xx redirects |
 | `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` |
+| `toolkit.restClient.historySize` | `30` | Recent responses kept per workspace (0 disables history) |
 
 **Limitations (v1):**
 
-- No request history, no diff between responses, no response → file forwarding.
+- No response → file forwarding (`>> file`).
 - No multipart uploads, WebSockets or gRPC.
 - No built-in auth helpers (Basic, OAuth, AWS Sig) — set the headers manually.
 - No request chaining (`> name`) or cookie persistence between requests.

@@ -2,7 +2,9 @@ import * as vscode from 'vscode'
 import { randomUUID } from 'node:crypto'
 import * as path from 'node:path'
 import {
+  addHistoryEntry,
   buildCurl,
+  describeHistoryEntry,
   environmentNames,
   findHeader,
   findRequestAtLine,
@@ -14,11 +16,13 @@ import {
   parseDotenv,
   parseEnvironmentFile,
   parseHttpFile,
+  truncateForHistory,
   type BodyFileRef,
   type EnvironmentFile,
   type HttpRequest,
   type InterpolateOptions,
-  type ParsedHttpFile
+  type ParsedHttpFile,
+  type ResponseHistoryEntry
 } from './rest-client-utils'
 
 const FILE_GLOB = '**/*.{http,rest}'
@@ -183,6 +187,147 @@ async function selectEnvironment(): Promise<void> {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Response history                                                          */
+/* -------------------------------------------------------------------------- */
+
+const HISTORY_STATE_KEY = 'toolkit.restClient.history'
+const HISTORY_SCHEME = 'toolkit-rest-history'
+/** Per-entry body cap stored in workspace state (~1 MB) so history stays small. */
+const MAX_HISTORY_BODY_CHARS = 1_000_000
+
+function historySize(): number {
+  return Math.max(0, vscode.workspace.getConfiguration('toolkit.restClient').get<number>('historySize', 30))
+}
+
+function getHistory(): ResponseHistoryEntry[] {
+  return extensionContext?.workspaceState.get<ResponseHistoryEntry[]>(HISTORY_STATE_KEY, []) ?? []
+}
+
+async function recordHistory(response: Awaited<ReturnType<typeof executeRequest>>, method: string): Promise<void> {
+  const max = historySize()
+  if (max <= 0) {
+    return
+  }
+  const { body, truncated } = truncateForHistory(response.body, MAX_HISTORY_BODY_CHARS)
+  const entry: ResponseHistoryEntry = {
+    id: randomUUID(),
+    method,
+    url: response.url,
+    status: response.status,
+    statusText: response.statusText,
+    durationMs: response.durationMs,
+    timestamp: Date.now(),
+    headers: response.headers,
+    body,
+    bodyTruncated: truncated
+  }
+  await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, addHistoryEntry(getHistory(), entry, max))
+}
+
+/** Maps a content-type to a file extension so the diff editor highlights the body. */
+function historyExtension(entry: ResponseHistoryEntry): string {
+  const lang = inferLanguageFromContentType(findHeader(entry.headers, 'content-type'))
+  switch (lang) {
+    case 'json':
+      return 'json'
+    case 'xml':
+      return 'xml'
+    case 'html':
+      return 'html'
+    case 'javascript':
+      return 'js'
+    case 'css':
+      return 'css'
+    case 'csv':
+      return 'csv'
+    default:
+      return 'txt'
+  }
+}
+
+/** Virtual URI addressing a history entry by id (content served read-only for diffs). */
+function historyUri(entry: ResponseHistoryEntry): vscode.Uri {
+  return vscode.Uri.from({
+    scheme: HISTORY_SCHEME,
+    path: `/${entry.method} ${entry.status}.${historyExtension(entry)}`,
+    query: entry.id
+  })
+}
+
+/** Serves a history entry's formatted response as a read-only virtual document. */
+class HistoryContentProvider implements vscode.TextDocumentContentProvider {
+  provideTextDocumentContent(uri: vscode.Uri): string {
+    const entry = getHistory().find(e => e.id === uri.query)
+    return entry ? formatResponse(entry) : ''
+  }
+}
+
+type HistoryItem = vscode.QuickPickItem & { entry: ResponseHistoryEntry }
+
+function historyQuickPickItems(history: ResponseHistoryEntry[]): HistoryItem[] {
+  return history.map(entry => {
+    const { label, description } = describeHistoryEntry(entry)
+    return { label: `$(arrow-small-right) ${label}`, description, entry }
+  })
+}
+
+async function showHistory(): Promise<void> {
+  const history = getHistory()
+  if (history.length === 0) {
+    vscode.window.showInformationMessage('Toolkit: no REST Client response history yet.')
+    return
+  }
+  const picked = await vscode.window.showQuickPick(historyQuickPickItems(history), {
+    placeHolder: 'REST Client — response history (pick one to reopen)'
+  })
+  if (!picked) {
+    return
+  }
+  await showResponse(picked.entry, readConfig().previewResponseAs)
+}
+
+async function diffHistory(): Promise<void> {
+  const history = getHistory()
+  if (history.length < 2) {
+    vscode.window.showInformationMessage('Toolkit: need at least two responses in history to diff.')
+    return
+  }
+  const first = await vscode.window.showQuickPick(historyQuickPickItems(history), {
+    placeHolder: 'Diff: pick the first response'
+  })
+  if (!first) {
+    return
+  }
+  const rest = history.filter(e => e.id !== first.entry.id)
+  const second = await vscode.window.showQuickPick(historyQuickPickItems(rest), {
+    placeHolder: 'Diff: pick the second response'
+  })
+  if (!second) {
+    return
+  }
+  // Diff oldest → newest so additions read as "what changed since".
+  const [older, newer] =
+    first.entry.timestamp <= second.entry.timestamp
+      ? [first.entry, second.entry]
+      : [second.entry, first.entry]
+  await vscode.commands.executeCommand(
+    'vscode.diff',
+    historyUri(older),
+    historyUri(newer),
+    `REST history: ${older.method} ${older.status} ↔ ${newer.method} ${newer.status}`
+  )
+}
+
+async function clearHistory(): Promise<void> {
+  if (getHistory().length === 0) {
+    vscode.window.showInformationMessage('Toolkit: REST Client history is already empty.')
+    return
+  }
+  await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, [])
+  vscode.window.showInformationMessage('Toolkit: REST Client response history cleared.')
+}
+
+/* -------------------------------------------------------------------------- */
 /*  CodeLens                                                                  */
 /* -------------------------------------------------------------------------- */
 
@@ -228,6 +373,7 @@ async function executeRequest(
   headers: Array<{ name: string; value: string }>
   body: string
   durationMs: number
+  url: string
 }> {
   const url = interpolate(req.url, variables, opts)
   const headers: Record<string, string> = {}
@@ -259,7 +405,8 @@ async function executeRequest(
       statusText: response.statusText,
       headers: responseHeaders,
       body: text,
-      durationMs
+      durationMs,
+      url
     }
   } finally {
     if (timer) {
@@ -355,6 +502,7 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
       },
       () => executeRequest(req, variables, config, baseDir, opts)
     )
+    await recordHistory(response, req.method)
     await showResponse(response, config.previewResponseAs)
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
@@ -484,7 +632,8 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
   extensionContext = context
 
   context.subscriptions.push(
-    vscode.languages.registerCodeLensProvider({ pattern: FILE_GLOB }, new HttpCodeLensProvider())
+    vscode.languages.registerCodeLensProvider({ pattern: FILE_GLOB }, new HttpCodeLensProvider()),
+    vscode.workspace.registerTextDocumentContentProvider(HISTORY_SCHEME, new HistoryContentProvider())
   )
 
   environmentStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
@@ -506,6 +655,9 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
     vscode.commands.registerCommand('toolkit.restClient.copyAsCurl', () => copyAsCurl()),
     vscode.commands.registerCommand('toolkit.restClient.copyAsCurlByIndex', (uri: string, index: number) =>
       copyAsCurlByIndex(uri, index)
-    )
+    ),
+    vscode.commands.registerCommand('toolkit.restClient.showHistory', () => showHistory()),
+    vscode.commands.registerCommand('toolkit.restClient.diffHistory', () => diffHistory()),
+    vscode.commands.registerCommand('toolkit.restClient.clearHistory', () => clearHistory())
   )
 }

@@ -795,6 +795,18 @@
         "title": "Toolkit: REST Client - Copy as curl (internal)"
       },
       {
+        "command": "toolkit.restClient.showHistory",
+        "title": "Toolkit: REST Client - Response History..."
+      },
+      {
+        "command": "toolkit.restClient.diffHistory",
+        "title": "Toolkit: REST Client - Diff Two Responses..."
+      },
+      {
+        "command": "toolkit.restClient.clearHistory",
+        "title": "Toolkit: REST Client - Clear Response History"
+      },
+      {
         "command": "toolkit.regexPlayground.open",
         "title": "Toolkit: Open Regex Playground"
       },
@@ -1296,6 +1308,16 @@
         {
           "command": "toolkit.restClient.send",
           "group": "0_toolkit@25",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.restClient.showHistory",
+          "group": "0_toolkit@25b",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.restClient.diffHistory",
+          "group": "0_toolkit@25c",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
@@ -2060,6 +2082,11 @@
           ],
           "default": "auto",
           "description": "Editor language used to render the response. 'auto' picks one from the Content-Type."
+        },
+        "toolkit.restClient.historySize": {
+          "type": "number",
+          "default": 30,
+          "description": "How many recent responses to keep in the per-workspace history (0 disables history)."
         },
         "toolkit.peekCommit.hover.enabled": {
           "type": "boolean",

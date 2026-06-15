@@ -1,3 +1,5 @@
+import { formatRelative } from './timestamp-utils'
+
 export interface HttpHeader {
   name: string
   value: string
@@ -514,4 +516,58 @@ export function buildCurl(req: {
     parts.push(`--data ${shellQuote(req.body)}`)
   }
   return parts.join(' \\\n  ')
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Response history                                                          */
+/* -------------------------------------------------------------------------- */
+
+export interface ResponseHistoryEntry {
+  /** Stable id used to address the entry from a diff URI. */
+  id: string
+  method: string
+  /** Final (interpolated) URL that was actually requested. */
+  url: string
+  status: number
+  statusText: string
+  durationMs: number
+  /** Epoch ms at which the response completed. */
+  timestamp: number
+  headers: HttpHeader[]
+  body: string
+  /** True when the stored body was clipped to keep workspace state small. */
+  bodyTruncated: boolean
+}
+
+/** Clips a body to `maxChars` so history never bloats the workspace state. */
+export function truncateForHistory(body: string, maxChars: number): { body: string; truncated: boolean } {
+  if (body.length <= maxChars) {
+    return { body, truncated: false }
+  }
+  return { body: body.slice(0, maxChars), truncated: true }
+}
+
+/** Prepends an entry to the history list and caps it at `max` (newest first). */
+export function addHistoryEntry(
+  list: ResponseHistoryEntry[],
+  entry: ResponseHistoryEntry,
+  max: number
+): ResponseHistoryEntry[] {
+  if (max <= 0) {
+    return []
+  }
+  return [entry, ...list].slice(0, max)
+}
+
+/** Quick-pick label + description for a history entry (e.g. `200 OK · 123ms · 2 minutes ago`). */
+export function describeHistoryEntry(
+  entry: ResponseHistoryEntry,
+  now: number = Date.now()
+): { label: string; description: string } {
+  const when = formatRelative(new Date(entry.timestamp), new Date(now))
+  const status = `${entry.status}${entry.statusText ? ` ${entry.statusText}` : ''}`
+  return {
+    label: `${entry.method} ${entry.url}`,
+    description: `${status} · ${entry.durationMs}ms · ${when}${entry.bodyTruncated ? ' · body truncated' : ''}`
+  }
 }
