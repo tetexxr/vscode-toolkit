@@ -16,7 +16,6 @@ import {
   parseDotenv,
   addHistoryEntry,
   truncateForHistory,
-  describeHistoryEntry,
   groupHistoryByRequest,
   historyStatusKind,
   formatBytes,
@@ -474,28 +473,6 @@ describe('response history', () => {
   it('should truncate a body past the cap and flag it', () => {
     assert.deepEqual(truncateForHistory('abcdef', 3), { body: 'abc', truncated: true })
     assert.deepEqual(truncateForHistory('ab', 3), { body: 'ab', truncated: false })
-  })
-
-  it('should describe an entry with status, duration and relative time', () => {
-    const now = 1_000_000
-    const d = describeHistoryEntry(entry('a', now - 60_000, { method: 'POST', durationMs: 42 }), now)
-    assert.equal(d.label, 'POST https://api.test/x')
-    assert.equal(d.description, '200 OK · 42ms · 1 minute ago')
-  })
-
-  it('should note a truncated body in the description', () => {
-    const now = 1_000_000
-    const d = describeHistoryEntry(entry('a', now, { bodyTruncated: true }), now)
-    assert.ok(d.description.includes('body truncated'))
-  })
-
-  it('should describe a failed request with its error instead of a status', () => {
-    const now = 1_000_000
-    const d = describeHistoryEntry(
-      entry('a', now, { status: 0, statusText: 'Request failed', durationMs: 5, error: 'getaddrinfo ENOTFOUND' }),
-      now
-    )
-    assert.equal(d.description, 'Failed: getaddrinfo ENOTFOUND · 5ms · just now')
   })
 
   it('should group entries by method + url, keeping each group newest-first', () => {

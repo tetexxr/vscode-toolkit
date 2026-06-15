@@ -5,7 +5,6 @@ import * as path from 'node:path'
 import {
   addHistoryEntry,
   buildCurl,
-  describeHistoryEntry,
   environmentNames,
   findHeader,
   findRequestAtLine,
@@ -421,72 +420,6 @@ function extensionForLanguage(language: string): string {
     default:
       return 'txt'
   }
-}
-
-type HistoryItem = vscode.QuickPickItem & { entry: ResponseHistoryEntry }
-
-function historyIcon(entry: ResponseHistoryEntry): string {
-  if (entry.error) {
-    return '$(error)'
-  }
-  if (entry.status >= 400) {
-    return '$(warning)'
-  }
-  return '$(arrow-small-right)'
-}
-
-function historyQuickPickItems(history: ResponseHistoryEntry[]): HistoryItem[] {
-  return history.map(entry => {
-    const { label, description } = describeHistoryEntry(entry)
-    return { label: `${historyIcon(entry)} ${label}`, description, entry }
-  })
-}
-
-async function showHistory(): Promise<void> {
-  const history = getHistory()
-  if (history.length === 0) {
-    vscode.window.showInformationMessage('Toolkit: no REST Client response history yet.')
-    return
-  }
-  const picked = await vscode.window.showQuickPick(historyQuickPickItems(history), {
-    placeHolder: 'REST Client — response history (pick one to reopen)'
-  })
-  if (!picked) {
-    return
-  }
-  await openEntryPreferred(picked.entry)
-}
-
-async function diffHistory(): Promise<void> {
-  const history = getHistory()
-  if (history.length < 2) {
-    vscode.window.showInformationMessage('Toolkit: need at least two responses in history to diff.')
-    return
-  }
-  const first = await vscode.window.showQuickPick(historyQuickPickItems(history), {
-    placeHolder: 'Diff: pick the first response'
-  })
-  if (!first) {
-    return
-  }
-  const rest = history.filter(e => e.id !== first.entry.id)
-  const second = await vscode.window.showQuickPick(historyQuickPickItems(rest), {
-    placeHolder: 'Diff: pick the second response'
-  })
-  if (!second) {
-    return
-  }
-  // Diff oldest → newest so additions read as "what changed since".
-  const [older, newer] =
-    first.entry.timestamp <= second.entry.timestamp
-      ? [first.entry, second.entry]
-      : [second.entry, first.entry]
-  await vscode.commands.executeCommand(
-    'vscode.diff',
-    historyUri(older),
-    historyUri(newer),
-    `REST history: ${older.method} ${older.status} ↔ ${newer.method} ${newer.status}`
-  )
 }
 
 async function clearHistory(): Promise<void> {
@@ -1646,8 +1579,6 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
     vscode.commands.registerCommand('toolkit.restClient.copyAsCurlByIndex', (uri: string, index: number) =>
       copyAsCurlByIndex(uri, index)
     ),
-    vscode.commands.registerCommand('toolkit.restClient.showHistory', () => showHistory()),
-    vscode.commands.registerCommand('toolkit.restClient.diffHistory', () => diffHistory()),
     vscode.commands.registerCommand('toolkit.restClient.clearHistory', () => clearHistory()),
     vscode.commands.registerCommand('toolkit.restClient.history.open', (id: string) => openHistoryEntry(id)),
     vscode.commands.registerCommand('toolkit.restClient.history.refresh', () => historyProvider?.refresh()),

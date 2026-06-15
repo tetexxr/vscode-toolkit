@@ -626,17 +626,6 @@ export function historyEntryTiming(entry: ResponseHistoryEntry, now: number = Da
   return `${entry.durationMs}ms · ${when}${entry.bodyTruncated ? ' · body truncated' : ''}`
 }
 
-/** Quick-pick label + description for a history entry (e.g. `200 OK · 123ms · 2 minutes ago`). */
-export function describeHistoryEntry(
-  entry: ResponseHistoryEntry,
-  now: number = Date.now()
-): { label: string; description: string } {
-  return {
-    label: `${entry.method} ${entry.url}`,
-    description: `${historyStatusLabel(entry)} · ${historyEntryTiming(entry, now)}`
-  }
-}
-
 /** One endpoint (method + final URL) with all of its responses, newest first. */
 export interface RequestGroup {
   /** Stable group key: `${method} ${url}`. */

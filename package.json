@@ -820,14 +820,6 @@
         "title": "Toolkit: REST Client - Copy as curl (internal)"
       },
       {
-        "command": "toolkit.restClient.showHistory",
-        "title": "Toolkit: REST Client - Response History..."
-      },
-      {
-        "command": "toolkit.restClient.diffHistory",
-        "title": "Toolkit: REST Client - Diff Two Responses..."
-      },
-      {
         "command": "toolkit.restClient.clearHistory",
         "title": "Toolkit: REST Client - Clear Response History",
         "icon": "$(clear-all)"
@@ -1656,16 +1648,6 @@
         {
           "command": "toolkit.restClient.copyAsCurl",
           "group": "0_toolkit@22",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.diffHistory",
-          "group": "0_toolkit@23",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.showHistory",
-          "group": "0_toolkit@24",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
