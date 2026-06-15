@@ -1,0 +1,81 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "HTTP request",
+  "scopeName": "source.http",
+  "patterns": [
+    { "include": "#separator" },
+    { "include": "#comment" },
+    { "include": "#variable-definition" },
+    { "include": "#request-line" },
+    { "include": "#header" },
+    { "include": "#interpolation" }
+  ],
+  "repository": {
+    "separator": {
+      "match": "^\\s*(###)(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.separator.http" },
+        "2": { "name": "entity.name.section.http" }
+      }
+    },
+    "comment": {
+      "match": "^\\s*(#|//).*$",
+      "name": "comment.line.http"
+    },
+    "variable-definition": {
+      "match": "^\\s*(@)([A-Za-z_][A-Za-z0-9_-]*)\\s*(=)\\s*(.*)$",
+      "captures": {
+        "1": { "name": "punctuation.definition.variable.http" },
+        "2": { "name": "variable.other.definition.http" },
+        "3": { "name": "keyword.operator.assignment.http" },
+        "4": {
+          "name": "string.unquoted.http",
+          "patterns": [{ "include": "#interpolation" }]
+        }
+      }
+    },
+    "request-line": {
+      "match": "^\\s*(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|TRACE|CONNECT)\\s+(.+?)(?:\\s+(HTTP/[\\d.]+))?\\s*$",
+      "captures": {
+        "1": { "name": "keyword.control.method.http" },
+        "2": {
+          "name": "string.unquoted.url.http",
+          "patterns": [{ "include": "#interpolation" }]
+        },
+        "3": { "name": "constant.language.http-version.http" }
+      }
+    },
+    "header": {
+      "match": "^\\s*([A-Za-z][A-Za-z0-9-]*)\\s*(:)\\s*(.*)$",
+      "captures": {
+        "1": { "name": "support.type.header.http" },
+        "2": { "name": "punctuation.separator.header.http" },
+        "3": {
+          "name": "string.unquoted.header-value.http",
+          "patterns": [{ "include": "#interpolation" }]
+        }
+      }
+    },
+    "interpolation": {
+      "begin": "\\{\\{",
+      "end": "\\}\\}",
+      "name": "meta.interpolation.http",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.template-expression.begin.http" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.template-expression.end.http" }
+      },
+      "patterns": [
+        {
+          "match": "\\$[A-Za-z][A-Za-z0-9_]*",
+          "name": "support.function.builtin.http"
+        },
+        {
+          "match": "[A-Za-z_][A-Za-z0-9_.-]*",
+          "name": "variable.other.interpolated.http"
+        }
+      ]
+    }
+  }
+}

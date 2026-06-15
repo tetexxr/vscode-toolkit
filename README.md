@@ -1282,6 +1282,8 @@ Tags must match a whole word — `// TODOLIST: foo` is not picked up.
 
 Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send Request** code lens; the response opens in a new tab with the right syntax highlighting and a pretty-printed body when it's JSON.
 
+`.http` / `.rest` files get their own **syntax highlighting**: request methods, URLs, header names, `@variable` definitions, `### section` separators, `#` / `//` comments and `{{interpolations}}` (built-in `$vars` included) are all colored.
+
 **Commands:**
 
 | Command | Description |
@@ -1372,7 +1374,6 @@ X-Toolkit-Time: 234ms
 
 **Limitations (v1):**
 
-- No syntax highlighting contributed — relies on whatever language is set (plaintext if none).
 - No request history, no diff between responses, no response → file forwarding.
 - No multipart uploads, file bodies (`< body.json`), WebSockets or gRPC.
 - No built-in auth helpers (Basic, OAuth, AWS Sig) — set the headers manually.

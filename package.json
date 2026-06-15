@@ -21,6 +21,28 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "languages": [
+      {
+        "id": "http",
+        "aliases": [
+          "HTTP",
+          "http",
+          "REST"
+        ],
+        "extensions": [
+          ".http",
+          ".rest"
+        ],
+        "configuration": "./syntaxes/http.language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "http",
+        "scopeName": "source.http",
+        "path": "./syntaxes/http.tmLanguage.json"
+      }
+    ],
     "themes": [
       {
         "label": "Toolkit: Generic Dark Theme",
