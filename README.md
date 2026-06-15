@@ -1342,7 +1342,7 @@ Content-Type: application/json
 - `<@encoding path` decodes the file with an explicit encoding (`utf-8`, `latin1`, `ascii`, `utf16le`, `base64`, `hex`); defaults to `utf-8`.
 - Body files are capped at 50 MB. **Copy as curl** maps a raw `< path` body to curl's `--data @path`.
 
-> A runnable example lives in [`examples/sample.http`](examples/sample.http) (with [`examples/payload.json`](examples/payload.json) for the file-body requests) — open it and click **Send Request**.
+> Runnable examples live in [`examples/sample.http`](examples/sample.http) (mirrors the docs above, against httpbin.org) and [`examples/playground.http`](examples/playground.http) (against the more reliable postman-echo.com / httpbingo.org, including error and slow-response requests). Both share [`examples/payload.json`](examples/payload.json) for the file-body requests — open one and click **Send Request**.
 
 **Environments:**
 
