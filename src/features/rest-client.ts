@@ -1106,9 +1106,12 @@ async function performFetch(
     }
   } catch (error) {
     // Turn a timeout abort into a clear, non-abort error so callers report it
-    // as a real failure (and record it) instead of a silent cancellation.
+    // as a real failure (and record it) instead of a silent cancellation. The
+    // name lets callers offer a "retry with longer timeout" action.
     if (timedOut) {
-      throw new Error(`Request timed out after ${config.timeoutMs} ms`)
+      const timeoutError = new Error(`Request timed out after ${config.timeoutMs} ms`)
+      timeoutError.name = 'TimeoutError'
+      throw timeoutError
     }
     throw error
   } finally {
@@ -1305,11 +1308,20 @@ async function sendResolved(
     // A failed request (DNS, refused, timeout, …) is still worth keeping in the
     // history so it can be reviewed or diffed later.
     const entry = await recordFailure(resolved, source, Date.now() - start, message, config)
-    vscode.window.showWarningMessage(`Toolkit: request failed — ${message}`)
     if (showInPanel) {
       showDetailPanel(entry)
     } else if (display === 'preferred') {
       await openEntryPreferred(entry)
+    }
+    if ((error as Error).name === 'TimeoutError') {
+      // Offer a one-click retry that doubles the timeout (repeats compound: 30s → 60s → 120s…).
+      const retry = 'Retry with longer timeout'
+      const choice = await vscode.window.showWarningMessage(`Toolkit: ${message}`, retry)
+      if (choice === retry) {
+        await sendResolved(resolved, source, { ...config, timeoutMs: config.timeoutMs * 2 }, display)
+      }
+    } else {
+      vscode.window.showWarningMessage(`Toolkit: request failed — ${message}`)
     }
   }
 }
