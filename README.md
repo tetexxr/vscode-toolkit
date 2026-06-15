@@ -1350,7 +1350,7 @@ Authorization: Bearer {{token}}
 - `@name = value` defines a variable scoped to the file.
 - `{{name}}` interpolates a variable in the URL, headers or body.
 - Lines starting with a single `#` (or `//`) are comments.
-- Responses up to `toolkit.restClient.maxResponseSizeMB` (default 100 MB) render normally; larger ones open as plain text in an editor. The hard cap is 256 MB — beyond that the request is aborted.
+- Responses under 48 MB render normally; larger ones open as plain text in an editor (from a temp file, since VS Code can't show bigger virtual documents). The hard cap is 256 MB — beyond that the request is aborted.
 
 **File bodies:**
 
@@ -1438,7 +1438,6 @@ X-Toolkit-Time: 234ms
 | `toolkit.restClient.followRedirects` | `true` | Follow 3xx redirects |
 | `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` (language used when a response is shown as text) |
 | `toolkit.restClient.previewResponseIn` | `panel` | Where Send Request shows its response: the rich `panel`, or a text `editor` |
-| `toolkit.restClient.maxResponseSizeMB` | `100` | Responses larger than this open as plain text instead of the rich/formatted view (hard cap 256 MB) |
 | `toolkit.restClient.history.clickAction` | `panel` | What selecting a history entry opens: the `panel` or a text `editor` |
 | `toolkit.restClient.history.storeRequest` | `true` | Store the resolved request (incl. headers/body) so it can be re-sent and copied as curl |
 | `toolkit.restClient.historySizePerRequest` | `30` | Recent responses kept per request — method + URL (0 disables history) |

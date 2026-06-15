@@ -45,9 +45,8 @@ const FILE_GLOB = '**/*.{http,rest}'
 
 /**
  * Hard cap on buffered response bodies. Kept under V8's ~512 MB max string size
- * so the body can still be held as a single string (and saved/searched). Bodies
- * above `maxResponseSizeMB` (but under this) render as plain text instead of the
- * rich panel.
+ * so the body can still be held as a single string. Above this the request is
+ * aborted; bodies above LARGE_RESPONSE_BYTES open as plain text from a temp file.
  */
 const MAX_RESPONSE_BYTES = 256 * 1024 * 1024
 
@@ -84,8 +83,6 @@ interface RestClientConfig {
   storeRequest: boolean
   /** What clicking a history entry opens. */
   historyClickAction: 'editor' | 'panel'
-  /** Responses larger than this (MB) open as plain text instead of the rich/formatted view. */
-  maxResponseSizeMB: number
 }
 
 function readConfig(): RestClientConfig {
@@ -96,8 +93,7 @@ function readConfig(): RestClientConfig {
     previewResponseAs: config.get<'auto' | 'raw' | 'json'>('previewResponseAs', 'auto'),
     previewResponseIn: config.get<'editor' | 'panel'>('previewResponseIn', 'panel'),
     storeRequest: config.get<boolean>('history.storeRequest', true),
-    historyClickAction: config.get<'editor' | 'panel'>('history.clickAction', 'editor'),
-    maxResponseSizeMB: Math.max(1, config.get<number>('maxResponseSizeMB', 100))
+    historyClickAction: config.get<'editor' | 'panel'>('history.clickAction', 'editor')
   }
 }
 
@@ -1208,30 +1204,34 @@ interface ShowResponseOptions {
    * active column stable so the side column (and its preview tab) is reused.
    */
   preserveFocus?: boolean
-  /** Force plain text with no JSON pretty-printing — for very large responses. */
-  forcePlain?: boolean
 }
 
-async function showResponse(
-  response: FetchResult,
-  options: ShowResponseOptions
-): Promise<void> {
-  const formatted = formatResponse(response, !options.forcePlain)
+/**
+ * A response at/above this is "large": shown as plain text from a real temp file
+ * (no JSON pretty-print). Kept under VS Code's ~50 MB limit for extension-provided
+ * virtual documents, which is the technical reason a temp file is needed.
+ */
+const LARGE_RESPONSE_BYTES = 48 * 1024 * 1024
+
+function isLargeResponse(response: FetchResult): boolean {
+  return Buffer.byteLength(response.body, 'utf-8') >= LARGE_RESPONSE_BYTES
+}
+
+async function showResponse(response: FetchResult, options: ShowResponseOptions): Promise<void> {
+  // Large bodies: skip pretty-print (expensive) and open from a real temp file,
+  // since a virtual document can't exceed VS Code's ~50 MB sync limit.
+  if (isLargeResponse(response)) {
+    await openResponseInTempFile(formatResponse(response, false), options)
+    return
+  }
+  const formatted = formatResponse(response)
   let language: string
-  if (options.forcePlain) {
-    language = 'plaintext'
-  } else if (options.previewResponseAs === 'raw') {
+  if (options.previewResponseAs === 'raw') {
     language = 'http'
   } else if (options.previewResponseAs === 'json') {
     language = 'json'
   } else {
     language = inferLanguageFromContentType(findHeader(response.headers, 'content-type'))
-  }
-  // VS Code can't sync an extension-provided virtual document above ~50 MB, so
-  // for large bodies write a real temp file and open that instead (no such cap).
-  if (Buffer.byteLength(formatted, 'utf-8') >= VIRTUAL_DOC_MAX_BYTES) {
-    await openResponseInTempFile(formatted, extensionForLanguage(language), options)
-    return
   }
   // Read-only virtual document: never dirty, so closing it won't prompt to save.
   const uri = vscode.Uri.from({
@@ -1253,12 +1253,9 @@ async function showResponse(
   })
 }
 
-/** Below VS Code's ~50 MB limit for extension-synchronized documents (with margin). */
-const VIRTUAL_DOC_MAX_BYTES = 48 * 1024 * 1024
-
-/** Writes a large response to a temp file and opens it — real files have no 50 MB cap. */
-async function openResponseInTempFile(content: string, ext: string, options: ShowResponseOptions): Promise<void> {
-  const file = vscode.Uri.file(path.join(os.tmpdir(), `toolkit-rest-${randomUUID()}.${ext}`))
+/** Writes a large response to a temp file (plain text) and opens it — real files have no 50 MB cap. */
+async function openResponseInTempFile(content: string, options: ShowResponseOptions): Promise<void> {
+  const file = vscode.Uri.file(path.join(os.tmpdir(), `toolkit-rest-${randomUUID()}.txt`))
   await vscode.workspace.fs.writeFile(file, Buffer.from(content, 'utf-8'))
   const doc = await vscode.workspace.openTextDocument(file)
   await vscode.window.showTextDocument(doc, {
@@ -1379,16 +1376,15 @@ async function sendResolved(
       (_progress, token) => performFetch(resolved, config, token)
     )
     const entry = await recordHistory(response, resolved, source, config)
-    const bytes = Buffer.byteLength(response.body, 'utf-8')
-    if (bytes > config.maxResponseSizeMB * 1024 * 1024) {
-      // Too big for the rich panel / pretty-printing: show the full body as plain
-      // text in an editor (which handles large files far better than a webview).
+    if (isLargeResponse(response)) {
+      // The panel only renders the truncated history entry, so the full large body
+      // would otherwise be lost: open it (plain text, temp file) instead.
       if (detailPanel && detailEntryId === undefined) {
         detailPanel.dispose() // drop the now-stale pending panel
       }
-      await showResponse(response, { previewResponseAs: config.previewResponseAs, forcePlain: true })
+      await showResponse(response, { previewResponseAs: config.previewResponseAs })
       vscode.window.showInformationMessage(
-        `Toolkit: large response (${formatBytes(bytes)}) shown as plain text.`
+        `Toolkit: large response (${formatBytes(Buffer.byteLength(response.body, 'utf-8'))}) opened as plain text.`
       )
     } else if (showInPanel) {
       showDetailPanel(entry)
@@ -1396,7 +1392,7 @@ async function sendResolved(
       // Re-send into the editor (history click action is "editor").
       await openEntryPreferred(entry)
     } else {
-      // Editor mode: show the live, full (non-capped) response with native highlighting.
+      // Editor mode: show the live, full response with native highlighting.
       await showResponse(response, { previewResponseAs: config.previewResponseAs })
     }
   } catch (error) {
