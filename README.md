@@ -1436,7 +1436,10 @@ X-Toolkit-Time: 234ms
 |---|---|---|
 | `toolkit.restClient.timeout` | `30000` | Request timeout in ms (0 disables). On timeout the request is reported as failed and recorded in the history — distinct from a cancellation, which is silent |
 | `toolkit.restClient.followRedirects` | `true` | Follow 3xx redirects |
-| `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` |
+| `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` (language used when a response is shown as text) |
+| `toolkit.restClient.previewResponseIn` | `panel` | Where Send Request shows its response: the rich `panel`, or a text `editor` |
+| `toolkit.restClient.history.clickAction` | `panel` | What selecting a history entry opens: the `panel` or a text `editor` |
+| `toolkit.restClient.history.storeRequest` | `true` | Store the resolved request (incl. headers/body) so it can be re-sent and copied as curl |
 | `toolkit.restClient.historySizePerRequest` | `30` | Recent responses kept per request — method + URL (0 disables history) |
 | `toolkit.restClient.historySize` | `500` | Overall safety cap on total responses kept across all requests (0 disables history) |
 

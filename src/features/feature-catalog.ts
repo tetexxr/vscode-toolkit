@@ -75,8 +75,9 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Workspace', name: 'Previous Bookmark', shortcut: 'Shift+Alt+F7', command: 'toolkit.bookmarks.previous', description: 'Jump to the previous one' },
   { category: 'Workspace', name: '.env Checker', command: 'toolkit.envCheck.checkWorkspace', description: 'Diagnostics when .env drifts from .env.example, with quick fix' },
   { category: 'Workspace', name: 'TODO Tree', command: 'toolkitTodoTree.focus', description: 'TODO/FIXME/HACK... comments in a sidebar tree, grouped by tag or file' },
-  { category: 'Workspace', name: 'REST Client', command: 'toolkit.restClient.send', description: 'Run .http requests; environments (env.json), variables, file bodies, copy as curl' },
-  { category: 'Workspace', name: 'REST Response History', command: 'toolkit.restClient.showHistory', description: 'Reopen or diff recent .http responses (status, timing, body)' },
+  { category: 'Workspace', name: 'REST Client', command: 'toolkit.restClient.send', description: 'Run .http requests; rich response panel with live timer/cancel and retry-on-timeout, environments, variables, file bodies, copy as curl' },
+  { category: 'Workspace', name: 'REST Requests', command: 'toolkitRestFiles.focus', description: 'Sidebar tree of every workspace .http/.rest file and its requests — open, jump to, or send each' },
+  { category: 'Workspace', name: 'REST Response History', command: 'toolkitRestHistory.focus', description: 'Sidebar tree of recent responses grouped per request; filter, re-send, diff, detail panel, copy as curl/body/URL, save body, go to source' },
   { category: 'Workspace', name: 'Regex Playground', command: 'toolkit.regexPlayground.open', description: 'Live regex tester in a panel, safe against catastrophic backtracking' },
 
   // ── Viewers & Appearance ───────────────────────────────

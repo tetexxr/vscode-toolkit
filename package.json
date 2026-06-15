@@ -800,6 +800,10 @@
         "title": "Toolkit: Send All Requests"
       },
       {
+        "command": "toolkit.restClient.sendByIndex",
+        "title": "Toolkit: Send Request (internal)"
+      },
+      {
         "command": "toolkit.restClient.cancelAll",
         "title": "Toolkit: Cancel Pending Requests"
       },
