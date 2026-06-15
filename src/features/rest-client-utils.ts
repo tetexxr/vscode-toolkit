@@ -831,13 +831,13 @@ const DETAIL_STYLES = `
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 16px 24px; }
   .topbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 14px 0 10px; z-index: 1; }
   .reqline { font-family: var(--vscode-editor-font-family); font-size: 13px; word-break: break-all; margin-bottom: 8px; }
-  .method { font-weight: 600; margin-right: 6px; }
-  .method-POST { color: var(--vscode-charts-green, #89d185); }
-  .method-PUT { color: var(--vscode-charts-orange, #d18616); }
-  .method-PATCH { color: var(--vscode-charts-yellow, #cca700); }
-  .method-DELETE { color: var(--vscode-charts-red, #f14c4c); }
-  .method-OPTIONS { color: var(--vscode-charts-blue, #3794ff); }
-  .method-HEAD { color: var(--vscode-charts-blue, #3794ff); }
+  .method { display: inline-block; font-weight: 600; font-size: 11px; margin-right: 8px; padding: 3px 8px; border-radius: 4px; color: #fff; background: var(--vscode-badge-background, #4d4d4d); vertical-align: middle; }
+  .method-POST { background: var(--vscode-charts-green, #2ea043); }
+  .method-PUT { background: var(--vscode-charts-orange, #d18616); }
+  .method-PATCH { background: var(--vscode-charts-yellow, #cca700); color: #000; }
+  .method-DELETE { background: var(--vscode-charts-red, #f14c4c); }
+  .method-OPTIONS { background: var(--vscode-charts-blue, #3794ff); }
+  .method-HEAD { background: var(--vscode-charts-blue, #3794ff); }
   .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 12px; color: #fff; }
   .badge.success { background: var(--vscode-testing-iconPassed, #2ea043); }
   .badge.redirect { background: var(--vscode-charts-blue, #3794ff); }
