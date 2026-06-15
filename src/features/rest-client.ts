@@ -926,7 +926,7 @@ const FILES_GROUP_BY_CONTEXT = 'toolkitRestFilesGroupBy'
 type FilesGroupBy = 'flat' | 'tree'
 
 function filesGroupBy(): FilesGroupBy {
-  return extensionContext?.workspaceState.get<FilesGroupBy>(FILES_GROUP_BY_KEY, 'flat') ?? 'flat'
+  return extensionContext?.workspaceState.get<FilesGroupBy>(FILES_GROUP_BY_KEY, 'tree') ?? 'tree'
 }
 
 async function setFilesGroupBy(mode: FilesGroupBy): Promise<void> {
