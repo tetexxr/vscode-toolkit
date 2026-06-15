@@ -1282,15 +1282,20 @@ Tags must match a whole word — `// TODOLIST: foo` is not picked up.
 
 Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send Request** code lens; the response opens in a new tab with the right syntax highlighting and a pretty-printed body when it's JSON.
 
+`.http` / `.rest` files get their own **syntax highlighting**: request methods, URLs, header names, `@variable` definitions, `### section` separators, `#` / `//` comments and `{{interpolations}}` (built-in `$vars` included) are all colored.
+
 **Commands:**
 
 | Command | Description |
 |---|---|
 | Send Request | Run the request under the cursor (also exposed as a CodeLens above each request) |
 | Send All Requests | Run every request in the active file |
-| Cancel Pending Requests | Abort any requests currently in flight |
+| Cancel Pending Requests | Abort any requests currently in flight (a single in-flight request can also be cancelled from its progress notification) |
 | REST Client - Select Environment... | Pick the active environment from `http-client.env.json` (also via the status bar item) |
 | REST Client - Copy as curl | Copy the request under the cursor as a `curl` command, with all variables resolved (also a CodeLens next to each Send Request) |
+| REST Client - Response History... | Pick a recent response to reopen it in an editor |
+| REST Client - Diff Two Responses... | Pick two recent responses and open them in a diff editor |
+| REST Client - Clear Response History | Empty the per-workspace history |
 
 All of these are also available from the **editor context menu** when right-clicking inside a `.http` / `.rest` file.
 
@@ -1317,8 +1322,27 @@ Authorization: Bearer {{token}}
 - `### name` separates request blocks (name optional).
 - `@name = value` defines a variable scoped to the file.
 - `{{name}}` interpolates a variable in the URL, headers or body.
-- Lines starting with a single `#` are comments.
+- Lines starting with a single `#` (or `//`) are comments.
 - Response bodies are capped at 50 MB; larger responses abort with an error.
+
+**File bodies:**
+
+Instead of inlining the body, point a request at a file (resolved relative to the `.http` file, or an absolute path):
+
+```http
+### Upload a payload from disk
+POST {{baseUrl}}/import
+Content-Type: application/json
+
+< ./payload.json
+```
+
+- `< path` sends the file's raw bytes — no interpolation.
+- `<@ path` interpolates `{{variables}}` inside the file before sending.
+- `<@encoding path` decodes the file with an explicit encoding (`utf-8`, `latin1`, `ascii`, `utf16le`, `base64`, `hex`); defaults to `utf-8`.
+- Body files are capped at 50 MB. **Copy as curl** maps a raw `< path` body to curl's `--data @path`.
+
+> Runnable examples live in [`examples/sample.http`](examples/sample.http) (mirrors the docs above, against httpbin.org) and [`examples/playground.http`](examples/playground.http) (against the more reliable postman-echo.com / httpbingo.org, including error and slow-response requests). Both share [`examples/payload.json`](examples/payload.json) for the file-body requests — open one and click **Send Request**.
 
 **Environments:**
 
@@ -1344,8 +1368,25 @@ The **Copy as curl** CodeLens next to each request's Send Request (or the comman
 | Placeholder | Value |
 |---|---|
 | `{{$timestamp}}` | Current Unix epoch in seconds |
+| `{{$timestamp -1 d}}` | Epoch with an offset — units `s`, `m`, `h`, `d`, `w`, `M`, `y` (signed amount) |
 | `{{$randomUUID}}` | Fresh UUID v4 |
+| `{{$randomInt 1 100}}` | Random integer in `[min, max]` (defaults to `0 1000`) |
 | `{{$datetime iso8601}}` | Current time in ISO 8601 |
+| `{{$datetime rfc1123}}` | Current time as an RFC 1123 string (e.g. `Fri, 15 Mar 2024 12:34:56 GMT`) |
+| `{{$datetime unix}}` | Current time as Unix epoch seconds |
+| `{{$datetime iso8601 -2 h}}` | Any `$datetime` format accepts the same trailing offset |
+| `{{$processEnv NAME}}` | Value of the `NAME` environment variable (empty if unset) |
+| `{{$dotenv NAME}}` | Value of `NAME` from a `.env` file next to the `.http` file |
+
+**Response history:**
+
+Every request you send is kept in a per-workspace history (newest first, capped by `toolkit.restClient.historySize`). This includes HTTP error responses (4xx/5xx are normal responses) **and** requests that never got a response at all — DNS failures, refused connections, timeouts — which are recorded as *Failed* entries with the error message as their body.
+
+- **REST Client - Response History...** lists recent requests — each showing method, URL, status (or the failure), duration and how long ago it ran. A 4xx/5xx is flagged with a warning icon and a network failure with an error icon. Pick one to reopen it in an editor.
+- **REST Client - Diff Two Responses...** lets you pick two entries and opens them side by side in a diff editor (oldest → newest), so you can spot what changed between two runs of the same request.
+- **REST Client - Clear Response History** empties it.
+
+Bodies are stored capped at ~1 MB per entry to keep the workspace state small; entries whose body was clipped are marked *body truncated*. Set `historySize` to `0` to disable history entirely. (Requests you cancel yourself are not recorded.)
 
 **Response format:**
 
@@ -1366,15 +1407,15 @@ X-Toolkit-Time: 234ms
 
 | Setting | Default | Description |
 |---|---|---|
-| `toolkit.restClient.timeout` | `30000` | Request timeout in ms (0 disables) |
+| `toolkit.restClient.timeout` | `30000` | Request timeout in ms (0 disables). On timeout the request is reported as failed and recorded in the history — distinct from a cancellation, which is silent |
 | `toolkit.restClient.followRedirects` | `true` | Follow 3xx redirects |
 | `toolkit.restClient.previewResponseAs` | `auto` | `auto`, `raw`, or `json` |
+| `toolkit.restClient.historySize` | `30` | Recent responses kept per workspace (0 disables history) |
 
-**Limitations (v1):**
+**Limitations:**
 
-- No syntax highlighting contributed — relies on whatever language is set (plaintext if none).
-- No request history, no diff between responses, no response → file forwarding.
-- No multipart uploads, file bodies (`< body.json`), WebSockets or gRPC.
+- No response → file forwarding (`>> file`).
+- No multipart uploads, WebSockets or gRPC.
 - No built-in auth helpers (Basic, OAuth, AWS Sig) — set the headers manually.
 - No request chaining (`> name`) or cookie persistence between requests.
 
@@ -1405,7 +1446,7 @@ A side panel where you can test regexes interactively. Pattern, flags, test inpu
 - The match cap (10 000) protects against runaway match lists.
 - Pattern, flags, input and replace persist across sessions in `globalState`.
 
-**Limitations (v1):**
+**Limitations:**
 
 - No cheat sheet of regex tokens.
 - No save / load of named patterns (only the last state survives).

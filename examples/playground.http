@@ -1,0 +1,56 @@
+# Playground against reliable public APIs — good for actually trying things out.
+// postman-echo.com echoes back your request (great for checking variables / bodies).
+// httpbingo.org can return any status or delay a response on demand.
+// Click the "Send Request" / "Copy as curl" CodeLens above each block.
+
+@echo = https://postman-echo.com
+@bin = https://httpbingo.org
+@token = dev-secret-123
+
+### 1. The simplest request — just a method and a URL
+GET https://postman-echo.com/get
+
+### 2. Add a header and a query string, reusing a variable with {{ }}
+GET {{echo}}/get?active=true
+Accept: application/json
+
+### 3. A POST with headers and an inline JSON body (echoed back under "data")
+POST {{echo}}/post
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Alice",
+  "email": "alice@example.com"
+}
+
+### 4. Built-in variables — generated fresh on every send
+POST {{echo}}/post
+Content-Type: application/json
+X-Request-Id: {{$randomUUID}}
+
+{
+  "now": "{{$datetime iso8601}}",
+  "rfc1123": "{{$datetime rfc1123}}",
+  "yesterday": {{$timestamp -1 d}},
+  "dice": {{$randomInt 1 6}},
+  "home": "{{$processEnv HOME}}"
+}
+
+### 5. Send a body straight from a file (raw — no interpolation)
+POST {{echo}}/post
+Content-Type: application/json
+
+< ./payload.json
+
+### 6. Same file, interpolating {{variables}} inside it before sending
+POST {{echo}}/post
+Content-Type: application/json
+
+<@ ./payload.json
+
+### 7. An HTTP error response (500) — saved in history with a warning icon
+GET {{bin}}/status/500
+
+### 8. A slow response — cancel it from the progress notification, or let it time out
+GET {{bin}}/delay/10

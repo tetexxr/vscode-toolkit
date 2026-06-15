@@ -2,7 +2,9 @@ import * as vscode from 'vscode'
 import { randomUUID } from 'node:crypto'
 import * as path from 'node:path'
 import {
+  addHistoryEntry,
   buildCurl,
+  describeHistoryEntry,
   environmentNames,
   findHeader,
   findRequestAtLine,
@@ -10,11 +12,17 @@ import {
   inferLanguageFromContentType,
   interpolate,
   mergeEnvironmentVariables,
+  parseBodyFileRef,
+  parseDotenv,
   parseEnvironmentFile,
   parseHttpFile,
+  truncateForHistory,
+  type BodyFileRef,
   type EnvironmentFile,
   type HttpRequest,
-  type ParsedHttpFile
+  type InterpolateOptions,
+  type ParsedHttpFile,
+  type ResponseHistoryEntry
 } from './rest-client-utils'
 
 const FILE_GLOB = '**/*.{http,rest}'
@@ -179,6 +187,239 @@ async function selectEnvironment(): Promise<void> {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Response history                                                          */
+/* -------------------------------------------------------------------------- */
+
+const HISTORY_STATE_KEY = 'toolkit.restClient.history'
+const HISTORY_SCHEME = 'toolkit-rest-history'
+/** Per-entry body cap stored in workspace state (~1 MB) so history stays small. */
+const MAX_HISTORY_BODY_CHARS = 1_000_000
+
+function historySize(): number {
+  return Math.max(0, vscode.workspace.getConfiguration('toolkit.restClient').get<number>('historySize', 30))
+}
+
+function getHistory(): ResponseHistoryEntry[] {
+  return extensionContext?.workspaceState.get<ResponseHistoryEntry[]>(HISTORY_STATE_KEY, []) ?? []
+}
+
+async function pushHistory(entry: ResponseHistoryEntry): Promise<void> {
+  const max = historySize()
+  if (max <= 0) {
+    return
+  }
+  await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, addHistoryEntry(getHistory(), entry, max))
+}
+
+async function recordHistory(response: Awaited<ReturnType<typeof executeRequest>>, method: string): Promise<void> {
+  const { body, truncated } = truncateForHistory(response.body, MAX_HISTORY_BODY_CHARS)
+  await pushHistory({
+    id: randomUUID(),
+    method,
+    url: response.url,
+    status: response.status,
+    statusText: response.statusText,
+    durationMs: response.durationMs,
+    timestamp: Date.now(),
+    headers: response.headers,
+    body,
+    bodyTruncated: truncated
+  })
+}
+
+/** Records a request that never got an HTTP response (network error / timeout). */
+async function recordFailure(method: string, url: string, durationMs: number, message: string): Promise<void> {
+  await pushHistory({
+    id: randomUUID(),
+    method,
+    url,
+    status: 0,
+    statusText: 'Request failed',
+    durationMs,
+    timestamp: Date.now(),
+    headers: [],
+    body: message,
+    bodyTruncated: false,
+    error: message
+  })
+}
+
+/** Maps a content-type to a file extension so the diff editor highlights the body. */
+function historyExtension(entry: ResponseHistoryEntry): string {
+  const lang = inferLanguageFromContentType(findHeader(entry.headers, 'content-type'))
+  switch (lang) {
+    case 'json':
+      return 'json'
+    case 'xml':
+      return 'xml'
+    case 'html':
+      return 'html'
+    case 'javascript':
+      return 'js'
+    case 'css':
+      return 'css'
+    case 'csv':
+      return 'csv'
+    default:
+      return 'txt'
+  }
+}
+
+/** Virtual URI addressing a history entry by id (content served read-only for diffs). */
+function historyUri(entry: ResponseHistoryEntry): vscode.Uri {
+  return vscode.Uri.from({
+    scheme: HISTORY_SCHEME,
+    path: `/${entry.method} ${entry.status}.${historyExtension(entry)}`,
+    query: entry.id
+  })
+}
+
+/** Serves a history entry's formatted response as a read-only virtual document. */
+class HistoryContentProvider implements vscode.TextDocumentContentProvider {
+  provideTextDocumentContent(uri: vscode.Uri): string {
+    const entry = getHistory().find(e => e.id === uri.query)
+    return entry ? formatResponse(entry) : ''
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Response preview (read-only virtual docs — no "save?" prompt on close)    */
+/* -------------------------------------------------------------------------- */
+
+const RESPONSE_SCHEME = 'toolkit-rest-response'
+const RESPONSE_CACHE_MAX = 50
+
+/**
+ * Serves formatted responses as read-only virtual documents. Unlike an untitled
+ * document seeded with content, these are never "dirty", so closing the tab
+ * doesn't prompt to save. Content is cached per URI with bounded FIFO eviction.
+ */
+class ResponsePreviewProvider implements vscode.TextDocumentContentProvider {
+  private cache = new Map<string, string>()
+  private emitter = new vscode.EventEmitter<vscode.Uri>()
+  readonly onDidChange = this.emitter.event
+
+  set(uri: vscode.Uri, content: string): void {
+    const key = uri.toString()
+    this.cache.delete(key)
+    this.cache.set(key, content)
+    while (this.cache.size > RESPONSE_CACHE_MAX) {
+      const oldest = this.cache.keys().next().value
+      if (oldest === undefined) {
+        break
+      }
+      this.cache.delete(oldest)
+    }
+    this.emitter.fire(uri)
+  }
+
+  provideTextDocumentContent(uri: vscode.Uri): string {
+    return this.cache.get(uri.toString()) ?? ''
+  }
+}
+
+const responsePreviewProvider = new ResponsePreviewProvider()
+/** Monotonic id so each opened response gets its own virtual URI (no collisions). */
+let responsePreviewSeq = 0
+
+/** File extension matching an editor language, for the preview tab title. */
+function extensionForLanguage(language: string): string {
+  switch (language) {
+    case 'json':
+      return 'json'
+    case 'xml':
+      return 'xml'
+    case 'html':
+      return 'html'
+    case 'javascript':
+      return 'js'
+    case 'css':
+      return 'css'
+    case 'csv':
+      return 'csv'
+    case 'http':
+      return 'http'
+    default:
+      return 'txt'
+  }
+}
+
+type HistoryItem = vscode.QuickPickItem & { entry: ResponseHistoryEntry }
+
+function historyIcon(entry: ResponseHistoryEntry): string {
+  if (entry.error) {
+    return '$(error)'
+  }
+  if (entry.status >= 400) {
+    return '$(warning)'
+  }
+  return '$(arrow-small-right)'
+}
+
+function historyQuickPickItems(history: ResponseHistoryEntry[]): HistoryItem[] {
+  return history.map(entry => {
+    const { label, description } = describeHistoryEntry(entry)
+    return { label: `${historyIcon(entry)} ${label}`, description, entry }
+  })
+}
+
+async function showHistory(): Promise<void> {
+  const history = getHistory()
+  if (history.length === 0) {
+    vscode.window.showInformationMessage('Toolkit: no REST Client response history yet.')
+    return
+  }
+  const picked = await vscode.window.showQuickPick(historyQuickPickItems(history), {
+    placeHolder: 'REST Client — response history (pick one to reopen)'
+  })
+  if (!picked) {
+    return
+  }
+  await showResponse(picked.entry, readConfig().previewResponseAs)
+}
+
+async function diffHistory(): Promise<void> {
+  const history = getHistory()
+  if (history.length < 2) {
+    vscode.window.showInformationMessage('Toolkit: need at least two responses in history to diff.')
+    return
+  }
+  const first = await vscode.window.showQuickPick(historyQuickPickItems(history), {
+    placeHolder: 'Diff: pick the first response'
+  })
+  if (!first) {
+    return
+  }
+  const rest = history.filter(e => e.id !== first.entry.id)
+  const second = await vscode.window.showQuickPick(historyQuickPickItems(rest), {
+    placeHolder: 'Diff: pick the second response'
+  })
+  if (!second) {
+    return
+  }
+  // Diff oldest → newest so additions read as "what changed since".
+  const [older, newer] =
+    first.entry.timestamp <= second.entry.timestamp
+      ? [first.entry, second.entry]
+      : [second.entry, first.entry]
+  await vscode.commands.executeCommand(
+    'vscode.diff',
+    historyUri(older),
+    historyUri(newer),
+    `REST history: ${older.method} ${older.status} ↔ ${newer.method} ${newer.status}`
+  )
+}
+
+async function clearHistory(): Promise<void> {
+  if (getHistory().length === 0) {
+    vscode.window.showInformationMessage('Toolkit: REST Client history is already empty.')
+    return
+  }
+  await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, [])
+  vscode.window.showInformationMessage('Toolkit: REST Client response history cleared.')
+}
+
+/* -------------------------------------------------------------------------- */
 /*  CodeLens                                                                  */
 /* -------------------------------------------------------------------------- */
 
@@ -215,27 +456,39 @@ const inflight: Set<AbortController> = new Set()
 async function executeRequest(
   req: HttpRequest,
   variables: Record<string, string>,
-  config: RestClientConfig
+  config: RestClientConfig,
+  baseDir: string,
+  opts: InterpolateOptions,
+  token?: vscode.CancellationToken
 ): Promise<{
   status: number
   statusText: string
   headers: Array<{ name: string; value: string }>
   body: string
   durationMs: number
+  url: string
 }> {
-  const url = interpolate(req.url, variables, { nextUuid: () => randomUUID() })
+  const url = interpolate(req.url, variables, opts)
   const headers: Record<string, string> = {}
   for (const h of req.headers) {
-    headers[h.name] = interpolate(h.value, variables, { nextUuid: () => randomUUID() })
+    headers[h.name] = interpolate(h.value, variables, opts)
   }
-  let body: string | undefined
-  if (req.body && req.body.length > 0) {
-    body = interpolate(req.body, variables, { nextUuid: () => randomUUID() })
-  }
+  const { body } = await resolveBody(req, variables, opts, baseDir)
 
   const controller = new AbortController()
   inflight.add(controller)
-  const timer = config.timeoutMs > 0 ? setTimeout(() => controller.abort(), config.timeoutMs) : null
+  // A timeout and a user cancellation both abort the same controller; the flag
+  // lets the catch below tell them apart (timeouts are surfaced and recorded;
+  // cancellations are silent).
+  let timedOut = false
+  const timer =
+    config.timeoutMs > 0
+      ? setTimeout(() => {
+          timedOut = true
+          controller.abort()
+        }, config.timeoutMs)
+      : null
+  const cancelSub = token?.onCancellationRequested(() => controller.abort())
   const start = Date.now()
   try {
     const response = await fetch(url, {
@@ -256,12 +509,21 @@ async function executeRequest(
       statusText: response.statusText,
       headers: responseHeaders,
       body: text,
-      durationMs
+      durationMs,
+      url
     }
+  } catch (error) {
+    // Turn a timeout abort into a clear, non-abort error so callers report it
+    // as a real failure (and record it) instead of a silent cancellation.
+    if (timedOut) {
+      throw new Error(`Request timed out after ${config.timeoutMs} ms`)
+    }
+    throw error
   } finally {
     if (timer) {
       clearTimeout(timer)
     }
+    cancelSub?.dispose()
     inflight.delete(controller)
   }
 }
@@ -279,7 +541,17 @@ async function showResponse(
   } else {
     language = inferLanguageFromContentType(findHeader(response.headers, 'content-type'))
   }
-  const doc = await vscode.workspace.openTextDocument({ content: formatted, language })
+  // Read-only virtual document: never dirty, so closing it won't prompt to save.
+  const uri = vscode.Uri.from({
+    scheme: RESPONSE_SCHEME,
+    path: `/${response.status} ${response.statusText}`.trimEnd() + `.${extensionForLanguage(language)}`,
+    query: String(responsePreviewSeq++)
+  })
+  responsePreviewProvider.set(uri, formatted)
+  const doc = await vscode.workspace.openTextDocument(uri)
+  if (doc.languageId !== language) {
+    await vscode.languages.setTextDocumentLanguage(doc, language)
+  }
   await vscode.window.showTextDocument(doc, { preview: false, viewColumn: vscode.ViewColumn.Beside })
 }
 
@@ -288,25 +560,83 @@ async function composeVariables(parsed: ParsedHttpFile, documentUri: vscode.Uri)
   return { ...(await loadEnvironmentVariables(documentUri)), ...variablesAsRecord(parsed) }
 }
 
+/** Reads the `.env` file sitting next to the .http file, for {{$dotenv NAME}}. Empty when absent. */
+async function loadDotenv(documentUri: vscode.Uri): Promise<Record<string, string>> {
+  const envUri = vscode.Uri.file(path.join(path.dirname(documentUri.fsPath), '.env'))
+  try {
+    return parseDotenv(Buffer.from(await vscode.workspace.fs.readFile(envUri)).toString('utf8'))
+  } catch {
+    return {}
+  }
+}
+
+/** Builds the interpolation options shared by execution and curl export. */
+async function buildInterpolateOptions(documentUri: vscode.Uri): Promise<InterpolateOptions> {
+  return {
+    nextUuid: () => randomUUID(),
+    processEnv: process.env,
+    dotenv: await loadDotenv(documentUri)
+  }
+}
+
+/**
+ * Resolves a request body: an inline body is interpolated in place; a
+ * `< path` / `<@ path` directive reads the file (relative to the .http file),
+ * decodes it, and optionally interpolates `{{variables}}` inside it.
+ */
+async function resolveBody(
+  req: HttpRequest,
+  variables: Record<string, string>,
+  opts: InterpolateOptions,
+  baseDir: string
+): Promise<{ body: string | undefined; fileRef: BodyFileRef | null; absolutePath?: string }> {
+  if (!req.body || req.body.length === 0) {
+    return { body: undefined, fileRef: null }
+  }
+  const fileRef = parseBodyFileRef(req.body)
+  if (!fileRef) {
+    return { body: interpolate(req.body, variables, opts), fileRef: null }
+  }
+  const absolutePath = path.isAbsolute(fileRef.path) ? fileRef.path : path.join(baseDir, fileRef.path)
+  const fileUri = vscode.Uri.file(absolutePath)
+  const stat = await vscode.workspace.fs.stat(fileUri)
+  if (stat.size > MAX_RESPONSE_BYTES) {
+    throw new Error(`Body file exceeds ${MAX_RESPONSE_BYTES / (1024 * 1024)} MB — request aborted.`)
+  }
+  let text = Buffer.from(await vscode.workspace.fs.readFile(fileUri)).toString(fileRef.encoding)
+  if (fileRef.interpolateVariables) {
+    text = interpolate(text, variables, opts)
+  }
+  return { body: text, fileRef, absolutePath }
+}
+
 async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<void> {
   const config = readConfig()
   const variables = await composeVariables(parsed, documentUri)
+  const opts = await buildInterpolateOptions(documentUri)
+  const baseDir = path.dirname(documentUri.fsPath)
+  const start = Date.now()
   try {
     const response = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
         title: `${req.method} ${req.url}`,
-        cancellable: false
+        cancellable: true
       },
-      () => executeRequest(req, variables, config)
+      (_progress, token) => executeRequest(req, variables, config, baseDir, opts, token)
     )
+    await recordHistory(response, req.method)
     await showResponse(response, config.previewResponseAs)
   } catch (error) {
+    const message = (error as Error).message
     if ((error as Error).name === 'AbortError') {
       vscode.window.showWarningMessage('Toolkit: request aborted.')
       return
     }
-    vscode.window.showWarningMessage(`Toolkit: request failed — ${(error as Error).message}`)
+    // A failed request (DNS, refused, timeout, …) is still worth keeping in the
+    // history so it can be reviewed or diffed later.
+    await recordFailure(req.method, interpolate(req.url, variables, opts), Date.now() - start, message)
+    vscode.window.showWarningMessage(`Toolkit: request failed — ${message}`)
   }
 }
 
@@ -342,12 +672,32 @@ async function sendByIndex(uriString: string, index: number): Promise<void> {
 
 async function copyCurlFor(req: HttpRequest, parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<void> {
   const variables = await composeVariables(parsed, documentUri)
-  const opts = { nextUuid: () => randomUUID() }
+  const opts = await buildInterpolateOptions(documentUri)
+  const baseDir = path.dirname(documentUri.fsPath)
+
+  // A raw `< path` body maps to curl's `--data @path` (curl reads the file), so
+  // we don't read it ourselves. An interpolated `<@ path` body (and inline
+  // bodies) are resolved to text and inlined.
+  const fileRef = req.body ? parseBodyFileRef(req.body) : null
+  let body = ''
+  let bodyFile: string | undefined
+  if (fileRef && !fileRef.interpolateVariables) {
+    bodyFile = path.isAbsolute(fileRef.path) ? fileRef.path : path.join(baseDir, fileRef.path)
+  } else {
+    try {
+      body = (await resolveBody(req, variables, opts, baseDir)).body ?? ''
+    } catch (error) {
+      vscode.window.showWarningMessage(`Toolkit: could not build curl — ${(error as Error).message}`)
+      return
+    }
+  }
+
   const curl = buildCurl({
     method: req.method,
     url: interpolate(req.url, variables, opts),
     headers: req.headers.map(h => ({ name: h.name, value: interpolate(h.value, variables, opts) })),
-    body: interpolate(req.body, variables, opts)
+    body,
+    bodyFile
   })
   await vscode.env.clipboard.writeText(curl)
   vscode.window.showInformationMessage('Toolkit: curl command copied to the clipboard.')
@@ -409,7 +759,9 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
   extensionContext = context
 
   context.subscriptions.push(
-    vscode.languages.registerCodeLensProvider({ pattern: FILE_GLOB }, new HttpCodeLensProvider())
+    vscode.languages.registerCodeLensProvider({ pattern: FILE_GLOB }, new HttpCodeLensProvider()),
+    vscode.workspace.registerTextDocumentContentProvider(HISTORY_SCHEME, new HistoryContentProvider()),
+    vscode.workspace.registerTextDocumentContentProvider(RESPONSE_SCHEME, responsePreviewProvider)
   )
 
   environmentStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100)
@@ -431,6 +783,9 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
     vscode.commands.registerCommand('toolkit.restClient.copyAsCurl', () => copyAsCurl()),
     vscode.commands.registerCommand('toolkit.restClient.copyAsCurlByIndex', (uri: string, index: number) =>
       copyAsCurlByIndex(uri, index)
-    )
+    ),
+    vscode.commands.registerCommand('toolkit.restClient.showHistory', () => showHistory()),
+    vscode.commands.registerCommand('toolkit.restClient.diffHistory', () => diffHistory()),
+    vscode.commands.registerCommand('toolkit.restClient.clearHistory', () => clearHistory())
   )
 }

@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.14.1",
+  "version": "1.15.0",
   "publisher": "tete",
   "repository": {
     "type": "git",
@@ -21,6 +21,28 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "languages": [
+      {
+        "id": "http",
+        "aliases": [
+          "HTTP",
+          "http",
+          "REST"
+        ],
+        "extensions": [
+          ".http",
+          ".rest"
+        ],
+        "configuration": "./syntaxes/http.language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "http",
+        "scopeName": "source.http",
+        "path": "./syntaxes/http.tmLanguage.json"
+      }
+    ],
     "themes": [
       {
         "label": "Toolkit: Generic Dark Theme",
@@ -773,6 +795,18 @@
         "title": "Toolkit: REST Client - Copy as curl (internal)"
       },
       {
+        "command": "toolkit.restClient.showHistory",
+        "title": "Toolkit: REST Client - Response History..."
+      },
+      {
+        "command": "toolkit.restClient.diffHistory",
+        "title": "Toolkit: REST Client - Diff Two Responses..."
+      },
+      {
+        "command": "toolkit.restClient.clearHistory",
+        "title": "Toolkit: REST Client - Clear Response History"
+      },
+      {
         "command": "toolkit.regexPlayground.open",
         "title": "Toolkit: Open Regex Playground"
       },
@@ -1277,56 +1311,66 @@
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.slugify",
+          "command": "toolkit.restClient.showHistory",
           "group": "0_toolkit@26",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.restClient.diffHistory",
+          "group": "0_toolkit@27",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.slugify",
+          "group": "0_toolkit@28",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.sumNumbers",
-          "group": "0_toolkit@27",
+          "group": "0_toolkit@29",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.toggleCsvRainbow",
-          "group": "0_toolkit@28",
+          "group": "0_toolkit@30",
           "when": "resourceExtname == .csv || resourceExtname == .tsv"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@29"
+          "group": "0_toolkit@31"
         },
         {
           "command": "toolkit.toggleQuotes",
-          "group": "0_toolkit@30"
+          "group": "0_toolkit@32"
         },
         {
           "command": "toolkit.transform.jsonMinify",
-          "group": "0_toolkit@31",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
-        },
-        {
-          "command": "toolkit.transform.jsonPrettify",
-          "group": "0_toolkit@32",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
-        },
-        {
-          "command": "toolkit.transform.jsonSortKeys",
           "group": "0_toolkit@33",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.jsonToYaml",
+          "command": "toolkit.transform.jsonPrettify",
           "group": "0_toolkit@34",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.yamlToJson",
+          "command": "toolkit.transform.jsonSortKeys",
           "group": "0_toolkit@35",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.jsonToYaml",
+          "group": "0_toolkit@36",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.yamlToJson",
+          "group": "0_toolkit@37",
           "when": "editorHasSelection && editorLangId == yaml"
         },
         {
           "command": "toolkit.transform",
-          "group": "0_toolkit@36",
+          "group": "0_toolkit@38",
           "when": "editorHasSelection"
         }
       ]
@@ -2039,6 +2083,11 @@
           "default": "auto",
           "description": "Editor language used to render the response. 'auto' picks one from the Content-Type."
         },
+        "toolkit.restClient.historySize": {
+          "type": "number",
+          "default": 30,
+          "description": "How many recent responses to keep in the per-workspace history (0 disables history)."
+        },
         "toolkit.peekCommit.hover.enabled": {
           "type": "boolean",
           "default": true,
@@ -2151,7 +2200,7 @@
     "@types/node": "^25.9.3",
     "@types/vscode": "^1.120.0",
     "@vscode/vsce": "^3.9.2",
-    "eslint": "^10.4.1",
+    "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
     "mocha": "^11.7.6",
     "pdfjs-dist": "^6.0.227",

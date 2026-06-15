@@ -11,7 +11,13 @@ import {
   inferLanguageFromContentType,
   findHeader,
   findRequestAtLine,
-  tryPrettyJson
+  tryPrettyJson,
+  parseBodyFileRef,
+  parseDotenv,
+  addHistoryEntry,
+  truncateForHistory,
+  describeHistoryEntry,
+  type ResponseHistoryEntry
 } from '../../src/features/rest-client-utils'
 
 describe('parseHttpFile — basic', () => {
@@ -168,6 +174,93 @@ describe('interpolate', () => {
   it('should preserve the original text when the template has no placeholders', () => {
     assert.equal(interpolate('static text', { unused: 'x' }), 'static text')
   })
+
+  it('should resolve $randomInt within the requested range using the injected random', () => {
+    assert.equal(interpolate('{{$randomInt 10 20}}', {}, { random: () => 0 }), '10')
+    assert.equal(interpolate('{{$randomInt 10 20}}', {}, { random: () => 0.999999 }), '20')
+    assert.equal(interpolate('{{$randomInt 10 20}}', {}, { random: () => 0.5 }), '15')
+  })
+
+  it('should clamp $randomInt when max < min', () => {
+    assert.equal(interpolate('{{$randomInt 20 10}}', {}, { random: () => 0.5 }), '20')
+  })
+
+  it('should resolve $processEnv from the injected environment', () => {
+    assert.equal(interpolate('{{$processEnv API_HOST}}', {}, { processEnv: { API_HOST: 'h' } }), 'h')
+    assert.equal(interpolate('{{$processEnv MISSING}}', {}, { processEnv: {} }), '')
+  })
+
+  it('should resolve $dotenv from the injected map', () => {
+    assert.equal(interpolate('{{$dotenv TOKEN}}', {}, { dotenv: { TOKEN: 'secret' } }), 'secret')
+    assert.equal(interpolate('{{$dotenv MISSING}}', {}, { dotenv: {} }), '')
+  })
+
+  it('should resolve $datetime rfc1123 and unix', () => {
+    const now = Date.UTC(2024, 2, 15, 12, 34, 56, 789)
+    assert.equal(interpolate('{{$datetime rfc1123}}', {}, { now }), 'Fri, 15 Mar 2024 12:34:56 GMT')
+    assert.equal(interpolate('{{$datetime unix}}', {}, { now }), String(Math.floor(now / 1000)))
+  })
+
+  it('should apply offsets to $timestamp and $datetime', () => {
+    const now = Date.UTC(2024, 2, 15, 12, 0, 0, 0)
+    assert.equal(interpolate('{{$timestamp -1 d}}', {}, { now }), String(Math.floor(now / 1000) - 86400))
+    assert.equal(interpolate('{{$timestamp 2 h}}', {}, { now }), String(Math.floor(now / 1000) + 7200))
+    assert.equal(interpolate('{{$datetime iso8601 1 d}}', {}, { now }), '2024-03-16T12:00:00.000Z')
+  })
+})
+
+describe('parseBodyFileRef', () => {
+  it('should recognize a raw < file directive', () => {
+    assert.deepEqual(parseBodyFileRef('< ./body.json'), {
+      path: './body.json',
+      interpolateVariables: false,
+      encoding: 'utf-8'
+    })
+  })
+
+  it('should recognize an interpolated <@ file directive', () => {
+    assert.deepEqual(parseBodyFileRef('<@ ./body.json'), {
+      path: './body.json',
+      interpolateVariables: true,
+      encoding: 'utf-8'
+    })
+  })
+
+  it('should honor an explicit encoding on <@', () => {
+    assert.deepEqual(parseBodyFileRef('<@latin1 data.txt'), {
+      path: 'data.txt',
+      interpolateVariables: true,
+      encoding: 'latin1'
+    })
+  })
+
+  it('should fall back to utf-8 for an unknown encoding', () => {
+    assert.equal(parseBodyFileRef('<@bogus data.txt')?.encoding, 'utf-8')
+  })
+
+  it('should not treat inline JSON or XML bodies as file refs', () => {
+    assert.equal(parseBodyFileRef('{"a":1}'), null)
+    assert.equal(parseBodyFileRef('<?xml version="1.0"?>\n<root/>'), null)
+    assert.equal(parseBodyFileRef('<root>hi</root>'), null)
+  })
+
+  it('should reject a directive with no path', () => {
+    assert.equal(parseBodyFileRef('<   '), null)
+  })
+})
+
+describe('parseDotenv', () => {
+  it('should parse KEY=value lines, comments, export, and quotes', () => {
+    const env = parseDotenv(
+      ['# comment', 'TOKEN=abc123', 'export HOST="example.com"', "NAME='Alice'", '', 'EMPTY=', 'bad line'].join('\n')
+    )
+    assert.deepEqual(env, {
+      TOKEN: 'abc123',
+      HOST: 'example.com',
+      NAME: 'Alice',
+      EMPTY: ''
+    })
+  })
 })
 
 describe('inferLanguageFromContentType / findHeader', () => {
@@ -297,5 +390,74 @@ describe('buildCurl / shellQuote', () => {
     assert.equal(shellQuote("it's"), "'it'\\''s'")
     const curl = buildCurl({ method: 'POST', url: 'https://x.test', headers: [], body: "{'a':1}" })
     assert.ok(curl.includes("--data '{'\\''a'\\'':1}'"))
+  })
+
+  it('should send a body file with --data @path', () => {
+    const curl = buildCurl({
+      method: 'POST',
+      url: 'https://api.test/upload',
+      headers: [],
+      body: '',
+      bodyFile: '/abs/path/body.json'
+    })
+    assert.ok(curl.includes("--data '@/abs/path/body.json'"))
+  })
+})
+
+describe('response history', () => {
+  const entry = (id: string, timestamp: number, over: Partial<ResponseHistoryEntry> = {}): ResponseHistoryEntry => ({
+    id,
+    method: 'GET',
+    url: 'https://api.test/x',
+    status: 200,
+    statusText: 'OK',
+    durationMs: 12,
+    timestamp,
+    headers: [],
+    body: '',
+    bodyTruncated: false,
+    ...over
+  })
+
+  it('should prepend newest-first and cap at max', () => {
+    let list: ResponseHistoryEntry[] = []
+    list = addHistoryEntry(list, entry('a', 1), 2)
+    list = addHistoryEntry(list, entry('b', 2), 2)
+    list = addHistoryEntry(list, entry('c', 3), 2)
+    assert.deepEqual(
+      list.map(e => e.id),
+      ['c', 'b']
+    )
+  })
+
+  it('should return an empty list when max is 0 (history disabled)', () => {
+    assert.deepEqual(addHistoryEntry([entry('a', 1)], entry('b', 2), 0), [])
+  })
+
+  it('should truncate a body past the cap and flag it', () => {
+    assert.deepEqual(truncateForHistory('abcdef', 3), { body: 'abc', truncated: true })
+    assert.deepEqual(truncateForHistory('ab', 3), { body: 'ab', truncated: false })
+  })
+
+  it('should describe an entry with status, duration and relative time', () => {
+    const now = 1_000_000
+    const d = describeHistoryEntry(entry('a', now - 60_000, { method: 'POST', durationMs: 42 }), now)
+    assert.equal(d.label, 'POST https://api.test/x')
+    assert.equal(d.description, '200 OK · 42ms · 1 minute ago')
+  })
+
+  it('should note a truncated body in the description', () => {
+    const now = 1_000_000
+    const d = describeHistoryEntry(entry('a', now, { bodyTruncated: true }), now)
+    assert.ok(d.description.includes('body truncated'))
+  })
+
+  it('should describe a failed request with its error instead of a status', () => {
+    const now = 1_000_000
+    const d = describeHistoryEntry(
+      entry('a', now, { status: 0, statusText: 'Request failed', durationMs: 5, error: 'getaddrinfo ENOTFOUND' }),
+      now
+    )
+    assert.equal(d.description, 'Failed: getaddrinfo ENOTFOUND · 5ms · just now')
   })
 })

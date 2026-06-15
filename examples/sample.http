@@ -1,0 +1,48 @@
+# Sample .http file — ordered from the simplest request to the most advanced.
+// Click the "Send Request" / "Copy as curl" CodeLens above each block.
+// (httpbin.org echoes back whatever it receives, so you can see the result.)
+
+@baseUrl = https://httpbin.org
+@token = dev-secret-123
+
+### 1. The simplest request — just a method and a URL
+GET https://httpbin.org/get
+
+### 2. Add a header, and reuse a variable with {{ }}
+GET {{baseUrl}}/get?active=true
+Accept: application/json
+
+### 3. A POST with headers and an inline JSON body
+POST {{baseUrl}}/anything
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Alice",
+  "email": "alice@example.com"
+}
+
+### 4. Built-in variables — generated fresh on every send
+POST {{baseUrl}}/anything
+Content-Type: application/json
+X-Request-Id: {{$randomUUID}}
+
+{
+  "now": "{{$datetime iso8601}}",
+  "rfc1123": "{{$datetime rfc1123}}",
+  "yesterday": {{$timestamp -1 d}},
+  "dice": {{$randomInt 1 6}},
+  "home": "{{$processEnv HOME}}"
+}
+
+### 5. Send a body straight from a file (raw — no interpolation)
+POST {{baseUrl}}/anything
+Content-Type: application/json
+
+< ./payload.json
+
+### 6. Same file, but interpolating {{variables}} inside it before sending
+POST {{baseUrl}}/anything
+Content-Type: application/json
+
+<@ ./payload.json

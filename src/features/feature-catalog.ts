@@ -75,7 +75,8 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Workspace', name: 'Previous Bookmark', shortcut: 'Shift+Alt+F7', command: 'toolkit.bookmarks.previous', description: 'Jump to the previous one' },
   { category: 'Workspace', name: '.env Checker', command: 'toolkit.envCheck.checkWorkspace', description: 'Diagnostics when .env drifts from .env.example, with quick fix' },
   { category: 'Workspace', name: 'TODO Tree', command: 'toolkitTodoTree.focus', description: 'TODO/FIXME/HACK... comments in a sidebar tree, grouped by tag or file' },
-  { category: 'Workspace', name: 'REST Client', command: 'toolkit.restClient.send', description: 'Run .http requests; environments (env.json), variables, copy as curl' },
+  { category: 'Workspace', name: 'REST Client', command: 'toolkit.restClient.send', description: 'Run .http requests; environments (env.json), variables, file bodies, copy as curl' },
+  { category: 'Workspace', name: 'REST Response History', command: 'toolkit.restClient.showHistory', description: 'Reopen or diff recent .http responses (status, timing, body)' },
   { category: 'Workspace', name: 'Regex Playground', command: 'toolkit.regexPlayground.open', description: 'Live regex tester in a panel, safe against catastrophic backtracking' },
 
   // ── Viewers & Appearance ───────────────────────────────
