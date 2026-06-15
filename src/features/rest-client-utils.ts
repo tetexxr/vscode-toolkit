@@ -391,7 +391,7 @@ export function findHeader(headers: HttpHeader[], name: string): string | undefi
   return undefined
 }
 
-export function formatResponse(response: ResponseLike): string {
+export function formatResponse(response: ResponseLike, prettyJson = true): string {
   const httpVersion = response.httpVersion ?? 'HTTP/1.1'
   const lines: string[] = [`${httpVersion} ${response.status} ${response.statusText}`.trimEnd()]
   for (const h of response.headers) {
@@ -403,7 +403,8 @@ export function formatResponse(response: ResponseLike): string {
   const contentType = findHeader(response.headers, 'content-type') ?? ''
   const lang = inferLanguageFromContentType(contentType)
   let body = response.body
-  if (lang === 'json' && body.trim().length > 0) {
+  // Pretty-printing buffers a second copy and re-parses; skip it for huge bodies.
+  if (prettyJson && lang === 'json' && body.trim().length > 0) {
     body = tryPrettyJson(body)
   }
   lines.push(body)
@@ -625,17 +626,6 @@ export function historyEntryTiming(entry: ResponseHistoryEntry, now: number = Da
   return `${entry.durationMs}ms · ${when}${entry.bodyTruncated ? ' · body truncated' : ''}`
 }
 
-/** Quick-pick label + description for a history entry (e.g. `200 OK · 123ms · 2 minutes ago`). */
-export function describeHistoryEntry(
-  entry: ResponseHistoryEntry,
-  now: number = Date.now()
-): { label: string; description: string } {
-  return {
-    label: `${entry.method} ${entry.url}`,
-    description: `${historyStatusLabel(entry)} · ${historyEntryTiming(entry, now)}`
-  }
-}
-
 /** One endpoint (method + final URL) with all of its responses, newest first. */
 export interface RequestGroup {
   /** Stable group key: `${method} ${url}`. */
@@ -735,6 +725,30 @@ export function summarizeGroupStatuses(entries: ResponseHistoryEntry[]): string 
   return [...counts.entries()].map(([status, count]) => `${count}×${status}`).join(' ')
 }
 
+/**
+ * Immediate children of a directory within a flat list of workspace-relative
+ * file paths, for the Requests view's folder-tree mode. `prefix` is the parent
+ * directory ('' for the root). Returns the immediate sub-directory paths and the
+ * file paths that sit directly in `prefix`, both sorted.
+ */
+export function directoryChildren(relPaths: string[], prefix: string): { dirs: string[]; files: string[] } {
+  const prefixSegs = prefix ? prefix.split('/') : []
+  const dirs = new Set<string>()
+  const files: string[] = []
+  for (const rel of relPaths) {
+    if (prefix && !rel.startsWith(prefix + '/')) {
+      continue
+    }
+    const rest = rel.split('/').slice(prefixSegs.length)
+    if (rest.length === 1) {
+      files.push(rel)
+    } else if (rest.length > 1) {
+      dirs.add([...prefixSegs, rest[0]].join('/'))
+    }
+  }
+  return { dirs: [...dirs].sort(), files: files.sort() }
+}
+
 /** Tree label + description for a request node in the Requests view. */
 export function describeRequestNode(request: HttpRequest): { label: string; description: string } {
   // The parser names unnamed blocks "Request N"; for those, lead with method+URL.
@@ -806,12 +820,18 @@ const DETAIL_STYLES = `
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 16px 24px; }
   .topbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 14px 0 10px; z-index: 1; }
   .reqline { font-family: var(--vscode-editor-font-family); font-size: 13px; word-break: break-all; margin-bottom: 8px; }
-  .method { font-weight: 600; margin-right: 6px; }
+  .method { display: inline-block; font-weight: 600; font-size: 11px; margin-right: 8px; padding: 3px 8px; border-radius: 4px; color: #fff; background: var(--vscode-badge-background, #4d4d4d); vertical-align: middle; }
+  .method-POST { background: #6a9955; color: #000; }
+  .method-PUT { background: #d9822b; }
+  .method-PATCH { background: var(--vscode-charts-yellow, #cca700); color: #000; }
+  .method-DELETE { background: var(--vscode-charts-red, #f14c4c); }
+  .method-OPTIONS { background: var(--vscode-charts-blue, #3794ff); }
+  .method-HEAD { background: var(--vscode-charts-blue, #3794ff); }
   .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 12px; color: #fff; }
-  .badge.success { background: var(--vscode-testing-iconPassed, #2ea043); }
+  .badge.success { background: #82b541; }
   .badge.redirect { background: var(--vscode-charts-blue, #3794ff); }
   .badge.clientError { background: var(--vscode-charts-yellow, #cca700); color: #000; }
-  .badge.serverError, .badge.failed { background: var(--vscode-charts-red, #f14c4c); }
+  .badge.serverError, .badge.failed { background: #d9605a; }
   .badge.pending { background: var(--vscode-charts-blue, #3794ff); }
   .dot { animation: pulse 1s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
@@ -821,6 +841,7 @@ const DETAIL_STYLES = `
   .retry-row { margin-top: 8px; align-items: center; }
   .retry-label { color: var(--vscode-descriptionForeground); font-size: 12px; margin-right: 2px; }
   .elapsed { color: var(--vscode-descriptionForeground); font-size: 12px; margin-left: 8px; font-variant-numeric: tabular-nums; }
+  .truncated { color: var(--vscode-charts-yellow, #cca700); font-size: 12px; margin-top: 10px; padding: 6px 10px; border-left: 3px solid var(--vscode-charts-yellow, #cca700); background: var(--vscode-textBlockQuote-background, rgba(255,255,255,.04)); }
   button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; }
   button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
   button:hover { background: var(--vscode-button-hoverBackground); }
@@ -877,6 +898,14 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
 
   const bodyData = embedJsonInScript({ pretty, raw: entry.body })
 
+  // The history stores at most ~1 MB per response; flag when what's shown is clipped.
+  const shownSize = formatBytes(Buffer.byteLength(entry.body, 'utf-8'))
+  const truncatedNote = entry.bodyTruncated
+    ? `<p class="truncated">⚠ Response truncated — showing the first ${escapeHtml(shownSize)}${
+        entry.bodyBytes ? ` of ${escapeHtml(formatBytes(entry.bodyBytes))}` : ''
+      }. The history keeps up to ~1&nbsp;MB per response.</p>`
+    : ''
+
   // On timeout, offer one-click retries at preset timeouts (no incremental ramp).
   const retryRow = entry.timedOut
     ? `<div class="actions retry-row"><span class="retry-label">Retry with:</span>${RETRY_TIMEOUT_PRESETS.map(
@@ -885,7 +914,7 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
     : ''
 
   const bodyHtml = `  <div class="topbar">
-    <div class="reqline"><span class="method">${escapeHtml(entry.method)}</span>${escapeHtml(entry.url)}</div>
+    <div class="reqline"><span class="method method-${escapeHtml(entry.method)}">${escapeHtml(entry.method)}</span>${escapeHtml(entry.url)}</div>
     <span class="badge ${kind}">${escapeHtml(statusText)}</span>
     <div class="meta">${escapeHtml(meta)}</div>
     <div class="actions">
@@ -902,7 +931,8 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
   <table>${headerRows(entry.headers)}</table>
   ${requestSectionHtml(entry.requestHeaders, entry.requestBody, false)}
   <h3>Body</h3>
-  <pre id="body"></pre>`
+  <pre id="body"></pre>
+  ${truncatedNote}`
 
   const scriptBody = `
     const vscode = acquireVsCodeApi();
@@ -952,7 +982,7 @@ export function buildPendingDetailHtml(request: PendingRequest, opts: DetailHtml
   const actions = cancelled ? '' : `<div class="actions pending"><button id="cancel">Cancel</button></div>`
 
   const bodyHtml = `  <div class="topbar">
-    <div class="reqline"><span class="method">${escapeHtml(request.method)}</span>${escapeHtml(request.url)}</div>
+    <div class="reqline"><span class="method method-${escapeHtml(request.method)}">${escapeHtml(request.method)}</span>${escapeHtml(request.url)}</div>
     ${badge}
     ${actions}
   </div>

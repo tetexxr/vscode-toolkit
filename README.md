@@ -1293,8 +1293,6 @@ Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send
 | Cancel Pending Requests | Abort any requests currently in flight (a single in-flight request can also be cancelled from its progress notification) |
 | REST Client - Select Environment... | Pick the active environment from `http-client.env.json` (also via the status bar item) |
 | REST Client - Copy as curl | Copy the request under the cursor as a `curl` command, with all variables resolved (also a CodeLens next to each Send Request) |
-| REST Client - Response History... | Pick a recent response to reopen it in an editor |
-| REST Client - Diff Two Responses... | Pick two recent responses and open them in a diff editor |
 | REST Client - Clear Response History | Empty the per-workspace history |
 
 All of these are also available from the **editor context menu** when right-clicking inside a `.http` / `.rest` file.
@@ -1312,7 +1310,7 @@ The **REST Client** container in the activity bar has a **Requests** section tha
 
 The **REST Client** container in the activity bar holds a **Response History** tree — a more visual alternative to the picker. By default responses are **grouped by request** (method + final URL), so repeated calls to the same endpoint collapse together instead of appearing interleaved; the just-used endpoint floats to the top. Each group shows a status breakdown (`2×200 1×500`), and each response shows a **color-coded status icon** (green 2xx, blue 3xx, yellow 4xx, red 5xx / failed), its duration, size and a relative timestamp.
 
-- **Click** a response to open it in the **detail panel** (the default; switch to a reused text editor with `toolkit.restClient.history.clickAction`). The picker (**Response History...**) opens the same way.
+- **Click** a response to open it in the **detail panel** (the default; switch to a reused text editor with `toolkit.restClient.history.clickAction`).
 - **Inline icons** (on hover): re-send the request, diff against the previous call to the same endpoint, or delete the entry.
 - **Right-click** for more: open in the detail panel or as text, **re-send**, **go to source request**, **copy as curl / body / URL**, or **save the body to a file**.
 - **Filter** (funnel icon in the view title): type method / URL / status terms (space-separated terms are AND-ed, e.g. `POST users` or `500`); a banner shows the active filter and the funnel turns filled — click it to clear. The filter is remembered per workspace.
@@ -1350,7 +1348,7 @@ Authorization: Bearer {{token}}
 - `@name = value` defines a variable scoped to the file.
 - `{{name}}` interpolates a variable in the URL, headers or body.
 - Lines starting with a single `#` (or `//`) are comments.
-- Response bodies are capped at 50 MB; larger responses abort with an error.
+- Responses under 48 MB render normally; larger ones open as plain text in an editor (from a temp file, since VS Code can't show bigger virtual documents). The hard cap is 256 MB — beyond that the request is aborted.
 
 **File bodies:**
 
@@ -1367,7 +1365,7 @@ Content-Type: application/json
 - `< path` sends the file's raw bytes — no interpolation.
 - `<@ path` interpolates `{{variables}}` inside the file before sending.
 - `<@encoding path` decodes the file with an explicit encoding (`utf-8`, `latin1`, `ascii`, `utf16le`, `base64`, `hex`); defaults to `utf-8`.
-- Body files are capped at 50 MB. **Copy as curl** maps a raw `< path` body to curl's `--data @path`.
+- Body files are capped at 256 MB. **Copy as curl** maps a raw `< path` body to curl's `--data @path`.
 
 > Runnable examples live in [`examples/sample.http`](examples/sample.http) (mirrors the docs above, against httpbin.org) and [`examples/playground.http`](examples/playground.http) (against the more reliable postman-echo.com / httpbingo.org, including error and slow-response requests). Both share [`examples/payload.json`](examples/payload.json) for the file-body requests — open one and click **Send Request**.
 
@@ -1409,9 +1407,7 @@ The **Copy as curl** CodeLens next to each request's Send Request (or the comman
 
 Every request you send is kept in a per-workspace history (newest first). Each request (method + URL) keeps its own most-recent responses — up to `toolkit.restClient.historySizePerRequest` (default 30) — so a busy endpoint never evicts the others; `toolkit.restClient.historySize` (default 500) is an overall safety cap. This includes HTTP error responses (4xx/5xx are normal responses) **and** requests that never got a response at all — DNS failures, refused connections, timeouts — which are recorded as *Failed* entries with the error message as their body.
 
-- **REST Client - Response History...** lists recent requests — each showing method, URL, status (or the failure), duration and how long ago it ran. A 4xx/5xx is flagged with a warning icon and a network failure with an error icon. Pick one to reopen it in an editor.
-- **REST Client - Diff Two Responses...** lets you pick two entries and opens them side by side in a diff editor (oldest → newest), so you can spot what changed between two runs of the same request.
-- **REST Client - Clear Response History** empties it.
+Browse it in the **Response History** view (see above): each entry shows method, URL, status (or the failure), duration and how long ago it ran, with a color-coded icon. From there you can reopen it, **diff it against the previous call to the same endpoint**, re-send, copy, or delete it. **REST Client - Clear Response History** empties the whole history.
 
 Bodies are stored capped at ~1 MB per entry to keep the workspace state small; entries whose body was clipped are marked *body truncated*. Set `historySizePerRequest` (or `historySize`) to `0` to disable history entirely. (Requests you cancel yourself are not recorded.)
 

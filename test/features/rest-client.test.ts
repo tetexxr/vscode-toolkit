@@ -16,7 +16,6 @@ import {
   parseDotenv,
   addHistoryEntry,
   truncateForHistory,
-  describeHistoryEntry,
   groupHistoryByRequest,
   historyStatusKind,
   formatBytes,
@@ -27,6 +26,7 @@ import {
   buildResponseDetailHtml,
   buildPendingDetailHtml,
   describeRequestNode,
+  directoryChildren,
   type ResponseHistoryEntry
 } from '../../src/features/rest-client-utils'
 
@@ -475,28 +475,6 @@ describe('response history', () => {
     assert.deepEqual(truncateForHistory('ab', 3), { body: 'ab', truncated: false })
   })
 
-  it('should describe an entry with status, duration and relative time', () => {
-    const now = 1_000_000
-    const d = describeHistoryEntry(entry('a', now - 60_000, { method: 'POST', durationMs: 42 }), now)
-    assert.equal(d.label, 'POST https://api.test/x')
-    assert.equal(d.description, '200 OK · 42ms · 1 minute ago')
-  })
-
-  it('should note a truncated body in the description', () => {
-    const now = 1_000_000
-    const d = describeHistoryEntry(entry('a', now, { bodyTruncated: true }), now)
-    assert.ok(d.description.includes('body truncated'))
-  })
-
-  it('should describe a failed request with its error instead of a status', () => {
-    const now = 1_000_000
-    const d = describeHistoryEntry(
-      entry('a', now, { status: 0, statusText: 'Request failed', durationMs: 5, error: 'getaddrinfo ENOTFOUND' }),
-      now
-    )
-    assert.equal(d.description, 'Failed: getaddrinfo ENOTFOUND · 5ms · just now')
-  })
-
   it('should group entries by method + url, keeping each group newest-first', () => {
     const history = [
       entry('c', 3, { method: 'GET', url: 'https://api.test/users' }),
@@ -744,5 +722,84 @@ describe('buildResponseDetailHtml — timeout retries', () => {
     // The .retry-row class lives in the stylesheet; the actual buttons (data-ms / label) must not.
     assert.ok(!html.includes('data-ms='))
     assert.ok(!html.includes('Retry with:'))
+  })
+})
+
+describe('buildResponseDetailHtml — method color', () => {
+  const make = (method) =>
+    buildResponseDetailHtml(
+      {
+        id: 'a', method, url: 'https://api.test/x', status: 200, statusText: 'OK',
+        durationMs: 1, timestamp: 1, headers: [], body: '', bodyTruncated: false
+      },
+      { cspSource: 'vscode-resource:', nonce: 'n' }
+    )
+
+  it('should tag the method span with a per-method class', () => {
+    assert.ok(make('POST').includes('class="method method-POST"'))
+    assert.ok(make('DELETE').includes('class="method method-DELETE"'))
+    assert.ok(make('GET').includes('class="method method-GET"'))
+  })
+
+  it('should define color rules for the common methods', () => {
+    const html = make('GET')
+    for (const m of ['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']) {
+      assert.ok(html.includes(`.method-${m} {`), `missing color rule for ${m}`)
+    }
+  })
+})
+
+describe('directoryChildren', () => {
+  const paths = [
+    'http/adevinta/fotocasa.http',
+    'http/adevinta/search.http',
+    'http/last-app/requests.http',
+    'http/readme.http',
+    'top.http'
+  ]
+
+  it('should list top-level dirs and files at the root', () => {
+    const { dirs, files } = directoryChildren(paths, '')
+    assert.deepEqual(dirs, ['http'])
+    assert.deepEqual(files, ['top.http'])
+  })
+
+  it('should list immediate children of a sub-directory', () => {
+    const { dirs, files } = directoryChildren(paths, 'http')
+    assert.deepEqual(dirs, ['http/adevinta', 'http/last-app'])
+    assert.deepEqual(files, ['http/readme.http'])
+  })
+
+  it('should list files inside a leaf directory', () => {
+    const { dirs, files } = directoryChildren(paths, 'http/adevinta')
+    assert.deepEqual(dirs, [])
+    assert.deepEqual(files, ['http/adevinta/fotocasa.http', 'http/adevinta/search.http'])
+  })
+
+  it('should not match sibling prefixes', () => {
+    const { files } = directoryChildren(['app/a.http', 'app-2/b.http'], 'app')
+    assert.deepEqual(files, ['app/a.http'])
+  })
+})
+
+describe('buildResponseDetailHtml — truncation note', () => {
+  const make = (over) =>
+    buildResponseDetailHtml(
+      {
+        id: 'a', method: 'GET', url: 'https://api.test/x', status: 200, statusText: 'OK',
+        durationMs: 1, timestamp: 1, headers: [], body: 'abc', bodyTruncated: false, ...over
+      },
+      { cspSource: 'vscode-resource:', nonce: 'n' }
+    )
+
+  it('should show a truncation note when the body was clipped', () => {
+    const html = make({ bodyTruncated: true, bodyBytes: 5_000_000 })
+    assert.ok(html.includes('class="truncated"'))
+    assert.ok(html.includes('Response truncated'))
+    assert.ok(html.includes('4.8 MB')) // 5_000_000 bytes ≈ 4.8 MB
+  })
+
+  it('should not show the note for a complete body', () => {
+    assert.ok(!make({ bodyTruncated: false }).includes('class="truncated"'))
   })
 })

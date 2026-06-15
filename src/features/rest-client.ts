@@ -1,16 +1,17 @@
 import * as vscode from 'vscode'
 import { randomUUID } from 'node:crypto'
+import * as os from 'node:os'
 import * as path from 'node:path'
 import {
   addHistoryEntry,
   buildCurl,
-  describeHistoryEntry,
   environmentNames,
   findHeader,
   findRequestAtLine,
   buildPendingDetailHtml,
   buildResponseDetailHtml,
   describeRequestNode,
+  directoryChildren,
   filterHistory,
   formatBytes,
   formatResponse,
@@ -41,8 +42,12 @@ import {
 
 const FILE_GLOB = '**/*.{http,rest}'
 
-/** Hard cap on buffered response bodies (mirrors utils/http.ts). */
-const MAX_RESPONSE_BYTES = 50 * 1024 * 1024
+/**
+ * Hard cap on buffered response bodies. Kept under V8's ~512 MB max string size
+ * so the body can still be held as a single string. Above this the request is
+ * aborted; bodies above LARGE_RESPONSE_BYTES open as plain text from a temp file.
+ */
+const MAX_RESPONSE_BYTES = 256 * 1024 * 1024
 
 /** Reads the response body as text, aborting if it exceeds the cap. */
 async function readBodyCapped(response: Response): Promise<string> {
@@ -415,72 +420,6 @@ function extensionForLanguage(language: string): string {
     default:
       return 'txt'
   }
-}
-
-type HistoryItem = vscode.QuickPickItem & { entry: ResponseHistoryEntry }
-
-function historyIcon(entry: ResponseHistoryEntry): string {
-  if (entry.error) {
-    return '$(error)'
-  }
-  if (entry.status >= 400) {
-    return '$(warning)'
-  }
-  return '$(arrow-small-right)'
-}
-
-function historyQuickPickItems(history: ResponseHistoryEntry[]): HistoryItem[] {
-  return history.map(entry => {
-    const { label, description } = describeHistoryEntry(entry)
-    return { label: `${historyIcon(entry)} ${label}`, description, entry }
-  })
-}
-
-async function showHistory(): Promise<void> {
-  const history = getHistory()
-  if (history.length === 0) {
-    vscode.window.showInformationMessage('Toolkit: no REST Client response history yet.')
-    return
-  }
-  const picked = await vscode.window.showQuickPick(historyQuickPickItems(history), {
-    placeHolder: 'REST Client — response history (pick one to reopen)'
-  })
-  if (!picked) {
-    return
-  }
-  await openEntryPreferred(picked.entry)
-}
-
-async function diffHistory(): Promise<void> {
-  const history = getHistory()
-  if (history.length < 2) {
-    vscode.window.showInformationMessage('Toolkit: need at least two responses in history to diff.')
-    return
-  }
-  const first = await vscode.window.showQuickPick(historyQuickPickItems(history), {
-    placeHolder: 'Diff: pick the first response'
-  })
-  if (!first) {
-    return
-  }
-  const rest = history.filter(e => e.id !== first.entry.id)
-  const second = await vscode.window.showQuickPick(historyQuickPickItems(rest), {
-    placeHolder: 'Diff: pick the second response'
-  })
-  if (!second) {
-    return
-  }
-  // Diff oldest → newest so additions read as "what changed since".
-  const [older, newer] =
-    first.entry.timestamp <= second.entry.timestamp
-      ? [first.entry, second.entry]
-      : [second.entry, first.entry]
-  await vscode.commands.executeCommand(
-    'vscode.diff',
-    historyUri(older),
-    historyUri(newer),
-    `REST history: ${older.method} ${older.status} ↔ ${newer.method} ${newer.status}`
-  )
 }
 
 async function clearHistory(): Promise<void> {
@@ -918,9 +857,25 @@ async function diffHistoryWithPrevious(node: HistoryNode | undefined): Promise<v
 const FILES_VIEW_ID = 'toolkitRestFiles'
 /** Folders never worth scanning for .http files. */
 const FILES_EXCLUDE_GLOB = '**/{node_modules,.git,dist,out,build,bin,obj,.vs,.next,coverage}/**'
+const FILES_GROUP_BY_KEY = 'toolkit.restClient.files.groupBy'
+const FILES_GROUP_BY_CONTEXT = 'toolkitRestFilesGroupBy'
 
-/** A discovered .http/.rest file, or one of the requests parsed from it. */
+/** `flat` is a plain file list; `tree` mirrors the folder structure. */
+type FilesGroupBy = 'flat' | 'tree'
+
+function filesGroupBy(): FilesGroupBy {
+  return extensionContext?.workspaceState.get<FilesGroupBy>(FILES_GROUP_BY_KEY, 'tree') ?? 'tree'
+}
+
+async function setFilesGroupBy(mode: FilesGroupBy): Promise<void> {
+  await extensionContext?.workspaceState.update(FILES_GROUP_BY_KEY, mode)
+  await vscode.commands.executeCommand('setContext', FILES_GROUP_BY_CONTEXT, mode)
+  filesProvider?.refresh()
+}
+
+/** A folder (tree mode), a discovered .http/.rest file, or a request parsed from one. */
 type FileNode =
+  | { kind: 'dir'; relPath: string }
   | { kind: 'file'; uri: vscode.Uri }
   | { kind: 'request'; uri: vscode.Uri; index: number; request: HttpRequest }
 
@@ -928,9 +883,12 @@ class RestFilesTreeProvider implements vscode.TreeDataProvider<FileNode> {
   private emitter = new vscode.EventEmitter<FileNode | undefined | null | void>()
   readonly onDidChangeTreeData = this.emitter.event
   private files: vscode.Uri[] = []
+  /** workspace-relative path → file URI, for folder-tree lookups. */
+  private byRelPath = new Map<string, vscode.Uri>()
 
   setFiles(files: vscode.Uri[]): void {
     this.files = files
+    this.byRelPath = new Map(files.map(uri => [vscode.workspace.asRelativePath(uri, false), uri]))
     this.emitter.fire()
   }
 
@@ -940,11 +898,19 @@ class RestFilesTreeProvider implements vscode.TreeDataProvider<FileNode> {
   }
 
   getTreeItem(node: FileNode): vscode.TreeItem {
+    if (node.kind === 'dir') {
+      const item = new vscode.TreeItem(path.basename(node.relPath), vscode.TreeItemCollapsibleState.Expanded)
+      item.resourceUri = vscode.Uri.file(node.relPath)
+      item.iconPath = vscode.ThemeIcon.Folder
+      item.contextValue = 'restDir'
+      return item
+    }
     if (node.kind === 'file') {
       const item = new vscode.TreeItem(path.basename(node.uri.fsPath), vscode.TreeItemCollapsibleState.Collapsed)
+      // In flat mode the folder is the useful hint; in tree mode it's redundant.
       const rel = vscode.workspace.asRelativePath(node.uri, false)
       const dir = path.dirname(rel)
-      item.description = dir === '.' ? '' : dir
+      item.description = filesGroupBy() === 'flat' && dir !== '.' ? dir : ''
       item.resourceUri = node.uri
       item.iconPath = vscode.ThemeIcon.File
       item.tooltip = node.uri.fsPath
@@ -972,7 +938,10 @@ class RestFilesTreeProvider implements vscode.TreeDataProvider<FileNode> {
 
   async getChildren(node?: FileNode): Promise<FileNode[]> {
     if (!node) {
-      return this.files.map<FileNode>(uri => ({ kind: 'file', uri }))
+      return filesGroupBy() === 'tree' ? this.dirChildren('') : this.files.map<FileNode>(uri => ({ kind: 'file', uri }))
+    }
+    if (node.kind === 'dir') {
+      return this.dirChildren(node.relPath)
     }
     if (node.kind === 'file') {
       try {
@@ -984,6 +953,15 @@ class RestFilesTreeProvider implements vscode.TreeDataProvider<FileNode> {
       }
     }
     return []
+  }
+
+  /** Folders then files immediately under `prefix` (tree mode). */
+  private dirChildren(prefix: string): FileNode[] {
+    const { dirs, files } = directoryChildren([...this.byRelPath.keys()], prefix)
+    return [
+      ...dirs.map<FileNode>(relPath => ({ kind: 'dir', relPath })),
+      ...files.map<FileNode>(rel => ({ kind: 'file', uri: this.byRelPath.get(rel) as vscode.Uri }))
+    ]
   }
 }
 
@@ -1161,10 +1139,24 @@ interface ShowResponseOptions {
   preserveFocus?: boolean
 }
 
-async function showResponse(
-  response: FetchResult,
-  options: ShowResponseOptions
-): Promise<void> {
+/**
+ * A response at/above this is "large": shown as plain text from a real temp file
+ * (no JSON pretty-print). Kept under VS Code's ~50 MB limit for extension-provided
+ * virtual documents, which is the technical reason a temp file is needed.
+ */
+const LARGE_RESPONSE_BYTES = 48 * 1024 * 1024
+
+function isLargeResponse(response: FetchResult): boolean {
+  return Buffer.byteLength(response.body, 'utf-8') >= LARGE_RESPONSE_BYTES
+}
+
+async function showResponse(response: FetchResult, options: ShowResponseOptions): Promise<void> {
+  // Large bodies: skip pretty-print (expensive) and open from a real temp file,
+  // since a virtual document can't exceed VS Code's ~50 MB sync limit.
+  if (isLargeResponse(response)) {
+    await openResponseInTempFile(formatResponse(response, false), options)
+    return
+  }
   const formatted = formatResponse(response)
   let language: string
   if (options.previewResponseAs === 'raw') {
@@ -1192,6 +1184,23 @@ async function showResponse(
     preserveFocus: options.preserveFocus ?? false,
     viewColumn: vscode.ViewColumn.Beside
   })
+}
+
+/**
+ * Writes a large response to a temp file and opens it via the `vscode.open`
+ * command. We deliberately avoid `openTextDocument`/`showTextDocument`: those
+ * sync the document to the extension host, which VS Code refuses above ~50 MB.
+ * `vscode.open` shows the file in the editor (with its own large-file handling)
+ * without that sync, so big bodies open fine.
+ */
+async function openResponseInTempFile(content: string, options: ShowResponseOptions): Promise<void> {
+  const file = vscode.Uri.file(path.join(os.tmpdir(), `toolkit-rest-${randomUUID()}.txt`))
+  await vscode.workspace.fs.writeFile(file, Buffer.from(content, 'utf-8'))
+  await vscode.commands.executeCommand('vscode.open', file, {
+    viewColumn: vscode.ViewColumn.Beside,
+    preview: options.preview ?? false,
+    preserveFocus: options.preserveFocus ?? false
+  } satisfies vscode.TextDocumentShowOptions)
 }
 
 async function composeVariables(parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<Record<string, string>> {
@@ -1268,7 +1277,7 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
 /**
  * How a freshly-sent response is shown:
  * - `live` opens the full response as text (used by Send Request — immediate,
- *   not body-capped, with native highlighting/find).
+ *   with native highlighting/find).
  * - `preferred` opens the recorded entry per the history click action (panel or
  *   editor), so re-sending from the history reuses the same surface.
  */
@@ -1305,13 +1314,23 @@ async function sendResolved(
       (_progress, token) => performFetch(resolved, config, token)
     )
     const entry = await recordHistory(response, resolved, source, config)
-    if (showInPanel) {
+    if (isLargeResponse(response)) {
+      // The panel only renders the truncated history entry, so the full large body
+      // would otherwise be lost: open it (plain text, temp file) instead.
+      if (detailPanel && detailEntryId === undefined) {
+        detailPanel.dispose() // drop the now-stale pending panel
+      }
+      await showResponse(response, { previewResponseAs: config.previewResponseAs })
+      vscode.window.showInformationMessage(
+        `Toolkit: large response (${formatBytes(Buffer.byteLength(response.body, 'utf-8'))}) opened as plain text.`
+      )
+    } else if (showInPanel) {
       showDetailPanel(entry)
     } else if (display === 'preferred') {
       // Re-send into the editor (history click action is "editor").
       await openEntryPreferred(entry)
     } else {
-      // Editor mode: show the live, full (non-capped) response with native highlighting.
+      // Editor mode: show the live, full response with native highlighting.
       await showResponse(response, { previewResponseAs: config.previewResponseAs })
     }
   } catch (error) {
@@ -1519,6 +1538,7 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
   // until the view is first shown, and kept in sync with a file-system watcher.
   filesProvider = new RestFilesTreeProvider()
   const filesView = vscode.window.createTreeView<FileNode>(FILES_VIEW_ID, { treeDataProvider: filesProvider })
+  void vscode.commands.executeCommand('setContext', FILES_GROUP_BY_CONTEXT, filesGroupBy())
   const filesWatcher = vscode.workspace.createFileSystemWatcher(FILE_GLOB)
   context.subscriptions.push(
     filesView,
@@ -1559,8 +1579,6 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
     vscode.commands.registerCommand('toolkit.restClient.copyAsCurlByIndex', (uri: string, index: number) =>
       copyAsCurlByIndex(uri, index)
     ),
-    vscode.commands.registerCommand('toolkit.restClient.showHistory', () => showHistory()),
-    vscode.commands.registerCommand('toolkit.restClient.diffHistory', () => diffHistory()),
     vscode.commands.registerCommand('toolkit.restClient.clearHistory', () => clearHistory()),
     vscode.commands.registerCommand('toolkit.restClient.history.open', (id: string) => openHistoryEntry(id)),
     vscode.commands.registerCommand('toolkit.restClient.history.refresh', () => historyProvider?.refresh()),
@@ -1609,6 +1627,8 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
       return entry ? goToHistorySource(entry) : undefined
     }),
     vscode.commands.registerCommand('toolkit.restClient.files.refresh', () => scanRestFiles()),
+    vscode.commands.registerCommand('toolkit.restClient.files.groupByFlat', () => setFilesGroupBy('flat')),
+    vscode.commands.registerCommand('toolkit.restClient.files.groupByTree', () => setFilesGroupBy('tree')),
     vscode.commands.registerCommand('toolkit.restClient.files.create', () => createRequestFile()),
     vscode.commands.registerCommand('toolkit.restClient.files.sendRequest', (node?: FileNode) => {
       if (node?.kind === 'request') {

@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.15.1",
+  "version": "1.15.2",
   "publisher": "tete",
   "repository": {
     "type": "git",
@@ -820,14 +820,6 @@
         "title": "Toolkit: REST Client - Copy as curl (internal)"
       },
       {
-        "command": "toolkit.restClient.showHistory",
-        "title": "Toolkit: REST Client - Response History..."
-      },
-      {
-        "command": "toolkit.restClient.diffHistory",
-        "title": "Toolkit: REST Client - Diff Two Responses..."
-      },
-      {
         "command": "toolkit.restClient.clearHistory",
         "title": "Toolkit: REST Client - Clear Response History",
         "icon": "$(clear-all)"
@@ -909,6 +901,16 @@
         "command": "toolkit.restClient.files.refresh",
         "title": "Toolkit: REST Client - Refresh Requests",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.restClient.files.groupByFlat",
+        "title": "Toolkit: REST Client - Show Requests as Flat List",
+        "icon": "$(list-flat)"
+      },
+      {
+        "command": "toolkit.restClient.files.groupByTree",
+        "title": "Toolkit: REST Client - Show Requests as Folder Tree",
+        "icon": "$(list-tree)"
       },
       {
         "command": "toolkit.restClient.files.create",
@@ -1083,14 +1085,24 @@
           "group": "navigation@3"
         },
         {
+          "command": "toolkit.restClient.files.groupByTree",
+          "when": "view == toolkitRestFiles && toolkitRestFilesGroupBy != tree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.restClient.files.groupByFlat",
+          "when": "view == toolkitRestFiles && toolkitRestFilesGroupBy != flat",
+          "group": "navigation@1"
+        },
+        {
           "command": "toolkit.restClient.files.create",
           "when": "view == toolkitRestFiles",
-          "group": "navigation@1"
+          "group": "navigation@2"
         },
         {
           "command": "toolkit.restClient.files.refresh",
           "when": "view == toolkitRestFiles",
-          "group": "navigation@2"
+          "group": "navigation@3"
         },
         {
           "command": "toolkit.restClient.history.filter",
@@ -1521,6 +1533,14 @@
         {
           "command": "toolkit.restClient.files.sendAll",
           "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.files.groupByFlat",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.files.groupByTree",
+          "when": "false"
         }
       ],
       "editor/context": [
@@ -1628,16 +1648,6 @@
         {
           "command": "toolkit.restClient.copyAsCurl",
           "group": "0_toolkit@22",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.diffHistory",
-          "group": "0_toolkit@23",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.showHistory",
-          "group": "0_toolkit@24",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
