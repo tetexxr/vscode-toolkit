@@ -1322,7 +1322,7 @@ The **REST Client** container in the activity bar holds a **Response History** t
 
 While a request is in flight (in panel mode) the panel shows a live **executing** view: the request being sent, a running **elapsed-time counter**, and a **Cancel** button — then it swaps to the response when it completes.
 
-The request timeout is set by `toolkit.restClient.timeout` (default 30 s). When a request **times out**, the warning offers **Retry with longer timeout**, which re-sends it with double the timeout — retrying again doubles it once more (30 s → 60 s → 120 s…).
+The request timeout is set by `toolkit.restClient.timeout` (default 30 s). When a request **times out**, the detail panel shows **preset retry buttons** — *Retry with 1 / 2 / 5 / 10 / 30 min* — so you can re-send straight away with as much time as that particular query needs (no incremental ramp). In editor mode the same presets are offered via the timeout warning's **Retry…** action.
 
 **Re-send:** replays the stored request (method, URL, headers and body) and records a fresh entry, so you can diff it against the previous one. Set `toolkit.restClient.history.storeRequest` to `false` to avoid persisting request headers (e.g. `Authorization`) in workspace storage — re-send then falls back to re-running the request from its source `.http` file.
 

@@ -25,6 +25,7 @@ import {
   parseDotenv,
   parseEnvironmentFile,
   parseHttpFile,
+  RETRY_TIMEOUT_PRESETS,
   summarizeGroupStatuses,
   truncateForHistory,
   type BodyFileRef,
@@ -283,7 +284,8 @@ async function recordFailure(
   source: HistorySource,
   durationMs: number,
   message: string,
-  config: RestClientConfig
+  config: RestClientConfig,
+  timedOut: boolean
 ): Promise<ResponseHistoryEntry> {
   const entry: ResponseHistoryEntry = {
     id: randomUUID(),
@@ -298,7 +300,8 @@ async function recordFailure(
     bodyTruncated: false,
     source,
     ...storedRequestFields(request, config),
-    error: message
+    error: message,
+    timedOut
   }
   await pushHistory(entry)
   return entry
@@ -782,7 +785,7 @@ function ensureDetailPanel(): vscode.WebviewPanel {
     detailPanel = undefined
     detailEntryId = undefined
   })
-  panel.webview.onDidReceiveMessage(async (msg: { command?: string }) => {
+  panel.webview.onDidReceiveMessage(async (msg: { command?: string; timeoutMs?: number }) => {
     // Cancel applies to the in-flight request and is valid while the panel is
     // pending (no entry yet), so it's handled before the entry lookup.
     if (msg.command === 'cancel') {
@@ -796,6 +799,11 @@ function ensureDetailPanel(): vscode.WebviewPanel {
     switch (msg.command) {
       case 'resend':
         await resendEntry(current)
+        break
+      case 'retry':
+        if (typeof msg.timeoutMs === 'number') {
+          await retryEntryWithTimeout(current, msg.timeoutMs)
+        }
         break
       case 'copyCurl':
         await copyHistoryCurl(current)
@@ -1307,23 +1315,53 @@ async function sendResolved(
     }
     // A failed request (DNS, refused, timeout, …) is still worth keeping in the
     // history so it can be reviewed or diffed later.
-    const entry = await recordFailure(resolved, source, Date.now() - start, message, config)
+    const timedOut = (error as Error).name === 'TimeoutError'
+    const entry = await recordFailure(resolved, source, Date.now() - start, message, config, timedOut)
     if (showInPanel) {
+      // The panel renders preset "Retry with N" buttons for timeouts itself.
       showDetailPanel(entry)
     } else if (display === 'preferred') {
       await openEntryPreferred(entry)
     }
-    if ((error as Error).name === 'TimeoutError') {
-      // Offer a one-click retry that doubles the timeout (repeats compound: 30s → 60s → 120s…).
-      const retry = 'Retry with longer timeout'
+    if (timedOut && !showInPanel) {
+      // Editor mode has no panel, so surface the same presets via the notification.
+      const retry = 'Retry…'
       const choice = await vscode.window.showWarningMessage(`Toolkit: ${message}`, retry)
       if (choice === retry) {
-        await sendResolved(resolved, source, { ...config, timeoutMs: config.timeoutMs * 2 }, display)
+        await promptRetryTimeout(resolved, source, config, display)
       }
-    } else {
+    } else if (!timedOut) {
       vscode.window.showWarningMessage(`Toolkit: request failed — ${message}`)
     }
   }
+}
+
+/** Quick-pick of preset timeouts → re-send the request with the chosen one (editor-mode retry). */
+async function promptRetryTimeout(
+  resolved: ResolvedRequest,
+  source: HistorySource,
+  config: RestClientConfig,
+  display: SendDisplay
+): Promise<void> {
+  const picked = await vscode.window.showQuickPick(
+    RETRY_TIMEOUT_PRESETS.map(p => ({ label: `Retry with ${p.label}`, ms: p.ms })),
+    { placeHolder: 'Retry the request with a longer timeout' }
+  )
+  if (picked) {
+    await sendResolved(resolved, source, { ...config, timeoutMs: picked.ms }, display)
+  }
+}
+
+/** Re-sends a (timed-out) entry with a specific timeout — used by the panel's preset buttons. */
+async function retryEntryWithTimeout(entry: ResponseHistoryEntry, timeoutMs: number): Promise<void> {
+  const resolved = resolvedFromEntry(entry)
+  if (!resolved) {
+    // No stored request to replay; fall back to a plain re-send from source.
+    await resendEntry(entry)
+    return
+  }
+  const source: HistorySource = entry.source ?? { uri: '', name: entry.method }
+  await sendResolved(resolved, source, { ...readConfig(), timeoutMs }, 'preferred')
 }
 
 /* -------------------------------------------------------------------------- */

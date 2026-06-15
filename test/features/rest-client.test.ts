@@ -685,3 +685,38 @@ describe('buildPendingDetailHtml', () => {
     assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'))
   })
 })
+
+describe('buildResponseDetailHtml — timeout retries', () => {
+  const base = {
+    id: 'a',
+    method: 'GET',
+    url: 'https://api.test/slow',
+    status: 0,
+    statusText: 'Request failed',
+    durationMs: 2000,
+    timestamp: 1_000_000,
+    headers: [],
+    body: 'Request timed out after 2000 ms',
+    bodyTruncated: false,
+    error: 'Request timed out after 2000 ms'
+  }
+
+  it('should render preset retry buttons for a timed-out entry', () => {
+    const html = buildResponseDetailHtml({ ...base, timedOut: true }, { cspSource: 'vscode-resource:', nonce: 'n' })
+    assert.ok(html.includes('retry-row'))
+    assert.ok(html.includes('Retry with:'))
+    assert.ok(html.includes('data-ms="60000"'))
+    assert.ok(html.includes('data-ms="1800000"'))
+    assert.ok(html.includes("command: 'retry'"))
+  })
+
+  it('should NOT render retry buttons for a non-timeout failure', () => {
+    const html = buildResponseDetailHtml(
+      { ...base, timedOut: false, error: 'getaddrinfo ENOTFOUND' },
+      { cspSource: 'vscode-resource:', nonce: 'n' }
+    )
+    // The .retry-row class lives in the stylesheet; the actual buttons (data-ms / label) must not.
+    assert.ok(!html.includes('data-ms='))
+    assert.ok(!html.includes('Retry with:'))
+  })
+})

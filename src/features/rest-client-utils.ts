@@ -551,7 +551,18 @@ export interface ResponseHistoryEntry {
    * and do NOT set this — they carry their real status instead.
    */
   error?: string
+  /** True when the failure was a timeout — surfaces the "retry with longer timeout" actions. */
+  timedOut?: boolean
 }
+
+/** Preset timeouts offered for retrying a request that timed out. */
+export const RETRY_TIMEOUT_PRESETS: ReadonlyArray<{ label: string; ms: number }> = [
+  { label: '1 min', ms: 60_000 },
+  { label: '2 min', ms: 120_000 },
+  { label: '5 min', ms: 300_000 },
+  { label: '10 min', ms: 600_000 },
+  { label: '30 min', ms: 1_800_000 }
+]
 
 /** A fully interpolated request, ready to send (or replay from history). */
 export interface ResolvedRequest {
@@ -787,6 +798,8 @@ const DETAIL_STYLES = `
   .meta { color: var(--vscode-descriptionForeground); font-size: 12px; margin: 6px 0 10px; }
   .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .actions.pending { margin-top: 12px; }
+  .retry-row { margin-top: 8px; align-items: center; }
+  .retry-label { color: var(--vscode-descriptionForeground); font-size: 12px; margin-right: 2px; }
   .elapsed { color: var(--vscode-descriptionForeground); font-size: 12px; margin-left: 8px; font-variant-numeric: tabular-nums; }
   button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; }
   button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
@@ -844,6 +857,13 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
 
   const bodyData = embedJsonInScript({ pretty, raw: entry.body })
 
+  // On timeout, offer one-click retries at preset timeouts (no incremental ramp).
+  const retryRow = entry.timedOut
+    ? `<div class="actions retry-row"><span class="retry-label">Retry with:</span>${RETRY_TIMEOUT_PRESETS.map(
+        p => `<button class="retry secondary" data-ms="${p.ms}">${escapeHtml(p.label)}</button>`
+      ).join('')}</div>`
+    : ''
+
   const bodyHtml = `  <div class="topbar">
     <div class="reqline"><span class="method">${escapeHtml(entry.method)}</span>${escapeHtml(entry.url)}</div>
     <span class="badge ${kind}">${escapeHtml(statusText)}</span>
@@ -856,6 +876,7 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
       <button id="toggleWrap" class="secondary">Toggle wrap</button>
       <button id="toggleRaw" class="secondary">Show raw</button>
     </div>
+    ${retryRow}
   </div>
   <h3>Response headers</h3>
   <table>${headerRows(entry.headers)}</table>
@@ -881,6 +902,9 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
     document.getElementById('copyCurl').addEventListener('click', post('copyCurl'));
     document.getElementById('copyBody').addEventListener('click', post('copyBody'));
     document.getElementById('openText').addEventListener('click', post('openText'));
+    document.querySelectorAll('.retry').forEach(b =>
+      b.addEventListener('click', () => vscode.postMessage({ command: 'retry', timeoutMs: Number(b.dataset.ms) }))
+    );
   `
 
   return detailDocument(opts, bodyHtml, scriptBody)
