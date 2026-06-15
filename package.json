@@ -1050,12 +1050,12 @@
         },
         {
           "command": "toolkit.restClient.history.diffWithPrevious",
-          "when": "view == toolkitRestHistory && viewItem == restHistoryEntry",
+          "when": "view == toolkitRestHistory && viewItem == restHistoryEntryWithPrevious",
           "group": "inline@1"
         },
         {
           "command": "toolkit.restClient.history.deleteEntry",
-          "when": "view == toolkitRestHistory && viewItem == restHistoryEntry",
+          "when": "view == toolkitRestHistory && viewItem =~ /^restHistoryEntry/",
           "group": "inline@2"
         }
       ],
@@ -1391,27 +1391,27 @@
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.selectEnvironment",
+          "command": "toolkit.restClient.diffHistory",
           "group": "0_toolkit@23",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.sendAll",
+          "command": "toolkit.restClient.showHistory",
           "group": "0_toolkit@24",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.send",
+          "command": "toolkit.restClient.selectEnvironment",
           "group": "0_toolkit@25",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.showHistory",
+          "command": "toolkit.restClient.sendAll",
           "group": "0_toolkit@26",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.diffHistory",
+          "command": "toolkit.restClient.send",
           "group": "0_toolkit@27",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },

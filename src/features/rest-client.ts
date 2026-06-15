@@ -501,7 +501,9 @@ class RestHistoryTreeProvider implements vscode.TreeDataProvider<HistoryNode> {
       command: 'toolkit.restClient.history.open',
       arguments: [entry.id]
     }
-    item.contextValue = 'restHistoryEntry'
+    // Only entries that have an earlier call to the same endpoint can be diffed,
+    // so flag those with a distinct contextValue to drive the inline diff icon.
+    item.contextValue = hasPreviousResponse(entry) ? 'restHistoryEntryWithPrevious' : 'restHistoryEntry'
     return item
   }
 
@@ -544,17 +546,27 @@ async function deleteHistoryEntry(node: HistoryNode | undefined): Promise<void> 
   historyProvider?.refresh()
 }
 
+/**
+ * The previous call to the same endpoint, if any. History is newest-first, so
+ * the previous response is the next older entry sharing the same method + URL.
+ */
+function previousResponse(entry: ResponseHistoryEntry): ResponseHistoryEntry | undefined {
+  const sameEndpoint = getHistory().filter(e => e.method === entry.method && e.url === entry.url)
+  const index = sameEndpoint.findIndex(e => e.id === entry.id)
+  return index >= 0 ? sameEndpoint[index + 1] : undefined
+}
+
+function hasPreviousResponse(entry: ResponseHistoryEntry): boolean {
+  return previousResponse(entry) !== undefined
+}
+
 /** Diffs a response against the previous call to the *same* endpoint, if any. */
 async function diffHistoryWithPrevious(node: HistoryNode | undefined): Promise<void> {
   if (!node || node.kind !== 'entry') {
     return
   }
   const current = node.entry
-  // History is newest-first; the previous call to this endpoint is the next
-  // older entry sharing the same method + URL.
-  const sameEndpoint = getHistory().filter(e => e.method === current.method && e.url === current.url)
-  const index = sameEndpoint.findIndex(e => e.id === current.id)
-  const previous = index >= 0 ? sameEndpoint[index + 1] : undefined
+  const previous = previousResponse(current)
   if (!previous) {
     vscode.window.showInformationMessage('Toolkit: no earlier response for this request to diff against.')
     return
@@ -926,13 +938,6 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
   })
   context.subscriptions.push(historyView)
   void vscode.commands.executeCommand('setContext', HISTORY_GROUP_BY_CONTEXT, historyGroupBy())
-  const updateHistoryBadge = () => {
-    const total = getHistory().length
-    historyView.badge =
-      total > 0 ? { value: total, tooltip: `${total} response${total === 1 ? '' : 's'} in history` } : undefined
-  }
-  historyProvider.onDidChangeTreeData(() => updateHistoryBadge())
-  updateHistoryBadge()
 
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.restClient.send', () => sendAtCursor()),
