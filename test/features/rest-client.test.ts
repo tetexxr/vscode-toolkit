@@ -22,6 +22,7 @@ import {
   formatBytes,
   summarizeGroupStatuses,
   escapeHtml,
+  embedJsonInScript,
   buildResponseDetailHtml,
   type ResponseHistoryEntry
 } from '../../src/features/rest-client-utils'
@@ -556,5 +557,18 @@ describe('response history', () => {
     const html = buildResponseDetailHtml(e, { cspSource: 'vscode-resource:', nonce: 'n' })
     assert.ok(!html.includes('<script>alert(1)</script>'))
     assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'))
+  })
+
+  it('should neutralize a </script> in the body so it cannot break out of the inline script', () => {
+    const e = entry('a', 1_000, { body: 'before</script><script>alert(1)</script>after' })
+    const html = buildResponseDetailHtml(e, { cspSource: 'vscode-resource:', nonce: 'n' })
+    // The only real closing tag is our own script's; the body's are escaped.
+    assert.equal(html.split('</script>').length, 2)
+    assert.ok(!html.includes('<script>alert(1)'))
+  })
+
+  it('embedJsonInScript should escape < and line separators', () => {
+    assert.equal(embedJsonInScript('a</b>'), '"a\\u003c/b>"')
+    assert.equal(embedJsonInScript('x y z'), '"x\\u2028y\\u2029z"')
   })
 })

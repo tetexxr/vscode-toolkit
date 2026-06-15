@@ -702,6 +702,18 @@ export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, ch => HTML_ESCAPES[ch])
 }
 
+/**
+ * Serializes a value to JSON safe to embed inside an inline `<script>`. Escapes
+ * `<` (so a body containing `</script>` or `<!--` can't break out) and the line
+ * separators that are invalid in JS string literals.
+ */
+export function embedJsonInScript(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+}
+
 export interface DetailHtmlOptions {
   /** Webview `cspSource` for the Content-Security-Policy. */
   cspSource: string
@@ -739,12 +751,16 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
     .filter(Boolean)
     .join(' · ')
 
-  const hasRequest = (entry.requestHeaders?.length ?? 0) > 0 || (entry.requestBody?.length ?? 0) > 0
-  const requestSection = hasRequest
-    ? `<details><summary>Request headers</summary><table>${headerRows(entry.requestHeaders ?? [])}</table></details>`
-    : ''
+  const hasReqHeaders = (entry.requestHeaders?.length ?? 0) > 0
+  const hasReqBody = (entry.requestBody?.length ?? 0) > 0
+  const requestSection =
+    hasReqHeaders || hasReqBody
+      ? `<details><summary>Request</summary>${
+          hasReqHeaders ? `<table>${headerRows(entry.requestHeaders ?? [])}</table>` : ''
+        }${hasReqBody ? `<pre class="reqbody">${escapeHtml(entry.requestBody ?? '')}</pre>` : ''}</details>`
+      : ''
 
-  const bodyData = JSON.stringify({ pretty, raw: entry.body })
+  const bodyData = embedJsonInScript({ pretty, raw: entry.body })
 
   return `<!DOCTYPE html>
 <html lang="en">

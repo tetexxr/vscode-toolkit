@@ -1303,12 +1303,12 @@ All of these are also available from the **editor context menu** when right-clic
 
 The **REST Client** container in the activity bar holds a **Response History** tree — a more visual alternative to the picker. By default responses are **grouped by request** (method + final URL), so repeated calls to the same endpoint collapse together instead of appearing interleaved; the just-used endpoint floats to the top. Each group shows a status breakdown (`2×200 1×500`), and each response shows a **color-coded status icon** (green 2xx, blue 3xx, yellow 4xx, red 5xx / failed), its duration, size and a relative timestamp.
 
-- **Click** a response to open it (a reused preview tab by default, or the detail panel — see `toolkit.restClient.history.clickAction`).
+- **Click** a response to open it in the **detail panel** (the default; switch to a reused text editor with `toolkit.restClient.history.clickAction`). The picker (**Response History...**) opens the same way.
 - **Inline icons** (on hover): re-send the request, diff against the previous call to the same endpoint, or delete the entry.
 - **Right-click** for more: open in the detail panel or as text, **re-send**, **go to source request**, **copy as curl / body / URL**, or **save the body to a file**.
 - **View title buttons**: toggle between *grouped by request* and a flat *timeline*, refresh, or clear all history.
 
-**Detail panel:** a reused webview (also reachable by setting the click action to `panel`) showing a colored status badge, the request line, timing and size, request/response **header tables**, and the body with **pretty/raw** and **wrap** toggles — plus buttons to re-send, copy as curl, copy the body, or open it as text.
+**Detail panel:** a reused webview showing a colored status badge, the request line, timing and size, the request (headers + body) and response **header tables**, and the response body with **pretty/raw** and **wrap** toggles — plus buttons to re-send, copy as curl, copy the body, or open it as text. Re-sending updates the same panel; deleting the shown entry (or clearing history) closes it.
 
 **Re-send:** replays the stored request (method, URL, headers and body) and records a fresh entry, so you can diff it against the previous one. Set `toolkit.restClient.history.storeRequest` to `false` to avoid persisting request headers (e.g. `Authorization`) in workspace storage — re-send then falls back to re-running the request from its source `.http` file.
 

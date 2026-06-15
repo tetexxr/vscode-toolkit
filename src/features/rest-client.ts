@@ -250,9 +250,9 @@ async function recordHistory(
   request: ResolvedRequest,
   source: HistorySource,
   config: RestClientConfig
-): Promise<void> {
+): Promise<ResponseHistoryEntry> {
   const { body, truncated } = truncateForHistory(response.body, MAX_HISTORY_BODY_CHARS)
-  await pushHistory({
+  const entry: ResponseHistoryEntry = {
     id: randomUUID(),
     method: request.method,
     url: response.url,
@@ -266,7 +266,9 @@ async function recordHistory(
     bodyBytes: Buffer.byteLength(response.body, 'utf-8'),
     source,
     ...storedRequestFields(request, config)
-  })
+  }
+  await pushHistory(entry)
+  return entry
 }
 
 /** Records a request that never got an HTTP response (network error / timeout). */
@@ -276,8 +278,8 @@ async function recordFailure(
   durationMs: number,
   message: string,
   config: RestClientConfig
-): Promise<void> {
-  await pushHistory({
+): Promise<ResponseHistoryEntry> {
+  const entry: ResponseHistoryEntry = {
     id: randomUUID(),
     method: request.method,
     url: request.url,
@@ -291,7 +293,9 @@ async function recordFailure(
     source,
     ...storedRequestFields(request, config),
     error: message
-  })
+  }
+  await pushHistory(entry)
+  return entry
 }
 
 /** Maps a content-type to a file extension so the diff editor highlights the body. */
@@ -467,6 +471,7 @@ async function clearHistory(): Promise<void> {
   }
   await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, [])
   historyProvider?.refresh()
+  syncDetailPanel()
   vscode.window.showInformationMessage('Toolkit: REST Client response history cleared.')
 }
 
@@ -627,7 +632,7 @@ async function resendEntry(entry: ResponseHistoryEntry): Promise<void> {
   const resolved = resolvedFromEntry(entry)
   if (resolved) {
     const source: HistorySource = entry.source ?? { uri: '', name: entry.method }
-    await sendResolved(resolved, source, readConfig())
+    await sendResolved(resolved, source, readConfig(), 'preferred')
     return
   }
   // No stored request (storeRequest disabled, or a pre-upgrade entry): re-run the
@@ -761,6 +766,13 @@ function showDetailPanel(entry: ResponseHistoryEntry): void {
   detailPanel.reveal(vscode.ViewColumn.Beside, true)
 }
 
+/** Closes the detail panel if the entry it shows was deleted or the history cleared. */
+function syncDetailPanel(): void {
+  if (detailPanel && detailEntryId && !entryById(detailEntryId)) {
+    detailPanel.dispose()
+  }
+}
+
 /** Deletes one entry from the history (invoked from the tree's inline trash icon). */
 async function deleteHistoryEntry(node: HistoryNode | undefined): Promise<void> {
   const entry = nodeEntry(node)
@@ -770,6 +782,7 @@ async function deleteHistoryEntry(node: HistoryNode | undefined): Promise<void> 
   const remaining = getHistory().filter(e => e.id !== entry.id)
   await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, remaining)
   historyProvider?.refresh()
+  syncDetailPanel()
 }
 
 /**
@@ -1050,6 +1063,15 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
 }
 
 /**
+ * How a freshly-sent response is shown:
+ * - `live` opens the full response as text (used by Send Request — immediate,
+ *   not body-capped, with native highlighting/find).
+ * - `preferred` opens the recorded entry per the history click action (panel or
+ *   editor), so re-sending from the history reuses the same surface.
+ */
+type SendDisplay = 'live' | 'preferred'
+
+/**
  * Sends a resolved request with a progress notification, records it (success or
  * failure) in the history, and opens the response. Shared by the initial send
  * and by re-send from the history.
@@ -1057,7 +1079,8 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
 async function sendResolved(
   resolved: ResolvedRequest,
   source: HistorySource,
-  config: RestClientConfig
+  config: RestClientConfig,
+  display: SendDisplay = 'live'
 ): Promise<void> {
   const start = Date.now()
   try {
@@ -1069,8 +1092,12 @@ async function sendResolved(
       },
       (_progress, token) => performFetch(resolved, config, token)
     )
-    await recordHistory(response, resolved, source, config)
-    await showResponse(response, { previewResponseAs: config.previewResponseAs })
+    const entry = await recordHistory(response, resolved, source, config)
+    if (display === 'preferred') {
+      await openEntryPreferred(entry)
+    } else {
+      await showResponse(response, { previewResponseAs: config.previewResponseAs })
+    }
   } catch (error) {
     const message = (error as Error).message
     if ((error as Error).name === 'AbortError') {
@@ -1079,8 +1106,11 @@ async function sendResolved(
     }
     // A failed request (DNS, refused, timeout, …) is still worth keeping in the
     // history so it can be reviewed or diffed later.
-    await recordFailure(resolved, source, Date.now() - start, message, config)
+    const entry = await recordFailure(resolved, source, Date.now() - start, message, config)
     vscode.window.showWarningMessage(`Toolkit: request failed — ${message}`)
+    if (display === 'preferred') {
+      await openEntryPreferred(entry)
+    }
   }
 }
 
