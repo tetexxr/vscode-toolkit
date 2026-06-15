@@ -757,6 +757,68 @@ function headerRows(headers: HttpHeader[]): string {
     .join('')
 }
 
+/** The collapsible "Request" section (headers + body). Empty string when there's nothing to show. */
+function requestSectionHtml(headers: HttpHeader[] | undefined, body: string | undefined, open: boolean): string {
+  const hasHeaders = (headers?.length ?? 0) > 0
+  const hasBody = (body?.length ?? 0) > 0
+  if (!hasHeaders && !hasBody) {
+    return ''
+  }
+  const inner = `${hasHeaders ? `<table>${headerRows(headers ?? [])}</table>` : ''}${
+    hasBody ? `<pre class="reqbody">${escapeHtml(body ?? '')}</pre>` : ''
+  }`
+  return `<details${open ? ' open' : ''}><summary>Request</summary>${inner}</details>`
+}
+
+/** Shared stylesheet for the detail/pending panels (theme-driven colors). */
+const DETAIL_STYLES = `
+  body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 16px 24px; }
+  .topbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 14px 0 10px; z-index: 1; }
+  .reqline { font-family: var(--vscode-editor-font-family); font-size: 13px; word-break: break-all; margin-bottom: 8px; }
+  .method { font-weight: 600; margin-right: 6px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 12px; color: #fff; }
+  .badge.success { background: var(--vscode-testing-iconPassed, #2ea043); }
+  .badge.redirect { background: var(--vscode-charts-blue, #3794ff); }
+  .badge.clientError { background: var(--vscode-charts-yellow, #cca700); color: #000; }
+  .badge.serverError, .badge.failed { background: var(--vscode-charts-red, #f14c4c); }
+  .badge.pending { background: var(--vscode-charts-blue, #3794ff); }
+  .dot { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+  .meta { color: var(--vscode-descriptionForeground); font-size: 12px; margin: 6px 0 10px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; }
+  button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
+  button:hover { background: var(--vscode-button-hoverBackground); }
+  button:disabled { opacity: .5; cursor: default; }
+  h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 18px 0 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  td { padding: 3px 8px; border-bottom: 1px solid var(--vscode-panel-border); vertical-align: top; }
+  .hname { color: var(--vscode-symbolIcon-keywordForeground, var(--vscode-foreground)); white-space: nowrap; font-family: var(--vscode-editor-font-family); }
+  .hval { font-family: var(--vscode-editor-font-family); word-break: break-all; }
+  .muted { color: var(--vscode-descriptionForeground); }
+  details { margin-top: 6px; }
+  summary { cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 14px 0 4px; }
+  pre { background: var(--vscode-textCodeBlock-background); padding: 10px; border-radius: 4px; overflow: auto; font-family: var(--vscode-editor-font-family); font-size: var(--vscode-editor-font-size); }
+  pre.wrap { white-space: pre-wrap; word-break: break-word; }
+`
+
+/** Wraps body + an inline (nonce-gated) script into a complete CSP'd HTML document. */
+function detailDocument(opts: DetailHtmlOptions, bodyHtml: string, scriptBody: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${opts.cspSource} 'unsafe-inline'; script-src 'nonce-${opts.nonce}';">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>${DETAIL_STYLES}</style>
+</head>
+<body>
+${bodyHtml}
+<script nonce="${opts.nonce}">${scriptBody}</script>
+</body>
+</html>`
+}
+
 /**
  * Builds the standalone HTML document for the response detail panel. Pure so it
  * can be unit-tested; all VS Code-specific values (CSP source, nonce) are passed
@@ -778,52 +840,9 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
     .filter(Boolean)
     .join(' · ')
 
-  const hasReqHeaders = (entry.requestHeaders?.length ?? 0) > 0
-  const hasReqBody = (entry.requestBody?.length ?? 0) > 0
-  const requestSection =
-    hasReqHeaders || hasReqBody
-      ? `<details><summary>Request</summary>${
-          hasReqHeaders ? `<table>${headerRows(entry.requestHeaders ?? [])}</table>` : ''
-        }${hasReqBody ? `<pre class="reqbody">${escapeHtml(entry.requestBody ?? '')}</pre>` : ''}</details>`
-      : ''
-
   const bodyData = embedJsonInScript({ pretty, raw: entry.body })
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${opts.cspSource} 'unsafe-inline'; script-src 'nonce-${opts.nonce}';">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 16px 24px; }
-  .topbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 14px 0 10px; z-index: 1; }
-  .reqline { font-family: var(--vscode-editor-font-family); font-size: 13px; word-break: break-all; margin-bottom: 8px; }
-  .method { font-weight: 600; margin-right: 6px; }
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 12px; color: #fff; }
-  .badge.success { background: var(--vscode-testing-iconPassed, #2ea043); }
-  .badge.redirect { background: var(--vscode-charts-blue, #3794ff); }
-  .badge.clientError { background: var(--vscode-charts-yellow, #cca700); color: #000; }
-  .badge.serverError, .badge.failed { background: var(--vscode-charts-red, #f14c4c); }
-  .meta { color: var(--vscode-descriptionForeground); font-size: 12px; margin: 6px 0 10px; }
-  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-  button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; }
-  button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
-  button:hover { background: var(--vscode-button-hoverBackground); }
-  h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 18px 0 6px; }
-  table { border-collapse: collapse; width: 100%; font-size: 12px; }
-  td { padding: 3px 8px; border-bottom: 1px solid var(--vscode-panel-border); vertical-align: top; }
-  .hname { color: var(--vscode-symbolIcon-keywordForeground, var(--vscode-foreground)); white-space: nowrap; font-family: var(--vscode-editor-font-family); }
-  .hval { font-family: var(--vscode-editor-font-family); word-break: break-all; }
-  .muted { color: var(--vscode-descriptionForeground); }
-  details { margin-top: 6px; }
-  summary { cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 14px 0 4px; }
-  pre { background: var(--vscode-textCodeBlock-background); padding: 10px; border-radius: 4px; overflow: auto; font-family: var(--vscode-editor-font-family); font-size: var(--vscode-editor-font-size); }
-  pre.wrap { white-space: pre-wrap; word-break: break-word; }
-</style>
-</head>
-<body>
-  <div class="topbar">
+  const bodyHtml = `  <div class="topbar">
     <div class="reqline"><span class="method">${escapeHtml(entry.method)}</span>${escapeHtml(entry.url)}</div>
     <span class="badge ${kind}">${escapeHtml(statusText)}</span>
     <div class="meta">${escapeHtml(meta)}</div>
@@ -838,10 +857,11 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
   </div>
   <h3>Response headers</h3>
   <table>${headerRows(entry.headers)}</table>
-  ${requestSection}
+  ${requestSectionHtml(entry.requestHeaders, entry.requestBody, false)}
   <h3>Body</h3>
-  <pre id="body"></pre>
-  <script nonce="${opts.nonce}">
+  <pre id="body"></pre>`
+
+  const scriptBody = `
     const vscode = acquireVsCodeApi();
     const data = ${bodyData};
     const bodyEl = document.getElementById('body');
@@ -859,7 +879,53 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
     document.getElementById('copyCurl').addEventListener('click', post('copyCurl'));
     document.getElementById('copyBody').addEventListener('click', post('copyBody'));
     document.getElementById('openText').addEventListener('click', post('openText'));
-  </script>
-</body>
-</html>`
+  `
+
+  return detailDocument(opts, bodyHtml, scriptBody)
+}
+
+/** A request being sent (for the live execution view). */
+export interface PendingRequest {
+  method: string
+  url: string
+  headers: HttpHeader[]
+  body?: string
+}
+
+/**
+ * Builds the "executing" view shown the instant a request is sent: the request we
+ * already know, a live elapsed-time counter and a Cancel button. When `cancelled`
+ * is true it renders a terminal "Cancelled" state (no timer, no Cancel button).
+ */
+export function buildPendingDetailHtml(request: PendingRequest, opts: DetailHtmlOptions, cancelled = false): string {
+  const badge = cancelled
+    ? `<span class="badge failed">Cancelled</span>`
+    : `<span class="badge pending"><span class="dot">●</span> Sending… <span id="elapsed">0.0s</span></span>`
+  const actions = cancelled ? '' : `<div class="actions"><button id="cancel">Cancel</button></div>`
+
+  const bodyHtml = `  <div class="topbar">
+    <div class="reqline"><span class="method">${escapeHtml(request.method)}</span>${escapeHtml(request.url)}</div>
+    ${badge}
+    ${actions}
+  </div>
+  ${requestSectionHtml(request.headers, request.body, true)}`
+
+  // Timer runs entirely client-side; Cancel just signals the extension.
+  const scriptBody = cancelled
+    ? ''
+    : `
+    const vscode = acquireVsCodeApi();
+    const el = document.getElementById('elapsed');
+    const t0 = performance.now();
+    const timer = setInterval(() => { el.textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's'; }, 100);
+    const cancel = document.getElementById('cancel');
+    cancel.addEventListener('click', () => {
+      vscode.postMessage({ command: 'cancel' });
+      clearInterval(timer);
+      cancel.disabled = true;
+      cancel.textContent = 'Cancelling…';
+    });
+  `
+
+  return detailDocument(opts, bodyHtml, scriptBody)
 }

@@ -8,6 +8,7 @@ import {
   environmentNames,
   findHeader,
   findRequestAtLine,
+  buildPendingDetailHtml,
   buildResponseDetailHtml,
   describeRequestNode,
   filterHistory,
@@ -762,47 +763,82 @@ let detailPanel: vscode.WebviewPanel | undefined
 /** Entry currently shown in the panel, so its buttons act on the right response. */
 let detailEntryId: string | undefined
 
-/** Opens (or reuses) the response detail webview for an entry. */
-function showDetailPanel(entry: ResponseHistoryEntry): void {
-  detailEntryId = entry.id
-  if (!detailPanel) {
-    detailPanel = vscode.window.createWebviewPanel(
-      DETAIL_VIEW_TYPE,
-      'REST Response',
-      { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
-      { enableScripts: true, retainContextWhenHidden: true }
-    )
-    detailPanel.onDidDispose(() => {
-      detailPanel = undefined
-      detailEntryId = undefined
-    })
-    detailPanel.webview.onDidReceiveMessage(async (msg: { command?: string }) => {
-      const current = detailEntryId ? entryById(detailEntryId) : undefined
-      if (!current) {
-        return
-      }
-      switch (msg.command) {
-        case 'resend':
-          await resendEntry(current)
-          break
-        case 'copyCurl':
-          await copyHistoryCurl(current)
-          break
-        case 'copyBody':
-          await copyHistoryBody(current)
-          break
-        case 'openText':
-          await openHistoryAsText(current)
-          break
-      }
-    })
+function detailHtmlOptions(panel: vscode.WebviewPanel): { cspSource: string; nonce: string } {
+  return { cspSource: panel.webview.cspSource, nonce: randomUUID().replace(/-/g, '') }
+}
+
+/** Creates the detail panel (with its message handler) on first use, then reuses it. */
+function ensureDetailPanel(): vscode.WebviewPanel {
+  if (detailPanel) {
+    return detailPanel
   }
-  detailPanel.title = `${entry.method} ${entry.error ? 'ERR' : entry.status}`
-  detailPanel.webview.html = buildResponseDetailHtml(entry, {
-    cspSource: detailPanel.webview.cspSource,
-    nonce: randomUUID().replace(/-/g, '')
+  const panel = vscode.window.createWebviewPanel(
+    DETAIL_VIEW_TYPE,
+    'REST Response',
+    { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
+    { enableScripts: true, retainContextWhenHidden: true }
+  )
+  panel.onDidDispose(() => {
+    detailPanel = undefined
+    detailEntryId = undefined
   })
-  detailPanel.reveal(vscode.ViewColumn.Beside, true)
+  panel.webview.onDidReceiveMessage(async (msg: { command?: string }) => {
+    // Cancel applies to the in-flight request and is valid while the panel is
+    // pending (no entry yet), so it's handled before the entry lookup.
+    if (msg.command === 'cancel') {
+      cancelAll()
+      return
+    }
+    const current = detailEntryId ? entryById(detailEntryId) : undefined
+    if (!current) {
+      return
+    }
+    switch (msg.command) {
+      case 'resend':
+        await resendEntry(current)
+        break
+      case 'copyCurl':
+        await copyHistoryCurl(current)
+        break
+      case 'copyBody':
+        await copyHistoryBody(current)
+        break
+      case 'openText':
+        await openHistoryAsText(current)
+        break
+    }
+  })
+  detailPanel = panel
+  return panel
+}
+
+/** Opens (or reuses) the response detail webview for a completed entry. */
+function showDetailPanel(entry: ResponseHistoryEntry): void {
+  const panel = ensureDetailPanel()
+  detailEntryId = entry.id
+  panel.title = `${entry.method} ${entry.error ? 'ERR' : entry.status}`
+  panel.webview.html = buildResponseDetailHtml(entry, detailHtmlOptions(panel))
+  panel.reveal(vscode.ViewColumn.Beside, true)
+}
+
+/** Shows the live "executing" view (request data + timer + Cancel) the instant a request is sent. */
+function showPendingPanel(request: ResolvedRequest): void {
+  const panel = ensureDetailPanel()
+  // No entry yet: clear the id so completed-entry actions stay inert while pending.
+  detailEntryId = undefined
+  panel.title = `${request.method} …`
+  panel.webview.html = buildPendingDetailHtml(request, detailHtmlOptions(panel))
+  panel.reveal(vscode.ViewColumn.Beside, true)
+}
+
+/** Renders a terminal "Cancelled" state in the panel (after an aborted send). */
+function showCancelledPanel(request: ResolvedRequest): void {
+  if (!detailPanel) {
+    return
+  }
+  detailEntryId = undefined
+  detailPanel.title = `${request.method} cancelled`
+  detailPanel.webview.html = buildPendingDetailHtml(request, detailHtmlOptions(detailPanel), true)
 }
 
 /** Closes the detail panel if the entry it shows was deleted or the history cleared. */
@@ -1228,6 +1264,15 @@ async function sendResolved(
   config: RestClientConfig,
   display: SendDisplay = 'live'
 ): Promise<void> {
+  // Whether the outcome lands in the detail panel: Send → previewResponseIn,
+  // re-send → the history click action.
+  const showInPanel =
+    display === 'preferred' ? config.historyClickAction === 'panel' : config.previewResponseIn === 'panel'
+  // Open the "executing" view immediately (request data + live timer + Cancel)
+  // so there's instant feedback while the request is in flight.
+  if (showInPanel) {
+    showPendingPanel(resolved)
+  }
   const start = Date.now()
   try {
     const response = await vscode.window.withProgress(
@@ -1239,11 +1284,11 @@ async function sendResolved(
       (_progress, token) => performFetch(resolved, config, token)
     )
     const entry = await recordHistory(response, resolved, source, config)
-    if (display === 'preferred') {
-      // Re-send: reuse whatever surface the history click action prefers.
-      await openEntryPreferred(entry)
-    } else if (config.previewResponseIn === 'panel') {
+    if (showInPanel) {
       showDetailPanel(entry)
+    } else if (display === 'preferred') {
+      // Re-send into the editor (history click action is "editor").
+      await openEntryPreferred(entry)
     } else {
       // Editor mode: show the live, full (non-capped) response with native highlighting.
       await showResponse(response, { previewResponseAs: config.previewResponseAs })
@@ -1252,16 +1297,19 @@ async function sendResolved(
     const message = (error as Error).message
     if ((error as Error).name === 'AbortError') {
       vscode.window.showWarningMessage('Toolkit: request aborted.')
+      if (showInPanel) {
+        showCancelledPanel(resolved)
+      }
       return
     }
     // A failed request (DNS, refused, timeout, …) is still worth keeping in the
     // history so it can be reviewed or diffed later.
     const entry = await recordFailure(resolved, source, Date.now() - start, message, config)
     vscode.window.showWarningMessage(`Toolkit: request failed — ${message}`)
-    if (display === 'preferred') {
-      await openEntryPreferred(entry)
-    } else if (config.previewResponseIn === 'panel') {
+    if (showInPanel) {
       showDetailPanel(entry)
+    } else if (display === 'preferred') {
+      await openEntryPreferred(entry)
     }
   }
 }

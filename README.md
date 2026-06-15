@@ -1320,6 +1320,8 @@ The **REST Client** container in the activity bar holds a **Response History** t
 
 **Detail panel:** a reused webview showing a colored status badge, the request line, timing and size, the request (headers + body) and response **header tables**, and the response body with **pretty/raw** and **wrap** toggles — plus buttons to re-send, copy as curl, copy the body, or open it as text. Re-sending updates the same panel; deleting the shown entry (or clearing history) closes it.
 
+While a request is in flight (in panel mode) the panel shows a live **executing** view: the request being sent, a running **elapsed-time counter**, and a **Cancel** button — then it swaps to the response when it completes.
+
 **Re-send:** replays the stored request (method, URL, headers and body) and records a fresh entry, so you can diff it against the previous one. Set `toolkit.restClient.history.storeRequest` to `false` to avoid persisting request headers (e.g. `Authorization`) in workspace storage — re-send then falls back to re-running the request from its source `.http` file.
 
 **File format:**

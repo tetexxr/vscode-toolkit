@@ -25,6 +25,7 @@ import {
   escapeHtml,
   embedJsonInScript,
   buildResponseDetailHtml,
+  buildPendingDetailHtml,
   describeRequestNode,
   type ResponseHistoryEntry
 } from '../../src/features/rest-client-utils'
@@ -648,5 +649,39 @@ describe('describeRequestNode', () => {
       label: 'Create user',
       description: 'POST https://a/b'
     })
+  })
+})
+
+describe('buildPendingDetailHtml', () => {
+  const req = { method: 'POST', url: 'https://api.test/users', headers: [{ name: 'Accept', value: '*/*' }], body: '{"a":1}' }
+
+  it('should render the executing view with timer and cancel button', () => {
+    const html = buildPendingDetailHtml(req, { cspSource: 'vscode-resource:', nonce: 'n1' })
+    assert.ok(html.includes('POST'))
+    assert.ok(html.includes('https://api.test/users'))
+    assert.ok(html.includes('Sending'))
+    assert.ok(html.includes('id="elapsed"'))
+    assert.ok(html.includes('id="cancel"'))
+    assert.ok(html.includes('nonce="n1"'))
+    assert.ok(html.includes('Content-Security-Policy'))
+    // Request data we already have is shown.
+    assert.ok(html.includes('Accept'))
+  })
+
+  it('should render a terminal cancelled state without timer or cancel button', () => {
+    const html = buildPendingDetailHtml(req, { cspSource: 'vscode-resource:', nonce: 'n2' }, true)
+    assert.ok(html.includes('Cancelled'))
+    assert.ok(!html.includes('id="elapsed"'))
+    assert.ok(!html.includes('id="cancel"'))
+    assert.ok(!html.includes('setInterval'))
+  })
+
+  it('should escape a malicious URL', () => {
+    const html = buildPendingDetailHtml(
+      { method: 'GET', url: 'https://x/"><script>alert(1)</script>', headers: [], body: undefined },
+      { cspSource: 'vscode-resource:', nonce: 'n3' }
+    )
+    assert.ok(!html.includes('<script>alert(1)</script>'))
+    assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'))
   })
 })
