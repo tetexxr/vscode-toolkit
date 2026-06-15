@@ -10,10 +10,14 @@ import {
   inferLanguageFromContentType,
   interpolate,
   mergeEnvironmentVariables,
+  parseBodyFileRef,
+  parseDotenv,
   parseEnvironmentFile,
   parseHttpFile,
+  type BodyFileRef,
   type EnvironmentFile,
   type HttpRequest,
+  type InterpolateOptions,
   type ParsedHttpFile
 } from './rest-client-utils'
 
@@ -215,7 +219,9 @@ const inflight: Set<AbortController> = new Set()
 async function executeRequest(
   req: HttpRequest,
   variables: Record<string, string>,
-  config: RestClientConfig
+  config: RestClientConfig,
+  baseDir: string,
+  opts: InterpolateOptions
 ): Promise<{
   status: number
   statusText: string
@@ -223,15 +229,12 @@ async function executeRequest(
   body: string
   durationMs: number
 }> {
-  const url = interpolate(req.url, variables, { nextUuid: () => randomUUID() })
+  const url = interpolate(req.url, variables, opts)
   const headers: Record<string, string> = {}
   for (const h of req.headers) {
-    headers[h.name] = interpolate(h.value, variables, { nextUuid: () => randomUUID() })
+    headers[h.name] = interpolate(h.value, variables, opts)
   }
-  let body: string | undefined
-  if (req.body && req.body.length > 0) {
-    body = interpolate(req.body, variables, { nextUuid: () => randomUUID() })
-  }
+  const { body } = await resolveBody(req, variables, opts, baseDir)
 
   const controller = new AbortController()
   inflight.add(controller)
@@ -288,9 +291,61 @@ async function composeVariables(parsed: ParsedHttpFile, documentUri: vscode.Uri)
   return { ...(await loadEnvironmentVariables(documentUri)), ...variablesAsRecord(parsed) }
 }
 
+/** Reads the `.env` file sitting next to the .http file, for {{$dotenv NAME}}. Empty when absent. */
+async function loadDotenv(documentUri: vscode.Uri): Promise<Record<string, string>> {
+  const envUri = vscode.Uri.file(path.join(path.dirname(documentUri.fsPath), '.env'))
+  try {
+    return parseDotenv(Buffer.from(await vscode.workspace.fs.readFile(envUri)).toString('utf8'))
+  } catch {
+    return {}
+  }
+}
+
+/** Builds the interpolation options shared by execution and curl export. */
+async function buildInterpolateOptions(documentUri: vscode.Uri): Promise<InterpolateOptions> {
+  return {
+    nextUuid: () => randomUUID(),
+    processEnv: process.env,
+    dotenv: await loadDotenv(documentUri)
+  }
+}
+
+/**
+ * Resolves a request body: an inline body is interpolated in place; a
+ * `< path` / `<@ path` directive reads the file (relative to the .http file),
+ * decodes it, and optionally interpolates `{{variables}}` inside it.
+ */
+async function resolveBody(
+  req: HttpRequest,
+  variables: Record<string, string>,
+  opts: InterpolateOptions,
+  baseDir: string
+): Promise<{ body: string | undefined; fileRef: BodyFileRef | null; absolutePath?: string }> {
+  if (!req.body || req.body.length === 0) {
+    return { body: undefined, fileRef: null }
+  }
+  const fileRef = parseBodyFileRef(req.body)
+  if (!fileRef) {
+    return { body: interpolate(req.body, variables, opts), fileRef: null }
+  }
+  const absolutePath = path.isAbsolute(fileRef.path) ? fileRef.path : path.join(baseDir, fileRef.path)
+  const fileUri = vscode.Uri.file(absolutePath)
+  const stat = await vscode.workspace.fs.stat(fileUri)
+  if (stat.size > MAX_RESPONSE_BYTES) {
+    throw new Error(`Body file exceeds ${MAX_RESPONSE_BYTES / (1024 * 1024)} MB — request aborted.`)
+  }
+  let text = Buffer.from(await vscode.workspace.fs.readFile(fileUri)).toString(fileRef.encoding)
+  if (fileRef.interpolateVariables) {
+    text = interpolate(text, variables, opts)
+  }
+  return { body: text, fileRef, absolutePath }
+}
+
 async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<void> {
   const config = readConfig()
   const variables = await composeVariables(parsed, documentUri)
+  const opts = await buildInterpolateOptions(documentUri)
+  const baseDir = path.dirname(documentUri.fsPath)
   try {
     const response = await vscode.window.withProgress(
       {
@@ -298,7 +353,7 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
         title: `${req.method} ${req.url}`,
         cancellable: false
       },
-      () => executeRequest(req, variables, config)
+      () => executeRequest(req, variables, config, baseDir, opts)
     )
     await showResponse(response, config.previewResponseAs)
   } catch (error) {
@@ -342,12 +397,32 @@ async function sendByIndex(uriString: string, index: number): Promise<void> {
 
 async function copyCurlFor(req: HttpRequest, parsed: ParsedHttpFile, documentUri: vscode.Uri): Promise<void> {
   const variables = await composeVariables(parsed, documentUri)
-  const opts = { nextUuid: () => randomUUID() }
+  const opts = await buildInterpolateOptions(documentUri)
+  const baseDir = path.dirname(documentUri.fsPath)
+
+  // A raw `< path` body maps to curl's `--data @path` (curl reads the file), so
+  // we don't read it ourselves. An interpolated `<@ path` body (and inline
+  // bodies) are resolved to text and inlined.
+  const fileRef = req.body ? parseBodyFileRef(req.body) : null
+  let body = ''
+  let bodyFile: string | undefined
+  if (fileRef && !fileRef.interpolateVariables) {
+    bodyFile = path.isAbsolute(fileRef.path) ? fileRef.path : path.join(baseDir, fileRef.path)
+  } else {
+    try {
+      body = (await resolveBody(req, variables, opts, baseDir)).body ?? ''
+    } catch (error) {
+      vscode.window.showWarningMessage(`Toolkit: could not build curl — ${(error as Error).message}`)
+      return
+    }
+  }
+
   const curl = buildCurl({
     method: req.method,
     url: interpolate(req.url, variables, opts),
     headers: req.headers.map(h => ({ name: h.name, value: interpolate(h.value, variables, opts) })),
-    body: interpolate(req.body, variables, opts)
+    body,
+    bodyFile
   })
   await vscode.env.clipboard.writeText(curl)
   vscode.window.showInformationMessage('Toolkit: curl command copied to the clipboard.')
