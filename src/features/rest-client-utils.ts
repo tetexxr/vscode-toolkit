@@ -852,6 +852,7 @@ const DETAIL_STYLES = `
   .retry-row { margin-top: 8px; align-items: center; }
   .retry-label { color: var(--vscode-descriptionForeground); font-size: 12px; margin-right: 2px; }
   .elapsed { color: var(--vscode-descriptionForeground); font-size: 12px; margin-left: 8px; font-variant-numeric: tabular-nums; }
+  .truncated { color: var(--vscode-charts-yellow, #cca700); font-size: 12px; margin-top: 10px; padding: 6px 10px; border-left: 3px solid var(--vscode-charts-yellow, #cca700); background: var(--vscode-textBlockQuote-background, rgba(255,255,255,.04)); }
   button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; }
   button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
   button:hover { background: var(--vscode-button-hoverBackground); }
@@ -908,6 +909,14 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
 
   const bodyData = embedJsonInScript({ pretty, raw: entry.body })
 
+  // The history stores at most ~1 MB per response; flag when what's shown is clipped.
+  const shownSize = formatBytes(Buffer.byteLength(entry.body, 'utf-8'))
+  const truncatedNote = entry.bodyTruncated
+    ? `<p class="truncated">⚠ Response truncated — showing the first ${escapeHtml(shownSize)}${
+        entry.bodyBytes ? ` of ${escapeHtml(formatBytes(entry.bodyBytes))}` : ''
+      }. The history keeps up to ~1&nbsp;MB per response.</p>`
+    : ''
+
   // On timeout, offer one-click retries at preset timeouts (no incremental ramp).
   const retryRow = entry.timedOut
     ? `<div class="actions retry-row"><span class="retry-label">Retry with:</span>${RETRY_TIMEOUT_PRESETS.map(
@@ -933,7 +942,8 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
   <table>${headerRows(entry.headers)}</table>
   ${requestSectionHtml(entry.requestHeaders, entry.requestBody, false)}
   <h3>Body</h3>
-  <pre id="body"></pre>`
+  <pre id="body"></pre>
+  ${truncatedNote}`
 
   const scriptBody = `
     const vscode = acquireVsCodeApi();

@@ -804,3 +804,25 @@ describe('directoryChildren', () => {
     assert.deepEqual(files, ['app/a.http'])
   })
 })
+
+describe('buildResponseDetailHtml — truncation note', () => {
+  const make = (over) =>
+    buildResponseDetailHtml(
+      {
+        id: 'a', method: 'GET', url: 'https://api.test/x', status: 200, statusText: 'OK',
+        durationMs: 1, timestamp: 1, headers: [], body: 'abc', bodyTruncated: false, ...over
+      },
+      { cspSource: 'vscode-resource:', nonce: 'n' }
+    )
+
+  it('should show a truncation note when the body was clipped', () => {
+    const html = make({ bodyTruncated: true, bodyBytes: 5_000_000 })
+    assert.ok(html.includes('class="truncated"'))
+    assert.ok(html.includes('Response truncated'))
+    assert.ok(html.includes('4.8 MB')) // 5_000_000 bytes ≈ 4.8 MB
+  })
+
+  it('should not show the note for a complete body', () => {
+    assert.ok(!make({ bodyTruncated: false }).includes('class="truncated"'))
+  })
+})
