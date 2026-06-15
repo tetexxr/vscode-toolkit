@@ -9,6 +9,10 @@ import {
   findHeader,
   findRequestAtLine,
   formatResponse,
+  groupHistoryByRequest,
+  historyEntryTiming,
+  historyStatusKind,
+  historyStatusLabel,
   inferLanguageFromContentType,
   interpolate,
   mergeEnvironmentVariables,
@@ -19,9 +23,11 @@ import {
   truncateForHistory,
   type BodyFileRef,
   type EnvironmentFile,
+  type HistoryStatusKind,
   type HttpRequest,
   type InterpolateOptions,
   type ParsedHttpFile,
+  type RequestGroup,
   type ResponseHistoryEntry
 } from './rest-client-utils'
 
@@ -209,6 +215,7 @@ async function pushHistory(entry: ResponseHistoryEntry): Promise<void> {
     return
   }
   await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, addHistoryEntry(getHistory(), entry, max))
+  historyProvider?.refresh()
 }
 
 async function recordHistory(response: Awaited<ReturnType<typeof executeRequest>>, method: string): Promise<void> {
@@ -416,7 +423,148 @@ async function clearHistory(): Promise<void> {
     return
   }
   await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, [])
+  historyProvider?.refresh()
   vscode.window.showInformationMessage('Toolkit: REST Client response history cleared.')
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Response history — tree view (sidebar)                                    */
+/* -------------------------------------------------------------------------- */
+
+const HISTORY_VIEW_ID = 'toolkitRestHistory'
+const HISTORY_GROUP_BY_KEY = 'toolkit.restClient.history.groupBy'
+/** Context key mirrored for the view-title toggle buttons' `when` clauses. */
+const HISTORY_GROUP_BY_CONTEXT = 'toolkitRestHistoryGroupBy'
+
+/** `request` collapses repeated calls to one endpoint together; `flat` is a plain timeline. */
+type HistoryGroupBy = 'request' | 'flat'
+
+function historyGroupBy(): HistoryGroupBy {
+  return extensionContext?.workspaceState.get<HistoryGroupBy>(HISTORY_GROUP_BY_KEY, 'request') ?? 'request'
+}
+
+async function setHistoryGroupBy(mode: HistoryGroupBy): Promise<void> {
+  await extensionContext?.workspaceState.update(HISTORY_GROUP_BY_KEY, mode)
+  await vscode.commands.executeCommand('setContext', HISTORY_GROUP_BY_CONTEXT, mode)
+  historyProvider?.refresh()
+}
+
+/** A request group (parent) or a single response (leaf). */
+type HistoryNode =
+  | { kind: 'group'; group: RequestGroup }
+  | { kind: 'entry'; entry: ResponseHistoryEntry; showRequest: boolean }
+
+/** Codicon + theme color per status bucket, so a glance at the tree reads pass/warn/fail. */
+const STATUS_ICON: Record<HistoryStatusKind, { icon: string; color: string }> = {
+  success: { icon: 'pass', color: 'testing.iconPassed' },
+  redirect: { icon: 'arrow-right', color: 'charts.blue' },
+  clientError: { icon: 'warning', color: 'charts.yellow' },
+  serverError: { icon: 'error', color: 'charts.red' },
+  failed: { icon: 'error', color: 'errorForeground' }
+}
+
+class RestHistoryTreeProvider implements vscode.TreeDataProvider<HistoryNode> {
+  private emitter = new vscode.EventEmitter<HistoryNode | undefined | null | void>()
+  readonly onDidChangeTreeData = this.emitter.event
+
+  refresh(): void {
+    this.emitter.fire()
+  }
+
+  getTreeItem(node: HistoryNode): vscode.TreeItem {
+    if (node.kind === 'group') {
+      const { method, url, entries } = node.group
+      const item = new vscode.TreeItem(`${method} ${url}`, vscode.TreeItemCollapsibleState.Expanded)
+      const latest = entries[0]
+      item.description = `${entries.length}× · ${historyStatusLabel(latest)} · ${historyEntryTiming(latest)}`
+      item.iconPath = new vscode.ThemeIcon('globe')
+      item.tooltip = new vscode.MarkdownString(`**${method}** \`${url}\`\n\n${entries.length} response(s) recorded`)
+      item.contextValue = 'restHistoryGroup'
+      return item
+    }
+    const { entry, showRequest } = node
+    const kind = historyStatusKind(entry)
+    const { icon, color } = STATUS_ICON[kind]
+    const item = new vscode.TreeItem(
+      showRequest ? `${entry.method} ${entry.url}` : historyStatusLabel(entry),
+      vscode.TreeItemCollapsibleState.None
+    )
+    item.description = showRequest
+      ? `${historyStatusLabel(entry)} · ${historyEntryTiming(entry)}`
+      : historyEntryTiming(entry)
+    item.iconPath = new vscode.ThemeIcon(icon, new vscode.ThemeColor(color))
+    item.tooltip = new vscode.MarkdownString(
+      `**${entry.method}** \`${entry.url}\`\n\n${historyStatusLabel(entry)} · ${historyEntryTiming(entry)}`
+    )
+    item.command = {
+      title: 'Open Response',
+      command: 'toolkit.restClient.history.open',
+      arguments: [entry.id]
+    }
+    item.contextValue = 'restHistoryEntry'
+    return item
+  }
+
+  getChildren(parent?: HistoryNode): HistoryNode[] {
+    if (!parent) {
+      const history = getHistory()
+      if (history.length === 0) {
+        return []
+      }
+      if (historyGroupBy() === 'flat') {
+        return history.map<HistoryNode>(entry => ({ kind: 'entry', entry, showRequest: true }))
+      }
+      return groupHistoryByRequest(history).map<HistoryNode>(group => ({ kind: 'group', group }))
+    }
+    if (parent.kind === 'group') {
+      return parent.group.entries.map<HistoryNode>(entry => ({ kind: 'entry', entry, showRequest: false }))
+    }
+    return []
+  }
+}
+
+let historyProvider: RestHistoryTreeProvider | undefined
+
+/** Reopens a stored response (looked up by id) in a read-only preview tab. */
+async function openHistoryEntry(id: string): Promise<void> {
+  const entry = getHistory().find(e => e.id === id)
+  if (!entry) {
+    return
+  }
+  await showResponse(entry, readConfig().previewResponseAs)
+}
+
+/** Deletes one entry from the history (invoked from the tree's inline trash icon). */
+async function deleteHistoryEntry(node: HistoryNode | undefined): Promise<void> {
+  if (!node || node.kind !== 'entry') {
+    return
+  }
+  const remaining = getHistory().filter(e => e.id !== node.entry.id)
+  await extensionContext?.workspaceState.update(HISTORY_STATE_KEY, remaining)
+  historyProvider?.refresh()
+}
+
+/** Diffs a response against the previous call to the *same* endpoint, if any. */
+async function diffHistoryWithPrevious(node: HistoryNode | undefined): Promise<void> {
+  if (!node || node.kind !== 'entry') {
+    return
+  }
+  const current = node.entry
+  // History is newest-first; the previous call to this endpoint is the next
+  // older entry sharing the same method + URL.
+  const sameEndpoint = getHistory().filter(e => e.method === current.method && e.url === current.url)
+  const index = sameEndpoint.findIndex(e => e.id === current.id)
+  const previous = index >= 0 ? sameEndpoint[index + 1] : undefined
+  if (!previous) {
+    vscode.window.showInformationMessage('Toolkit: no earlier response for this request to diff against.')
+    return
+  }
+  await vscode.commands.executeCommand(
+    'vscode.diff',
+    historyUri(previous),
+    historyUri(current),
+    `REST history: ${previous.method} ${previous.status} ↔ ${current.status}`
+  )
 }
 
 /* -------------------------------------------------------------------------- */
@@ -772,6 +920,20 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
   )
   updateEnvironmentStatusBar()
 
+  historyProvider = new RestHistoryTreeProvider()
+  const historyView = vscode.window.createTreeView<HistoryNode>(HISTORY_VIEW_ID, {
+    treeDataProvider: historyProvider
+  })
+  context.subscriptions.push(historyView)
+  void vscode.commands.executeCommand('setContext', HISTORY_GROUP_BY_CONTEXT, historyGroupBy())
+  const updateHistoryBadge = () => {
+    const total = getHistory().length
+    historyView.badge =
+      total > 0 ? { value: total, tooltip: `${total} response${total === 1 ? '' : 's'} in history` } : undefined
+  }
+  historyProvider.onDidChangeTreeData(() => updateHistoryBadge())
+  updateHistoryBadge()
+
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.restClient.send', () => sendAtCursor()),
     vscode.commands.registerCommand('toolkit.restClient.sendByIndex', (uri: string, index: number) =>
@@ -786,6 +948,16 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
     ),
     vscode.commands.registerCommand('toolkit.restClient.showHistory', () => showHistory()),
     vscode.commands.registerCommand('toolkit.restClient.diffHistory', () => diffHistory()),
-    vscode.commands.registerCommand('toolkit.restClient.clearHistory', () => clearHistory())
+    vscode.commands.registerCommand('toolkit.restClient.clearHistory', () => clearHistory()),
+    vscode.commands.registerCommand('toolkit.restClient.history.open', (id: string) => openHistoryEntry(id)),
+    vscode.commands.registerCommand('toolkit.restClient.history.refresh', () => historyProvider?.refresh()),
+    vscode.commands.registerCommand('toolkit.restClient.history.groupByRequest', () => setHistoryGroupBy('request')),
+    vscode.commands.registerCommand('toolkit.restClient.history.groupByFlat', () => setHistoryGroupBy('flat')),
+    vscode.commands.registerCommand('toolkit.restClient.history.deleteEntry', (node?: HistoryNode) =>
+      deleteHistoryEntry(node)
+    ),
+    vscode.commands.registerCommand('toolkit.restClient.history.diffWithPrevious', (node?: HistoryNode) =>
+      diffHistoryWithPrevious(node)
+    )
   )
 }

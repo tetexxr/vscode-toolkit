@@ -76,7 +76,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | .env Checker | — | Diagnostics when .env drifts from .env.example, with quick fix |
 | TODO Tree | — | TODO/FIXME/HACK... comments in a sidebar tree, grouped by tag or file |
 | REST Client | — | Run .http requests; environments (env.json), variables, file bodies, copy as curl |
-| REST Response History | — | Reopen or diff recent .http responses (status, timing, body) |
+| REST Response History | — | Sidebar tree of recent .http responses grouped by request; color-coded status, reopen, diff, delete |
 | Regex Playground | — | Live regex tester in a panel, safe against catastrophic backtracking |
 
 ## Viewers & Appearance
@@ -93,5 +93,5 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 ## Where to find things
 
 - Most actions live in the **right-click menus** — the editor menu shows the actions for that file type (`.http`, `.json`, `.md`, `package.json`, `.csproj`...), the explorer menu the file/folder ones.
-- Tree views (Commit History, TODOs, NuGet, npm) have **inline icons** on hover.
+- Tree views (Commit History, TODOs, NuGet, npm, REST Response History) have **inline icons** on hover.
 - Everything is also in the **Command Palette** under `Toolkit:`.

@@ -73,6 +73,11 @@
           "id": "toolkit-todo",
           "title": "TODOs",
           "icon": "themes/icons/todo-tree.svg"
+        },
+        {
+          "id": "rest-client",
+          "title": "REST Client",
+          "icon": "themes/icons/rest-client.svg"
         }
       ]
     },
@@ -103,6 +108,12 @@
         {
           "id": "toolkitTodoTree",
           "name": "TODOs"
+        }
+      ],
+      "rest-client": [
+        {
+          "id": "toolkitRestHistory",
+          "name": "Response History"
         }
       ]
     },
@@ -804,7 +815,37 @@
       },
       {
         "command": "toolkit.restClient.clearHistory",
-        "title": "Toolkit: REST Client - Clear Response History"
+        "title": "Toolkit: REST Client - Clear Response History",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "toolkit.restClient.history.open",
+        "title": "Toolkit: REST Client - Open Response"
+      },
+      {
+        "command": "toolkit.restClient.history.refresh",
+        "title": "Toolkit: REST Client - Refresh History",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.restClient.history.groupByRequest",
+        "title": "Toolkit: REST Client - Group History by Request",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "toolkit.restClient.history.groupByFlat",
+        "title": "Toolkit: REST Client - Show History as Timeline",
+        "icon": "$(list-flat)"
+      },
+      {
+        "command": "toolkit.restClient.history.deleteEntry",
+        "title": "Toolkit: REST Client - Delete Response",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "toolkit.restClient.history.diffWithPrevious",
+        "title": "Toolkit: REST Client - Diff with Previous Response",
+        "icon": "$(git-compare)"
       },
       {
         "command": "toolkit.regexPlayground.open",
@@ -957,6 +998,26 @@
           "command": "toolkit.todoTree.refresh",
           "when": "view == toolkitTodoTree",
           "group": "navigation@3"
+        },
+        {
+          "command": "toolkit.restClient.history.groupByRequest",
+          "when": "view == toolkitRestHistory && toolkitRestHistoryGroupBy != request",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.restClient.history.groupByFlat",
+          "when": "view == toolkitRestHistory && toolkitRestHistoryGroupBy != flat",
+          "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.restClient.history.refresh",
+          "when": "view == toolkitRestHistory",
+          "group": "navigation@3"
+        },
+        {
+          "command": "toolkit.restClient.clearHistory",
+          "when": "view == toolkitRestHistory",
+          "group": "navigation@4"
         }
       ],
       "editor/title": [
@@ -986,6 +1047,16 @@
           "command": "toolkit.todoTree.excludeFolder",
           "when": "view == toolkitTodoTree && (viewItem == file || viewItem == todo)",
           "group": "1_modify@1"
+        },
+        {
+          "command": "toolkit.restClient.history.diffWithPrevious",
+          "when": "view == toolkitRestHistory && viewItem == restHistoryEntry",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.restClient.history.deleteEntry",
+          "when": "view == toolkitRestHistory && viewItem == restHistoryEntry",
+          "group": "inline@2"
         }
       ],
       "toolkit.csharp.new": [
@@ -1185,6 +1256,30 @@
         },
         {
           "command": "toolkit.restClient.sendByIndex",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.open",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.deleteEntry",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.diffWithPrevious",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.refresh",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.groupByRequest",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.history.groupByFlat",
           "when": "false"
         }
       ],

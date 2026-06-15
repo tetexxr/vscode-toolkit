@@ -565,17 +565,77 @@ export function addHistoryEntry(
   return [entry, ...list].slice(0, max)
 }
 
+/** Human-readable status for an entry: `200 OK`, or `Failed: <error>` for a request that never responded. */
+export function historyStatusLabel(entry: ResponseHistoryEntry): string {
+  return entry.error
+    ? `Failed: ${entry.error}`
+    : `${entry.status}${entry.statusText ? ` ${entry.statusText}` : ''}`
+}
+
+/** Timing + relative-time suffix for an entry (e.g. `123ms · 2 minutes ago · body truncated`). */
+export function historyEntryTiming(entry: ResponseHistoryEntry, now: number = Date.now()): string {
+  const when = formatRelative(new Date(entry.timestamp), new Date(now))
+  return `${entry.durationMs}ms · ${when}${entry.bodyTruncated ? ' · body truncated' : ''}`
+}
+
 /** Quick-pick label + description for a history entry (e.g. `200 OK · 123ms · 2 minutes ago`). */
 export function describeHistoryEntry(
   entry: ResponseHistoryEntry,
   now: number = Date.now()
 ): { label: string; description: string } {
-  const when = formatRelative(new Date(entry.timestamp), new Date(now))
-  const status = entry.error
-    ? `Failed: ${entry.error}`
-    : `${entry.status}${entry.statusText ? ` ${entry.statusText}` : ''}`
   return {
     label: `${entry.method} ${entry.url}`,
-    description: `${status} · ${entry.durationMs}ms · ${when}${entry.bodyTruncated ? ' · body truncated' : ''}`
+    description: `${historyStatusLabel(entry)} · ${historyEntryTiming(entry, now)}`
   }
+}
+
+/** One endpoint (method + final URL) with all of its responses, newest first. */
+export interface RequestGroup {
+  /** Stable group key: `${method} ${url}`. */
+  key: string
+  method: string
+  url: string
+  entries: ResponseHistoryEntry[]
+}
+
+/**
+ * Groups history entries by request (method + final URL) so repeated calls to
+ * the same endpoint collapse together instead of appearing interleaved. The input
+ * is assumed newest-first; each group keeps that order, and the groups themselves
+ * are ordered by their most-recent entry (so the just-used endpoint floats to the
+ * top).
+ */
+export function groupHistoryByRequest(history: ResponseHistoryEntry[]): RequestGroup[] {
+  const groups: RequestGroup[] = []
+  const byKey = new Map<string, RequestGroup>()
+  for (const entry of history) {
+    const key = `${entry.method} ${entry.url}`
+    let group = byKey.get(key)
+    if (!group) {
+      group = { key, method: entry.method, url: entry.url, entries: [] }
+      byKey.set(key, group)
+      groups.push(group)
+    }
+    group.entries.push(entry)
+  }
+  return groups
+}
+
+/** Coarse status bucket used to pick an icon and color for a history entry. */
+export type HistoryStatusKind = 'success' | 'redirect' | 'clientError' | 'serverError' | 'failed'
+
+export function historyStatusKind(entry: ResponseHistoryEntry): HistoryStatusKind {
+  if (entry.error || entry.status === 0) {
+    return 'failed'
+  }
+  if (entry.status >= 500) {
+    return 'serverError'
+  }
+  if (entry.status >= 400) {
+    return 'clientError'
+  }
+  if (entry.status >= 300) {
+    return 'redirect'
+  }
+  return 'success'
 }

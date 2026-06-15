@@ -17,6 +17,8 @@ import {
   addHistoryEntry,
   truncateForHistory,
   describeHistoryEntry,
+  groupHistoryByRequest,
+  historyStatusKind,
   type ResponseHistoryEntry
 } from '../../src/features/rest-client-utils'
 
@@ -459,5 +461,39 @@ describe('response history', () => {
       now
     )
     assert.equal(d.description, 'Failed: getaddrinfo ENOTFOUND · 5ms · just now')
+  })
+
+  it('should group entries by method + url, keeping each group newest-first', () => {
+    const history = [
+      entry('c', 3, { method: 'GET', url: 'https://api.test/users' }),
+      entry('b', 2, { method: 'POST', url: 'https://api.test/users' }),
+      entry('a', 1, { method: 'GET', url: 'https://api.test/users' })
+    ]
+    const groups = groupHistoryByRequest(history)
+    assert.equal(groups.length, 2)
+    // Groups are ordered by their most-recent entry: GET (c, newest) before POST (b).
+    assert.equal(groups[0].key, 'GET https://api.test/users')
+    assert.deepEqual(
+      groups[0].entries.map(e => e.id),
+      ['c', 'a']
+    )
+    assert.equal(groups[1].key, 'POST https://api.test/users')
+    assert.deepEqual(
+      groups[1].entries.map(e => e.id),
+      ['b']
+    )
+  })
+
+  it('should return no groups for an empty history', () => {
+    assert.deepEqual(groupHistoryByRequest([]), [])
+  })
+
+  it('should bucket a status into the right kind for icon/color', () => {
+    assert.equal(historyStatusKind(entry('a', 1, { status: 200 })), 'success')
+    assert.equal(historyStatusKind(entry('a', 1, { status: 204 })), 'success')
+    assert.equal(historyStatusKind(entry('a', 1, { status: 301 })), 'redirect')
+    assert.equal(historyStatusKind(entry('a', 1, { status: 404 })), 'clientError')
+    assert.equal(historyStatusKind(entry('a', 1, { status: 500 })), 'serverError')
+    assert.equal(historyStatusKind(entry('a', 1, { status: 0, error: 'ENOTFOUND' })), 'failed')
   })
 })

@@ -1299,6 +1299,15 @@ Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send
 
 All of these are also available from the **editor context menu** when right-clicking inside a `.http` / `.rest` file.
 
+**Response History view:**
+
+The **REST Client** container in the activity bar holds a **Response History** tree — a more visual alternative to the picker. By default responses are **grouped by request** (method + final URL), so repeated calls to the same endpoint collapse together instead of appearing interleaved; the just-used endpoint floats to the top. Each response shows a **color-coded status icon** (green 2xx, blue 3xx, yellow 4xx, red 5xx / failed), its duration and a relative timestamp.
+
+- **Click** a response to reopen it in a read-only tab.
+- **Inline icons** (on hover): diff a response against the previous call to the same endpoint, or delete it.
+- **View title buttons**: toggle between *grouped by request* and a flat *timeline*, refresh, or clear all history.
+- A **badge** on the view shows how many responses are currently stored.
+
 **File format:**
 
 ```http
