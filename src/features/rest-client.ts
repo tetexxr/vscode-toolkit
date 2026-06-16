@@ -132,6 +132,15 @@ async function readJsonIfExists(uri: vscode.Uri): Promise<EnvironmentFile | null
   }
 }
 
+async function fileExists(uri: vscode.Uri): Promise<boolean> {
+  try {
+    await vscode.workspace.fs.stat(uri)
+    return true
+  } catch {
+    return false
+  }
+}
+
 /**
  * Finds http-client.env.json (+ private overlay) next to the .http file,
  * walking up to the workspace folder root. The nearest directory containing
@@ -996,6 +1005,90 @@ async function createRequestFile(): Promise<void> {
   await vscode.window.showTextDocument(document)
 }
 
+/**
+ * Creates the http-client.private.env.json overlay next to a selected
+ * http-client.env.json, scaffolded with the same environment names mapped to
+ * empty objects (so secrets can be added per environment without overriding the
+ * public values, which merge key by key). If it already exists it is just
+ * opened. The private file is added to the repository's .gitignore.
+ */
+async function createPrivateEnvFile(resource?: vscode.Uri): Promise<void> {
+  const target = resource ?? vscode.window.activeTextEditor?.document.uri
+  if (!target || path.basename(target.fsPath) !== ENV_FILE_NAME) {
+    vscode.window.showInformationMessage(`Toolkit: select a ${ENV_FILE_NAME} file to create its private overlay.`)
+    return
+  }
+
+  const privateUri = vscode.Uri.file(path.join(path.dirname(target.fsPath), PRIVATE_ENV_FILE_NAME))
+  const alreadyExists = await fileExists(privateUri)
+
+  if (!alreadyExists) {
+    const publicFile = await readJsonIfExists(target)
+    const scaffold: EnvironmentFile = {}
+    for (const name of Object.keys(publicFile ?? {})) {
+      scaffold[name] = {}
+    }
+    await vscode.workspace.fs.writeFile(privateUri, Buffer.from(JSON.stringify(scaffold, null, 2) + '\n', 'utf8'))
+    await ignorePrivateEnvFile(privateUri)
+  }
+
+  await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(privateUri))
+  if (alreadyExists) {
+    vscode.window.showInformationMessage(`Toolkit: ${PRIVATE_ENV_FILE_NAME} already exists — opened it.`)
+  }
+}
+
+/**
+ * Adds http-client.private.env.json to the repository's .gitignore so the
+ * secrets it holds are never committed. Prefers the nearest existing
+ * .gitignore (walking up from the file to the workspace root); otherwise falls
+ * back to the nearest folder that contains a .git entry. A bare filename
+ * pattern ignores the file wherever it lives.
+ */
+async function ignorePrivateEnvFile(privateUri: vscode.Uri): Promise<void> {
+  const folder = vscode.workspace.getWorkspaceFolder(privateUri)
+  const stopAt = folder ? folder.uri.fsPath : path.dirname(privateUri.fsPath)
+  let dir = path.dirname(privateUri.fsPath)
+  let gitignorePath: string | undefined
+  let repoRootPath: string | undefined
+  for (;;) {
+    if (!gitignorePath && (await fileExists(vscode.Uri.file(path.join(dir, '.gitignore'))))) {
+      gitignorePath = path.join(dir, '.gitignore')
+    }
+    if (!repoRootPath && (await fileExists(vscode.Uri.file(path.join(dir, '.git'))))) {
+      repoRootPath = dir
+    }
+    if (dir === stopAt || path.dirname(dir) === dir) {
+      break
+    }
+    dir = path.dirname(dir)
+  }
+
+  const targetPath = gitignorePath ?? (repoRootPath ? path.join(repoRootPath, '.gitignore') : undefined)
+  if (!targetPath) {
+    return
+  }
+
+  const targetUri = vscode.Uri.file(targetPath)
+  let current = ''
+  try {
+    current = Buffer.from(await vscode.workspace.fs.readFile(targetUri)).toString('utf8')
+  } catch {
+    current = ''
+  }
+  const alreadyIgnored = current
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .some(line => line === PRIVATE_ENV_FILE_NAME || line === `/${PRIVATE_ENV_FILE_NAME}`)
+  if (alreadyIgnored) {
+    return
+  }
+
+  const separator = current.length === 0 ? '' : current.endsWith('\n') ? '\n' : '\n\n'
+  const addition = `# REST Client private environment (secrets)\n${PRIVATE_ENV_FILE_NAME}\n`
+  await vscode.workspace.fs.writeFile(targetUri, Buffer.from(current + separator + addition, 'utf8'))
+}
+
 /* -------------------------------------------------------------------------- */
 /*  CodeLens                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -1575,6 +1668,9 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
     vscode.commands.registerCommand('toolkit.restClient.sendAll', () => sendAll()),
     vscode.commands.registerCommand('toolkit.restClient.cancelAll', () => cancelAll()),
     vscode.commands.registerCommand('toolkit.restClient.selectEnvironment', () => selectEnvironment()),
+    vscode.commands.registerCommand('toolkit.restClient.createPrivateEnv', (uri?: vscode.Uri) =>
+      createPrivateEnvFile(uri)
+    ),
     vscode.commands.registerCommand('toolkit.restClient.copyAsCurl', () => copyAsCurl()),
     vscode.commands.registerCommand('toolkit.restClient.copyAsCurlByIndex', (uri: string, index: number) =>
       copyAsCurlByIndex(uri, index)
