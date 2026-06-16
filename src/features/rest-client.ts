@@ -4,7 +4,9 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import {
   addHistoryEntry,
+  appendGitignorePattern,
   buildCurl,
+  buildPrivateEnvScaffold,
   environmentNames,
   findHeader,
   findRequestAtLine,
@@ -1023,12 +1025,8 @@ async function createPrivateEnvFile(resource?: vscode.Uri): Promise<void> {
   const alreadyExists = await fileExists(privateUri)
 
   if (!alreadyExists) {
-    const publicFile = await readJsonIfExists(target)
-    const scaffold: EnvironmentFile = {}
-    for (const name of Object.keys(publicFile ?? {})) {
-      scaffold[name] = {}
-    }
-    await vscode.workspace.fs.writeFile(privateUri, Buffer.from(JSON.stringify(scaffold, null, 2) + '\n', 'utf8'))
+    const scaffold = buildPrivateEnvScaffold(await readJsonIfExists(target))
+    await vscode.workspace.fs.writeFile(privateUri, Buffer.from(scaffold, 'utf8'))
     await ignorePrivateEnvFile(privateUri)
   }
 
@@ -1076,17 +1074,12 @@ async function ignorePrivateEnvFile(privateUri: vscode.Uri): Promise<void> {
   } catch {
     current = ''
   }
-  const alreadyIgnored = current
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .some(line => line === PRIVATE_ENV_FILE_NAME || line === `/${PRIVATE_ENV_FILE_NAME}`)
-  if (alreadyIgnored) {
+
+  const updated = appendGitignorePattern(current, PRIVATE_ENV_FILE_NAME, 'REST Client private environment (secrets)')
+  if (updated === null) {
     return
   }
-
-  const separator = current.length === 0 ? '' : current.endsWith('\n') ? '\n' : '\n\n'
-  const addition = `# REST Client private environment (secrets)\n${PRIVATE_ENV_FILE_NAME}\n`
-  await vscode.workspace.fs.writeFile(targetUri, Buffer.from(current + separator + addition, 'utf8'))
+  await vscode.workspace.fs.writeFile(targetUri, Buffer.from(updated, 'utf8'))
 }
 
 /* -------------------------------------------------------------------------- */
