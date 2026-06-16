@@ -1292,6 +1292,7 @@ Run HTTP requests from `.http` / `.rest` files. Each request block gets a **Send
 | Send All Requests | Run every request in the active file |
 | Cancel Pending Requests | Abort any requests currently in flight (a single in-flight request can also be cancelled from its progress notification) |
 | REST Client - Select Environment... | Pick the active environment from `http-client.env.json` (also via the status bar item) |
+| REST Client - Create Private Environment File | Right-click an `http-client.env.json` (in the explorer or its editor) to scaffold its `http-client.private.env.json` overlay — same environment names, empty maps ready for secrets — and add it to the repo's `.gitignore` |
 | REST Client - Copy as curl | Copy the request under the cursor as a `curl` command, with all variables resolved (also a CodeLens next to each Send Request) |
 | REST Client - Clear Response History | Empty the per-workspace history |
 
@@ -1380,7 +1381,7 @@ Point the same `.http` file at dev/staging/prod without editing it. Create an `h
 }
 ```
 
-- An optional `http-client.private.env.json` (gitignore it) overlays the public file key by key — put secrets there.
+- An optional `http-client.private.env.json` (gitignore it) overlays the public file key by key — put secrets there. Right-click the `http-client.env.json` (in the explorer or its editor) and choose **REST Client - Create Private Environment File** to scaffold it and gitignore it automatically.
 - Pick the active environment with **REST Client - Select Environment...** or by clicking the **globe item in the status bar** (visible while a `.http` file is active). The choice is remembered per workspace.
 - Resolution order for `{{...}}`: file `@vars` → private environment → public environment → built-ins. A file can therefore override an environment value locally.
 
