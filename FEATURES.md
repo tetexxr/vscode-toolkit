@@ -75,7 +75,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Previous Bookmark | `Shift+Alt+F7` | Jump to the previous one |
 | .env Checker | — | Diagnostics when .env drifts from .env.example, with quick fix |
 | TODO Tree | — | TODO/FIXME/HACK... comments in a sidebar tree, grouped by tag or file |
-| REST Client | — | Run .http requests; rich response panel with live timer/cancel and retry-on-timeout, environments (env.json), variables, file bodies, copy as curl |
+| REST Client | — | Run .http requests; rich response panel with live timer/cancel and retry-on-timeout, environments (env.json, with a gitignored private overlay you can scaffold from the env file's context menu), variables, file bodies, copy as curl |
 | REST Requests | — | Sidebar tree of every workspace .http/.rest file and its requests — open, jump to, or send each |
 | REST Response History | — | Sidebar tree of recent responses grouped per request; color-coded status, filter, re-send, diff, detail panel, copy as curl/body/URL, save body, go to source |
 | Regex Playground | — | Live regex tester in a panel, safe against catastrophic backtracking |

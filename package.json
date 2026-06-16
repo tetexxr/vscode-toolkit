@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.15.2",
+  "version": "1.15.3",
   "publisher": "tete",
   "repository": {
     "type": "git",
@@ -812,6 +812,10 @@
         "title": "Toolkit: REST Client - Select Environment..."
       },
       {
+        "command": "toolkit.restClient.createPrivateEnv",
+        "title": "Toolkit: REST Client - Create Private Environment File"
+      },
+      {
         "command": "toolkit.restClient.copyAsCurl",
         "title": "Toolkit: REST Client - Copy as curl"
       },
@@ -1406,19 +1410,24 @@
           "group": "0_toolkit@15"
         },
         {
+          "command": "toolkit.restClient.createPrivateEnv",
+          "when": "resourceFilename == http-client.env.json",
+          "group": "0_toolkit@16"
+        },
+        {
           "command": "toolkit.git.stageChanges",
           "when": "gitOpenRepositoryCount != 0",
-          "group": "0_toolkit@16"
+          "group": "0_toolkit@17"
         },
         {
           "command": "toolkit.todoTree.excludeFolder",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@17"
+          "group": "0_toolkit@18"
         },
         {
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@18"
+          "group": "0_toolkit@19"
         }
       ],
       "commandPalette": [
@@ -1428,6 +1437,10 @@
         },
         {
           "command": "toolkit.npm.managePackages",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.restClient.createPrivateEnv",
           "when": "false"
         },
         {
@@ -1649,6 +1662,11 @@
           "command": "toolkit.restClient.copyAsCurl",
           "group": "0_toolkit@22",
           "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.restClient.createPrivateEnv",
+          "group": "0_toolkit@23",
+          "when": "resourceFilename == http-client.env.json"
         },
         {
           "command": "toolkit.restClient.selectEnvironment",

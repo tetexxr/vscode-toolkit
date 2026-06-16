@@ -1,6 +1,8 @@
 import { strict as assert } from 'assert'
 import {
+  appendGitignorePattern,
   buildCurl,
+  buildPrivateEnvScaffold,
   environmentNames,
   mergeEnvironmentVariables,
   parseEnvironmentFile,
@@ -367,6 +369,69 @@ describe('environmentNames / mergeEnvironmentVariables', () => {
     assert.deepEqual(mergeEnvironmentVariables(pub, priv, 'dev'), { a: '1', b: 'secret', c: '3' })
     assert.deepEqual(mergeEnvironmentVariables(pub, priv, 'prod'), { a: '9' })
     assert.deepEqual(mergeEnvironmentVariables(pub, priv, 'missing'), {})
+  })
+})
+
+describe('buildPrivateEnvScaffold', () => {
+  it('should mirror the public environment names as empty objects', () => {
+    const pub = { local: { baseUrl: 'http://localhost:5101' }, production: { baseUrl: 'https://x' } }
+    assert.equal(buildPrivateEnvScaffold(pub), '{\n  "local": {},\n  "production": {}\n}\n')
+  })
+
+  it('should not carry over the public variable values (so nothing is clobbered on merge)', () => {
+    const scaffold = JSON.parse(buildPrivateEnvScaffold({ dev: { token: 'public-value' } }))
+    assert.deepEqual(scaffold, { dev: {} })
+  })
+
+  it('should produce an empty object for a null or empty public file', () => {
+    assert.equal(buildPrivateEnvScaffold(null), '{}\n')
+    assert.equal(buildPrivateEnvScaffold({}), '{}\n')
+  })
+
+  it('should end with a trailing newline', () => {
+    assert.ok(buildPrivateEnvScaffold({ local: {} }).endsWith('}\n'))
+  })
+})
+
+describe('appendGitignorePattern', () => {
+  const pattern = 'http-client.private.env.json'
+  const comment = 'REST Client private environment (secrets)'
+
+  it('should append under a comment, separated by a blank line, when the file ends with a newline', () => {
+    assert.equal(
+      appendGitignorePattern('node_modules/\n', pattern, comment),
+      `node_modules/\n\n# ${comment}\n${pattern}\n`
+    )
+  })
+
+  it('should first finish the last line when the file does not end with a newline', () => {
+    assert.equal(
+      appendGitignorePattern('node_modules/', pattern, comment),
+      `node_modules/\n\n# ${comment}\n${pattern}\n`
+    )
+  })
+
+  it('should write without a leading blank line when the file is empty', () => {
+    assert.equal(appendGitignorePattern('', pattern, comment), `# ${comment}\n${pattern}\n`)
+  })
+
+  it('should omit the comment header when none is given', () => {
+    assert.equal(appendGitignorePattern('', pattern), `${pattern}\n`)
+  })
+
+  it('should return null when the pattern is already present (bare or root-anchored)', () => {
+    assert.equal(appendGitignorePattern(`a\n${pattern}\nb\n`, pattern, comment), null)
+    assert.equal(appendGitignorePattern(`/${pattern}\n`, pattern, comment), null)
+  })
+
+  it('should ignore surrounding whitespace when detecting an existing entry', () => {
+    assert.equal(appendGitignorePattern(`  ${pattern}  \n`, pattern, comment), null)
+  })
+
+  it('should not treat a different but similar pattern as already present', () => {
+    const result = appendGitignorePattern('http-client.env.json\n', pattern, comment)
+    assert.notEqual(result, null)
+    assert.ok(result?.includes(`${pattern}\n`))
   })
 })
 

@@ -485,6 +485,40 @@ export function mergeEnvironmentVariables(
   return { ...(publicFile?.[environment] ?? {}), ...(privateFile?.[environment] ?? {}) }
 }
 
+/**
+ * Builds the http-client.private.env.json overlay scaffold: the same
+ * environment names as the public file, each mapped to an empty object. Secrets
+ * are then added per environment without overriding the public values (which
+ * merge key by key). Returns the pretty-printed JSON document (trailing newline
+ * included).
+ */
+export function buildPrivateEnvScaffold(publicFile: EnvironmentFile | null): string {
+  const scaffold: EnvironmentFile = {}
+  for (const name of Object.keys(publicFile ?? {})) {
+    scaffold[name] = {}
+  }
+  return JSON.stringify(scaffold, null, 2) + '\n'
+}
+
+/**
+ * Appends a pattern to .gitignore content, under an optional comment. Returns
+ * null when the pattern is already present (bare or root-anchored), so the
+ * caller can skip writing; otherwise returns the full new file content. A blank
+ * line is inserted before the comment unless the file is empty.
+ */
+export function appendGitignorePattern(current: string, pattern: string, comment?: string): string | null {
+  const alreadyIgnored = current
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .some(line => line === pattern || line === `/${pattern}`)
+  if (alreadyIgnored) {
+    return null
+  }
+  const separator = current.length === 0 ? '' : current.endsWith('\n') ? '\n' : '\n\n'
+  const header = comment ? `# ${comment}\n` : ''
+  return current + separator + header + pattern + '\n'
+}
+
 /* -------------------------------------------------------------------------- */
 /*  curl export                                                               */
 /* -------------------------------------------------------------------------- */
