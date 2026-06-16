@@ -113,6 +113,42 @@ describe('parseHttpFile — basic', () => {
     assert.equal(parsed.requests[0].method, 'GET')
   })
 
+  it('should strip a comment that follows a request body so the body stays valid', () => {
+    const text = [
+      '### send-pending',
+      'POST https://api.example.com/send-pending',
+      'Content-Type: application/json',
+      '',
+      '{',
+      '    "locationId": "abc"',
+      '}',
+      '',
+      '# ───── section divider ─────',
+      '',
+      '### next',
+      'GET https://api.example.com/next'
+    ].join('\n')
+    const parsed = parseHttpFile(text)
+    assert.equal(parsed.requests.length, 2)
+    assert.equal(parsed.requests[0].body, '{\n    "locationId": "abc"\n}')
+  })
+
+  it('should strip # and // comment lines inside a body', () => {
+    const text = [
+      'POST https://x',
+      'Content-Type: application/json',
+      '',
+      '{',
+      '# explanation',
+      '  "a": 1,',
+      '// another note',
+      '  "b": 2',
+      '}'
+    ].join('\n')
+    const parsed = parseHttpFile(text)
+    assert.equal(parsed.requests[0].body, '{\n  "a": 1,\n  "b": 2\n}')
+  })
+
   it('should treat lines after the headers blank line as body and preserve newlines', () => {
     const text = ['POST https://x', 'Content-Type: text/plain', '', 'line 1', 'line 2', ''].join('\n')
     const parsed = parseHttpFile(text)

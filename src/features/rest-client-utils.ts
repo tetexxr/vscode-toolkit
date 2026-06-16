@@ -79,16 +79,19 @@ export function parseHttpFile(text: string): ParsedHttpFile {
       continue
     }
 
+    // Comment lines (`#` or `//`) are ignored everywhere — including inside a
+    // body — so a section divider placed after a request's JSON body doesn't
+    // get appended to it and corrupt the payload. The `###` separator is
+    // matched above, so it's never mistaken for a `#` comment here.
+    if (trimmed.startsWith('#') || trimmed.startsWith('//')) {
+      continue
+    }
+
     if (state === 'body') {
       bodyLines.push(raw)
       if (trimmed.length > 0) {
         lastMeaningfulLine = i
       }
-      continue
-    }
-
-    // Comments (single #) outside of body are ignored.
-    if (trimmed.startsWith('#')) {
       continue
     }
 
