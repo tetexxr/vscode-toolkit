@@ -78,11 +78,6 @@
           "id": "rest-client",
           "title": "REST Client",
           "icon": "themes/icons/rest-client.svg"
-        },
-        {
-          "id": "toolkit-local-history",
-          "title": "Local History",
-          "icon": "themes/icons/local-history.svg"
         }
       ]
     },
@@ -92,6 +87,11 @@
           "id": "toolkitCommitList",
           "name": "Commit History",
           "when": "gitOpenRepositoryCount != 0",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "toolkitLocalHistory",
+          "name": "Local History",
           "visibility": "collapsed"
         }
       ],
@@ -123,12 +123,6 @@
         {
           "id": "toolkitRestHistory",
           "name": "Response History"
-        }
-      ],
-      "toolkit-local-history": [
-        {
-          "id": "toolkitLocalHistory",
-          "name": "Revisions"
         }
       ]
     },

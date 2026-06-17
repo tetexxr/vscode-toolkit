@@ -1485,11 +1485,11 @@ A side panel where you can test regexes interactively. Pattern, flags, test inpu
 
 JetBrains-style local history: every time you **save** a file, Toolkit captures a revision of its contents — independent of git, and without touching your repository. When you break something, delete a block by accident, or reset away uncommitted work, you can diff against or restore any earlier version.
 
-Revisions for the **active file** show up in the **Local History** view in its own Activity Bar container (newest first). Click a revision to diff it against the current file; right-click for **Restore** and **Delete Revision**.
+Revisions for the **active file** show up in the **Local History** view in the **Source Control** sidebar, alongside **Commit History** (newest first). Click a revision to diff it against the current file; right-click for **Restore** and **Delete Revision**.
 
 Open it from:
 
-- **Activity Bar** — the **Local History** container.
+- **Source Control sidebar** — the **Local History** section.
 - **Editor / Explorer context menu** — **Toolkit: Show Local History** (focuses the view on that file).
 - **Command Palette** — **Toolkit: Show Local History**.
 
