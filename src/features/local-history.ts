@@ -253,7 +253,6 @@ class LocalHistoryProvider implements vscode.TreeDataProvider<RevisionNode> {
   /** Re-reads the current file's revisions from the store. */
   async reload(): Promise<void> {
     this.revisions = this.currentUri ? await this.store.list(this.currentUri.toString()) : []
-    void vscode.commands.executeCommand('setContext', 'toolkitLocalHistoryHasFile', this.currentUri !== undefined)
     this.emitter.fire()
   }
 
