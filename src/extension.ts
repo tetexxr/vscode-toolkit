@@ -46,6 +46,7 @@ import { registerCompareCommands } from './features/compare'
 import { registerPeekCommitCommands } from './features/peek-commit'
 import { registerLocalHistoryCommands } from './features/local-history'
 import { registerScratchCommands } from './features/scratch'
+import { registerRunScriptsCommands } from './features/run-scripts'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -95,6 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerPeekCommitCommands(context)
   registerLocalHistoryCommands(context)
   registerScratchCommands(context)
+  registerRunScriptsCommands(context)
 }
 
 export function deactivate() {}

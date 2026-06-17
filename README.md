@@ -22,6 +22,7 @@ All-in-one VS Code utility extension.
     - [NPM Package Manager](#npm-package-manager)
     - [NPM Intellisense](#npm-intellisense)
     - [Dependency Vulnerability Audit](#dependency-vulnerability-audit)
+    - [Run Scripts](#run-scripts)
   - [Code Editing](#code-editing)
     - [Change Case](#change-case)
     - [Slugify](#slugify)
@@ -376,6 +377,30 @@ Check a project's dependencies for known vulnerabilities using each ecosystem's 
 **Apply fixes:** for npm and pnpm projects, the first entry of the quick pick is **Apply fixes** — it runs the ecosystem's official remediation (`npm audit fix` / `pnpm audit --fix`) and re-audits so you can see what's left (fixes requiring a major bump are not applied automatically; update those from the package manager panel). yarn classic has no fix command, so the entry is not shown there. For NuGet there is no official auto-fix either — remediate by updating the affected package from the [NuGet panel](#nuget-package-manager).
 
 > Note: NuGet requires the project to be restored (`dotnet restore`) — the vulnerability data comes from the restore graph.
+
+#### Run Scripts
+
+Run any `package.json` script without leaving the editor. A **`▶ Run`** CodeLens sits above each entry in the `scripts` block — click it to run that script in an integrated terminal.
+
+The package manager is auto-detected per project (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, the `packageManager` field, otherwise npm), so the right command is used in monorepos with mixed tooling.
+
+Access:
+
+- **CodeLens** — `▶ Run` above each script in an open `package.json`.
+- **Command Palette** — **Toolkit: Run Script…** picks the nearest `package.json` (or asks which one) and lists its scripts.
+- **Editor context menu** — **Toolkit: Run Script…** when editing a `package.json`.
+
+**Behavior:**
+
+- Each script runs in the directory of its own `package.json`, so workspace/monorepo packages run in the right place.
+- Runs reuse a terminal named `<pm>: <script>`, so repeatedly running the same script doesn't pile up terminals.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.runScripts.enableCodeLens` | `true` | Show the Run CodeLens above each script |
+| `toolkit.runScripts.packageManager` | `auto` | Force `npm`/`yarn`/`pnpm`, or `auto`-detect |
 
 ### Code Editing
 

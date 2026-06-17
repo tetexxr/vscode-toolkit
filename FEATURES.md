@@ -24,6 +24,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | NPM Intellisense | — | Autocomplete package names in import/require |
 | npm Audit | — | Known vulnerabilities via npm/yarn/pnpm audit, sorted by severity, with apply-fixes |
 | NuGet Vulnerabilities | — | Same for .NET projects and solutions via dotnet list package |
+| Run Scripts | — | Run a package.json script via a CodeLens above each one, or a Run Script… picker; auto-detects npm/yarn/pnpm |
 
 ## Editing
 

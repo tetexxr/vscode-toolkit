@@ -1072,6 +1072,14 @@
       {
         "command": "toolkit.scratch.moveToWorkspace",
         "title": "Toolkit: Scratches - Move to Workspace…"
+      },
+      {
+        "command": "toolkit.runScripts.run",
+        "title": "Toolkit: Run Script (internal)"
+      },
+      {
+        "command": "toolkit.runScripts.pick",
+        "title": "Toolkit: Run Script…"
       }
     ],
     "keybindings": [
@@ -1754,6 +1762,10 @@
         {
           "command": "toolkit.scratch.moveToWorkspace",
           "when": "false"
+        },
+        {
+          "command": "toolkit.runScripts.run",
+          "when": "false"
         }
       ],
       "editor/context": [
@@ -1944,6 +1956,11 @@
           "command": "toolkit.scratch.newFromSelection",
           "group": "0_toolkit@40",
           "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.runScripts.pick",
+          "group": "0_toolkit@41",
+          "when": "resourceFilename == package.json"
         }
       ]
     },
@@ -1989,6 +2006,22 @@
           "items": {
             "type": "string"
           }
+        },
+        "toolkit.runScripts.enableCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a Run CodeLens above each script in package.json."
+        },
+        "toolkit.runScripts.packageManager": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "npm",
+            "yarn",
+            "pnpm"
+          ],
+          "description": "Package manager used to run scripts. 'auto' detects it from the lockfile / packageManager field."
         },
         "toolkit.changeCase.includeDotInCurrentWord": {
           "type": "boolean",

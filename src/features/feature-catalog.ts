@@ -33,6 +33,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Packages', name: 'NPM Intellisense', command: 'toolkit.npmIntellisense.import', description: 'Autocomplete package names in import/require; command to insert an import' },
   { category: 'Packages', name: 'npm Audit', command: 'toolkit.npm.audit', description: 'Known vulnerabilities via npm/yarn/pnpm audit, sorted by severity, with apply-fixes' },
   { category: 'Packages', name: 'NuGet Vulnerabilities', command: 'toolkit.nuget.vulnerabilities', description: 'Same for .NET projects and solutions via dotnet list package' },
+  { category: 'Packages', name: 'Run Scripts', command: 'toolkit.runScripts.pick', description: 'Run a package.json script via a CodeLens above each one, or a Run Script… picker; auto-detects npm/yarn/pnpm' },
 
   // ── Editing ────────────────────────────────────────────
   { category: 'Editing', name: 'Change Case', command: 'toolkit.changeCase', description: 'Convert selection between 13 case formats (live preview)' },
