@@ -237,9 +237,16 @@ class LocalHistoryProvider implements vscode.TreeDataProvider<RevisionNode> {
     return this.revisions.length > 0
   }
 
-  /** Points the view at a file (or nothing) and reloads its revisions. */
+  /** Points the view at a file and reloads its revisions. */
   async setActive(uri: vscode.Uri | undefined): Promise<void> {
-    this.currentUri = uri && uri.scheme === 'file' ? uri : undefined
+    // Ignore editors that aren't real files (the virtual revision side of a diff,
+    // output panes, etc.) and no-op when the file hasn't actually changed. This
+    // keeps the last file's history on screen and, crucially, stops opening a diff
+    // for the active file from rebuilding the whole tree — which looked like a flicker.
+    if (!uri || uri.scheme !== 'file' || uri.toString() === this.currentUri?.toString()) {
+      return
+    }
+    this.currentUri = uri
     await this.reload()
   }
 
