@@ -405,22 +405,25 @@ function buildEditWebviewHtml(
       datePicker.disabled = !changeDateCheckbox.checked;
     });
 
-    document.getElementById('apply').addEventListener('click', () => {
+    function apply() {
       const rawDate = changeDateCheckbox.checked ? datePicker.value : undefined;
       const date = rawDate ? rawDate.replace('T', ' ') + ':00' : undefined;
       vscode.postMessage({ command: 'apply', message: textarea.value, date: date || null });
-    });
+    }
+
+    document.getElementById('apply').addEventListener('click', apply);
     document.getElementById('discard').addEventListener('click', () => {
       vscode.postMessage({ command: 'discard' });
     });
-    textarea.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd+Enter applies from the message box and from the date/time field.
+    const applyOnShortcut = (e) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        const rawDate = changeDateCheckbox.checked ? datePicker.value : undefined;
-        const date = rawDate ? rawDate.replace('T', ' ') + ':00' : undefined;
-        vscode.postMessage({ command: 'apply', message: textarea.value, date: date || null });
+        apply();
       }
-    });
+    };
+    textarea.addEventListener('keydown', applyOnShortcut);
+    datePicker.addEventListener('keydown', applyOnShortcut);
 
     document.getElementById('reset-soft')?.addEventListener('click', () => {
       vscode.postMessage({ command: 'reset', mode: 'soft' });
