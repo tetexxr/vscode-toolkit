@@ -48,6 +48,7 @@ import { registerLocalHistoryCommands } from './features/local-history'
 import { registerScratchCommands } from './features/scratch'
 import { registerRunScriptsCommands } from './features/run-scripts'
 import { registerColorDecorators } from './features/color-decorators'
+import { registerNumberBaseCommands } from './features/number-base'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -99,6 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerScratchCommands(context)
   registerRunScriptsCommands(context)
   registerColorDecorators(context)
+  registerNumberBaseCommands(context)
 }
 
 export function deactivate() {}

@@ -51,6 +51,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Editing', name: 'Sum Numbers', command: 'toolkit.sumNumbers', description: 'Sum the leading number of each selected line' },
   { category: 'Editing', name: 'Insert', command: 'toolkit.insert', description: 'UUID v4/v7, ULID, timestamps, random hex/base64 at each cursor' },
   { category: 'Editing', name: 'Timestamp Converter & Hover', command: 'toolkit.timestamp.convert', description: 'Convert epoch ⇄ ISO; hover any epoch number to decode it' },
+  { category: 'Editing', name: 'Number Base Converter', command: 'toolkit.numberBase.convert', description: 'Convert a selected number between dec/hex/bin/oct; hover any number to see all bases' },
   { category: 'Editing', name: 'UUID / ULID Hover', description: 'Hover an id to see its kind and embedded creation time (automatic)' },
   { category: 'Editing', name: 'Format Markdown Table', command: 'toolkit.markdown.formatTable', description: 'Align table pipes to the widest cell, honoring GFM alignment' },
   { category: 'Editing', name: 'Compact Markdown Table', command: 'toolkit.markdown.compactTable', description: 'Strip the padding back out for minimal tables and clean diffs' },

@@ -37,6 +37,7 @@ All-in-one VS Code utility extension.
     - [Transform Selection](#transform-selection)
     - [Insert UUID / Timestamp / Random](#insert-uuid--timestamp--random)
     - [Timestamp Converter & Hover](#timestamp-converter--hover)
+    - [Number Base Converter](#number-base-converter)
     - [UUID / ULID Hover](#uuid--ulid-hover)
     - [Format Markdown Table](#format-markdown-table)
     - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
@@ -851,6 +852,32 @@ Place the cursor over a 10-, 13- or 16-digit number anywhere in any file. If the
 | `toolkit.timestamp.hover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
 | `toolkit.timestamp.hover.minYear` | `1990` | Lower bound for considering a number to be a timestamp |
 | `toolkit.timestamp.hover.maxYear` | `2100` | Upper bound for considering a number to be a timestamp |
+
+#### Number Base Converter
+
+Work with numbers across bases without reaching for a calculator. Recognizes decimal, hex (`0x…`), binary (`0b…`), and octal (`0o…`) literals, and uses `BigInt` so 64-bit values keep full precision.
+
+**Hover:** place the cursor over a number to see it in **decimal, hex, octal, and binary** (binary grouped into nibbles). Prefixed literals (`0x`, `0b`, `0o`) always show the hover; bare decimals only once they reach a minimum digit count, so it never fires on a `0` or a loop index.
+
+**Convert:** select one or more numbers and run a conversion — either **Toolkit: Convert Number Base…** (a picker previewing each target) or a direct command:
+
+| Command | Result |
+|---|---|
+| Convert Number Base… | Pick the target base from a quick pick |
+| Convert Number to Decimal | `255` |
+| Convert Number to Hex | `0xff` |
+| Convert Number to Binary | `0b11111111` |
+| Convert Number to Octal | `0o377` |
+
+Available from the editor context menu (with a selection) and the Command Palette. With multiple selections, every recognized number is converted at once; non-numbers are left untouched.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.numberBase.enableHover` | `true` | Toggle the number-base hover |
+| `toolkit.numberBase.hoverMinDecimalDigits` | `3` | Minimum digits before a bare decimal triggers the hover |
+| `toolkit.numberBase.hoverLanguages` | `["*"]` | Languages where the hover is active (reload required after change) |
 
 #### UUID / ULID Hover
 

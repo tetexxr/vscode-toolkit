@@ -1080,6 +1080,26 @@
       {
         "command": "toolkit.runScripts.pick",
         "title": "Toolkit: Run Script…"
+      },
+      {
+        "command": "toolkit.numberBase.convert",
+        "title": "Toolkit: Convert Number Base…"
+      },
+      {
+        "command": "toolkit.numberBase.toDecimal",
+        "title": "Toolkit: Convert Number to Decimal"
+      },
+      {
+        "command": "toolkit.numberBase.toHex",
+        "title": "Toolkit: Convert Number to Hex"
+      },
+      {
+        "command": "toolkit.numberBase.toBinary",
+        "title": "Toolkit: Convert Number to Binary"
+      },
+      {
+        "command": "toolkit.numberBase.toOctal",
+        "title": "Toolkit: Convert Number to Octal"
       }
     ],
     "keybindings": [
@@ -1961,6 +1981,11 @@
           "command": "toolkit.runScripts.pick",
           "group": "0_toolkit@41",
           "when": "resourceFilename == package.json"
+        },
+        {
+          "command": "toolkit.numberBase.convert",
+          "group": "0_toolkit@42",
+          "when": "editorHasSelection"
         }
       ]
     },
@@ -2003,6 +2028,27 @@
             "**/*.min.*"
           ],
           "description": "Glob patterns for files that should never be snapshotted.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.numberBase.enableHover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hover over a number literal to see it in decimal, hex, octal, and binary."
+        },
+        "toolkit.numberBase.hoverMinDecimalDigits": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "description": "Minimum digit count before a bare decimal triggers the hover (prefixed 0x/0b/0o literals always trigger it)."
+        },
+        "toolkit.numberBase.hoverLanguages": {
+          "type": "array",
+          "default": [
+            "*"
+          ],
+          "description": "Languages where the number-base hover is active. Use [\"*\"] for all.",
           "items": {
             "type": "string"
           }
