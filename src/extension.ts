@@ -51,6 +51,7 @@ import { registerColorDecorators } from './features/color-decorators'
 import { registerNumberBaseCommands } from './features/number-base'
 import { registerDiffToolsCommands } from './features/diff-tools'
 import { registerCronCommands } from './features/cron'
+import { registerGitStashCommands } from './features/git-stash'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -105,6 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerNumberBaseCommands(context)
   registerDiffToolsCommands(context)
   registerCronCommands(context)
+  registerGitStashCommands(context)
 }
 
 export function deactivate() {}

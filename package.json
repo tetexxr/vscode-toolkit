@@ -93,6 +93,12 @@
           "id": "toolkitLocalHistory",
           "name": "Local History",
           "visibility": "collapsed"
+        },
+        {
+          "id": "toolkitGitStash",
+          "name": "Stashes",
+          "when": "gitOpenRepositoryCount != 0",
+          "visibility": "collapsed"
         }
       ],
       "nuget-explorer": [
@@ -141,6 +147,10 @@
       {
         "view": "toolkitLocalHistory",
         "contents": "No local history for this file yet.\nRevisions are captured automatically every time you save a file in the workspace.\n\nOpen a saved file to see its revisions here."
+      },
+      {
+        "view": "toolkitGitStash",
+        "contents": "No stashes in this repository.\n[Create Stash](command:toolkit.gitStash.create)"
       },
       {
         "view": "toolkitRestFiles",
@@ -1108,6 +1118,35 @@
       {
         "command": "toolkit.diff.withOpenFile",
         "title": "Toolkit: Compare with Open File…"
+      },
+      {
+        "command": "toolkit.gitStash.create",
+        "title": "Toolkit: Create Stash",
+        "icon": "$(add)"
+      },
+      {
+        "command": "toolkit.gitStash.refresh",
+        "title": "Toolkit: Stashes - Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.gitStash.open",
+        "title": "Toolkit: Stashes - Open Diff"
+      },
+      {
+        "command": "toolkit.gitStash.apply",
+        "title": "Toolkit: Stashes - Apply",
+        "icon": "$(check)"
+      },
+      {
+        "command": "toolkit.gitStash.pop",
+        "title": "Toolkit: Stashes - Pop",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "toolkit.gitStash.drop",
+        "title": "Toolkit: Stashes - Drop",
+        "icon": "$(trash)"
       }
     ],
     "keybindings": [
@@ -1262,6 +1301,16 @@
         {
           "command": "toolkit.localHistory.clearFile",
           "when": "view == toolkitLocalHistory",
+          "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.gitStash.create",
+          "when": "view == toolkitGitStash",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.gitStash.refresh",
+          "when": "view == toolkitGitStash",
           "group": "navigation@2"
         },
         {
@@ -1421,6 +1470,41 @@
         {
           "command": "toolkit.localHistory.deleteRevision",
           "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "9_danger@1"
+        },
+        {
+          "command": "toolkit.gitStash.apply",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.gitStash.pop",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "inline@2"
+        },
+        {
+          "command": "toolkit.gitStash.drop",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "inline@3"
+        },
+        {
+          "command": "toolkit.gitStash.open",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "1_open@1"
+        },
+        {
+          "command": "toolkit.gitStash.apply",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "1_open@2"
+        },
+        {
+          "command": "toolkit.gitStash.pop",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "1_open@3"
+        },
+        {
+          "command": "toolkit.gitStash.drop",
+          "when": "view == toolkitGitStash && viewItem == stash",
           "group": "9_danger@1"
         },
         {
@@ -1793,6 +1877,30 @@
         },
         {
           "command": "toolkit.runScripts.run",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitStash.create",
+          "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "toolkit.gitStash.refresh",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitStash.open",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitStash.apply",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitStash.pop",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitStash.drop",
           "when": "false"
         }
       ],

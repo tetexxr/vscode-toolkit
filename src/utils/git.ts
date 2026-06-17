@@ -530,3 +530,61 @@ export async function squashIntoParent(cwd: string, hash: string, mode: 'fixup' 
     throw new Error(`Squashing the commit failed and the rebase was rolled back: ${message}`)
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Stash                                                                     */
+/* -------------------------------------------------------------------------- */
+
+export interface StashEntry {
+  /** The stash reference, e.g. `stash@{0}`. */
+  ref: string
+  /** The reflog subject, e.g. `WIP on main: 1a2b3c4 message`. */
+  message: string
+  /** Relative committer date, e.g. `2 hours ago`. */
+  relativeDate: string
+}
+
+const STASH_FIELD = '\x1f'
+
+/** Parses the output of `git stash list` formatted with STASH_FIELD separators. */
+export function parseStashList(output: string): StashEntry[] {
+  if (!output) {
+    return []
+  }
+  return output.split('\n').map(line => {
+    const [ref, message, relativeDate] = line.split(STASH_FIELD)
+    return { ref: ref ?? '', message: message ?? '', relativeDate: relativeDate ?? '' }
+  })
+}
+
+export async function listStashes(cwd: string): Promise<StashEntry[]> {
+  const output = await gitExec(cwd, ['stash', 'list', `--format=%gd${STASH_FIELD}%gs${STASH_FIELD}%cr`])
+  return parseStashList(output)
+}
+
+export async function getStashDiff(cwd: string, ref: string): Promise<string> {
+  return gitExec(cwd, ['stash', 'show', '-p', ref])
+}
+
+export async function createStash(cwd: string, message: string, includeUntracked: boolean): Promise<void> {
+  const args = ['stash', 'push']
+  if (includeUntracked) {
+    args.push('--include-untracked')
+  }
+  if (message.trim().length > 0) {
+    args.push('-m', message.trim())
+  }
+  await gitExec(cwd, args)
+}
+
+export async function applyStash(cwd: string, ref: string): Promise<void> {
+  await gitExec(cwd, ['stash', 'apply', ref])
+}
+
+export async function popStash(cwd: string, ref: string): Promise<void> {
+  await gitExec(cwd, ['stash', 'pop', ref])
+}
+
+export async function dropStash(cwd: string, ref: string): Promise<void> {
+  await gitExec(cwd, ['stash', 'drop', ref])
+}

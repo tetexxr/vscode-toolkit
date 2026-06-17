@@ -12,6 +12,7 @@ All-in-one VS Code utility extension.
     - [Git File History](#git-file-history)
     - [Git Blame (Inline Annotations)](#git-blame-inline-annotations)
     - [Edit Commit Message & Reset HEAD](#edit-commit-message--reset-head)
+    - [Git Stash Manager](#git-stash-manager)
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
     - [Compare with Branch](#compare-with-branch)
@@ -198,6 +199,23 @@ All three actions show a modal confirmation before running. The Hard button in t
 - If the automated rebase fails midway, it is **rolled back automatically** so the repository is left exactly as it was.
 - Both **edit message** and **reset** rewrite git history. If the commits have already been pushed, a force push will be required.
 - **Reset --hard cannot be easily undone** — the modal confirmation is the only check. If in doubt, use Soft instead and decide what to do with the staged changes afterwards.
+
+#### Git Stash Manager
+
+Manage git stashes from a **Stashes** view in the **Source Control** sidebar, alongside Commit History and Local History — a much friendlier surface than the bare CLI.
+
+- Each stash is listed with its message and relative date. Click one to open its **diff** (read-only patch) in an editor.
+- Title bar: **Create Stash** (`+`) and **Refresh**.
+- Per-stash actions (inline icons and context menu): **Apply**, **Pop**, **Drop**.
+
+**Create:** asks whether to include untracked files, then an optional message, and runs `git stash push`. If there's nothing to stash, a message says so.
+
+**Behavior:**
+
+- **Apply** keeps the stash; **Pop** removes it after applying (if it conflicts, the stash is kept and a warning explains why).
+- **Drop** permanently deletes a stash and asks for confirmation first.
+- The view refreshes after each action and whenever it becomes visible again, so stashes created from the terminal or the SCM view show up too.
+- Operates on the first workspace folder's repository.
 
 #### Expand Changed Files
 

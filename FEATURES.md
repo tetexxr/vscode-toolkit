@@ -10,6 +10,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Git File History | — | Commit history + diffs for a file in a panel, paged with Load more |
 | Git Blame | — | Toggle JetBrains-style inline blame annotations on every line |
 | Commit History view | — | SCM sidebar: edit message/date, reset HEAD (soft/mixed/hard), squash/fixup into parent, cherry-pick from branch |
+| Git Stash Manager | — | SCM sidebar: list stashes with diff preview; create, apply, pop, drop |
 | Compare with Branch | — | Diff the file, a folder, or the whole project against another local branch |
 | Diff Tools | — | Compare the selection/file with the clipboard, or the active file with another open tab |
 | Expand Changed Files | — | Expand only the explorer folders containing git changes |
