@@ -47,6 +47,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Insert | — | UUID v4/v7, ULID, timestamps, random hex/base64 at each cursor |
 | Timestamp Converter & Hover | — | Convert epoch ⇄ ISO; hover any epoch number to decode it |
 | Number Base Converter | — | Convert a selected number between dec/hex/bin/oct; hover any number to see all bases |
+| Cron Hover | — | Hover a cron expression to see a plain-English description and the next run times |
 | UUID / ULID Hover | — | Hover an id to see its kind and embedded creation time |
 | Format Markdown Table | — | Align table pipes to the widest cell, honoring GFM alignment |
 | Compact Markdown Table | — | Strip the padding back out for minimal tables and clean diffs |

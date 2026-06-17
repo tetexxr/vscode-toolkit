@@ -50,6 +50,7 @@ import { registerRunScriptsCommands } from './features/run-scripts'
 import { registerColorDecorators } from './features/color-decorators'
 import { registerNumberBaseCommands } from './features/number-base'
 import { registerDiffToolsCommands } from './features/diff-tools'
+import { registerCronCommands } from './features/cron'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -103,6 +104,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerColorDecorators(context)
   registerNumberBaseCommands(context)
   registerDiffToolsCommands(context)
+  registerCronCommands(context)
 }
 
 export function deactivate() {}

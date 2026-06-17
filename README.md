@@ -39,6 +39,7 @@ All-in-one VS Code utility extension.
     - [Insert UUID / Timestamp / Random](#insert-uuid--timestamp--random)
     - [Timestamp Converter & Hover](#timestamp-converter--hover)
     - [Number Base Converter](#number-base-converter)
+    - [Cron Hover](#cron-hover)
     - [UUID / ULID Hover](#uuid--ulid-hover)
     - [Format Markdown Table](#format-markdown-table)
     - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
@@ -890,6 +891,31 @@ Available from the editor context menu (with a selection) and the Command Palett
 | `toolkit.numberBase.enableHover` | `true` | Toggle the number-base hover |
 | `toolkit.numberBase.hoverMinDecimalDigits` | `3` | Minimum digits before a bare decimal triggers the hover |
 | `toolkit.numberBase.hoverLanguages` | `["*"]` | Languages where the hover is active (reload required after change) |
+
+#### Cron Hover
+
+Hover over a cron expression to see what it means in plain English and **when it will next run** — handy in CI configs, Kubernetes CronJobs, scheduler definitions, and anywhere else cron shows up.
+
+Supports standard **5-field** cron and **6-field** (seconds-first) cron, with `*`, ranges (`1-5`), lists (`1,15`), steps (`*/10`), and month/day names (`JAN`, `MON`). Both `0` and `7` are accepted for Sunday. Quartz extras (`L`, `W`, `#`) are not supported.
+
+Examples of what the hover shows:
+
+| Expression | Description |
+|---|---|
+| `*/5 * * * *` | Every 5 minutes |
+| `0 9 * * 1-5` | At 09:00, on Monday … Friday |
+| `30 8 1 * *` | At 08:30, on day-of-month 1 |
+| `0 0 1 1 *` | At 00:00, on day-of-month 1, in January |
+
+The next run times are computed in your local timezone. When day-of-month and day-of-week are both restricted, either may match (the standard Vixie cron rule).
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.cron.enableHover` | `true` | Toggle the cron hover |
+| `toolkit.cron.nextRunsCount` | `5` | How many upcoming run times to list |
+| `toolkit.cron.hoverLanguages` | `["*"]` | Languages where the hover is active (reload required after change) |
 
 #### UUID / ULID Hover
 
