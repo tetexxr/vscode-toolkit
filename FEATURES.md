@@ -10,7 +10,9 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Git File History | — | Commit history + diffs for a file in a panel, paged with Load more |
 | Git Blame | — | Toggle JetBrains-style inline blame annotations on every line |
 | Commit History view | — | SCM sidebar: edit message/date, reset HEAD (soft/mixed/hard), squash/fixup into parent, cherry-pick from branch |
+| Git Stash Manager | — | SCM sidebar: list stashes with diff preview; create, apply, pop, drop |
 | Compare with Branch | — | Diff the file, a folder, or the whole project against another local branch |
+| Diff Tools | — | Compare the selection/file with the clipboard, or the active file with another open tab |
 | Expand Changed Files | — | Expand only the explorer folders containing git changes |
 | Stage Changes | — | Stage files/folders from the explorer (multi-select, multi-repo) |
 | Peek Last Commit | — | Hover any line to see the commit that last touched it |
@@ -24,6 +26,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | NPM Intellisense | — | Autocomplete package names in import/require |
 | npm Audit | — | Known vulnerabilities via npm/yarn/pnpm audit, sorted by severity, with apply-fixes |
 | NuGet Vulnerabilities | — | Same for .NET projects and solutions via dotnet list package |
+| Run Scripts | — | Run a package.json script via a CodeLens above each one, or a Run Script… picker; auto-detects npm/yarn/pnpm |
 
 ## Editing
 
@@ -44,6 +47,9 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Sum Numbers | — | Sum the leading number of each selected line |
 | Insert | — | UUID v4/v7, ULID, timestamps, random hex/base64 at each cursor |
 | Timestamp Converter & Hover | — | Convert epoch ⇄ ISO; hover any epoch number to decode it |
+| Number Base Converter | — | Convert a selected number between dec/hex/bin/oct; hover any number to see all bases |
+| Cron Hover | — | Hover a cron expression to see a plain-English description and the next run times |
+| Password Generator | — | KeePassXC-style panel: secure (CSPRNG) passwords with class/length options and a live entropy strength meter |
 | UUID / ULID Hover | — | Hover an id to see its kind and embedded creation time |
 | Format Markdown Table | — | Align table pipes to the widest cell, honoring GFM alignment |
 | Compact Markdown Table | — | Strip the padding back out for minimal tables and clean diffs |
@@ -75,10 +81,12 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Previous Bookmark | `Shift+Alt+F7` | Jump to the previous one |
 | .env Checker | — | Diagnostics when .env drifts from .env.example, with quick fix |
 | TODO Tree | — | TODO/FIXME/HACK... comments in a sidebar tree, grouped by tag or file |
-| REST Client | — | Run .http requests; rich response panel with live timer/cancel and retry-on-timeout, environments (env.json, with a gitignored private overlay you can scaffold from the env file's context menu), variables, file bodies, copy as curl |
+| REST Client | — | Run .http requests; rich response panel with live timer/cancel and retry-on-timeout, environments (env.json, with a gitignored private overlay you can scaffold from the env file's context menu), variables, file bodies, @assert checks on status/headers/body, copy as curl |
 | REST Requests | — | Sidebar tree of every workspace .http/.rest file and its requests — open, jump to, or send each |
 | REST Response History | — | Sidebar tree of recent responses grouped per request; color-coded status, filter, re-send, diff, detail panel, copy as curl/body/URL, save body, go to source |
 | Regex Playground | — | Live regex tester in a panel, safe against catastrophic backtracking |
+| Local History | — | JetBrains-style per-file revisions captured on every save; diff against or restore any past version |
+| Scratch Files | — | Throwaway files kept outside the workspace (never committed); listed in the Explorer, with new-from-selection |
 
 ## Viewers & Appearance
 
@@ -86,6 +94,8 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 |---|---|---|
 | Diagnostic Highlight | — | Make hint/info diagnostics actually visible (colored underlines) |
 | CSV Rainbow | — | Color each CSV/TSV column; hover shows the column header |
+| Color Decorators | — | Inline color swatches + native picker for hex/rgb/hsl in any language (CSS-family excluded; automatic) |
+| Pick Color from Screen | — | Eyedropper: pick any pixel on screen and insert it as hex/rgb/hsl at the cursor |
 | PDF Viewer | — | Open PDFs in a tab: search, outline, thumbnails, zoom, text selection |
 | SVG Preview | — | Live side-panel preview with zoom and background toggle |
 | Generic Dark Theme | — | Dark+ base with JetBrains-style syntax colors per language |

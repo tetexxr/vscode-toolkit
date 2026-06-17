@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.15.4",
+  "version": "1.16.0",
   "publisher": "tete",
   "repository": {
     "type": "git",
@@ -88,6 +88,17 @@
           "name": "Commit History",
           "when": "gitOpenRepositoryCount != 0",
           "visibility": "collapsed"
+        },
+        {
+          "id": "toolkitLocalHistory",
+          "name": "Local History",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "toolkitGitStash",
+          "name": "Stashes",
+          "when": "gitOpenRepositoryCount != 0",
+          "visibility": "collapsed"
         }
       ],
       "nuget-explorer": [
@@ -119,9 +130,28 @@
           "id": "toolkitRestHistory",
           "name": "Response History"
         }
+      ],
+      "explorer": [
+        {
+          "id": "toolkitScratchFiles",
+          "name": "Scratches",
+          "visibility": "collapsed"
+        }
       ]
     },
     "viewsWelcome": [
+      {
+        "view": "toolkitScratchFiles",
+        "contents": "No scratch files yet.\nScratch files are throwaway files kept outside your workspace — never committed.\n[New Scratch](command:toolkit.scratch.new)"
+      },
+      {
+        "view": "toolkitLocalHistory",
+        "contents": "No local history for this file yet.\nRevisions are captured automatically every time you save a file in the workspace.\n\nOpen a saved file to see its revisions here."
+      },
+      {
+        "view": "toolkitGitStash",
+        "contents": "No stashes in this repository.\n[Create Stash](command:toolkit.gitStash.create)"
+      },
       {
         "view": "toolkitRestFiles",
         "contents": "No .http or .rest files were found in this workspace.\n[New Request File](command:toolkit.restClient.files.create)"
@@ -992,6 +1022,139 @@
       {
         "command": "toolkit.markdown.compactTable",
         "title": "Toolkit: Compact Markdown Table"
+      },
+      {
+        "command": "toolkit.localHistory.show",
+        "title": "Toolkit: Show Local History"
+      },
+      {
+        "command": "toolkit.localHistory.refresh",
+        "title": "Toolkit: Local History - Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.localHistory.clearFile",
+        "title": "Toolkit: Local History - Clear History for This File",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "toolkit.localHistory.openDiff",
+        "title": "Toolkit: Local History - Open Diff"
+      },
+      {
+        "command": "toolkit.localHistory.restore",
+        "title": "Toolkit: Local History - Restore This Revision",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "toolkit.localHistory.deleteRevision",
+        "title": "Toolkit: Local History - Delete Revision",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "toolkit.scratch.new",
+        "title": "Toolkit: New Scratch File",
+        "icon": "$(add)"
+      },
+      {
+        "command": "toolkit.scratch.newFromSelection",
+        "title": "Toolkit: New Scratch from Selection"
+      },
+      {
+        "command": "toolkit.scratch.refresh",
+        "title": "Toolkit: Scratches - Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.scratch.open",
+        "title": "Toolkit: Scratches - Open"
+      },
+      {
+        "command": "toolkit.scratch.rename",
+        "title": "Toolkit: Scratches - Rename",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "toolkit.scratch.delete",
+        "title": "Toolkit: Scratches - Delete",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "toolkit.scratch.moveToWorkspace",
+        "title": "Toolkit: Scratches - Move to Workspace…"
+      },
+      {
+        "command": "toolkit.runScripts.run",
+        "title": "Toolkit: Run Script (internal)"
+      },
+      {
+        "command": "toolkit.runScripts.pick",
+        "title": "Toolkit: Run Script…"
+      },
+      {
+        "command": "toolkit.numberBase.convert",
+        "title": "Toolkit: Convert Number Base…"
+      },
+      {
+        "command": "toolkit.numberBase.toDecimal",
+        "title": "Toolkit: Convert Number to Decimal"
+      },
+      {
+        "command": "toolkit.numberBase.toHex",
+        "title": "Toolkit: Convert Number to Hex"
+      },
+      {
+        "command": "toolkit.numberBase.toBinary",
+        "title": "Toolkit: Convert Number to Binary"
+      },
+      {
+        "command": "toolkit.numberBase.toOctal",
+        "title": "Toolkit: Convert Number to Octal"
+      },
+      {
+        "command": "toolkit.diff.withClipboard",
+        "title": "Toolkit: Compare with Clipboard"
+      },
+      {
+        "command": "toolkit.diff.withOpenFile",
+        "title": "Toolkit: Compare with Open File…"
+      },
+      {
+        "command": "toolkit.gitStash.create",
+        "title": "Toolkit: Create Stash",
+        "icon": "$(add)"
+      },
+      {
+        "command": "toolkit.gitStash.refresh",
+        "title": "Toolkit: Stashes - Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.gitStash.open",
+        "title": "Toolkit: Stashes - Open Diff"
+      },
+      {
+        "command": "toolkit.gitStash.apply",
+        "title": "Toolkit: Stashes - Apply",
+        "icon": "$(check)"
+      },
+      {
+        "command": "toolkit.gitStash.pop",
+        "title": "Toolkit: Stashes - Pop",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "toolkit.gitStash.drop",
+        "title": "Toolkit: Stashes - Drop",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "toolkit.colorPicker.pickFromScreen",
+        "title": "Toolkit: Pick Color from Screen"
+      },
+      {
+        "command": "toolkit.passwordGenerator.open",
+        "title": "Toolkit: Open Password Generator"
       }
     ],
     "keybindings": [
@@ -1137,6 +1300,36 @@
           "command": "toolkit.restClient.clearHistory",
           "when": "view == toolkitRestHistory",
           "group": "navigation@4"
+        },
+        {
+          "command": "toolkit.localHistory.refresh",
+          "when": "view == toolkitLocalHistory",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.localHistory.clearFile",
+          "when": "view == toolkitLocalHistory",
+          "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.gitStash.create",
+          "when": "view == toolkitGitStash",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.gitStash.refresh",
+          "when": "view == toolkitGitStash",
+          "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.scratch.new",
+          "when": "view == toolkitScratchFiles",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.scratch.refresh",
+          "when": "view == toolkitScratchFiles",
+          "group": "navigation@2"
         }
       ],
       "editor/title": [
@@ -1261,6 +1454,96 @@
           "command": "toolkit.restClient.files.sendAll",
           "when": "view == toolkitRestFiles && viewItem == restFile",
           "group": "1_run@1"
+        },
+        {
+          "command": "toolkit.localHistory.restore",
+          "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.localHistory.deleteRevision",
+          "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "inline@2"
+        },
+        {
+          "command": "toolkit.localHistory.openDiff",
+          "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "1_open@1"
+        },
+        {
+          "command": "toolkit.localHistory.restore",
+          "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "1_open@2"
+        },
+        {
+          "command": "toolkit.localHistory.deleteRevision",
+          "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "9_danger@1"
+        },
+        {
+          "command": "toolkit.gitStash.apply",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.gitStash.pop",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "inline@2"
+        },
+        {
+          "command": "toolkit.gitStash.drop",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "inline@3"
+        },
+        {
+          "command": "toolkit.gitStash.open",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "1_open@1"
+        },
+        {
+          "command": "toolkit.gitStash.apply",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "1_open@2"
+        },
+        {
+          "command": "toolkit.gitStash.pop",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "1_open@3"
+        },
+        {
+          "command": "toolkit.gitStash.drop",
+          "when": "view == toolkitGitStash && viewItem == stash",
+          "group": "9_danger@1"
+        },
+        {
+          "command": "toolkit.scratch.rename",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.scratch.delete",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "inline@2"
+        },
+        {
+          "command": "toolkit.scratch.open",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "1_open@1"
+        },
+        {
+          "command": "toolkit.scratch.rename",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "1_open@2"
+        },
+        {
+          "command": "toolkit.scratch.moveToWorkspace",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "1_open@3"
+        },
+        {
+          "command": "toolkit.scratch.delete",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "9_danger@1"
         }
       ],
       "toolkit.csharp.new": [
@@ -1415,19 +1698,24 @@
           "group": "0_toolkit@16"
         },
         {
+          "command": "toolkit.localHistory.show",
+          "when": "!explorerResourceIsFolder",
+          "group": "0_toolkit@17"
+        },
+        {
           "command": "toolkit.git.stageChanges",
           "when": "gitOpenRepositoryCount != 0",
-          "group": "0_toolkit@17"
+          "group": "0_toolkit@18"
         },
         {
           "command": "toolkit.todoTree.excludeFolder",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@18"
+          "group": "0_toolkit@19"
         },
         {
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@19"
+          "group": "0_toolkit@20"
         }
       ],
       "commandPalette": [
@@ -1554,6 +1842,74 @@
         {
           "command": "toolkit.restClient.files.groupByTree",
           "when": "false"
+        },
+        {
+          "command": "toolkit.localHistory.refresh",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.localHistory.clearFile",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.localHistory.openDiff",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.localHistory.restore",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.localHistory.deleteRevision",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.scratch.refresh",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.scratch.open",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.scratch.rename",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.scratch.delete",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.scratch.moveToWorkspace",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.runScripts.run",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitStash.create",
+          "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "toolkit.gitStash.refresh",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitStash.open",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitStash.apply",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitStash.pop",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.gitStash.drop",
+          "when": "false"
         }
       ],
       "editor/context": [
@@ -1588,152 +1944,183 @@
           "when": "gitOpenRepositoryCount != 0"
         },
         {
+          "command": "toolkit.diff.withClipboard",
+          "group": "0_toolkit@7"
+        },
+        {
+          "command": "toolkit.diff.withOpenFile",
+          "group": "0_toolkit@8"
+        },
+        {
           "command": "toolkit.convertImportsToAlias",
-          "group": "0_toolkit@7",
+          "group": "0_toolkit@9",
           "when": "editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/"
         },
         {
           "command": "toolkit.convertImportsToRelative",
-          "group": "0_toolkit@8",
+          "group": "0_toolkit@10",
           "when": "editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/"
         },
         {
+          "command": "toolkit.numberBase.convert",
+          "group": "0_toolkit@11",
+          "when": "editorHasSelection"
+        },
+        {
           "command": "toolkit.timestamp.convert",
-          "group": "0_toolkit@9",
+          "group": "0_toolkit@12",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.markdown.formatTable",
-          "group": "0_toolkit@10",
+          "group": "0_toolkit@13",
           "when": "editorLangId == markdown"
         },
         {
           "command": "toolkit.gitHistory",
-          "group": "0_toolkit@11"
+          "group": "0_toolkit@14"
         },
         {
           "command": "toolkit.insert",
-          "group": "0_toolkit@12"
+          "group": "0_toolkit@15"
         },
         {
           "command": "toolkit.jsonToType",
-          "group": "0_toolkit@13",
+          "group": "0_toolkit@16",
           "when": "editorLangId =~ /^(json|jsonc)$/"
         },
         {
           "command": "toolkit.lines",
-          "group": "0_toolkit@14",
+          "group": "0_toolkit@17",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.npm.managePackages",
-          "group": "0_toolkit@15",
+          "group": "0_toolkit@18",
           "when": "resourceFilename == package.json"
         },
         {
           "command": "toolkit.nuget.managePackages",
-          "group": "0_toolkit@16",
+          "group": "0_toolkit@19",
           "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj"
         },
         {
+          "command": "toolkit.scratch.newFromSelection",
+          "group": "0_toolkit@20",
+          "when": "editorHasSelection"
+        },
+        {
           "command": "toolkit.npm.audit",
-          "group": "0_toolkit@17",
+          "group": "0_toolkit@21",
           "when": "resourceFilename == package.json"
         },
         {
           "command": "toolkit.nuget.vulnerabilities",
-          "group": "0_toolkit@18",
+          "group": "0_toolkit@22",
           "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj"
         },
         {
           "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@19"
+          "group": "0_toolkit@23"
         },
         {
           "command": "toolkit.pasteImage",
-          "group": "0_toolkit@20"
+          "group": "0_toolkit@24"
+        },
+        {
+          "command": "toolkit.colorPicker.pickFromScreen",
+          "group": "0_toolkit@25"
         },
         {
           "command": "toolkit.svgPreview.open",
-          "group": "0_toolkit@21",
+          "group": "0_toolkit@26",
           "when": "resourceExtname == .svg"
         },
         {
           "command": "toolkit.restClient.copyAsCurl",
-          "group": "0_toolkit@22",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.createPrivateEnv",
-          "group": "0_toolkit@23",
-          "when": "resourceFilename == http-client.env.json"
-        },
-        {
-          "command": "toolkit.restClient.selectEnvironment",
-          "group": "0_toolkit@25",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.sendAll",
-          "group": "0_toolkit@26",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.send",
           "group": "0_toolkit@27",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.slugify",
+          "command": "toolkit.restClient.createPrivateEnv",
           "group": "0_toolkit@28",
+          "when": "resourceFilename == http-client.env.json"
+        },
+        {
+          "command": "toolkit.restClient.selectEnvironment",
+          "group": "0_toolkit@29",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.runScripts.pick",
+          "group": "0_toolkit@30",
+          "when": "resourceFilename == package.json"
+        },
+        {
+          "command": "toolkit.restClient.sendAll",
+          "group": "0_toolkit@31",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.restClient.send",
+          "group": "0_toolkit@32",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.localHistory.show",
+          "group": "0_toolkit@33"
+        },
+        {
+          "command": "toolkit.slugify",
+          "group": "0_toolkit@34",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.sumNumbers",
-          "group": "0_toolkit@29",
+          "group": "0_toolkit@35",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.toggleCsvRainbow",
-          "group": "0_toolkit@30",
+          "group": "0_toolkit@36",
           "when": "resourceExtname == .csv || resourceExtname == .tsv"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@31"
+          "group": "0_toolkit@37"
         },
         {
           "command": "toolkit.toggleQuotes",
-          "group": "0_toolkit@32"
+          "group": "0_toolkit@38"
         },
         {
           "command": "toolkit.transform.jsonMinify",
-          "group": "0_toolkit@33",
+          "group": "0_toolkit@39",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
           "command": "toolkit.transform.jsonPrettify",
-          "group": "0_toolkit@34",
+          "group": "0_toolkit@40",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
           "command": "toolkit.transform.jsonSortKeys",
-          "group": "0_toolkit@35",
+          "group": "0_toolkit@41",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
           "command": "toolkit.transform.jsonToYaml",
-          "group": "0_toolkit@36",
+          "group": "0_toolkit@42",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
           "command": "toolkit.transform.yamlToJson",
-          "group": "0_toolkit@37",
+          "group": "0_toolkit@43",
           "when": "editorHasSelection && editorLangId == yaml"
         },
         {
           "command": "toolkit.transform",
-          "group": "0_toolkit@38",
+          "group": "0_toolkit@44",
           "when": "editorHasSelection"
         }
       ]
@@ -1741,6 +2128,119 @@
     "configuration": {
       "title": "Toolkit",
       "properties": {
+        "toolkit.colorPicker.insertFormat": {
+          "type": "string",
+          "default": "hex",
+          "enum": [
+            "hex",
+            "rgb",
+            "hsl"
+          ],
+          "description": "Format used when inserting a color picked with the screen eyedropper."
+        },
+        "toolkit.localHistory.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Capture a local revision of a file every time it is saved, independent of git."
+        },
+        "toolkit.localHistory.maxRevisionsPerFile": {
+          "type": "number",
+          "default": 50,
+          "minimum": 0,
+          "description": "Maximum number of revisions kept per file. Older revisions beyond this are pruned. Use 0 for unlimited."
+        },
+        "toolkit.localHistory.maxAgeDays": {
+          "type": "number",
+          "default": 30,
+          "minimum": 0,
+          "description": "Revisions older than this many days are pruned (the most recent revision is always kept). Use 0 to never expire by age."
+        },
+        "toolkit.localHistory.maxFileSizeKB": {
+          "type": "number",
+          "default": 1024,
+          "minimum": 1,
+          "description": "Files larger than this (in KB) are not snapshotted, to keep local-history storage small."
+        },
+        "toolkit.localHistory.exclude": {
+          "type": "array",
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/bin/**",
+            "**/obj/**",
+            "**/out/**",
+            "**/*.min.*"
+          ],
+          "description": "Glob patterns for files that should never be snapshotted.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.numberBase.enableHover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hover over a number literal to see it in decimal, hex, octal, and binary."
+        },
+        "toolkit.numberBase.hoverMinDecimalDigits": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "description": "Minimum digit count before a bare decimal triggers the hover (prefixed 0x/0b/0o literals always trigger it)."
+        },
+        "toolkit.numberBase.hoverLanguages": {
+          "type": "array",
+          "default": [
+            "*"
+          ],
+          "description": "Languages where the number-base hover is active. Use [\"*\"] for all.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.colorDecorators.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show color swatches (and the native color picker) for hex/rgb/hsl literals in all languages except CSS/SCSS/LESS/Sass, which VS Code already covers."
+        },
+        "toolkit.cron.enableHover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hover over a cron expression to see a description and the next run times."
+        },
+        "toolkit.cron.nextRunsCount": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "description": "How many upcoming run times to list in the cron hover."
+        },
+        "toolkit.cron.hoverLanguages": {
+          "type": "array",
+          "default": [
+            "*"
+          ],
+          "description": "Languages where the cron hover is active. Use [\"*\"] for all.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolkit.runScripts.enableCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a Run CodeLens above each script in package.json."
+        },
+        "toolkit.runScripts.packageManager": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "npm",
+            "yarn",
+            "pnpm"
+          ],
+          "description": "Package manager used to run scripts. 'auto' detects it from the lockfile / packageManager field."
+        },
         "toolkit.changeCase.includeDotInCurrentWord": {
           "type": "boolean",
           "default": false,

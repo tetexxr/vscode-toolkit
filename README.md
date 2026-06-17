@@ -12,16 +12,19 @@ All-in-one VS Code utility extension.
     - [Git File History](#git-file-history)
     - [Git Blame (Inline Annotations)](#git-blame-inline-annotations)
     - [Edit Commit Message & Reset HEAD](#edit-commit-message--reset-head)
+    - [Git Stash Manager](#git-stash-manager)
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
     - [Compare with Branch](#compare-with-branch)
     - [Compare Project / Folder with Branch](#compare-project--folder-with-branch)
     - [Peek Last Commit on Line](#peek-last-commit-on-line)
+    - [Diff Tools](#diff-tools)
   - [Package Management](#package-management)
     - [NuGet Package Manager](#nuget-package-manager)
     - [NPM Package Manager](#npm-package-manager)
     - [NPM Intellisense](#npm-intellisense)
     - [Dependency Vulnerability Audit](#dependency-vulnerability-audit)
+    - [Run Scripts](#run-scripts)
   - [Code Editing](#code-editing)
     - [Change Case](#change-case)
     - [Slugify](#slugify)
@@ -36,6 +39,9 @@ All-in-one VS Code utility extension.
     - [Transform Selection](#transform-selection)
     - [Insert UUID / Timestamp / Random](#insert-uuid--timestamp--random)
     - [Timestamp Converter & Hover](#timestamp-converter--hover)
+    - [Number Base Converter](#number-base-converter)
+    - [Cron Hover](#cron-hover)
+    - [Password Generator](#password-generator)
     - [UUID / ULID Hover](#uuid--ulid-hover)
     - [Format Markdown Table](#format-markdown-table)
     - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
@@ -55,9 +61,13 @@ All-in-one VS Code utility extension.
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
+    - [Local History](#local-history)
+    - [Scratch Files](#scratch-files)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
+    - [Color Decorators](#color-decorators)
+    - [Pick Color from Screen](#pick-color-from-screen)
     - [PDF Viewer](#pdf-viewer)
     - [SVG Preview](#svg-preview)
     - [Generic Dark Theme](#generic-dark-theme)
@@ -192,6 +202,23 @@ All three actions show a modal confirmation before running. The Hard button in t
 - Both **edit message** and **reset** rewrite git history. If the commits have already been pushed, a force push will be required.
 - **Reset --hard cannot be easily undone** — the modal confirmation is the only check. If in doubt, use Soft instead and decide what to do with the staged changes afterwards.
 
+#### Git Stash Manager
+
+Manage git stashes from a **Stashes** view in the **Source Control** sidebar, alongside Commit History and Local History — a much friendlier surface than the bare CLI.
+
+- Each stash is listed with its message and relative date. Click one to open its **diff** (read-only patch) in an editor.
+- Title bar: **Create Stash** (`+`) and **Refresh**.
+- Per-stash actions (inline icons and context menu): **Apply**, **Pop**, **Drop**.
+
+**Create:** asks whether to include untracked files, then an optional message, and runs `git stash push`. If there's nothing to stash, a message says so.
+
+**Behavior:**
+
+- **Apply** keeps the stash; **Pop** removes it after applying (if it conflicts, the stash is kept and a warning explains why).
+- **Drop** permanently deletes a stash and asks for confirmation first.
+- The view refreshes after each action and whenever it becomes visible again, so stashes created from the terminal or the SCM view show up too.
+- Operates on the first workspace folder's repository.
+
 #### Expand Changed Files
 
 Expand only the folders in the file explorer that contain git-modified, added, or untracked files. Useful for quickly navigating to the parts of the project you're actively working on without expanding the entire tree.
@@ -254,6 +281,17 @@ Hover any line in a tracked file to see the **full commit** that last touched it
 |---|---|---|
 | `toolkit.peekCommit.hover.enabled` | `true` | Toggle the peek-commit hover |
 | `toolkit.peekCommit.hover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
+
+#### Diff Tools
+
+Quick, ad-hoc diffs that VS Code doesn't offer out of the box (comparing two **files** in the Explorer already has built-in **Select for Compare** / **Compare with Selected**, so that isn't repeated here).
+
+| Command | What it compares |
+|---|---|
+| Toolkit: Compare with Clipboard | The current **selection** (or the whole file when nothing is selected) against the **clipboard** |
+| Toolkit: Compare with Open File… | The active file against another **open tab**, picked from a quick pick |
+
+Both open a native diff editor and are available from the editor context menu and the Command Palette. The clipboard (and a compared selection) are shown as read-only virtual documents, given the source file's extension so syntax highlighting matches.
 
 ### Package Management
 
@@ -374,6 +412,30 @@ Check a project's dependencies for known vulnerabilities using each ecosystem's 
 **Apply fixes:** for npm and pnpm projects, the first entry of the quick pick is **Apply fixes** — it runs the ecosystem's official remediation (`npm audit fix` / `pnpm audit --fix`) and re-audits so you can see what's left (fixes requiring a major bump are not applied automatically; update those from the package manager panel). yarn classic has no fix command, so the entry is not shown there. For NuGet there is no official auto-fix either — remediate by updating the affected package from the [NuGet panel](#nuget-package-manager).
 
 > Note: NuGet requires the project to be restored (`dotnet restore`) — the vulnerability data comes from the restore graph.
+
+#### Run Scripts
+
+Run any `package.json` script without leaving the editor. A **`▶ Run`** CodeLens sits above each entry in the `scripts` block — click it to run that script in an integrated terminal.
+
+The package manager is auto-detected per project (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, the `packageManager` field, otherwise npm), so the right command is used in monorepos with mixed tooling.
+
+Access:
+
+- **CodeLens** — `▶ Run` above each script in an open `package.json`.
+- **Command Palette** — **Toolkit: Run Script…** picks the nearest `package.json` (or asks which one) and lists its scripts.
+- **Editor context menu** — **Toolkit: Run Script…** when editing a `package.json`.
+
+**Behavior:**
+
+- Each script runs in the directory of its own `package.json`, so workspace/monorepo packages run in the right place.
+- Runs reuse a terminal named `<pm>: <script>`, so repeatedly running the same script doesn't pile up terminals.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.runScripts.enableCodeLens` | `true` | Show the Run CodeLens above each script |
+| `toolkit.runScripts.packageManager` | `auto` | Force `npm`/`yarn`/`pnpm`, or `auto`-detect |
 
 ### Code Editing
 
@@ -823,6 +885,74 @@ Place the cursor over a 10-, 13- or 16-digit number anywhere in any file. If the
 | `toolkit.timestamp.hover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
 | `toolkit.timestamp.hover.minYear` | `1990` | Lower bound for considering a number to be a timestamp |
 | `toolkit.timestamp.hover.maxYear` | `2100` | Upper bound for considering a number to be a timestamp |
+
+#### Number Base Converter
+
+Work with numbers across bases without reaching for a calculator. Recognizes decimal, hex (`0x…`), binary (`0b…`), and octal (`0o…`) literals, and uses `BigInt` so 64-bit values keep full precision.
+
+**Hover:** place the cursor over a number to see it in **decimal, hex, octal, and binary** (binary grouped into nibbles). Prefixed literals (`0x`, `0b`, `0o`) always show the hover; bare decimals only once they reach a minimum digit count, so it never fires on a `0` or a loop index.
+
+**Convert:** select one or more numbers and run a conversion — either **Toolkit: Convert Number Base…** (a picker previewing each target) or a direct command:
+
+| Command | Result |
+|---|---|
+| Convert Number Base… | Pick the target base from a quick pick |
+| Convert Number to Decimal | `255` |
+| Convert Number to Hex | `0xff` |
+| Convert Number to Binary | `0b11111111` |
+| Convert Number to Octal | `0o377` |
+
+Available from the editor context menu (with a selection) and the Command Palette. With multiple selections, every recognized number is converted at once; non-numbers are left untouched.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.numberBase.enableHover` | `true` | Toggle the number-base hover |
+| `toolkit.numberBase.hoverMinDecimalDigits` | `3` | Minimum digits before a bare decimal triggers the hover |
+| `toolkit.numberBase.hoverLanguages` | `["*"]` | Languages where the hover is active (reload required after change) |
+
+#### Cron Hover
+
+Hover over a cron expression to see what it means in plain English and **when it will next run** — handy in CI configs, Kubernetes CronJobs, scheduler definitions, and anywhere else cron shows up.
+
+Supports standard **5-field** cron and **6-field** (seconds-first) cron, with `*`, ranges (`1-5`), lists (`1,15`), steps (`*/10`), and month/day names (`JAN`, `MON`). Both `0` and `7` are accepted for Sunday. Quartz extras (`L`, `W`, `#`) are not supported.
+
+Examples of what the hover shows:
+
+| Expression | Description |
+|---|---|
+| `*/5 * * * *` | Every 5 minutes |
+| `0 9 * * 1-5` | At 09:00, on Monday … Friday |
+| `30 8 1 * *` | At 08:30, on day-of-month 1 |
+| `0 0 1 1 *` | At 00:00, on day-of-month 1, in January |
+
+The next run times are computed in your local timezone. When day-of-month and day-of-week are both restricted, either may match (the standard Vixie cron rule).
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.cron.enableHover` | `true` | Toggle the cron hover |
+| `toolkit.cron.nextRunsCount` | `5` | How many upcoming run times to list |
+| `toolkit.cron.hoverLanguages` | `["*"]` | Languages where the hover is active (reload required after change) |
+
+#### Password Generator
+
+A KeePassXC-style password generator in a panel (run **Toolkit: Open Password Generator** from the Command Palette or the editor context menu — no permanent sidebar icon).
+
+- **Length** slider and character classes: lowercase, uppercase, digits, symbols.
+- **Exclude look-alikes** (`I l 1 O 0 o |`) and **exclude custom characters**.
+- **Require each class** — guarantees at least one character from every selected class.
+- **Regenerate**, **Copy**, and **Insert at cursor**.
+- A live **strength meter** showing the password's **exact entropy in bits**.
+
+**Security:**
+
+- Passwords use the operating system's cryptographically-secure RNG (`crypto.randomInt`, unbiased) — never `Math.random`.
+- Because the password is randomly generated, the strength meter reports its **exact** entropy (`length × log₂(pool size)`), not a heuristic guess.
+- Generated passwords are **never stored** (no settings, history, or logs) — only your chosen options are remembered.
+- Copying a password **excludes it from the Toolkit [Clipboard History](#clipboard-history)**, so secrets don't linger there.
 
 #### UUID / ULID Hover
 
@@ -1368,6 +1498,29 @@ Content-Type: application/json
 - `<@encoding path` decodes the file with an explicit encoding (`utf-8`, `latin1`, `ascii`, `utf16le`, `base64`, `hex`); defaults to `utf-8`.
 - Body files are capped at 256 MB. **Copy as curl** maps a raw `< path` body to curl's `--data @path`.
 
+**Assertions:**
+
+Turn a request into a check by adding `@assert` directives as comments in the request block. They're plain comments — ignored when sending — but after the response arrives they're evaluated and a summary is shown (`asserts passed (3/3) ✓`, or a warning listing what failed).
+
+```http
+GET {{baseUrl}}/users/1
+
+# @assert status == 200
+# @assert header Content-Type contains application/json
+# @assert body $.name == "Leanne"
+```
+
+| Form | Operators | Example |
+|---|---|---|
+| `status <op> <n>` | `==` `!=` `>` `>=` `<` `<=` | `# @assert status >= 200` |
+| `header <name> <op> <value>` | `==` `!=` `contains` `matches` | `# @assert header Content-Type contains json` |
+| `body <jsonpath> <op> <value>` | `==` `!=` `>` `>=` `<` `<=` `contains` `matches` | `# @assert body $.items[0].id == 5` |
+| `body <op> <value>` (whole body) | `contains` `matches` | `# @assert body contains "ok"` |
+
+- JSONPath supports a practical subset: `$`, `.key`, `[index]`, `["key"]` (no wildcards or filters).
+- `matches` takes a regular expression; quoted values have their quotes stripped.
+- Assertions run on every send (CodeLens, Send All, context menu); they never alter the request itself.
+
 > Runnable examples live in [`examples/sample.http`](examples/sample.http) (mirrors the docs above, against httpbin.org) and [`examples/playground.http`](examples/playground.http) (against the more reliable postman-echo.com / httpbingo.org, including error and slow-response requests). Both share [`examples/payload.json`](examples/payload.json) for the file-body requests — open one and click **Send Request**.
 
 **Environments:**
@@ -1480,6 +1633,87 @@ A side panel where you can test regexes interactively. Pattern, flags, test inpu
 - No save / load of named patterns (only the last state survives).
 - No export of the pattern as a literal for other languages.
 
+#### Local History
+
+JetBrains-style local history: every time you **save** a file, Toolkit captures a revision of its contents — independent of git, and without touching your repository. When you break something, delete a block by accident, or reset away uncommitted work, you can diff against or restore any earlier version.
+
+Revisions for the **active file** show up in the **Local History** view in the **Source Control** sidebar, alongside **Commit History** (newest first). Click a revision to diff it against the current file; right-click for **Restore** and **Delete Revision**.
+
+Open it from:
+
+- **Source Control sidebar** — the **Local History** section.
+- **Editor / Explorer context menu** — **Toolkit: Show Local History** (focuses the view on that file).
+- **Command Palette** — **Toolkit: Show Local History**.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Show Local History | Reveal the Local History view for the current file |
+| Local History - Refresh | Reload the revisions of the active file |
+| Local History - Clear History for This File | Delete every stored revision for the active file |
+| Local History - Restore This Revision | Overwrite the file with the selected revision (context menu) |
+| Local History - Delete Revision | Remove a single stored revision (context menu) |
+
+**Behavior:**
+
+- A revision is captured on every save; an unchanged save (identical content) is skipped, so the list only holds real states.
+- Clicking a revision opens a native diff (revision ↔ current file). The revision side is read-only.
+- **Restore** first snapshots the file's current contents (so the restore is itself reversible), then replaces the document via an undoable edit.
+- Revisions are stored gzipped under VS Code's global storage — never written into the workspace and never committed.
+- Old revisions are pruned automatically: beyond `maxRevisionsPerFile`, or older than `maxAgeDays` (the most recent revision is always kept).
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.localHistory.enabled` | `true` | Capture a revision on each save |
+| `toolkit.localHistory.maxRevisionsPerFile` | `50` | Max revisions kept per file (`0` = unlimited) |
+| `toolkit.localHistory.maxAgeDays` | `30` | Prune revisions older than this many days (`0` = never) |
+| `toolkit.localHistory.maxFileSizeKB` | `1024` | Skip files larger than this, to keep storage small |
+| `toolkit.localHistory.exclude` | `node_modules`, `.git`, `dist`, `build`, `bin`, `obj`, `out`, `*.min.*` | Glob patterns never snapshotted |
+
+**Limitations:**
+
+- Revisions are captured on save only — unsaved in-memory edits are not tracked.
+- History is local to your machine and is not shared or synced.
+- File renames/moves start a fresh history (revisions are keyed by path).
+
+#### Scratch Files
+
+JetBrains-style scratch files: throwaway files for trying something out — a JSON payload, a SQL query, a snippet, some notes — kept **outside your workspace**, so they never end up in git or the project explorer. They persist across sessions (unlike an untitled tab) but live in VS Code's global storage.
+
+A **Scratches** section in the **Explorer** sidebar lists every scratch (newest first). Click one to open it; right-click for **Rename**, **Delete**, and **Move to Workspace…** (when a scratch turns out to be worth keeping).
+
+Create one from:
+
+- **Explorer → Scratches** — the `+` button in the section title.
+- **Command Palette** — **Toolkit: New Scratch File**, then pick a language.
+- **Editor context menu** — select some text and run **Toolkit: New Scratch from Selection** to drop it into a new scratch in the same language.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| New Scratch File | Pick a language (curated list, or "Other…" for all installed) and open a fresh scratch |
+| New Scratch from Selection | Move the current selection into a new scratch in the active file's language |
+| Scratches - Refresh | Reload the scratch list |
+| Scratches - Rename | Rename a scratch (context menu) |
+| Scratches - Delete | Delete a scratch to the OS trash, so it stays recoverable (context menu) |
+| Scratches - Move to Workspace… | Copy a scratch into a workspace folder and open it there (context menu) |
+
+**Behavior:**
+
+- Scratches are named `scratch-1.<ext>`, `scratch-2.<ext>`… with the extension matching the chosen language, so file icons and syntax highlighting just work.
+- A scratch created via "Other…" remembers its language even when the extension is generic, reopening in the right mode.
+- Files are stored under VS Code's global storage — never written into the workspace and never committed.
+- Deleting a scratch sends it to the OS trash rather than removing it permanently.
+
+**Limitations:**
+
+- Scratches are global to your machine, not synced or shared.
+- The list is not searchable beyond the Explorer's own filter.
+
 ### Appearance & Viewers
 
 #### Diagnostic Highlight
@@ -1534,6 +1768,41 @@ Toggle with **Toolkit: Toggle CSV Rainbow** from the Command Palette or the edit
 | `toolkit.csvRainbow.colors` | 10-color palette | Colors used to colorize columns in rotation |
 | `toolkit.csvRainbow.delimiters` | `[",", ";", "\t", "\|"]` | Candidate delimiters for auto-detection |
 | `toolkit.csvRainbow.maxLines` | `5000` | Maximum number of lines to colorize |
+
+#### Color Decorators
+
+Inline **color swatches** for `#hex`, `rgb()`/`rgba()`, and `hsl()`/`hsla()` literals — in **any language**. Click a swatch to open VS Code's native color picker and convert between formats.
+
+VS Code ships this only for CSS/SCSS/LESS/Sass; this feature brings it everywhere else — a color in a `.ts` constant, a `.json` config, an app theme, a Markdown file, a YAML file, etc.
+
+**Behavior:**
+
+- A swatch is rendered before each recognized color literal; clicking it opens the picker.
+- The picker offers the color in **hex, rgb, and hsl** — picking one rewrites the literal in place, preserving alpha.
+- CSS, SCSS, LESS, and Sass are skipped, since VS Code already provides swatches there (no duplicate decorators).
+- Only unambiguous literals are detected — bare CSS color names (`red`, `rebeccapurple`) are intentionally ignored to avoid false positives in prose and identifiers.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.colorDecorators.enabled` | `true` | Show swatches and the picker for color literals |
+
+#### Pick Color from Screen
+
+A screen **eyedropper**: pick any pixel anywhere on your screen and insert its color into the editor. Useful for matching a color from a design, a browser, or another app without leaving VS Code.
+
+Run **Toolkit: Pick Color from Screen** (Command Palette or editor context menu). A small panel opens — click **Activate eyedropper**, then click any pixel on screen. The color is inserted at the cursor (or replaces the selection); with no active editor, it's copied to the clipboard instead.
+
+A click is needed to start the eyedropper because the underlying browser API requires a user gesture. The color is inserted in the format set by `toolkit.colorPicker.insertFormat`.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.colorPicker.insertFormat` | `hex` | Format of the inserted color (`hex`, `rgb`, or `hsl`) |
+
+> Relies on the browser **EyeDropper API**; if a VS Code build doesn't provide it, a message says so.
 
 #### PDF Viewer
 
