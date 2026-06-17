@@ -124,9 +124,20 @@
           "id": "toolkitRestHistory",
           "name": "Response History"
         }
+      ],
+      "explorer": [
+        {
+          "id": "toolkitScratchFiles",
+          "name": "Scratches",
+          "visibility": "collapsed"
+        }
       ]
     },
     "viewsWelcome": [
+      {
+        "view": "toolkitScratchFiles",
+        "contents": "No scratch files yet.\nScratch files are throwaway files kept outside your workspace — never committed.\n[New Scratch](command:toolkit.scratch.new)"
+      },
       {
         "view": "toolkitLocalHistory",
         "contents": "No local history for this file yet.\nRevisions are captured automatically every time you save a file in the workspace.\n\nOpen a saved file to see its revisions here."
@@ -1029,6 +1040,38 @@
         "command": "toolkit.localHistory.deleteRevision",
         "title": "Toolkit: Local History - Delete Revision",
         "icon": "$(trash)"
+      },
+      {
+        "command": "toolkit.scratch.new",
+        "title": "Toolkit: New Scratch File",
+        "icon": "$(add)"
+      },
+      {
+        "command": "toolkit.scratch.newFromSelection",
+        "title": "Toolkit: New Scratch from Selection"
+      },
+      {
+        "command": "toolkit.scratch.refresh",
+        "title": "Toolkit: Scratches - Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.scratch.open",
+        "title": "Toolkit: Scratches - Open"
+      },
+      {
+        "command": "toolkit.scratch.rename",
+        "title": "Toolkit: Scratches - Rename",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "toolkit.scratch.delete",
+        "title": "Toolkit: Scratches - Delete",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "toolkit.scratch.moveToWorkspace",
+        "title": "Toolkit: Scratches - Move to Workspace…"
       }
     ],
     "keybindings": [
@@ -1184,6 +1227,16 @@
           "command": "toolkit.localHistory.clearFile",
           "when": "view == toolkitLocalHistory",
           "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.scratch.new",
+          "when": "view == toolkitScratchFiles",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.scratch.refresh",
+          "when": "view == toolkitScratchFiles",
+          "group": "navigation@2"
         }
       ],
       "editor/title": [
@@ -1332,6 +1385,36 @@
         {
           "command": "toolkit.localHistory.deleteRevision",
           "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "9_danger@1"
+        },
+        {
+          "command": "toolkit.scratch.rename",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.scratch.delete",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "inline@2"
+        },
+        {
+          "command": "toolkit.scratch.open",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "1_open@1"
+        },
+        {
+          "command": "toolkit.scratch.rename",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "1_open@2"
+        },
+        {
+          "command": "toolkit.scratch.moveToWorkspace",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
+          "group": "1_open@3"
+        },
+        {
+          "command": "toolkit.scratch.delete",
+          "when": "view == toolkitScratchFiles && viewItem == scratch",
           "group": "9_danger@1"
         }
       ],
@@ -1651,6 +1734,26 @@
         {
           "command": "toolkit.localHistory.deleteRevision",
           "when": "false"
+        },
+        {
+          "command": "toolkit.scratch.refresh",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.scratch.open",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.scratch.rename",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.scratch.delete",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.scratch.moveToWorkspace",
+          "when": "false"
         }
       ],
       "editor/context": [
@@ -1836,6 +1939,11 @@
         {
           "command": "toolkit.localHistory.show",
           "group": "0_toolkit@39"
+        },
+        {
+          "command": "toolkit.scratch.newFromSelection",
+          "group": "0_toolkit@40",
+          "when": "editorHasSelection"
         }
       ]
     },

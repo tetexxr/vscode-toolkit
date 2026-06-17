@@ -56,6 +56,7 @@ All-in-one VS Code utility extension.
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
     - [Local History](#local-history)
+    - [Scratch Files](#scratch-files)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -1526,6 +1527,41 @@ Open it from:
 - Revisions are captured on save only — unsaved in-memory edits are not tracked.
 - History is local to your machine and is not shared or synced.
 - File renames/moves start a fresh history (revisions are keyed by path).
+
+#### Scratch Files
+
+JetBrains-style scratch files: throwaway files for trying something out — a JSON payload, a SQL query, a snippet, some notes — kept **outside your workspace**, so they never end up in git or the project explorer. They persist across sessions (unlike an untitled tab) but live in VS Code's global storage.
+
+A **Scratches** section in the **Explorer** sidebar lists every scratch (newest first). Click one to open it; right-click for **Rename**, **Delete**, and **Move to Workspace…** (when a scratch turns out to be worth keeping).
+
+Create one from:
+
+- **Explorer → Scratches** — the `+` button in the section title.
+- **Command Palette** — **Toolkit: New Scratch File**, then pick a language.
+- **Editor context menu** — select some text and run **Toolkit: New Scratch from Selection** to drop it into a new scratch in the same language.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| New Scratch File | Pick a language (curated list, or "Other…" for all installed) and open a fresh scratch |
+| New Scratch from Selection | Move the current selection into a new scratch in the active file's language |
+| Scratches - Refresh | Reload the scratch list |
+| Scratches - Rename | Rename a scratch (context menu) |
+| Scratches - Delete | Delete a scratch to the OS trash, so it stays recoverable (context menu) |
+| Scratches - Move to Workspace… | Copy a scratch into a workspace folder and open it there (context menu) |
+
+**Behavior:**
+
+- Scratches are named `scratch-1.<ext>`, `scratch-2.<ext>`… with the extension matching the chosen language, so file icons and syntax highlighting just work.
+- A scratch created via "Other…" remembers its language even when the extension is generic, reopening in the right mode.
+- Files are stored under VS Code's global storage — never written into the workspace and never committed.
+- Deleting a scratch sends it to the OS trash rather than removing it permanently.
+
+**Limitations:**
+
+- Scratches are global to your machine, not synced or shared.
+- The list is not searchable beyond the Explorer's own filter.
 
 ### Appearance & Viewers
 

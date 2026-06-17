@@ -80,6 +80,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Workspace', name: 'REST Response History', command: 'toolkitRestHistory.focus', description: 'Sidebar tree of recent responses grouped per request; filter, re-send, diff, detail panel, copy as curl/body/URL, save body, go to source' },
   { category: 'Workspace', name: 'Regex Playground', command: 'toolkit.regexPlayground.open', description: 'Live regex tester in a panel, safe against catastrophic backtracking' },
   { category: 'Workspace', name: 'Local History', command: 'toolkitLocalHistory.focus', description: 'JetBrains-style per-file revisions captured on every save; diff against or restore any past version' },
+  { category: 'Workspace', name: 'Scratch Files', command: 'toolkit.scratch.new', description: 'Throwaway files kept outside the workspace (never committed); listed in the Explorer, with new-from-selection' },
 
   // ── Viewers & Appearance ───────────────────────────────
   { category: 'Viewers & Appearance', name: 'Diagnostic Highlight', command: 'toolkit.toggleDiagnosticHighlight', description: 'Make hint/info diagnostics actually visible (colored underlines)' },

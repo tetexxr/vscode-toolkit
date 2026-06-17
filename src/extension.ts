@@ -45,6 +45,7 @@ import { registerRegexPlaygroundCommands } from './features/regex-playground'
 import { registerCompareCommands } from './features/compare'
 import { registerPeekCommitCommands } from './features/peek-commit'
 import { registerLocalHistoryCommands } from './features/local-history'
+import { registerScratchCommands } from './features/scratch'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -93,6 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerCompareCommands(context)
   registerPeekCommitCommands(context)
   registerLocalHistoryCommands(context)
+  registerScratchCommands(context)
 }
 
 export function deactivate() {}
