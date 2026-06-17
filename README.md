@@ -1479,6 +1479,29 @@ Content-Type: application/json
 - `<@encoding path` decodes the file with an explicit encoding (`utf-8`, `latin1`, `ascii`, `utf16le`, `base64`, `hex`); defaults to `utf-8`.
 - Body files are capped at 256 MB. **Copy as curl** maps a raw `< path` body to curl's `--data @path`.
 
+**Assertions:**
+
+Turn a request into a check by adding `@assert` directives as comments in the request block. They're plain comments — ignored when sending — but after the response arrives they're evaluated and a summary is shown (`asserts passed (3/3) ✓`, or a warning listing what failed).
+
+```http
+GET {{baseUrl}}/users/1
+
+# @assert status == 200
+# @assert header Content-Type contains application/json
+# @assert body $.name == "Leanne"
+```
+
+| Form | Operators | Example |
+|---|---|---|
+| `status <op> <n>` | `==` `!=` `>` `>=` `<` `<=` | `# @assert status >= 200` |
+| `header <name> <op> <value>` | `==` `!=` `contains` `matches` | `# @assert header Content-Type contains json` |
+| `body <jsonpath> <op> <value>` | `==` `!=` `>` `>=` `<` `<=` `contains` `matches` | `# @assert body $.items[0].id == 5` |
+| `body <op> <value>` (whole body) | `contains` `matches` | `# @assert body contains "ok"` |
+
+- JSONPath supports a practical subset: `$`, `.key`, `[index]`, `["key"]` (no wildcards or filters).
+- `matches` takes a regular expression; quoted values have their quotes stripped.
+- Assertions run on every send (CodeLens, Send All, context menu); they never alter the request itself.
+
 > Runnable examples live in [`examples/sample.http`](examples/sample.http) (mirrors the docs above, against httpbin.org) and [`examples/playground.http`](examples/playground.http) (against the more reliable postman-echo.com / httpbingo.org, including error and slow-response requests). Both share [`examples/payload.json`](examples/payload.json) for the file-body requests — open one and click **Send Request**.
 
 **Environments:**

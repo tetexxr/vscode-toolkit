@@ -14,6 +14,7 @@ import {
   buildResponseDetailHtml,
   describeRequestNode,
   directoryChildren,
+  evaluateAssertions,
   filterHistory,
   formatBytes,
   formatResponse,
@@ -39,7 +40,8 @@ import {
   type ParsedHttpFile,
   type RequestGroup,
   type ResolvedRequest,
-  type ResponseHistoryEntry
+  type ResponseHistoryEntry,
+  type ResponseLike
 } from './rest-client-utils'
 
 const FILE_GLOB = '**/*.{http,rest}'
@@ -1357,7 +1359,22 @@ async function runAndShow(req: HttpRequest, parsed: ParsedHttpFile, documentUri:
     vscode.window.showWarningMessage(`Toolkit: could not build request — ${(error as Error).message}`)
     return
   }
-  await sendResolved(resolved, source, config)
+  await sendResolved(resolved, source, config, 'live', req.asserts)
+}
+
+/** Evaluates a request's `@assert` directives against the response and reports a summary. */
+function reportAsserts(asserts: string[], response: ResponseLike): void {
+  if (asserts.length === 0) {
+    return
+  }
+  const results = evaluateAssertions(asserts, response)
+  const passed = results.filter(r => r.ok).length
+  if (passed === results.length) {
+    vscode.window.showInformationMessage(`Toolkit: asserts passed (${passed}/${results.length}) ✓`)
+  } else {
+    const failures = results.filter(r => !r.ok).map(r => r.message).slice(0, 3).join('; ')
+    vscode.window.showWarningMessage(`Toolkit: asserts failed (${passed}/${results.length}) — ${failures}`)
+  }
 }
 
 /**
@@ -1378,7 +1395,8 @@ async function sendResolved(
   resolved: ResolvedRequest,
   source: HistorySource,
   config: RestClientConfig,
-  display: SendDisplay = 'live'
+  display: SendDisplay = 'live',
+  asserts: string[] = []
 ): Promise<void> {
   // Whether the outcome lands in the detail panel: Send → previewResponseIn,
   // re-send → the history click action.
@@ -1400,6 +1418,7 @@ async function sendResolved(
       (_progress, token) => performFetch(resolved, config, token)
     )
     const entry = await recordHistory(response, resolved, source, config)
+    reportAsserts(asserts, response)
     if (isLargeResponse(response)) {
       // The panel only renders the truncated history entry, so the full large body
       // would otherwise be lost: open it (plain text, temp file) instead.

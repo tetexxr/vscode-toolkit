@@ -46,3 +46,11 @@ POST {{baseUrl}}/anything
 Content-Type: application/json
 
 <@ ./payload.json
+
+### 7. Assertions — @assert comments are checked against the response after sending
+GET {{baseUrl}}/get?active=true
+Accept: application/json
+
+# @assert status == 200
+# @assert header Content-Type contains application/json
+# @assert body $.args.active == true

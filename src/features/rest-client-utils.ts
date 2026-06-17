@@ -19,6 +19,8 @@ export interface HttpRequest {
   body: string
   startLine: number
   endLine: number
+  /** `@assert` directives (comment lines) attached to this request. */
+  asserts: string[]
 }
 
 export interface ParsedHttpFile {
@@ -30,6 +32,7 @@ const SEPARATOR_PATTERN = /^###(?:\s+(.*))?$/
 const VARIABLE_PATTERN = /^@([A-Za-z_][A-Za-z0-9_-]*)\s*=\s*(.*)$/
 const REQUEST_LINE_PATTERN = /^([A-Z]+)\s+(\S.*?)(?:\s+HTTP\/[\d.]+)?\s*$/
 const HEADER_PATTERN = /^([A-Za-z][A-Za-z0-9-]*)\s*:\s*(.*)$/
+const ASSERT_PATTERN = /^(?:#|\/\/)\s*@assert\s+(.+)$/i
 
 type ParseState = 'idle' | 'headers' | 'body'
 
@@ -42,6 +45,7 @@ export function parseHttpFile(text: string): ParsedHttpFile {
   let current: HttpRequest | null = null
   let bodyLines: string[] = []
   let pendingName: string | null = null
+  let pendingAsserts: string[] = []
   let lastMeaningfulLine = -1
 
   const finalize = () => {
@@ -75,7 +79,21 @@ export function parseHttpFile(text: string): ParsedHttpFile {
       finalize()
       const name = sepMatch[1]?.trim()
       pendingName = name && name.length > 0 ? name : null
+      pendingAsserts = []
       state = 'idle'
+      continue
+    }
+
+    // `@assert` directives live in comment lines; capture them for the request
+    // they belong to (attaching to the current one, or buffering for the next).
+    const assertMatch = trimmed.match(ASSERT_PATTERN)
+    if (assertMatch) {
+      const expr = assertMatch[1].trim()
+      if (current) {
+        current.asserts.push(expr)
+      } else {
+        pendingAsserts.push(expr)
+      }
       continue
     }
 
@@ -114,9 +132,11 @@ export function parseHttpFile(text: string): ParsedHttpFile {
           headers: [],
           body: '',
           startLine: i,
-          endLine: i
+          endLine: i,
+          asserts: pendingAsserts
         }
         pendingName = null
+        pendingAsserts = []
         lastMeaningfulLine = i
         state = 'headers'
         continue
@@ -392,6 +412,136 @@ export function findHeader(headers: HttpHeader[], name: string): string | undefi
     }
   }
   return undefined
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Assertions                                                                */
+/* -------------------------------------------------------------------------- */
+
+export interface AssertResult {
+  expr: string
+  ok: boolean
+  message: string
+}
+
+type AssertOp = '==' | '!=' | '>' | '>=' | '<' | '<=' | 'contains' | 'matches'
+
+function stripQuotes(value: string): string {
+  const t = value.trim()
+  if (t.length >= 2 && ((t[0] === '"' && t.endsWith('"')) || (t[0] === "'" && t.endsWith("'")))) {
+    return t.slice(1, -1)
+  }
+  return t
+}
+
+function compareNumeric(actual: number, op: AssertOp, expected: number): boolean {
+  if (Number.isNaN(actual) || Number.isNaN(expected)) {
+    return false
+  }
+  switch (op) {
+    case '==': return actual === expected
+    case '!=': return actual !== expected
+    case '>': return actual > expected
+    case '>=': return actual >= expected
+    case '<': return actual < expected
+    case '<=': return actual <= expected
+    default: return false
+  }
+}
+
+function compareString(actual: string, op: AssertOp, expected: string): boolean {
+  switch (op) {
+    case '==': return actual === expected
+    case '!=': return actual !== expected
+    case 'contains': return actual.includes(expected)
+    case 'matches':
+      try {
+        return new RegExp(expected).test(actual)
+      } catch {
+        return false
+      }
+    default:
+      return compareNumeric(Number(actual), op, Number(expected))
+  }
+}
+
+/**
+ * Resolves a small JSONPath subset against a value: `$`, `.key`, `[index]`,
+ * `["key"]`, `['key']`. Returns undefined when the path doesn't resolve or
+ * isn't fully consumed (no wildcards or filters).
+ */
+export function evalJsonPath(json: unknown, path: string): unknown {
+  if (path[0] !== '$') {
+    return undefined
+  }
+  let cur: unknown = json
+  const re = /\.([A-Za-z_$][\w$]*)|\[(\d+)\]|\["([^"]*)"\]|\['([^']*)'\]/g
+  let lastIndex = 1
+  let match: RegExpExecArray | null
+  re.lastIndex = 1
+  while ((match = re.exec(path)) !== null) {
+    if (match.index !== lastIndex) {
+      return undefined
+    }
+    const key = match[1] ?? match[3] ?? match[4] ?? match[2]
+    if (cur === null || typeof cur !== 'object') {
+      return undefined
+    }
+    cur = (cur as Record<string, unknown>)[key]
+    lastIndex = re.lastIndex
+  }
+  return lastIndex === path.length ? cur : undefined
+}
+
+function evaluateOne(expr: string, response: ResponseLike): AssertResult {
+  const fail = (message: string): AssertResult => ({ expr, ok: false, message })
+  const pass = (): AssertResult => ({ expr, ok: true, message: expr })
+
+  let m = /^status\s*(==|!=|>=|<=|>|<)\s*(.+)$/i.exec(expr)
+  if (m) {
+    const ok = compareNumeric(response.status, m[1] as AssertOp, Number(stripQuotes(m[2])))
+    return ok ? pass() : fail(`${expr} — got ${response.status}`)
+  }
+
+  m = /^header\s+(\S+)\s+(==|!=|contains|matches)\s+(.+)$/i.exec(expr)
+  if (m) {
+    const actual = findHeader(response.headers, m[1])
+    if (actual === undefined) {
+      return fail(`${expr} — header "${m[1]}" not present`)
+    }
+    const ok = compareString(actual, m[2].toLowerCase() as AssertOp, stripQuotes(m[3]))
+    return ok ? pass() : fail(`${expr} — got "${actual}"`)
+  }
+
+  m = /^body\s+(\$\S*)\s+(==|!=|>=|<=|>|<|contains|matches)\s+(.+)$/i.exec(expr)
+  if (m) {
+    let json: unknown
+    try {
+      json = JSON.parse(response.body)
+    } catch {
+      return fail(`${expr} — body is not valid JSON`)
+    }
+    const value = evalJsonPath(json, m[1])
+    if (value === undefined) {
+      return fail(`${expr} — "${m[1]}" not found`)
+    }
+    const actualStr = typeof value === 'string' ? value : JSON.stringify(value)
+    const ok = compareString(actualStr, m[2].toLowerCase() as AssertOp, stripQuotes(m[3]))
+    return ok ? pass() : fail(`${expr} — got ${actualStr}`)
+  }
+
+  m = /^body\s+(contains|matches|==|!=)\s+(.+)$/i.exec(expr)
+  if (m) {
+    const ok = compareString(response.body, m[1].toLowerCase() as AssertOp, stripQuotes(m[2]))
+    return ok ? pass() : fail(`${expr} — body did not match`)
+  }
+
+  return fail(`${expr} — unrecognized assertion`)
+}
+
+/** Evaluates each `@assert` expression against a response. */
+export function evaluateAssertions(asserts: string[], response: ResponseLike): AssertResult[] {
+  return asserts.map(expr => evaluateOne(expr, response))
 }
 
 export function formatResponse(response: ResponseLike, prettyJson = true): string {
