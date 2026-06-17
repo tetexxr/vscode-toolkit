@@ -55,6 +55,7 @@ All-in-one VS Code utility extension.
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
+    - [Local History](#local-history)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -1479,6 +1480,52 @@ A side panel where you can test regexes interactively. Pattern, flags, test inpu
 - No cheat sheet of regex tokens.
 - No save / load of named patterns (only the last state survives).
 - No export of the pattern as a literal for other languages.
+
+#### Local History
+
+JetBrains-style local history: every time you **save** a file, Toolkit captures a revision of its contents — independent of git, and without touching your repository. When you break something, delete a block by accident, or reset away uncommitted work, you can diff against or restore any earlier version.
+
+Revisions for the **active file** show up in the **Local History** view in its own Activity Bar container (newest first). Click a revision to diff it against the current file; right-click for **Restore** and **Delete Revision**.
+
+Open it from:
+
+- **Activity Bar** — the **Local History** container.
+- **Editor / Explorer context menu** — **Toolkit: Show Local History** (focuses the view on that file).
+- **Command Palette** — **Toolkit: Show Local History**.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Show Local History | Reveal the Local History view for the current file |
+| Local History - Refresh | Reload the revisions of the active file |
+| Local History - Clear History for This File | Delete every stored revision for the active file |
+| Local History - Restore This Revision | Overwrite the file with the selected revision (context menu) |
+| Local History - Delete Revision | Remove a single stored revision (context menu) |
+
+**Behavior:**
+
+- A revision is captured on every save; an unchanged save (identical content) is skipped, so the list only holds real states.
+- Clicking a revision opens a native diff (revision ↔ current file). The revision side is read-only.
+- **Restore** first snapshots the file's current contents (so the restore is itself reversible), then replaces the document via an undoable edit.
+- Revisions are stored gzipped under VS Code's global storage — never written into the workspace and never committed.
+- Old revisions are pruned automatically: beyond `maxRevisionsPerFile`, or older than `maxAgeDays` (the most recent revision is always kept).
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.localHistory.enabled` | `true` | Capture a revision on each save |
+| `toolkit.localHistory.maxRevisionsPerFile` | `50` | Max revisions kept per file (`0` = unlimited) |
+| `toolkit.localHistory.maxAgeDays` | `30` | Prune revisions older than this many days (`0` = never) |
+| `toolkit.localHistory.maxFileSizeKB` | `1024` | Skip files larger than this, to keep storage small |
+| `toolkit.localHistory.exclude` | `node_modules`, `.git`, `dist`, `build`, `bin`, `obj`, `out`, `*.min.*` | Glob patterns never snapshotted |
+
+**Limitations:**
+
+- Revisions are captured on save only — unsaved in-memory edits are not tracked.
+- History is local to your machine and is not shared or synced.
+- File renames/moves start a fresh history (revisions are keyed by path).
 
 ### Appearance & Viewers
 

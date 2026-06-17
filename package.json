@@ -78,6 +78,11 @@
           "id": "rest-client",
           "title": "REST Client",
           "icon": "themes/icons/rest-client.svg"
+        },
+        {
+          "id": "toolkit-local-history",
+          "title": "Local History",
+          "icon": "themes/icons/local-history.svg"
         }
       ]
     },
@@ -119,9 +124,19 @@
           "id": "toolkitRestHistory",
           "name": "Response History"
         }
+      ],
+      "toolkit-local-history": [
+        {
+          "id": "toolkitLocalHistory",
+          "name": "Revisions"
+        }
       ]
     },
     "viewsWelcome": [
+      {
+        "view": "toolkitLocalHistory",
+        "contents": "No local history for this file yet.\nRevisions are captured automatically every time you save a file in the workspace.\n\nOpen a saved file to see its revisions here."
+      },
       {
         "view": "toolkitRestFiles",
         "contents": "No .http or .rest files were found in this workspace.\n[New Request File](command:toolkit.restClient.files.create)"
@@ -992,6 +1007,34 @@
       {
         "command": "toolkit.markdown.compactTable",
         "title": "Toolkit: Compact Markdown Table"
+      },
+      {
+        "command": "toolkit.localHistory.show",
+        "title": "Toolkit: Show Local History"
+      },
+      {
+        "command": "toolkit.localHistory.refresh",
+        "title": "Toolkit: Local History - Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "toolkit.localHistory.clearFile",
+        "title": "Toolkit: Local History - Clear History for This File",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "toolkit.localHistory.openDiff",
+        "title": "Toolkit: Local History - Open Diff"
+      },
+      {
+        "command": "toolkit.localHistory.restore",
+        "title": "Toolkit: Local History - Restore This Revision",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "toolkit.localHistory.deleteRevision",
+        "title": "Toolkit: Local History - Delete Revision",
+        "icon": "$(trash)"
       }
     ],
     "keybindings": [
@@ -1137,6 +1180,16 @@
           "command": "toolkit.restClient.clearHistory",
           "when": "view == toolkitRestHistory",
           "group": "navigation@4"
+        },
+        {
+          "command": "toolkit.localHistory.refresh",
+          "when": "view == toolkitLocalHistory",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.localHistory.clearFile",
+          "when": "view == toolkitLocalHistory",
+          "group": "navigation@2"
         }
       ],
       "editor/title": [
@@ -1261,6 +1314,31 @@
           "command": "toolkit.restClient.files.sendAll",
           "when": "view == toolkitRestFiles && viewItem == restFile",
           "group": "1_run@1"
+        },
+        {
+          "command": "toolkit.localHistory.restore",
+          "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "inline@1"
+        },
+        {
+          "command": "toolkit.localHistory.deleteRevision",
+          "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "inline@2"
+        },
+        {
+          "command": "toolkit.localHistory.openDiff",
+          "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "1_open@1"
+        },
+        {
+          "command": "toolkit.localHistory.restore",
+          "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "1_open@2"
+        },
+        {
+          "command": "toolkit.localHistory.deleteRevision",
+          "when": "view == toolkitLocalHistory && viewItem == revision",
+          "group": "9_danger@1"
         }
       ],
       "toolkit.csharp.new": [
@@ -1428,6 +1506,11 @@
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
           "group": "0_toolkit@19"
+        },
+        {
+          "command": "toolkit.localHistory.show",
+          "when": "!explorerResourceIsFolder",
+          "group": "0_toolkit@20"
         }
       ],
       "commandPalette": [
@@ -1553,6 +1636,26 @@
         },
         {
           "command": "toolkit.restClient.files.groupByTree",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.localHistory.refresh",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.localHistory.clearFile",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.localHistory.openDiff",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.localHistory.restore",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.localHistory.deleteRevision",
           "when": "false"
         }
       ],
@@ -1735,12 +1838,56 @@
           "command": "toolkit.transform",
           "group": "0_toolkit@38",
           "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.localHistory.show",
+          "group": "0_toolkit@39"
         }
       ]
     },
     "configuration": {
       "title": "Toolkit",
       "properties": {
+        "toolkit.localHistory.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Capture a local revision of a file every time it is saved, independent of git."
+        },
+        "toolkit.localHistory.maxRevisionsPerFile": {
+          "type": "number",
+          "default": 50,
+          "minimum": 0,
+          "description": "Maximum number of revisions kept per file. Older revisions beyond this are pruned. Use 0 for unlimited."
+        },
+        "toolkit.localHistory.maxAgeDays": {
+          "type": "number",
+          "default": 30,
+          "minimum": 0,
+          "description": "Revisions older than this many days are pruned (the most recent revision is always kept). Use 0 to never expire by age."
+        },
+        "toolkit.localHistory.maxFileSizeKB": {
+          "type": "number",
+          "default": 1024,
+          "minimum": 1,
+          "description": "Files larger than this (in KB) are not snapshotted, to keep local-history storage small."
+        },
+        "toolkit.localHistory.exclude": {
+          "type": "array",
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/bin/**",
+            "**/obj/**",
+            "**/out/**",
+            "**/*.min.*"
+          ],
+          "description": "Glob patterns for files that should never be snapshotted.",
+          "items": {
+            "type": "string"
+          }
+        },
         "toolkit.changeCase.includeDotInCurrentWord": {
           "type": "boolean",
           "default": false,

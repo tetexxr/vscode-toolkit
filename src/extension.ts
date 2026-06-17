@@ -44,6 +44,7 @@ import { registerRestClientCommands } from './features/rest-client'
 import { registerRegexPlaygroundCommands } from './features/regex-playground'
 import { registerCompareCommands } from './features/compare'
 import { registerPeekCommitCommands } from './features/peek-commit'
+import { registerLocalHistoryCommands } from './features/local-history'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -91,6 +92,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerRegexPlaygroundCommands(context)
   registerCompareCommands(context)
   registerPeekCommitCommands(context)
+  registerLocalHistoryCommands(context)
 }
 
 export function deactivate() {}

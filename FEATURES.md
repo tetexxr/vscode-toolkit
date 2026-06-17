@@ -79,6 +79,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | REST Requests | — | Sidebar tree of every workspace .http/.rest file and its requests — open, jump to, or send each |
 | REST Response History | — | Sidebar tree of recent responses grouped per request; color-coded status, filter, re-send, diff, detail panel, copy as curl/body/URL, save body, go to source |
 | Regex Playground | — | Live regex tester in a panel, safe against catastrophic backtracking |
+| Local History | — | JetBrains-style per-file revisions captured on every save; diff against or restore any past version |
 
 ## Viewers & Appearance
 
