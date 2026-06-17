@@ -2007,6 +2007,11 @@
             "type": "string"
           }
         },
+        "toolkit.colorDecorators.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show color swatches (and the native color picker) for hex/rgb/hsl literals in all languages except CSS/SCSS/LESS/Sass, which VS Code already covers."
+        },
         "toolkit.runScripts.enableCodeLens": {
           "type": "boolean",
           "default": true,

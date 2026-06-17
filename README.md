@@ -61,6 +61,7 @@ All-in-one VS Code utility extension.
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
+    - [Color Decorators](#color-decorators)
     - [PDF Viewer](#pdf-viewer)
     - [SVG Preview](#svg-preview)
     - [Generic Dark Theme](#generic-dark-theme)
@@ -1642,6 +1643,25 @@ Toggle with **Toolkit: Toggle CSV Rainbow** from the Command Palette or the edit
 | `toolkit.csvRainbow.colors` | 10-color palette | Colors used to colorize columns in rotation |
 | `toolkit.csvRainbow.delimiters` | `[",", ";", "\t", "\|"]` | Candidate delimiters for auto-detection |
 | `toolkit.csvRainbow.maxLines` | `5000` | Maximum number of lines to colorize |
+
+#### Color Decorators
+
+Inline **color swatches** for `#hex`, `rgb()`/`rgba()`, and `hsl()`/`hsla()` literals — in **any language**. Click a swatch to open VS Code's native color picker and convert between formats.
+
+VS Code ships this only for CSS/SCSS/LESS/Sass; this feature brings it everywhere else — a color in a `.ts` constant, a `.json` config, an app theme, a Markdown file, a YAML file, etc.
+
+**Behavior:**
+
+- A swatch is rendered before each recognized color literal; clicking it opens the picker.
+- The picker offers the color in **hex, rgb, and hsl** — picking one rewrites the literal in place, preserving alpha.
+- CSS, SCSS, LESS, and Sass are skipped, since VS Code already provides swatches there (no duplicate decorators).
+- Only unambiguous literals are detected — bare CSS color names (`red`, `rebeccapurple`) are intentionally ignored to avoid false positives in prose and identifiers.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.colorDecorators.enabled` | `true` | Show swatches and the picker for color literals |
 
 #### PDF Viewer
 

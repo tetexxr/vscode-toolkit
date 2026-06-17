@@ -47,6 +47,7 @@ import { registerPeekCommitCommands } from './features/peek-commit'
 import { registerLocalHistoryCommands } from './features/local-history'
 import { registerScratchCommands } from './features/scratch'
 import { registerRunScriptsCommands } from './features/run-scripts'
+import { registerColorDecorators } from './features/color-decorators'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -97,6 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerLocalHistoryCommands(context)
   registerScratchCommands(context)
   registerRunScriptsCommands(context)
+  registerColorDecorators(context)
 }
 
 export function deactivate() {}
