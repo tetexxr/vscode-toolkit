@@ -1100,6 +1100,14 @@
       {
         "command": "toolkit.numberBase.toOctal",
         "title": "Toolkit: Convert Number to Octal"
+      },
+      {
+        "command": "toolkit.diff.withClipboard",
+        "title": "Toolkit: Compare with Clipboard"
+      },
+      {
+        "command": "toolkit.diff.withOpenFile",
+        "title": "Toolkit: Compare with Open File…"
       }
     ],
     "keybindings": [
@@ -1986,6 +1994,14 @@
           "command": "toolkit.numberBase.convert",
           "group": "0_toolkit@42",
           "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.diff.withClipboard",
+          "group": "0_toolkit@43"
+        },
+        {
+          "command": "toolkit.diff.withOpenFile",
+          "group": "0_toolkit@44"
         }
       ]
     },

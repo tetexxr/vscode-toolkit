@@ -17,6 +17,7 @@ All-in-one VS Code utility extension.
     - [Compare with Branch](#compare-with-branch)
     - [Compare Project / Folder with Branch](#compare-project--folder-with-branch)
     - [Peek Last Commit on Line](#peek-last-commit-on-line)
+    - [Diff Tools](#diff-tools)
   - [Package Management](#package-management)
     - [NuGet Package Manager](#nuget-package-manager)
     - [NPM Package Manager](#npm-package-manager)
@@ -259,6 +260,17 @@ Hover any line in a tracked file to see the **full commit** that last touched it
 |---|---|---|
 | `toolkit.peekCommit.hover.enabled` | `true` | Toggle the peek-commit hover |
 | `toolkit.peekCommit.hover.languages` | `["*"]` | Languages where the hover is active (reload required after change) |
+
+#### Diff Tools
+
+Quick, ad-hoc diffs that VS Code doesn't offer out of the box (comparing two **files** in the Explorer already has built-in **Select for Compare** / **Compare with Selected**, so that isn't repeated here).
+
+| Command | What it compares |
+|---|---|
+| Toolkit: Compare with Clipboard | The current **selection** (or the whole file when nothing is selected) against the **clipboard** |
+| Toolkit: Compare with Open File… | The active file against another **open tab**, picked from a quick pick |
+
+Both open a native diff editor and are available from the editor context menu and the Command Palette. The clipboard (and a compared selection) are shown as read-only virtual documents, given the source file's extension so syntax highlighting matches.
 
 ### Package Management
 

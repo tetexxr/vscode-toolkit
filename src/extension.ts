@@ -49,6 +49,7 @@ import { registerScratchCommands } from './features/scratch'
 import { registerRunScriptsCommands } from './features/run-scripts'
 import { registerColorDecorators } from './features/color-decorators'
 import { registerNumberBaseCommands } from './features/number-base'
+import { registerDiffToolsCommands } from './features/diff-tools'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -101,6 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerRunScriptsCommands(context)
   registerColorDecorators(context)
   registerNumberBaseCommands(context)
+  registerDiffToolsCommands(context)
 }
 
 export function deactivate() {}
