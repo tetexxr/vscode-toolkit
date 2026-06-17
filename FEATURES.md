@@ -94,6 +94,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Diagnostic Highlight | — | Make hint/info diagnostics actually visible (colored underlines) |
 | CSV Rainbow | — | Color each CSV/TSV column; hover shows the column header |
 | Color Decorators | — | Inline color swatches + native picker for hex/rgb/hsl in any language (CSS-family excluded; automatic) |
+| Pick Color from Screen | — | Eyedropper: pick any pixel on screen and insert it as hex/rgb/hsl at the cursor |
 | PDF Viewer | — | Open PDFs in a tab: search, outline, thumbnails, zoom, text selection |
 | SVG Preview | — | Live side-panel preview with zoom and background toggle |
 | Generic Dark Theme | — | Dark+ base with JetBrains-style syntax colors per language |

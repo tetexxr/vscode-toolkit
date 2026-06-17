@@ -91,6 +91,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Viewers & Appearance', name: 'Diagnostic Highlight', command: 'toolkit.toggleDiagnosticHighlight', description: 'Make hint/info diagnostics actually visible (colored underlines)' },
   { category: 'Viewers & Appearance', name: 'CSV Rainbow', command: 'toolkit.toggleCsvRainbow', description: 'Color each CSV/TSV column; hover shows the column header' },
   { category: 'Viewers & Appearance', name: 'Color Decorators', description: 'Inline color swatches + native picker for hex/rgb/hsl in any language (CSS-family excluded; automatic)' },
+  { category: 'Viewers & Appearance', name: 'Pick Color from Screen', command: 'toolkit.colorPicker.pickFromScreen', description: 'Eyedropper: pick any pixel on screen and insert it as hex/rgb/hsl at the cursor' },
   { category: 'Viewers & Appearance', name: 'PDF Viewer', description: 'Open PDFs in a tab: search, outline, thumbnails, zoom, text selection (automatic)' },
   { category: 'Viewers & Appearance', name: 'SVG Preview', command: 'toolkit.svgPreview.open', description: 'Live side-panel preview with zoom and background toggle' },
   { category: 'Viewers & Appearance', name: 'Generic Dark Theme', description: 'Dark+ base with JetBrains-style syntax colors per language (pick it in Color Theme)' },

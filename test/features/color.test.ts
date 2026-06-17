@@ -1,6 +1,7 @@
 import { strict as assert } from 'assert'
 import {
   findColors,
+  formatColor,
   hslToRgb,
   parseColor,
   rgbToHsl,
@@ -88,6 +89,16 @@ describe('formatting', () => {
   it('should format hsl and hsla', () => {
     assert.equal(toHslString({ r: 255, g: 0, b: 0, a: 1 }), 'hsl(0, 100%, 50%)')
     assert.equal(toHslString({ r: 255, g: 0, b: 0, a: 0.5 }), 'hsla(0, 100%, 50%, 0.5)')
+  })
+})
+
+describe('formatColor', () => {
+  const red = { r: 255, g: 0, b: 0, a: 1 }
+
+  it('should format in the chosen notation', () => {
+    assert.equal(formatColor(red, 'hex'), '#ff0000')
+    assert.equal(formatColor(red, 'rgb'), 'rgb(255, 0, 0)')
+    assert.equal(formatColor(red, 'hsl'), 'hsl(0, 100%, 50%)')
   })
 })
 

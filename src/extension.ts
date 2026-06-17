@@ -52,6 +52,7 @@ import { registerNumberBaseCommands } from './features/number-base'
 import { registerDiffToolsCommands } from './features/diff-tools'
 import { registerCronCommands } from './features/cron'
 import { registerGitStashCommands } from './features/git-stash'
+import { registerEyedropperCommands } from './features/eyedropper'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -107,6 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerDiffToolsCommands(context)
   registerCronCommands(context)
   registerGitStashCommands(context)
+  registerEyedropperCommands(context)
 }
 
 export function deactivate() {}

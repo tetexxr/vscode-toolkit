@@ -183,6 +183,20 @@ function hue2rgb(p: number, q: number, t: number): number {
   return p
 }
 
+export type ColorFormat = 'hex' | 'rgb' | 'hsl'
+
+/** Formats a color in the chosen notation. */
+export function formatColor(rgba: Rgba, format: ColorFormat): string {
+  switch (format) {
+    case 'rgb':
+      return toRgbString(rgba)
+    case 'hsl':
+      return toHslString(rgba)
+    default:
+      return toHex(rgba)
+  }
+}
+
 /** HSL → RGB. h is 0–360, s and l are 0–100; alpha passes through. */
 export function hslToRgb(h: number, s: number, l: number, a = 1): Rgba {
   const hn = (((h % 360) + 360) % 360) / 360

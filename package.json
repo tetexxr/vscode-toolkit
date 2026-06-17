@@ -1147,6 +1147,10 @@
         "command": "toolkit.gitStash.drop",
         "title": "Toolkit: Stashes - Drop",
         "icon": "$(trash)"
+      },
+      {
+        "command": "toolkit.colorPicker.pickFromScreen",
+        "title": "Toolkit: Pick Color from Screen"
       }
     ],
     "keybindings": [
@@ -2020,95 +2024,99 @@
           "group": "0_toolkit@24"
         },
         {
+          "command": "toolkit.colorPicker.pickFromScreen",
+          "group": "0_toolkit@25"
+        },
+        {
           "command": "toolkit.svgPreview.open",
-          "group": "0_toolkit@25",
+          "group": "0_toolkit@26",
           "when": "resourceExtname == .svg"
         },
         {
           "command": "toolkit.restClient.copyAsCurl",
-          "group": "0_toolkit@26",
+          "group": "0_toolkit@27",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
           "command": "toolkit.restClient.createPrivateEnv",
-          "group": "0_toolkit@27",
+          "group": "0_toolkit@28",
           "when": "resourceFilename == http-client.env.json"
         },
         {
           "command": "toolkit.restClient.selectEnvironment",
-          "group": "0_toolkit@28",
+          "group": "0_toolkit@29",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
           "command": "toolkit.runScripts.pick",
-          "group": "0_toolkit@29",
+          "group": "0_toolkit@30",
           "when": "resourceFilename == package.json"
         },
         {
           "command": "toolkit.restClient.sendAll",
-          "group": "0_toolkit@30",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.send",
           "group": "0_toolkit@31",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
+          "command": "toolkit.restClient.send",
+          "group": "0_toolkit@32",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
           "command": "toolkit.localHistory.show",
-          "group": "0_toolkit@32"
+          "group": "0_toolkit@33"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@33",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.sumNumbers",
           "group": "0_toolkit@34",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleCsvRainbow",
+          "command": "toolkit.sumNumbers",
           "group": "0_toolkit@35",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.toggleCsvRainbow",
+          "group": "0_toolkit@36",
           "when": "resourceExtname == .csv || resourceExtname == .tsv"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@36"
-        },
-        {
-          "command": "toolkit.toggleQuotes",
           "group": "0_toolkit@37"
         },
         {
-          "command": "toolkit.transform.jsonMinify",
-          "group": "0_toolkit@38",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+          "command": "toolkit.toggleQuotes",
+          "group": "0_toolkit@38"
         },
         {
-          "command": "toolkit.transform.jsonPrettify",
+          "command": "toolkit.transform.jsonMinify",
           "group": "0_toolkit@39",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.jsonSortKeys",
+          "command": "toolkit.transform.jsonPrettify",
           "group": "0_toolkit@40",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.jsonToYaml",
+          "command": "toolkit.transform.jsonSortKeys",
           "group": "0_toolkit@41",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.yamlToJson",
+          "command": "toolkit.transform.jsonToYaml",
           "group": "0_toolkit@42",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.yamlToJson",
+          "group": "0_toolkit@43",
           "when": "editorHasSelection && editorLangId == yaml"
         },
         {
           "command": "toolkit.transform",
-          "group": "0_toolkit@43",
+          "group": "0_toolkit@44",
           "when": "editorHasSelection"
         }
       ]
@@ -2116,6 +2124,16 @@
     "configuration": {
       "title": "Toolkit",
       "properties": {
+        "toolkit.colorPicker.insertFormat": {
+          "type": "string",
+          "default": "hex",
+          "enum": [
+            "hex",
+            "rgb",
+            "hsl"
+          ],
+          "description": "Format used when inserting a color picked with the screen eyedropper."
+        },
         "toolkit.localHistory.enabled": {
           "type": "boolean",
           "default": true,

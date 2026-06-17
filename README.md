@@ -66,6 +66,7 @@ All-in-one VS Code utility extension.
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
     - [Color Decorators](#color-decorators)
+    - [Pick Color from Screen](#pick-color-from-screen)
     - [PDF Viewer](#pdf-viewer)
     - [SVG Preview](#svg-preview)
     - [Generic Dark Theme](#generic-dark-theme)
@@ -1768,6 +1769,22 @@ VS Code ships this only for CSS/SCSS/LESS/Sass; this feature brings it everywher
 | Setting | Default | Description |
 |---|---|---|
 | `toolkit.colorDecorators.enabled` | `true` | Show swatches and the picker for color literals |
+
+#### Pick Color from Screen
+
+A screen **eyedropper**: pick any pixel anywhere on your screen and insert its color into the editor. Useful for matching a color from a design, a browser, or another app without leaving VS Code.
+
+Run **Toolkit: Pick Color from Screen** (Command Palette or editor context menu). A small panel opens — click **Activate eyedropper**, then click any pixel on screen. The color is inserted at the cursor (or replaces the selection); with no active editor, it's copied to the clipboard instead.
+
+A click is needed to start the eyedropper because the underlying browser API requires a user gesture. The color is inserted in the format set by `toolkit.colorPicker.insertFormat`.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.colorPicker.insertFormat` | `hex` | Format of the inserted color (`hex`, `rgb`, or `hsl`) |
+
+> Relies on the browser **EyeDropper API**; if a VS Code build doesn't provide it, a message says so.
 
 #### PDF Viewer
 
