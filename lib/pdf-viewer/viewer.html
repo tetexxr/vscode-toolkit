@@ -102,7 +102,16 @@
     var INITIAL_SCALE = '${lastScale}' || '${scale}';
     var INITIAL_MODE = '${lastScaleMode}' || '${scale}';
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_URL;
+    // The worker URL is cross-origin to this webview document, so a direct
+    // `new Worker(WORKER_URL)` is blocked and pdf.js silently falls back to a
+    // main-thread "fake worker" (extremely slow). Load it as a same-origin blob
+    // module worker instead (allowed by the `worker-src blob:` CSP).
+    try {
+      var workerBlobUrl = URL.createObjectURL(await (await fetch(WORKER_URL)).blob());
+      pdfjsLib.GlobalWorkerOptions.workerPort = new Worker(workerBlobUrl, { type: 'module' });
+    } catch (e) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_URL;
+    }
     var vscodeApi = acquireVsCodeApi();
 
     var $ = function(id) { return document.getElementById(id); };
@@ -165,7 +174,7 @@
       pages = [];
       if (observer) observer.disconnect();
 
-      pdfjsLib.getDocument(url).promise.then(function(doc) {
+      pdfjsLib.getDocument({ url: url }).promise.then(function(doc) {
         pdf = doc;
         totalPagesEl.textContent = pdf.numPages;
         pageInput.max = pdf.numPages;
