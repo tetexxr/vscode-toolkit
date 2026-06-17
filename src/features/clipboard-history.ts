@@ -1,6 +1,17 @@
 import * as vscode from 'vscode'
 import { ClipboardHistory, formatItem } from './clipboard-history-utils'
 
+// Values to skip exactly once when the watcher next sees them, so secrets
+// (e.g. a generated password) never land in the clipboard history.
+const secretValues = new Set<string>()
+
+/** Marks a clipboard value the history watcher should not capture (one-shot). */
+export function markClipboardSecret(text: string): void {
+  if (text.length > 0) {
+    secretValues.add(text)
+  }
+}
+
 class Watcher {
   private timer: NodeJS.Timeout | null = null
   private lastSeen: string | null = null
@@ -31,6 +42,12 @@ class Watcher {
       }
       try {
         const text = await vscode.env.clipboard.readText()
+        if (secretValues.has(text)) {
+          // A marked secret (e.g. a generated password): treat as seen but never store it.
+          secretValues.delete(text)
+          this.lastSeen = text
+          return
+        }
         if (text !== this.lastSeen) {
           this.lastSeen = text
           if (text.length > 0) {

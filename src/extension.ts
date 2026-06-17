@@ -53,6 +53,7 @@ import { registerDiffToolsCommands } from './features/diff-tools'
 import { registerCronCommands } from './features/cron'
 import { registerGitStashCommands } from './features/git-stash'
 import { registerEyedropperCommands } from './features/eyedropper'
+import { registerPasswordGeneratorCommands } from './features/password-generator'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -109,6 +110,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerCronCommands(context)
   registerGitStashCommands(context)
   registerEyedropperCommands(context)
+  registerPasswordGeneratorCommands(context)
 }
 
 export function deactivate() {}

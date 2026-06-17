@@ -55,6 +55,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Editing', name: 'Timestamp Converter & Hover', command: 'toolkit.timestamp.convert', description: 'Convert epoch ⇄ ISO; hover any epoch number to decode it' },
   { category: 'Editing', name: 'Number Base Converter', command: 'toolkit.numberBase.convert', description: 'Convert a selected number between dec/hex/bin/oct; hover any number to see all bases' },
   { category: 'Editing', name: 'Cron Hover', description: 'Hover a cron expression to see a plain-English description and the next run times (automatic)' },
+  { category: 'Editing', name: 'Password Generator', command: 'toolkit.passwordGenerator.open', description: 'KeePassXC-style panel: secure (CSPRNG) passwords with class/length options and a live entropy strength meter' },
   { category: 'Editing', name: 'UUID / ULID Hover', description: 'Hover an id to see its kind and embedded creation time (automatic)' },
   { category: 'Editing', name: 'Format Markdown Table', command: 'toolkit.markdown.formatTable', description: 'Align table pipes to the widest cell, honoring GFM alignment' },
   { category: 'Editing', name: 'Compact Markdown Table', command: 'toolkit.markdown.compactTable', description: 'Strip the padding back out for minimal tables and clean diffs' },

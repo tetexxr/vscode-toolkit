@@ -41,6 +41,7 @@ All-in-one VS Code utility extension.
     - [Timestamp Converter & Hover](#timestamp-converter--hover)
     - [Number Base Converter](#number-base-converter)
     - [Cron Hover](#cron-hover)
+    - [Password Generator](#password-generator)
     - [UUID / ULID Hover](#uuid--ulid-hover)
     - [Format Markdown Table](#format-markdown-table)
     - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
@@ -935,6 +936,23 @@ The next run times are computed in your local timezone. When day-of-month and da
 | `toolkit.cron.enableHover` | `true` | Toggle the cron hover |
 | `toolkit.cron.nextRunsCount` | `5` | How many upcoming run times to list |
 | `toolkit.cron.hoverLanguages` | `["*"]` | Languages where the hover is active (reload required after change) |
+
+#### Password Generator
+
+A KeePassXC-style password generator in a panel (run **Toolkit: Open Password Generator** from the Command Palette or the editor context menu — no permanent sidebar icon).
+
+- **Length** slider and character classes: lowercase, uppercase, digits, symbols.
+- **Exclude look-alikes** (`I l 1 O 0 o |`) and **exclude custom characters**.
+- **Require each class** — guarantees at least one character from every selected class.
+- **Regenerate**, **Copy**, and **Insert at cursor**.
+- A live **strength meter** showing the password's **exact entropy in bits**.
+
+**Security:**
+
+- Passwords use the operating system's cryptographically-secure RNG (`crypto.randomInt`, unbiased) — never `Math.random`.
+- Because the password is randomly generated, the strength meter reports its **exact** entropy (`length × log₂(pool size)`), not a heuristic guess.
+- Generated passwords are **never stored** (no settings, history, or logs) — only your chosen options are remembered.
+- Copying a password **excludes it from the Toolkit [Clipboard History](#clipboard-history)**, so secrets don't linger there.
 
 #### UUID / ULID Hover
 
