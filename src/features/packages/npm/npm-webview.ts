@@ -281,7 +281,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   color: white;
 }
 .pkg-status-installed { background: ${cssColor.success}; }
-.pkg-status-outdated { background: ${cssColor.warning}; }
+.pkg-status-outdated { background: ${cssColor.warning}; color: #000; }
 
 .pkg-info {
   flex: 1;

@@ -2,48 +2,50 @@
  * Centralized semantic color palette for the whole extension.
  *
  * Single source of truth: change a token here and every panel, badge and
- * editor decoration updates. Values come from the One Dark family, which the
- * extension already leaned on (csv-rainbow, version-bump labels, syntax theme).
+ * editor decoration updates. Values are the exact GitHub Primer (dark) functional
+ * tokens (@primer/primitives), so the extension matches GitHub's palette.
  *
  * Two layers:
- *  - `color.*`   raw hex tokens — use in editor decorations (TextEditorDecorationType)
- *                and anywhere a plain color string is needed.
- *  - `cssColor.*` webview CSS values that honour the user's VS Code theme first
- *                and fall back to our token, so panels adapt to light/dark themes.
- *                Use these inside webview <style> template literals.
+ *  - `color.*`    raw hex tokens — use in editor decorations
+ *                 (TextEditorDecorationType) and anywhere a plain color is needed.
+ *  - `cssColor.*` webview CSS values. Brand/semantic chips are fixed to the token
+ *                 so panels show this palette consistently regardless of the active
+ *                 theme; Git/error roles defer to the user's theme variable and fall
+ *                 back to the token.
  */
 
-/** Raw One Dark tokens — single source of truth. */
+/** Raw GitHub Primer (dark) tokens — single source of truth. */
 export const color = {
-  /** green — ok / up-to-date / success / added / patch / strong */
-  success: '#98C379',
-  /** amber — update available / outdated / warning / modified / minor */
-  warning: '#E5C07B',
-  /** red — error / 5xx / deleted / danger / major / vulnerability */
-  error: '#E06C75',
-  /** blue — informational / 3xx / redirect */
-  info: '#61AFEF',
-  /** brand blue — primary CTAs (matches the bundled theme's accent) */
-  accent: '#3474F0',
-  /** purple — secondary / categorical accents */
-  special: '#C678DD',
-  /** orange — categorical (e.g. PUT method, mid strength) */
-  orange: '#D19A66',
-  /** cyan — categorical (e.g. diagnostic hints) */
-  cyan: '#56B6C2'
+  /** green — ok / up-to-date / success / added / patch / strong (success.emphasis) */
+  success: '#238636',
+  /** amber — update available / outdated / warning / modified / minor (attention.fg) */
+  warning: '#d29922',
+  /** red — error / 5xx / deleted / danger / major / vulnerability (danger.fg) */
+  error: '#f85149',
+  /** brand blue — primary CTAs and blue chips: redirect / OPTIONS / pending (accent.emphasis) */
+  accent: '#1f6feb',
+  /** lighter blue — informational accents on dark surfaces / decoration lines (accent.fg) */
+  info: '#58a6ff',
+  /** purple — secondary / categorical accents (done.fg) */
+  special: '#a371f7',
+  /** orange — categorical, e.g. PUT method, mid strength (severe.fg) */
+  orange: '#db6d28',
+  /** cyan — categorical, e.g. diagnostic hints. Primer has no functional cyan; closest scale hue. */
+  cyan: '#39c5cf'
 } as const
 
 /**
- * Webview CSS values: prefer the user's theme variable, fall back to our token.
- * Keeps panels theme-adaptive instead of hardcoded for dark themes.
+ * Webview CSS values. Semantic chips use the fixed token (consistent brand);
+ * Git resource and error roles honour the user's theme variable, token as fallback.
  */
 export const cssColor = {
-  success: `var(--vscode-charts-green, ${color.success})`,
-  warning: `var(--vscode-charts-yellow, ${color.warning})`,
-  error: `var(--vscode-charts-red, ${color.error})`,
-  info: `var(--vscode-charts-blue, ${color.info})`,
-  orange: `var(--vscode-charts-orange, ${color.orange})`,
-  special: `var(--vscode-charts-purple, ${color.special})`,
+  success: color.success,
+  warning: color.warning,
+  error: color.error,
+  accent: color.accent,
+  info: color.info,
+  orange: color.orange,
+  special: color.special,
   // Git resource decorations — match the user's SCM colors when available.
   gitAdded: `var(--vscode-gitDecoration-addedResourceForeground, ${color.success})`,
   gitDeleted: `var(--vscode-gitDecoration-deletedResourceForeground, ${color.error})`,

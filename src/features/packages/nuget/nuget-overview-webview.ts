@@ -173,7 +173,7 @@ html, body {
 
 .badge-yes {
   background: ${cssColor.success};
-  color: #000;
+  color: #fff;
 }
 .badge-no {
   background: ${cssColor.warning};
