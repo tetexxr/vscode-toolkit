@@ -6,6 +6,7 @@ import {
   addHistoryEntry,
   appendGitignorePattern,
   buildCurl,
+  curlToHttpRequest,
   buildPrivateEnvScaffold,
   environmentNames,
   findHeader,
@@ -1576,6 +1577,31 @@ async function copyAsCurl(): Promise<void> {
   await copyCurlFor(req, parsed, editor.document.uri)
 }
 
+async function importCurl(): Promise<void> {
+  const clipboard = (await vscode.env.clipboard.readText()).trim()
+  if (!clipboard) {
+    vscode.window.showInformationMessage('Toolkit: copy a curl command to the clipboard first.')
+    return
+  }
+  const block = curlToHttpRequest(clipboard)
+  if (!block) {
+    vscode.window.showWarningMessage('Toolkit: the clipboard does not contain a recognizable curl command.')
+    return
+  }
+
+  const editor = vscode.window.activeTextEditor
+  if (editor && isHttpFile(editor.document)) {
+    // Append after the existing content so the new block is its own request.
+    const pos = editor.selection.active
+    const atCleanLineStart =
+      pos.character === 0 && (pos.line === 0 || editor.document.lineAt(pos.line - 1).text.trim() === '')
+    await editor.edit(b => b.insert(pos, `${atCleanLineStart ? '' : '\n\n'}${block}\n`))
+  } else {
+    const doc = await vscode.workspace.openTextDocument({ language: 'http', content: `${block}\n` })
+    await vscode.window.showTextDocument(doc)
+  }
+}
+
 async function copyAsCurlByIndex(uriString: string, index: number): Promise<void> {
   const uri = vscode.Uri.parse(uriString)
   const document = await vscode.workspace.openTextDocument(uri)
@@ -1684,6 +1710,7 @@ export function registerRestClientCommands(context: vscode.ExtensionContext): vo
       createPrivateEnvFile(uri)
     ),
     vscode.commands.registerCommand('toolkit.restClient.copyAsCurl', () => copyAsCurl()),
+    vscode.commands.registerCommand('toolkit.restClient.importCurl', () => importCurl()),
     vscode.commands.registerCommand('toolkit.restClient.copyAsCurlByIndex', (uri: string, index: number) =>
       copyAsCurlByIndex(uri, index)
     ),

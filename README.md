@@ -1543,6 +1543,15 @@ Point the same `.http` file at dev/staging/prod without editing it. Create an `h
 
 The **Copy as curl** CodeLens next to each request's Send Request (or the command / context menu entry) builds the `curl` equivalent of the request — method, URL, headers and body, with every variable (environment included) already resolved and shell-quoted — and copies it to the clipboard. Handy for reproducing an issue in a terminal, attaching to a ticket, or sharing with someone without VS Code.
 
+**Import cURL:**
+
+The inverse. Copy a `curl` command anywhere (a browser's **Copy as cURL** in DevTools, Postman, a README, a ticket) and run **Toolkit: Import cURL as Request**. It reads the clipboard, parses the command, and drops a ready-to-send `.http` block at your cursor (or into a new `.http` document when you're not already in one).
+
+- Understands the common flags: `-X/--request`, `-H/--header`, `-d/--data`, `--data-raw`, `--data-binary`, `--data-urlencode`, `-F/--form`, `-G/--get` (folds the data into the query string), `-u/--user` (becomes a `Basic` auth header), `-b/--cookie`, `-A/--user-agent`, `-e/--referer`.
+- Handles single/double quoting, the browser `'\''` escape, and `\` / `^` line continuations.
+- The method is inferred (`POST` when a body is present, otherwise `GET`) unless `-X` says otherwise, and JSON bodies are pretty-printed when the `Content-Type` is JSON.
+- Noise flags that don't change the request (`--compressed`, `-s`, `-k`, `-L`, `-o <file>`…) are ignored.
+
 **Built-in variables:**
 
 | Placeholder | Value |

@@ -850,6 +850,10 @@
         "title": "Toolkit: REST Client - Copy as curl"
       },
       {
+        "command": "toolkit.restClient.importCurl",
+        "title": "Toolkit: REST Client - Import cURL as Request"
+      },
+      {
         "command": "toolkit.restClient.copyAsCurlByIndex",
         "title": "Toolkit: REST Client - Copy as curl (internal)"
       },
@@ -2042,6 +2046,11 @@
         },
         {
           "command": "toolkit.restClient.copyAsCurl",
+          "group": "0_toolkit@27",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.restClient.importCurl",
           "group": "0_toolkit@27",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
