@@ -44,6 +44,7 @@ All-in-one VS Code utility extension.
     - [Password Generator](#password-generator)
     - [UUID / ULID Hover](#uuid--ulid-hover)
     - [Format Markdown Table](#format-markdown-table)
+    - [Generate Table of Contents](#generate-table-of-contents)
     - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
@@ -61,8 +62,10 @@ All-in-one VS Code utility extension.
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
+    - [JSON Playground](#json-playground)
     - [Local History](#local-history)
     - [Scratch Files](#scratch-files)
+    - [Kill Port](#kill-port)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -73,6 +76,14 @@ All-in-one VS Code utility extension.
     - [Generic Dark Theme](#generic-dark-theme)
     - [JetBrains Dark Icons](#jetbrains-dark-icons)
 - [Development](#development)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+  - [Build](#build)
+  - [Test](#test)
+  - [Lint](#lint)
+  - [Package & Install](#package--install)
+  - [Uninstall](#uninstall)
+  - [Update Dependencies](#update-dependencies)
 
 ## Features
 
@@ -1009,6 +1020,23 @@ The inverse also exists: **Toolkit: Compact Markdown Table** strips all alignmen
 - Rows with missing cells are padded with empty ones; leading indentation (tables inside lists) is preserved.
 - Tables with or without surrounding pipes are recognized; the output always uses surrounding pipes.
 
+#### Generate Table of Contents
+
+Run **Toolkit: Generate Table of Contents** in a Markdown file (Command Palette or editor context menu). It asks for the deepest heading level to include (H1–H6), then builds a nested bullet list linking to each heading.
+
+The TOC is wrapped in `<!-- toc -->` … `<!-- /toc -->` markers. Run the command again and the block is **regenerated in place** between those markers, so it's easy to keep up to date as the document changes. With no markers present yet, the block is inserted at the cursor.
+
+**Behavior:**
+
+- Anchor links use GitHub's slug algorithm — lowercased, punctuation stripped, spaces hyphenated, accented letters and intraword underscores kept, and duplicate headings disambiguated with `-1`, `-2`… so the links work on GitHub and in VS Code's preview.
+- Headings inside fenced code blocks (``` ``` ``` and `~~~`) are ignored.
+- Indentation is relative to the shallowest included heading, so a document whose headings start at `##` still produces a flush-left list.
+- Inline markdown in headings (links, `` `code` ``, `**bold**`) is stripped from the link text.
+
+**Limitations:**
+
+- Only ATX headings (`#`-prefixed) are recognized, not the Setext (`===` / `---`) underline style.
+
 #### JSON to TypeScript / C# Types
 
 Generate type definitions from a JSON sample. The source is the current selection if non-empty, otherwise the clipboard.
@@ -1542,6 +1570,16 @@ Point the same `.http` file at dev/staging/prod without editing it. Create an `h
 
 The **Copy as curl** CodeLens next to each request's Send Request (or the command / context menu entry) builds the `curl` equivalent of the request — method, URL, headers and body, with every variable (environment included) already resolved and shell-quoted — and copies it to the clipboard. Handy for reproducing an issue in a terminal, attaching to a ticket, or sharing with someone without VS Code.
 
+**Import cURL:**
+
+The inverse. Copy a `curl` command anywhere (a browser's **Copy as cURL** in DevTools, Postman, a README, a ticket) and run **Toolkit: Import cURL as Request**. It reads the clipboard, parses the command, and drops a ready-to-send `.http` block at your cursor (or into a new `.http` document when you're not already in one).
+
+- Understands the common flags: `-X/--request`, `-H/--header`, `-d/--data`, `--data-raw`, `--data-binary`, `--data-urlencode`, `-F/--form`, `-G/--get` (folds the data into the query string), `-u/--user` (becomes a `Basic` auth header), `-b/--cookie`, `-A/--user-agent`, `-e/--referer`.
+- A file body (`--data @payload.json`) is rendered with the `.http` file-body syntax (`< payload.json`).
+- Handles single/double quoting, the browser `'\''` escape, and `\` / `^` line continuations.
+- The method is inferred (`POST` when a body is present, otherwise `GET`) unless `-X` says otherwise, and JSON bodies are pretty-printed when the `Content-Type` is JSON.
+- Noise flags that don't change the request (`--compressed`, `-s`, `-k`, `-L`, `-o <file>`…) are ignored.
+
 **Built-in variables:**
 
 | Placeholder | Value |
@@ -1633,6 +1671,37 @@ A side panel where you can test regexes interactively. Pattern, flags, test inpu
 - No save / load of named patterns (only the last state survives).
 - No export of the pattern as a literal for other languages.
 
+#### JSON Playground
+
+A side panel for slicing and transforming JSON live, like a browser console pointed at one blob. Paste (or load) JSON, write a **JavaScript expression** against it, and see the result update as you type. Your parsed JSON is bound to `$` (and `data`):
+
+```js
+$.users.filter(u => u.active).map(u => u.email)
+$.items.reduce((sum, i) => sum + i.price, 0)
+Object.keys($.config)
+```
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Open JSON Playground | Opens the panel, restoring the last JSON and query |
+| JSON Playground - Load Selection or File | Opens the panel with the current selection (or the whole active file) as the JSON |
+
+**Behavior:**
+
+- The query is a normal JavaScript expression. For multi-step work, write statements with an explicit `return` (`const ids = $.rows.map(r => r.id); return new Set(ids)`).
+- An empty query just pretty-prints the JSON; the status line shows the result's type and its item/key count.
+- Evaluation runs in a **worker thread with a 1.5 s timeout**, so an infinite loop shows a "Query timed out" error instead of freezing the editor. Input is debounced (~150 ms).
+- Results are rendered as pretty JSON, surviving circular references, `bigint`, and functions; very large output is truncated.
+- The JSON and the query persist across sessions in `globalState`.
+
+**Limitations:**
+
+- Queries are JavaScript, not jq or JSONPath syntax.
+- The result view is read-only — it doesn't write back to the source file.
+- Queries are evaluated as code (in a worker thread, on your own machine and data) — it's a REPL, not a sandbox. A timeout stops infinite loops, but a query has Node worker privileges, so don't paste a query you don't understand.
+
 #### Local History
 
 JetBrains-style local history: every time you **save** a file, Toolkit captures a revision of its contents — independent of git, and without touching your repository. When you break something, delete a block by accident, or reset away uncommitted work, you can diff against or restore any earlier version.
@@ -1713,6 +1782,30 @@ Create one from:
 
 - Scratches are global to your machine, not synced or shared.
 - The list is not searchable beyond the Explorer's own filter.
+
+#### Kill Port
+
+The end of `Error: listen EADDRINUSE: address already in use :::3000`. Run **Toolkit: Kill Port** to see every process currently listening on a TCP port — pick one (or several at once), confirm, and Toolkit sends them `SIGKILL`.
+
+Each entry is labelled with its port (`:3000`) and, on macOS/Linux, enriched with the details that tell you *what* you're about to kill:
+
+- The **full command line with arguments** (e.g. `node /Users/alice/proj/server.js --watch`) as the entry's detail line — far more telling than the truncated process name.
+- The **owning user**, **uptime** (`up 2h 15m`), and **parent pid** in the description.
+
+Open it from the **Command Palette** (`Toolkit: Kill Port…`) or the **All Features** launcher.
+
+**Behavior:**
+
+- Cross-platform: uses `lsof` (+ `ps` for the details above) on macOS/Linux and `netstat` + `tasklist` on Windows.
+- Multi-select — clear a whole range of dev servers in one go. A port already freed by the time you confirm is treated as success.
+- A process bound to both IPv4 and IPv6 on the same port shows up once; selecting several ports that share a pid kills that pid only once.
+- Type a port number in the picker to filter straight to it.
+
+**Limitations:**
+
+- Lists TCP listeners only (the usual "port in use" case), not UDP.
+- The command-line / user / uptime / parent enrichment is macOS/Linux only; on Windows entries show the image name from `tasklist`.
+- Killing a process you don't own reports a permission error — re-launch the owning process or VS Code with the right privileges.
 
 ### Appearance & Viewers
 

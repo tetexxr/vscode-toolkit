@@ -59,6 +59,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Editing', name: 'UUID / ULID Hover', description: 'Hover an id to see its kind and embedded creation time (automatic)' },
   { category: 'Editing', name: 'Format Markdown Table', command: 'toolkit.markdown.formatTable', description: 'Align table pipes to the widest cell, honoring GFM alignment' },
   { category: 'Editing', name: 'Compact Markdown Table', command: 'toolkit.markdown.compactTable', description: 'Strip the padding back out for minimal tables and clean diffs' },
+  { category: 'Editing', name: 'Generate Table of Contents', command: 'toolkit.markdown.generateToc', description: 'Build a nested TOC of the markdown headings up to a chosen level; updates in place between markers' },
   { category: 'Editing', name: 'JSON to Type', command: 'toolkit.jsonToType', description: 'Generate TypeScript/C# types from a JSON sample' },
 
   // ── Code Generation ────────────────────────────────────
@@ -84,9 +85,12 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Workspace', name: 'REST Client', command: 'toolkit.restClient.send', description: 'Run .http requests; rich response panel with live timer/cancel and retry-on-timeout, environments (with a scaffoldable gitignored private overlay), variables, file bodies, @assert checks on status/headers/body, copy as curl' },
   { category: 'Workspace', name: 'REST Requests', command: 'toolkitRestFiles.focus', description: 'Sidebar tree of every workspace .http/.rest file and its requests — open, jump to, or send each' },
   { category: 'Workspace', name: 'REST Response History', command: 'toolkitRestHistory.focus', description: 'Sidebar tree of recent responses grouped per request; filter, re-send, diff, detail panel, copy as curl/body/URL, save body, go to source' },
+  { category: 'Workspace', name: 'Import cURL', command: 'toolkit.restClient.importCurl', description: 'Turn a curl command on the clipboard into an .http request block (the inverse of Copy as curl)' },
   { category: 'Workspace', name: 'Regex Playground', command: 'toolkit.regexPlayground.open', description: 'Live regex tester in a panel, safe against catastrophic backtracking' },
+  { category: 'Workspace', name: 'JSON Playground', command: 'toolkit.jsonPlayground.open', description: 'Query JSON live with a JavaScript expression ($ is your JSON), evaluated safely in a worker' },
   { category: 'Workspace', name: 'Local History', command: 'toolkitLocalHistory.focus', description: 'JetBrains-style per-file revisions captured on every save; diff against or restore any past version' },
   { category: 'Workspace', name: 'Scratch Files', command: 'toolkit.scratch.new', description: 'Throwaway files kept outside the workspace (never committed); listed in the Explorer, with new-from-selection' },
+  { category: 'Workspace', name: 'Kill Port', command: 'toolkit.killPort', description: 'List the processes listening on TCP ports and kill one or several (multi-select)' },
 
   // ── Viewers & Appearance ───────────────────────────────
   { category: 'Viewers & Appearance', name: 'Diagnostic Highlight', command: 'toolkit.toggleDiagnosticHighlight', description: 'Make hint/info diagnostics actually visible (colored underlines)' },

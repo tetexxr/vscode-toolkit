@@ -53,6 +53,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | UUID / ULID Hover | — | Hover an id to see its kind and embedded creation time |
 | Format Markdown Table | — | Align table pipes to the widest cell, honoring GFM alignment |
 | Compact Markdown Table | — | Strip the padding back out for minimal tables and clean diffs |
+| Generate Table of Contents | — | Build a nested TOC of the markdown headings up to a chosen level; updates in place between markers |
 | JSON to Type | — | Generate TypeScript/C# types from a JSON sample |
 
 ## Code Generation
@@ -84,9 +85,12 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | REST Client | — | Run .http requests; rich response panel with live timer/cancel and retry-on-timeout, environments (env.json, with a gitignored private overlay you can scaffold from the env file's context menu), variables, file bodies, @assert checks on status/headers/body, copy as curl |
 | REST Requests | — | Sidebar tree of every workspace .http/.rest file and its requests — open, jump to, or send each |
 | REST Response History | — | Sidebar tree of recent responses grouped per request; color-coded status, filter, re-send, diff, detail panel, copy as curl/body/URL, save body, go to source |
+| Import cURL | — | Turn a curl command on the clipboard into an .http request block (the inverse of Copy as curl) |
 | Regex Playground | — | Live regex tester in a panel, safe against catastrophic backtracking |
+| JSON Playground | — | Query JSON live with a JavaScript expression (`$` is your JSON), evaluated safely in a worker |
 | Local History | — | JetBrains-style per-file revisions captured on every save; diff against or restore any past version |
 | Scratch Files | — | Throwaway files kept outside the workspace (never committed); listed in the Explorer, with new-from-selection |
+| Kill Port | — | List the processes listening on TCP ports and kill one or several (multi-select) |
 
 ## Viewers & Appearance
 

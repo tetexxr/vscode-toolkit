@@ -707,6 +707,234 @@ export function buildCurl(req: {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  curl → .http import (the inverse of buildCurl)                            */
+/* -------------------------------------------------------------------------- */
+
+export interface ParsedCurlRequest {
+  method: string
+  url: string
+  headers: HttpHeader[]
+  body: string
+  /** Set when the body comes from a file (`curl --data @path`); rendered as `< path`. */
+  bodyFile?: string
+}
+
+/**
+ * Splits a curl command line into shell-like tokens, honoring single quotes,
+ * double quotes, backslash escapes and `\` / `^` line continuations. Browser
+ * "Copy as cURL" output — including the `'\''` single-quote escape and the
+ * Windows `^`-continued form — tokenizes correctly.
+ */
+export function tokenizeCurl(input: string): string[] {
+  const tokens: string[] = []
+  let token = ''
+  let hasToken = false
+  let state: 'normal' | 'single' | 'double' = 'normal'
+
+  const flush = (): void => {
+    if (hasToken) {
+      tokens.push(token)
+      token = ''
+      hasToken = false
+    }
+  }
+
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i]
+    if (state === 'single') {
+      if (ch === "'") {
+        state = 'normal'
+      } else {
+        token += ch
+        hasToken = true
+      }
+    } else if (state === 'double') {
+      if (ch === '"') {
+        state = 'normal'
+      } else if (ch === '\\') {
+        const next = input[i + 1]
+        if (next === '\n') {
+          i++
+        } else if (next === '"' || next === '\\' || next === '$' || next === '`') {
+          token += next
+          hasToken = true
+          i++
+        } else {
+          token += ch
+          hasToken = true
+        }
+      } else {
+        token += ch
+        hasToken = true
+      }
+    } else if (ch === "'") {
+      state = 'single'
+      hasToken = true
+    } else if (ch === '"') {
+      state = 'double'
+      hasToken = true
+    } else if (ch === '\\') {
+      const next = input[i + 1]
+      if (next === '\n') {
+        i++
+      } else if (next !== undefined) {
+        token += next
+        hasToken = true
+        i++
+      }
+    } else if (ch === '^' && (input[i + 1] === '\n' || input[i + 1] === '\r')) {
+      // Windows cmd line-continuation caret — drop it; the newline separates.
+    } else if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+      flush()
+    } else {
+      token += ch
+      hasToken = true
+    }
+  }
+  flush()
+  return tokens
+}
+
+/** curl flags that take no argument and don't affect the request shape. */
+const CURL_FLAGS_NO_ARG = new Set([
+  '--compressed', '-s', '--silent', '-S', '--show-error', '-i', '--include', '-k', '--insecure',
+  '-L', '--location', '-v', '--verbose', '-#', '--progress-bar', '-f', '--fail', '--http1.1',
+  '--http2', '-g', '--globoff', '-j', '--junk-session-cookies', '-N', '--no-buffer', '-O',
+  '--remote-name', '-q', '--raw', '--no-keepalive'
+])
+
+/** curl flags whose following token is consumed but irrelevant to the request. */
+const CURL_FLAGS_SKIP_ARG = new Set([
+  '-o', '--output', '-m', '--max-time', '--connect-timeout', '--retry', '-w', '--write-out',
+  '--cacert', '--cert', '--key', '-x', '--proxy', '--resolve', '-c', '--cookie-jar',
+  '--limit-rate', '--max-redirs'
+])
+
+/**
+ * Parses a curl command into a request. Handles the common flags produced by
+ * browsers / Postman: `-X`, `-H`, `-d/--data*`, `--data-urlencode`, `-F`,
+ * `-u` (→ Basic auth), `-b`, `-A`, `-e`, `-G`. Returns null when no URL is found.
+ */
+export function parseCurl(input: string): ParsedCurlRequest | null {
+  const tokens = tokenizeCurl(input)
+  // Require the `curl` prefix so arbitrary clipboard text isn't turned into a
+  // bogus request (and to mirror buildCurl, which always emits `curl …`).
+  if (tokens[0]?.toLowerCase() !== 'curl') {
+    return null
+  }
+  let i = 1
+
+  let method = ''
+  let url = ''
+  const headers: HttpHeader[] = []
+  const dataParts: string[] = []
+  let bodyFile = ''
+  let forceGet = false
+
+  const addHeader = (raw: string): void => {
+    const idx = raw.indexOf(':')
+    if (idx === -1) {
+      return
+    }
+    const name = raw.slice(0, idx).trim()
+    const value = raw.slice(idx + 1).trim()
+    if (name) {
+      headers.push({ name, value })
+    }
+  }
+
+  for (; i < tokens.length; i++) {
+    const t = tokens[i]
+    const arg = (): string => tokens[++i] ?? ''
+    if (t === '-X' || t === '--request') {
+      method = arg().toUpperCase()
+    } else if (t === '-H' || t === '--header') {
+      addHeader(arg())
+    } else if (t === '--data-raw') {
+      // --data-raw never interprets a leading @ as a file.
+      dataParts.push(arg())
+    } else if (t === '-d' || t === '--data' || t === '--data-ascii' || t === '--data-binary') {
+      const v = arg()
+      if (v.startsWith('@') && v !== '@-') {
+        bodyFile = v.slice(1) // curl reads this file; .http uses `< path`
+      } else {
+        dataParts.push(v)
+      }
+    } else if (t === '--data-urlencode') {
+      const v = arg()
+      const eq = v.indexOf('=')
+      dataParts.push(eq === -1 ? encodeURIComponent(v) : `${v.slice(0, eq)}=${encodeURIComponent(v.slice(eq + 1))}`)
+    } else if (t === '-F' || t === '--form') {
+      dataParts.push(arg())
+    } else if (t === '-u' || t === '--user') {
+      headers.push({ name: 'Authorization', value: `Basic ${Buffer.from(arg()).toString('base64')}` })
+    } else if (t === '-b' || t === '--cookie') {
+      headers.push({ name: 'Cookie', value: arg() })
+    } else if (t === '-A' || t === '--user-agent') {
+      headers.push({ name: 'User-Agent', value: arg() })
+    } else if (t === '-e' || t === '--referer') {
+      headers.push({ name: 'Referer', value: arg() })
+    } else if (t === '-G' || t === '--get') {
+      forceGet = true
+    } else if (t === '--url') {
+      url = arg()
+    } else if (CURL_FLAGS_SKIP_ARG.has(t)) {
+      i++
+    } else if (CURL_FLAGS_NO_ARG.has(t) || (t.startsWith('-') && t.length > 1)) {
+      // Known no-arg flag, or an unknown flag we choose to ignore.
+    } else if (!url) {
+      url = t
+    }
+  }
+
+  if (!url) {
+    return null
+  }
+
+  let body = dataParts.length <= 1 ? (dataParts[0] ?? '') : dataParts.join('&')
+  if (forceGet && body) {
+    url += (url.includes('?') ? '&' : '?') + body
+    body = ''
+  }
+  if (!method) {
+    method = body || bodyFile ? 'POST' : 'GET'
+  }
+  return bodyFile ? { method, url, headers, body, bodyFile } : { method, url, headers, body }
+}
+
+/** Pretty-prints a JSON body when the headers declare a JSON content type. */
+function formatImportedBody(body: string, headers: HttpHeader[]): string {
+  if (/json/i.test(findHeader(headers, 'content-type') ?? '')) {
+    try {
+      return JSON.stringify(JSON.parse(body), null, 2)
+    } catch {
+      // Not valid JSON — keep it verbatim.
+    }
+  }
+  return body
+}
+
+/** Renders a parsed request as an `.http` block. */
+export function renderHttpRequest(req: ParsedCurlRequest, name = 'Imported from curl'): string {
+  const lines = [`### ${name}`, `${req.method} ${req.url}`]
+  for (const header of req.headers) {
+    lines.push(`${header.name}: ${header.value}`)
+  }
+  if (req.bodyFile) {
+    lines.push('', `< ${req.bodyFile}`)
+  } else if (req.body) {
+    lines.push('', formatImportedBody(req.body, req.headers))
+  }
+  return lines.join('\n')
+}
+
+/** Converts a curl command into an `.http` block, or null when it can't be parsed. */
+export function curlToHttpRequest(input: string, name?: string): string | null {
+  const req = parseCurl(input)
+  return req ? renderHttpRequest(req, name) : null
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Response history                                                          */
 /* -------------------------------------------------------------------------- */
 
