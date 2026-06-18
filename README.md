@@ -1575,6 +1575,7 @@ The **Copy as curl** CodeLens next to each request's Send Request (or the comman
 The inverse. Copy a `curl` command anywhere (a browser's **Copy as cURL** in DevTools, Postman, a README, a ticket) and run **Toolkit: Import cURL as Request**. It reads the clipboard, parses the command, and drops a ready-to-send `.http` block at your cursor (or into a new `.http` document when you're not already in one).
 
 - Understands the common flags: `-X/--request`, `-H/--header`, `-d/--data`, `--data-raw`, `--data-binary`, `--data-urlencode`, `-F/--form`, `-G/--get` (folds the data into the query string), `-u/--user` (becomes a `Basic` auth header), `-b/--cookie`, `-A/--user-agent`, `-e/--referer`.
+- A file body (`--data @payload.json`) is rendered with the `.http` file-body syntax (`< payload.json`).
 - Handles single/double quoting, the browser `'\''` escape, and `\` / `^` line continuations.
 - The method is inferred (`POST` when a body is present, otherwise `GET`) unless `-X` says otherwise, and JSON bodies are pretty-printed when the `Content-Type` is JSON.
 - Noise flags that don't change the request (`--compressed`, `-s`, `-k`, `-L`, `-o <file>`…) are ignored.
@@ -1699,6 +1700,7 @@ Object.keys($.config)
 
 - Queries are JavaScript, not jq or JSONPath syntax.
 - The result view is read-only — it doesn't write back to the source file.
+- Queries are evaluated as code (in a worker thread, on your own machine and data) — it's a REPL, not a sandbox. A timeout stops infinite loops, but a query has Node worker privileges, so don't paste a query you don't understand.
 
 #### Local History
 
