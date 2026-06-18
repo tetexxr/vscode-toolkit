@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { getRepoRoot, getFileLogPatch, getFileCommitCount } from '../../utils/git'
 import { escapeHtml, createNonce } from '../../utils/html'
+import { cssColor } from '../../utils/palette'
 
 function renderPatch(raw: string): string {
   const lines = raw.split('\n')
@@ -201,7 +202,7 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, sh
 
     #error {
       text-align: center;
-      color: var(--vscode-errorForeground, #f48771);
+      color: ${cssColor.errorText};
       padding: 8px 0;
     }
   </style>

@@ -23,6 +23,7 @@ import { renderFileList, renderDiffContent, renderDiffPlaceholders, pickRepoRoot
 import { escapeHtml, createNonce } from '../../utils/html'
 import { escapeMd } from '../../utils/markdown'
 import { logError } from '../../utils/logger'
+import { cssColor } from '../../utils/palette'
 
 function buildEditWebviewHtml(
   commit: CommitLogEntry,
@@ -130,7 +131,7 @@ function buildEditWebviewHtml(
     button.primary:hover { background: var(--vscode-button-hoverBackground); }
     button.secondary { color: var(--vscode-button-secondaryForeground); background: var(--vscode-button-secondaryBackground); }
     button.secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
-    button.danger { color: var(--vscode-button-foreground); background: var(--vscode-errorForeground, #c74e39); }
+    button.danger { color: var(--vscode-button-foreground); background: ${cssColor.errorText}; }
     button.danger:hover { opacity: 0.85; }
 
     .shortcut-hint {
@@ -247,9 +248,9 @@ function buildEditWebviewHtml(
       flex-shrink: 0;
     }
 
-    .file-status.added { color: var(--vscode-gitDecoration-addedResourceForeground, #73c991); }
-    .file-status.deleted { color: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39); }
-    .file-status.modified { color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d); }
+    .file-status.added { color: ${cssColor.gitAdded}; }
+    .file-status.deleted { color: ${cssColor.gitDeleted}; }
+    .file-status.modified { color: ${cssColor.gitModified}; }
 
     .file-path {
       flex: 1;
@@ -267,8 +268,8 @@ function buildEditWebviewHtml(
       font-size: 0.85em;
     }
 
-    .stat-add { color: var(--vscode-gitDecoration-addedResourceForeground, #73c991); }
-    .stat-del { color: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39); }
+    .stat-add { color: ${cssColor.gitAdded}; }
+    .stat-del { color: ${cssColor.gitDeleted}; }
 
     /* --- Diff section --- */
 
@@ -341,7 +342,7 @@ function buildEditWebviewHtml(
 
     .diff-error {
       padding: 10px 12px;
-      color: var(--vscode-errorForeground, #c74e39);
+      color: ${cssColor.errorText};
       font-family: var(--vscode-font-family, sans-serif);
       font-size: 0.9em;
     }
