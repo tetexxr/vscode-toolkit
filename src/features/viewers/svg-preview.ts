@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'node:path'
 import { createNonce, escapeHtml } from '../../utils/html'
+import { cssColor } from '../../utils/palette'
 
 /**
  * SVG Preview — renders the active .svg file in a side panel with live
@@ -111,7 +112,7 @@ function buildHtml(fileName: string, dataUri: string): string {
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
-    border-bottom: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+    border-bottom: 1px solid ${cssColor.border};
     flex: 0 0 auto;
   }
   .toolbar button {
@@ -119,7 +120,7 @@ function buildHtml(fileName: string, dataUri: string): string {
     font-size: 12px;
     color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
     background: var(--vscode-button-secondaryBackground, transparent);
-    border: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.4));
+    border: 1px solid ${cssColor.border};
     border-radius: 2px;
     padding: 2px 8px;
     cursor: pointer;

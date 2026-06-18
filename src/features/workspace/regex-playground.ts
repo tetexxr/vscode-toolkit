@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto'
 import * as path from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { highlightMatches, type EvalResult } from './regex-playground-utils'
+import { cssColor } from '../../utils/palette'
 
 const STORAGE_KEY = 'toolkit.regexPlayground.state.v1'
 
@@ -244,7 +245,7 @@ function buildHtml(webview: vscode.Webview, nonce: string): string {
     margin: 6px 0 0 0;
     padding: 8px;
     background: var(--vscode-textCodeBlock-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid ${cssColor.border};
     border-radius: 2px;
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: var(--vscode-editor-font-size, 13px);
@@ -264,12 +265,12 @@ function buildHtml(webview: vscode.Webview, nonce: string): string {
     margin-top: 4px;
     max-height: 240px;
     overflow-y: auto;
-    border: 1px solid var(--vscode-panel-border);
+    border: 1px solid ${cssColor.border};
     border-radius: 2px;
   }
   .match-card {
     padding: 6px 8px;
-    border-bottom: 1px solid var(--vscode-panel-border);
+    border-bottom: 1px solid ${cssColor.border};
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: 12px;
   }

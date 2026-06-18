@@ -8,14 +8,16 @@ import {
   type BookmarkData,
   type BookmarkLocation
 } from './bookmarks-utils'
+import { color as palette, withAlpha } from '../../utils/palette'
 
 const STORAGE_KEY = 'toolkit.bookmarks.v1'
+const DEFAULT_HIGHLIGHT_COLOR = withAlpha(palette.warning, 0.15)
 
 class BookmarkController {
   private gutterDecoration: vscode.TextEditorDecorationType
   private highlightDecoration: vscode.TextEditorDecorationType
   private highlightEnabled = false
-  private highlightColor = 'rgba(255,200,0,0.15)'
+  private highlightColor = DEFAULT_HIGHLIGHT_COLOR
   private gutterEnabled = true
 
   constructor(
@@ -38,7 +40,7 @@ class BookmarkController {
     const config = vscode.workspace.getConfiguration('toolkit.bookmarks')
     this.gutterEnabled = config.get<boolean>('gutterIcon', true)
     this.highlightEnabled = config.get<boolean>('highlightLine', false)
-    const color = config.get<string>('highlightColor', 'rgba(255,200,0,0.15)')
+    const color = config.get<string>('highlightColor', DEFAULT_HIGHLIGHT_COLOR)
     if (color !== this.highlightColor) {
       this.highlightDecoration.dispose()
       this.highlightColor = color

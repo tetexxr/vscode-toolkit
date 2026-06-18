@@ -4,6 +4,9 @@
  * Uses VS Code CSS custom properties for native theme integration.
  */
 
+import { cssColor } from '../../../utils/palette'
+import { BUTTON_CSS } from '../../../utils/webview-ui'
+
 export function generateWebviewHtml(nonce: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -56,7 +59,7 @@ html, body {
 
 #header {
   flex-shrink: 0;
-  border-bottom: 1px solid var(--vscode-panel-border);
+  border-bottom: 1px solid ${cssColor.border};
 }
 
 #nav-bar {
@@ -78,7 +81,7 @@ html, body {
   border-bottom: 2px solid transparent;
   font-family: inherit;
 }
-.nav-tab:hover { color: var(--vscode-button-background); }
+.nav-tab:hover { color: var(--vscode-button-background); background: transparent; }
 .nav-tab.active {
   color: var(--vscode-button-background);
   border-bottom-color: var(--vscode-button-background);
@@ -141,34 +144,7 @@ html, body {
 
 /* ── Buttons & Inputs ───────────────────────────── */
 
-.btn {
-  font-size: 0.95rem;
-  background: var(--vscode-button-background);
-  color: var(--vscode-button-foreground);
-  border: none;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-}
-.btn:hover { background: var(--vscode-button-hoverBackground); }
-.btn:disabled { opacity: 0.5; cursor: default; }
-
-.btn-secondary {
-  background: var(--vscode-button-secondaryBackground);
-  color: var(--vscode-button-secondaryForeground);
-}
-.btn-secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
-
-.btn-icon {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  font-size: 1rem;
-}
+${BUTTON_CSS}
 
 select {
   background: var(--vscode-dropdown-background);
@@ -198,7 +174,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 #resize-handle {
   width: 5px;
   cursor: col-resize;
-  background: var(--vscode-panel-border);
+  background: ${cssColor.border};
   flex-shrink: 0;
 }
 #resize-handle:hover { background: var(--vscode-focusBorder); }
@@ -217,7 +193,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   align-items: center;
   justify-content: space-between;
   padding: 0.4rem 0.75rem;
-  border-bottom: 1px solid var(--vscode-panel-border);
+  border-bottom: 1px solid ${cssColor.border};
 }
 .select-all-bar label {
   display: flex;
@@ -278,8 +254,8 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   line-height: 1;
   color: white;
 }
-.pkg-status-installed { background: forestgreen; }
-.pkg-status-outdated { background: cornflowerblue; }
+.pkg-status-installed { background: ${cssColor.success}; }
+.pkg-status-outdated { background: ${cssColor.warning}; color: #000; }
 
 .pkg-info {
   flex: 1;
@@ -297,7 +273,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   margin-left: 0.4rem;
   opacity: 0.6;
   padding: 1px 4px;
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid ${cssColor.border};
   border-radius: 3px;
 }
 .pkg-author, .pkg-downloads { font-size: 0.95rem; margin-left: 0.4rem; opacity: 0.8; }
@@ -401,9 +377,9 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   color: var(--vscode-editorWarning-foreground, #e5c07b);
   margin-right: 0.3rem;
 }
-.bump-major { color: #f48771; font-weight: 600; }
-.bump-minor { color: #e5c07b; font-weight: 600; }
-.bump-patch { color: #98c379; font-weight: 600; }
+.bump-major { color: ${cssColor.error}; font-weight: 600; }
+.bump-minor { color: ${cssColor.warning}; font-weight: 600; }
+.bump-patch { color: ${cssColor.success}; font-weight: 600; }
 
 /* ── Package details ────────────────────────────── */
 
@@ -493,7 +469,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 .detail-installed-type {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--vscode-panel-border);
+  border-top: 1px solid ${cssColor.border};
   font-size: 1rem;
   opacity: 0.8;
 }

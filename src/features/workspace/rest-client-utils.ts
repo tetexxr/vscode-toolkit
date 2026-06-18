@@ -1,4 +1,6 @@
 import { formatRelative } from '../editing/convert/timestamp-utils'
+import { cssColor } from '../../utils/palette'
+import { BUTTON_CSS } from '../../utils/webview-ui'
 
 export interface HttpHeader {
   name: string
@@ -1236,18 +1238,18 @@ const DETAIL_STYLES = `
   .topbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 14px 0 10px; z-index: 1; }
   .reqline { font-family: var(--vscode-editor-font-family); font-size: 13px; word-break: break-all; margin-bottom: 8px; }
   .method { display: inline-block; font-weight: 600; font-size: 11px; margin-right: 8px; padding: 3px 8px; border-radius: 4px; color: #fff; background: var(--vscode-badge-background, #4d4d4d); vertical-align: middle; }
-  .method-POST { background: #6a9955; color: #000; }
-  .method-PUT { background: #d9822b; }
-  .method-PATCH { background: var(--vscode-charts-yellow, #cca700); color: #000; }
-  .method-DELETE { background: var(--vscode-charts-red, #f14c4c); }
-  .method-OPTIONS { background: var(--vscode-charts-blue, #3794ff); }
-  .method-HEAD { background: var(--vscode-charts-blue, #3794ff); }
+  .method-POST { background: ${cssColor.success}; color: #fff; }
+  .method-PUT { background: ${cssColor.orange}; color: #000; }
+  .method-PATCH { background: ${cssColor.warning}; color: #000; }
+  .method-DELETE { background: ${cssColor.error}; }
+  .method-OPTIONS { background: ${cssColor.accent}; }
+  .method-HEAD { background: ${cssColor.accent}; }
   .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 12px; color: #fff; }
-  .badge.success { background: #82b541; }
-  .badge.redirect { background: var(--vscode-charts-blue, #3794ff); }
-  .badge.clientError { background: var(--vscode-charts-yellow, #cca700); color: #000; }
-  .badge.serverError, .badge.failed { background: #d9605a; }
-  .badge.pending { background: var(--vscode-charts-blue, #3794ff); }
+  .badge.success { background: ${cssColor.success}; color: #fff; }
+  .badge.redirect { background: ${cssColor.accent}; }
+  .badge.clientError { background: ${cssColor.warning}; color: #000; }
+  .badge.serverError, .badge.failed { background: ${cssColor.error}; }
+  .badge.pending { background: ${cssColor.accent}; }
   .dot { animation: pulse 1s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
   .meta { color: var(--vscode-descriptionForeground); font-size: 12px; margin: 6px 0 10px; }
@@ -1257,13 +1259,10 @@ const DETAIL_STYLES = `
   .retry-label { color: var(--vscode-descriptionForeground); font-size: 12px; margin-right: 2px; }
   .elapsed { color: var(--vscode-descriptionForeground); font-size: 12px; margin-left: 8px; font-variant-numeric: tabular-nums; }
   .truncated { color: var(--vscode-charts-yellow, #cca700); font-size: 12px; margin-top: 10px; padding: 6px 10px; border-left: 3px solid var(--vscode-charts-yellow, #cca700); background: var(--vscode-textBlockQuote-background, rgba(255,255,255,.04)); }
-  button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; }
-  button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
-  button:hover { background: var(--vscode-button-hoverBackground); }
-  button:disabled { opacity: .5; cursor: default; }
+  ${BUTTON_CSS}
   h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 18px 0 6px; }
   table { border-collapse: collapse; width: 100%; font-size: 12px; }
-  td { padding: 3px 8px; border-bottom: 1px solid var(--vscode-panel-border); vertical-align: top; }
+  td { padding: 3px 8px; border-bottom: 1px solid ${cssColor.border}; vertical-align: top; }
   .hname { color: var(--vscode-symbolIcon-keywordForeground, var(--vscode-foreground)); white-space: nowrap; font-family: var(--vscode-editor-font-family); }
   .hval { font-family: var(--vscode-editor-font-family); word-break: break-all; }
   .muted { color: var(--vscode-descriptionForeground); }

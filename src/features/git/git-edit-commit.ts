@@ -23,6 +23,8 @@ import { renderFileList, renderDiffContent, renderDiffPlaceholders, pickRepoRoot
 import { escapeHtml, createNonce } from '../../utils/html'
 import { escapeMd } from '../../utils/markdown'
 import { logError } from '../../utils/logger'
+import { cssColor } from '../../utils/palette'
+import { BUTTON_CSS } from '../../utils/webview-ui'
 
 function buildEditWebviewHtml(
   commit: CommitLogEntry,
@@ -62,7 +64,7 @@ function buildEditWebviewHtml(
       z-index: 10;
       background: var(--vscode-editor-background);
       padding: 16px 0 12px;
-      border-bottom: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+      border-bottom: 1px solid ${cssColor.border};
     }
 
     .commit-info {
@@ -71,7 +73,7 @@ function buildEditWebviewHtml(
       gap: 8px;
       padding: 6px 12px;
       margin-bottom: 10px;
-      background: var(--vscode-textBlockQuote-background, rgba(128,128,128,0.1));
+      background: ${cssColor.surface};
       border-radius: 4px;
       border-left: 3px solid var(--vscode-textLink-foreground);
       font-size: 0.9em;
@@ -116,22 +118,7 @@ function buildEditWebviewHtml(
       align-items: center;
     }
 
-    button {
-      padding: 4px 12px;
-      border: none;
-      border-radius: 2px;
-      font-size: var(--vscode-font-size, 13px);
-      cursor: pointer;
-      outline: none;
-    }
-
-    button:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 1px; }
-    button.primary { color: var(--vscode-button-foreground); background: var(--vscode-button-background); }
-    button.primary:hover { background: var(--vscode-button-hoverBackground); }
-    button.secondary { color: var(--vscode-button-secondaryForeground); background: var(--vscode-button-secondaryBackground); }
-    button.secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
-    button.danger { color: var(--vscode-button-foreground); background: var(--vscode-errorForeground, #c74e39); }
-    button.danger:hover { opacity: 0.85; }
+    ${BUTTON_CSS}
 
     .shortcut-hint {
       color: var(--vscode-descriptionForeground);
@@ -216,7 +203,7 @@ function buildEditWebviewHtml(
     }
 
     .file-list {
-      border: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+      border: 1px solid ${cssColor.border};
       border-radius: 4px;
       overflow: hidden;
     }
@@ -236,7 +223,7 @@ function buildEditWebviewHtml(
     }
 
     .file-entry + .file-entry {
-      border-top: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.1));
+      border-top: 1px solid ${cssColor.border};
     }
 
     .file-status {
@@ -247,9 +234,9 @@ function buildEditWebviewHtml(
       flex-shrink: 0;
     }
 
-    .file-status.added { color: var(--vscode-gitDecoration-addedResourceForeground, #73c991); }
-    .file-status.deleted { color: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39); }
-    .file-status.modified { color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d); }
+    .file-status.added { color: ${cssColor.gitAdded}; }
+    .file-status.deleted { color: ${cssColor.gitDeleted}; }
+    .file-status.modified { color: ${cssColor.gitModified}; }
 
     .file-path {
       flex: 1;
@@ -267,8 +254,8 @@ function buildEditWebviewHtml(
       font-size: 0.85em;
     }
 
-    .stat-add { color: var(--vscode-gitDecoration-addedResourceForeground, #73c991); }
-    .stat-del { color: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39); }
+    .stat-add { color: ${cssColor.gitAdded}; }
+    .stat-del { color: ${cssColor.gitDeleted}; }
 
     /* --- Diff section --- */
 
@@ -276,7 +263,7 @@ function buildEditWebviewHtml(
       margin: 24px 0;
       border-radius: 4px;
       overflow: hidden;
-      border: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+      border: 1px solid ${cssColor.border};
       font-family: var(--vscode-editor-font-family, monospace);
       font-size: var(--vscode-editor-font-size, 13px);
     }
@@ -341,7 +328,7 @@ function buildEditWebviewHtml(
 
     .diff-error {
       padding: 10px 12px;
-      color: var(--vscode-errorForeground, #c74e39);
+      color: ${cssColor.errorText};
       font-family: var(--vscode-font-family, sans-serif);
       font-size: 0.9em;
     }

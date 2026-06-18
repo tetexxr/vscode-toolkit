@@ -2,6 +2,8 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { getRepoRoot, getFileLogPatch, getFileCommitCount } from '../../utils/git'
 import { escapeHtml, createNonce } from '../../utils/html'
+import { cssColor } from '../../utils/palette'
+import { BUTTON_CSS } from '../../utils/webview-ui'
 
 function renderPatch(raw: string): string {
   const lines = raw.split('\n')
@@ -108,11 +110,11 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, sh
       top: 0;
       background: var(--vscode-editor-background);
       z-index: 1;
-      border-bottom: 1px solid var(--vscode-panel-border, transparent);
+      border-bottom: 1px solid ${cssColor.border};
     }
 
     .commit {
-      border-bottom: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+      border-bottom: 1px solid ${cssColor.border};
       padding: 16px 0;
     }
 
@@ -135,7 +137,7 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, sh
       margin: 8px 0;
       border-radius: 4px;
       overflow: hidden;
-      border: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+      border: 1px solid ${cssColor.border};
     }
 
     .diff-header, .diff-meta {
@@ -174,21 +176,9 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, sh
       word-break: break-all;
     }
 
-    #loadMore {
-      display: block;
-      margin: 16px auto;
-      padding: 6px 16px;
-      font-family: inherit;
-      font-size: inherit;
-      color: var(--vscode-button-foreground);
-      background: var(--vscode-button-background);
-      border: none;
-      border-radius: 2px;
-      cursor: pointer;
-    }
+    ${BUTTON_CSS}
 
-    #loadMore:hover { background: var(--vscode-button-hoverBackground); }
-    #loadMore:disabled { opacity: 0.5; cursor: default; }
+    #loadMore { display: block; margin: 16px auto; }
 
     /* display: block above beats the UA's [hidden] rule, so re-assert it. */
     [hidden] { display: none !important; }
@@ -201,7 +191,7 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, sh
 
     #error {
       text-align: center;
-      color: var(--vscode-errorForeground, #f48771);
+      color: ${cssColor.errorText};
       padding: 8px 0;
     }
   </style>

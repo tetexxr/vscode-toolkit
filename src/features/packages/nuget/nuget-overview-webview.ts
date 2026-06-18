@@ -3,6 +3,9 @@
  * Shows a table per project with installed packages, versions and update status.
  */
 
+import { cssColor } from '../../../utils/palette'
+import { BUTTON_CSS } from '../../../utils/webview-ui'
+
 export function generateOverviewHtml(nonce: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -58,27 +61,7 @@ html, body {
   flex: 1;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.9rem;
-  background: var(--vscode-button-background);
-  color: var(--vscode-button-foreground);
-  border: none;
-  padding: 5px 12px;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-}
-.btn:hover { background: var(--vscode-button-hoverBackground); }
-.btn:disabled { opacity: 0.5; cursor: default; }
-
-.btn-secondary {
-  background: var(--vscode-button-secondaryBackground);
-  color: var(--vscode-button-secondaryForeground);
-}
-.btn-secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
+${BUTTON_CSS}
 
 .search-box {
   background: var(--vscode-input-background);
@@ -100,7 +83,7 @@ html, body {
 
 .project-header {
   background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid ${cssColor.border};
   border-bottom: none;
 }
 
@@ -120,7 +103,7 @@ html, body {
 .pkg-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid ${cssColor.border};
 }
 
 .pkg-table col.col-name    { width: 40%; }
@@ -134,14 +117,14 @@ html, body {
   font-weight: 600;
   text-align: center;
   padding: 0.4rem 0.75rem;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid ${cssColor.border};
   white-space: nowrap;
 }
 .pkg-table th:first-child { text-align: left; }
 
 .pkg-table td {
   padding: 0.35rem 0.75rem;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid ${cssColor.border};
   white-space: nowrap;
   text-align: center;
   overflow: hidden;
@@ -164,18 +147,19 @@ html, body {
 
 .badge {
   display: inline-block;
-  padding: 1px 8px;
+  padding: 2px 8px;
   font-size: 0.85em;
   font-weight: 600;
+  border-radius: 10px;
 }
 
 .badge-yes {
-  background: #2e7d32;
+  background: ${cssColor.success};
   color: #fff;
 }
 .badge-no {
-  background: #c62828;
-  color: #fff;
+  background: ${cssColor.warning};
+  color: #000;
 }
 .badge-unknown {
   background: var(--vscode-badge-background);
@@ -228,9 +212,9 @@ html, body {
   color: var(--vscode-editorWarning-foreground, #e5c07b);
 }
 
-.bump-major { color: #f48771; font-weight: 600; }
-.bump-minor { color: #e5c07b; font-weight: 600; }
-.bump-patch { color: #98c379; font-weight: 600; }
+.bump-major { color: ${cssColor.error}; font-weight: 600; }
+.bump-minor { color: ${cssColor.warning}; font-weight: 600; }
+.bump-patch { color: ${cssColor.success}; font-weight: 600; }
 
 
 .btn-update-sm {
