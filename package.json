@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.16.0",
+  "version": "1.17.0",
   "publisher": "tete",
   "repository": {
     "type": "git",
