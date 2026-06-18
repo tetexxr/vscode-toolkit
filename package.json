@@ -1989,72 +1989,72 @@
           "when": "editorLangId == markdown"
         },
         {
-          "command": "toolkit.gitHistory",
-          "group": "0_toolkit@14"
+          "command": "toolkit.markdown.generateToc",
+          "group": "0_toolkit@14",
+          "when": "editorLangId == markdown"
         },
         {
-          "command": "toolkit.insert",
+          "command": "toolkit.gitHistory",
           "group": "0_toolkit@15"
         },
         {
+          "command": "toolkit.insert",
+          "group": "0_toolkit@16"
+        },
+        {
           "command": "toolkit.jsonToType",
-          "group": "0_toolkit@16",
+          "group": "0_toolkit@17",
           "when": "editorLangId =~ /^(json|jsonc)$/"
         },
         {
           "command": "toolkit.lines",
-          "group": "0_toolkit@17",
+          "group": "0_toolkit@18",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.npm.managePackages",
-          "group": "0_toolkit@18",
+          "group": "0_toolkit@19",
           "when": "resourceFilename == package.json"
         },
         {
           "command": "toolkit.nuget.managePackages",
-          "group": "0_toolkit@19",
+          "group": "0_toolkit@20",
           "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj"
         },
         {
           "command": "toolkit.scratch.newFromSelection",
-          "group": "0_toolkit@20",
+          "group": "0_toolkit@21",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.npm.audit",
-          "group": "0_toolkit@21",
+          "group": "0_toolkit@22",
           "when": "resourceFilename == package.json"
         },
         {
           "command": "toolkit.nuget.vulnerabilities",
-          "group": "0_toolkit@22",
+          "group": "0_toolkit@23",
           "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj"
         },
         {
           "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@23"
-        },
-        {
-          "command": "toolkit.pasteImage",
           "group": "0_toolkit@24"
         },
         {
-          "command": "toolkit.colorPicker.pickFromScreen",
+          "command": "toolkit.pasteImage",
           "group": "0_toolkit@25"
         },
         {
+          "command": "toolkit.colorPicker.pickFromScreen",
+          "group": "0_toolkit@26"
+        },
+        {
           "command": "toolkit.svgPreview.open",
-          "group": "0_toolkit@26",
+          "group": "0_toolkit@27",
           "when": "resourceExtname == .svg"
         },
         {
           "command": "toolkit.restClient.copyAsCurl",
-          "group": "0_toolkit@27",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.importCurl",
           "group": "0_toolkit@28",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
@@ -2064,86 +2064,86 @@
           "when": "resourceFilename == http-client.env.json"
         },
         {
-          "command": "toolkit.restClient.selectEnvironment",
+          "command": "toolkit.restClient.importCurl",
           "group": "0_toolkit@30",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.runScripts.pick",
+          "command": "toolkit.restClient.selectEnvironment",
           "group": "0_toolkit@31",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.runScripts.pick",
+          "group": "0_toolkit@32",
           "when": "resourceFilename == package.json"
         },
         {
           "command": "toolkit.restClient.sendAll",
-          "group": "0_toolkit@32",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.send",
           "group": "0_toolkit@33",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
+          "command": "toolkit.restClient.send",
+          "group": "0_toolkit@34",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
           "command": "toolkit.localHistory.show",
-          "group": "0_toolkit@34"
+          "group": "0_toolkit@35"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@35",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.sumNumbers",
           "group": "0_toolkit@36",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleCsvRainbow",
+          "command": "toolkit.sumNumbers",
           "group": "0_toolkit@37",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.toggleCsvRainbow",
+          "group": "0_toolkit@38",
           "when": "resourceExtname == .csv || resourceExtname == .tsv"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@38"
-        },
-        {
-          "command": "toolkit.toggleQuotes",
           "group": "0_toolkit@39"
         },
         {
-          "command": "toolkit.transform.jsonMinify",
-          "group": "0_toolkit@40",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+          "command": "toolkit.toggleQuotes",
+          "group": "0_toolkit@40"
         },
         {
-          "command": "toolkit.transform.jsonPrettify",
+          "command": "toolkit.transform.jsonMinify",
           "group": "0_toolkit@41",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.jsonSortKeys",
+          "command": "toolkit.transform.jsonPrettify",
           "group": "0_toolkit@42",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.jsonToYaml",
+          "command": "toolkit.transform.jsonSortKeys",
           "group": "0_toolkit@43",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.yamlToJson",
+          "command": "toolkit.transform.jsonToYaml",
           "group": "0_toolkit@44",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.yamlToJson",
+          "group": "0_toolkit@45",
           "when": "editorHasSelection && editorLangId == yaml"
         },
         {
           "command": "toolkit.transform",
-          "group": "0_toolkit@45",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.markdown.generateToc",
           "group": "0_toolkit@46",
-          "when": "editorLangId == markdown"
+          "when": "editorHasSelection"
         }
       ]
     },
