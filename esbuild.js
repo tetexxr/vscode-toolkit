@@ -23,7 +23,9 @@ const builds = [
   // The Regex Playground spawns this as a worker thread via
   // `new Worker(path.join(__dirname, 'regex-worker.js'))`, so it must be emitted
   // as its own bundle next to extension.js in dist/.
-  { ...shared, entryPoints: ['src/features/workspace/regex-worker.ts'], outfile: 'dist/regex-worker.js' }
+  { ...shared, entryPoints: ['src/features/workspace/regex-worker.ts'], outfile: 'dist/regex-worker.js' },
+  // The JSON Playground spawns this worker the same way; emit it as its own bundle.
+  { ...shared, entryPoints: ['src/features/workspace/json-worker.ts'], outfile: 'dist/json-worker.js' }
 ]
 
 async function main() {

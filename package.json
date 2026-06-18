@@ -983,6 +983,14 @@
         "title": "Toolkit: Regex Playground - Test Selection as Input"
       },
       {
+        "command": "toolkit.jsonPlayground.open",
+        "title": "Toolkit: Open JSON Playground"
+      },
+      {
+        "command": "toolkit.jsonPlayground.loadSelection",
+        "title": "Toolkit: JSON Playground - Load Selection or File"
+      },
+      {
         "command": "toolkit.compareWithBranch",
         "title": "Toolkit: Compare with Branch..."
       },

@@ -56,6 +56,7 @@ import { registerEyedropperCommands } from './features/viewers/eyedropper'
 import { registerPasswordGeneratorCommands } from './features/editing/generate/password-generator'
 import { registerKillPortCommands } from './features/workspace/kill-port'
 import { registerTocCommands } from './features/editing/convert/toc'
+import { registerJsonPlaygroundCommands } from './features/workspace/json-playground'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -115,6 +116,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerPasswordGeneratorCommands(context)
   registerKillPortCommands(context)
   registerTocCommands(context)
+  registerJsonPlaygroundCommands(context)
 }
 
 export function deactivate() {}

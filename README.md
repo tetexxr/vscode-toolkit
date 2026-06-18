@@ -62,6 +62,7 @@ All-in-one VS Code utility extension.
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
+    - [JSON Playground](#json-playground)
     - [Local History](#local-history)
     - [Scratch Files](#scratch-files)
     - [Kill Port](#kill-port)
@@ -1668,6 +1669,36 @@ A side panel where you can test regexes interactively. Pattern, flags, test inpu
 - No cheat sheet of regex tokens.
 - No save / load of named patterns (only the last state survives).
 - No export of the pattern as a literal for other languages.
+
+#### JSON Playground
+
+A side panel for slicing and transforming JSON live, like a browser console pointed at one blob. Paste (or load) JSON, write a **JavaScript expression** against it, and see the result update as you type. Your parsed JSON is bound to `$` (and `data`):
+
+```js
+$.users.filter(u => u.active).map(u => u.email)
+$.items.reduce((sum, i) => sum + i.price, 0)
+Object.keys($.config)
+```
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Open JSON Playground | Opens the panel, restoring the last JSON and query |
+| JSON Playground - Load Selection or File | Opens the panel with the current selection (or the whole active file) as the JSON |
+
+**Behavior:**
+
+- The query is a normal JavaScript expression. For multi-step work, write statements with an explicit `return` (`const ids = $.rows.map(r => r.id); return new Set(ids)`).
+- An empty query just pretty-prints the JSON; the status line shows the result's type and its item/key count.
+- Evaluation runs in a **worker thread with a 1.5 s timeout**, so an infinite loop shows a "Query timed out" error instead of freezing the editor. Input is debounced (~150 ms).
+- Results are rendered as pretty JSON, surviving circular references, `bigint`, and functions; very large output is truncated.
+- The JSON and the query persist across sessions in `globalState`.
+
+**Limitations:**
+
+- Queries are JavaScript, not jq or JSONPath syntax.
+- The result view is read-only — it doesn't write back to the source file.
 
 #### Local History
 

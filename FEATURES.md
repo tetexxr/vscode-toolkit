@@ -87,6 +87,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | REST Response History | — | Sidebar tree of recent responses grouped per request; color-coded status, filter, re-send, diff, detail panel, copy as curl/body/URL, save body, go to source |
 | Import cURL | — | Turn a curl command on the clipboard into an .http request block (the inverse of Copy as curl) |
 | Regex Playground | — | Live regex tester in a panel, safe against catastrophic backtracking |
+| JSON Playground | — | Query JSON live with a JavaScript expression (`$` is your JSON), evaluated safely in a worker |
 | Local History | — | JetBrains-style per-file revisions captured on every save; diff against or restore any past version |
 | Scratch Files | — | Throwaway files kept outside the workspace (never committed); listed in the Explorer, with new-from-selection |
 | Kill Port | — | List the processes listening on TCP ports and kill one or several (multi-select) |
