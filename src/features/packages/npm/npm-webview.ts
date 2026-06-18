@@ -4,6 +4,8 @@
  * Uses VS Code CSS custom properties for native theme integration.
  */
 
+import { cssColor } from '../../../utils/palette'
+
 export function generateWebviewHtml(nonce: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -278,8 +280,8 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   line-height: 1;
   color: white;
 }
-.pkg-status-installed { background: forestgreen; }
-.pkg-status-outdated { background: cornflowerblue; }
+.pkg-status-installed { background: ${cssColor.success}; }
+.pkg-status-outdated { background: ${cssColor.warning}; }
 
 .pkg-info {
   flex: 1;
@@ -401,9 +403,9 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   color: var(--vscode-editorWarning-foreground, #e5c07b);
   margin-right: 0.3rem;
 }
-.bump-major { color: #f48771; font-weight: 600; }
-.bump-minor { color: #e5c07b; font-weight: 600; }
-.bump-patch { color: #98c379; font-weight: 600; }
+.bump-major { color: ${cssColor.error}; font-weight: 600; }
+.bump-minor { color: ${cssColor.warning}; font-weight: 600; }
+.bump-patch { color: ${cssColor.success}; font-weight: 600; }
 
 /* ── Package details ────────────────────────────── */
 

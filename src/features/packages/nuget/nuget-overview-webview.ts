@@ -3,6 +3,8 @@
  * Shows a table per project with installed packages, versions and update status.
  */
 
+import { cssColor } from '../../../utils/palette'
+
 export function generateOverviewHtml(nonce: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -100,7 +102,7 @@ html, body {
 
 .project-header {
   background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--vscode-panel-border);
   border-bottom: none;
 }
 
@@ -120,7 +122,7 @@ html, body {
 .pkg-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--vscode-panel-border);
 }
 
 .pkg-table col.col-name    { width: 40%; }
@@ -134,14 +136,14 @@ html, body {
   font-weight: 600;
   text-align: center;
   padding: 0.4rem 0.75rem;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--vscode-panel-border);
   white-space: nowrap;
 }
 .pkg-table th:first-child { text-align: left; }
 
 .pkg-table td {
   padding: 0.35rem 0.75rem;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--vscode-panel-border);
   white-space: nowrap;
   text-align: center;
   overflow: hidden;
@@ -170,12 +172,12 @@ html, body {
 }
 
 .badge-yes {
-  background: #2e7d32;
-  color: #fff;
+  background: ${cssColor.success};
+  color: #000;
 }
 .badge-no {
-  background: #c62828;
-  color: #fff;
+  background: ${cssColor.warning};
+  color: #000;
 }
 .badge-unknown {
   background: var(--vscode-badge-background);
@@ -228,9 +230,9 @@ html, body {
   color: var(--vscode-editorWarning-foreground, #e5c07b);
 }
 
-.bump-major { color: #f48771; font-weight: 600; }
-.bump-minor { color: #e5c07b; font-weight: 600; }
-.bump-patch { color: #98c379; font-weight: 600; }
+.bump-major { color: ${cssColor.error}; font-weight: 600; }
+.bump-minor { color: ${cssColor.warning}; font-weight: 600; }
+.bump-patch { color: ${cssColor.success}; font-weight: 600; }
 
 
 .btn-update-sm {
