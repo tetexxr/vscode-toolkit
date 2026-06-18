@@ -41,6 +41,20 @@ describe('githubSlug', () => {
   it('should slug from the rendered text, ignoring markdown', () => {
     assert.equal(githubSlug('Use `code` here', new Map()), 'use-code-here')
   })
+
+  it('should drop & and keep the double hyphen from the surrounding spaces', () => {
+    // Matches the anchor GitHub / VS Code preview actually generate.
+    assert.equal(githubSlug('Appearance & Viewers', new Map()), 'appearance--viewers')
+  })
+
+  it('should treat other removed punctuation between spaces the same way', () => {
+    assert.equal(githubSlug('Get / Post', new Map()), 'get--post')
+    assert.equal(githubSlug('Code Generation & Refactoring', new Map()), 'code-generation--refactoring')
+  })
+
+  it('should not collapse a real double space either', () => {
+    assert.equal(githubSlug('a  b', new Map()), 'a--b')
+  })
 })
 
 describe('extractHeadings', () => {

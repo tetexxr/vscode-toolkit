@@ -37,14 +37,16 @@ export function stripInlineMarkdown(text: string): string {
 
 /**
  * GitHub's heading-anchor algorithm: lowercase, drop everything but letters,
- * numbers, spaces, `_` and `-`, then spaces → hyphens. Duplicates get a
- * `-1`, `-2`… suffix, tracked through the shared `used` counter.
+ * numbers, spaces, `_` and `-`, then each whitespace → a hyphen. Spaces are
+ * NOT collapsed, so a removed character between spaces yields a double hyphen
+ * (e.g. "Appearance & Viewers" → `appearance--viewers`), exactly like GitHub
+ * and VS Code's preview. Duplicates get a `-1`, `-2`… suffix via `used`.
  */
 export function githubSlug(text: string, used: Map<string, number>): string {
   const base = stripInlineMarkdown(text)
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s_-]/gu, '')
-    .replace(/\s+/g, '-')
+    .replace(/\s/g, '-')
   const seen = used.get(base)
   if (seen === undefined) {
     used.set(base, 0)
