@@ -1644,12 +1644,12 @@
         },
         {
           "command": "toolkit.compareFolderWithBranch",
-          "when": "explorerResourceIsFolder && gitOpenRepositoryCount != 0",
+          "when": "gitOpenRepositoryCount != 0",
           "group": "0_toolkit@2"
         },
         {
           "command": "toolkit.compareProjectWithBranch",
-          "when": "explorerResourceIsFolder && gitOpenRepositoryCount != 0",
+          "when": "gitOpenRepositoryCount != 0",
           "group": "0_toolkit@3"
         },
         {

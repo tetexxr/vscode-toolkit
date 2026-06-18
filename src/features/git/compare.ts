@@ -313,8 +313,33 @@ async function resolveProjectRepoRoot(): Promise<{ repoRoot: string; label: stri
   return { repoRoot, label: path.basename(repoRoot) }
 }
 
-async function compareProjectWithBranch(provider: BranchContentProvider): Promise<void> {
-  const resolved = await resolveProjectRepoRoot()
+/** The directory a resource lives in: itself when it's a folder, else its parent. */
+async function resourceDirectory(uri: vscode.Uri): Promise<string> {
+  try {
+    const stat = await vscode.workspace.fs.stat(uri)
+    if (stat.type & vscode.FileType.Directory) {
+      return uri.fsPath
+    }
+  } catch {
+    // Can't stat — assume a file and use its parent.
+  }
+  return path.dirname(uri.fsPath)
+}
+
+async function compareProjectWithBranch(provider: BranchContentProvider, uri?: vscode.Uri): Promise<void> {
+  // From a clicked resource, target the repo that contains it; otherwise fall
+  // back to the active workspace folder (and prompt when there are several).
+  let resolved: { repoRoot: string; label: string } | null
+  if (uri && uri.scheme === 'file') {
+    const repoRoot = await getRepoRoot(await resourceDirectory(uri))
+    if (!repoRoot) {
+      vscode.window.showWarningMessage('Toolkit: this file is not inside a git repository.')
+      return
+    }
+    resolved = { repoRoot, label: path.basename(repoRoot) }
+  } else {
+    resolved = await resolveProjectRepoRoot()
+  }
   if (!resolved) {
     return
   }
@@ -325,17 +350,19 @@ async function compareProjectWithBranch(provider: BranchContentProvider): Promis
   await compareScopeWithBranch(provider, resolved.repoRoot, branch, undefined, resolved.label)
 }
 
-async function compareFolderWithBranch(provider: BranchContentProvider, folderUri?: vscode.Uri): Promise<void> {
-  if (!folderUri || folderUri.scheme !== 'file') {
-    vscode.window.showInformationMessage('Toolkit: right-click a folder in the Explorer to use this command.')
+async function compareFolderWithBranch(provider: BranchContentProvider, resourceUri?: vscode.Uri): Promise<void> {
+  if (!resourceUri || resourceUri.scheme !== 'file') {
+    vscode.window.showInformationMessage('Toolkit: right-click a file or folder in the Explorer to use this command.')
     return
   }
-  const repoRoot = await getRepoRoot(folderUri.fsPath)
+  // On a file, compare the folder it sits in.
+  const folderPath = await resourceDirectory(resourceUri)
+  const repoRoot = await getRepoRoot(folderPath)
   if (!repoRoot) {
     vscode.window.showWarningMessage('Toolkit: this folder is not inside a git repository.')
     return
   }
-  const relFolder = relativizeToRepo(repoRoot, folderUri.fsPath)
+  const relFolder = relativizeToRepo(repoRoot, folderPath)
   const scopeLabel = relFolder.length > 0 ? relFolder : path.basename(repoRoot)
   const branch = await pickBranch(repoRoot, `Compare "${scopeLabel}" against which branch?`)
   if (!branch) {
@@ -357,7 +384,9 @@ export function registerCompareCommands(context: vscode.ExtensionContext): void 
     vscode.commands.registerCommand('toolkit.compareWithBranch', (uri?: vscode.Uri) =>
       compareWithBranch(provider, uri)
     ),
-    vscode.commands.registerCommand('toolkit.compareProjectWithBranch', () => compareProjectWithBranch(provider)),
+    vscode.commands.registerCommand('toolkit.compareProjectWithBranch', (uri?: vscode.Uri) =>
+      compareProjectWithBranch(provider, uri)
+    ),
     vscode.commands.registerCommand('toolkit.compareFolderWithBranch', (uri?: vscode.Uri) =>
       compareFolderWithBranch(provider, uri)
     )
