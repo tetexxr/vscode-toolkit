@@ -75,6 +75,14 @@ All-in-one VS Code utility extension.
     - [Generic Dark Theme](#generic-dark-theme)
     - [JetBrains Dark Icons](#jetbrains-dark-icons)
 - [Development](#development)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+  - [Build](#build)
+  - [Test](#test)
+  - [Lint](#lint)
+  - [Package & Install](#package--install)
+  - [Uninstall](#uninstall)
+  - [Update Dependencies](#update-dependencies)
 
 ## Features
 
