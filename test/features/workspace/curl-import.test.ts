@@ -135,4 +135,27 @@ describe('curlToHttpRequest', () => {
   it('should return null for non-curl input', () => {
     assert.equal(curlToHttpRequest('not a curl command'), null)
   })
+
+  it('should render a file body (--data @path) as the .http `< path` syntax', () => {
+    const block = curlToHttpRequest('curl -X POST https://api.test/upload --data @payload.json')
+    assert.equal(
+      block,
+      ['### Imported from curl', 'POST https://api.test/upload', '', '< payload.json'].join('\n')
+    )
+  })
+
+  it('should treat --data-raw @x as a literal body, not a file', () => {
+    const req = parseCurl('curl https://api.test --data-raw @notafile')
+    assert.equal(req?.body, '@notafile')
+    assert.equal(req?.bodyFile, undefined)
+  })
+
+  it('should map cookie, user-agent and referer flags to headers', () => {
+    const req = parseCurl('curl https://api.test -b "a=1" -A "MyAgent/1.0" -e "https://ref.test"')
+    assert.deepEqual(req?.headers, [
+      { name: 'Cookie', value: 'a=1' },
+      { name: 'User-Agent', value: 'MyAgent/1.0' },
+      { name: 'Referer', value: 'https://ref.test' }
+    ])
+  })
 })

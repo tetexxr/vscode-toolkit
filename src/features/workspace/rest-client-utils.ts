@@ -715,6 +715,8 @@ export interface ParsedCurlRequest {
   url: string
   headers: HttpHeader[]
   body: string
+  /** Set when the body comes from a file (`curl --data @path`); rendered as `< path`. */
+  bodyFile?: string
 }
 
 /**
@@ -826,6 +828,7 @@ export function parseCurl(input: string): ParsedCurlRequest | null {
   let url = ''
   const headers: HttpHeader[] = []
   const dataParts: string[] = []
+  let bodyFile = ''
   let forceGet = false
 
   const addHeader = (raw: string): void => {
@@ -847,8 +850,16 @@ export function parseCurl(input: string): ParsedCurlRequest | null {
       method = arg().toUpperCase()
     } else if (t === '-H' || t === '--header') {
       addHeader(arg())
-    } else if (t === '-d' || t === '--data' || t === '--data-raw' || t === '--data-ascii' || t === '--data-binary') {
+    } else if (t === '--data-raw') {
+      // --data-raw never interprets a leading @ as a file.
       dataParts.push(arg())
+    } else if (t === '-d' || t === '--data' || t === '--data-ascii' || t === '--data-binary') {
+      const v = arg()
+      if (v.startsWith('@') && v !== '@-') {
+        bodyFile = v.slice(1) // curl reads this file; .http uses `< path`
+      } else {
+        dataParts.push(v)
+      }
     } else if (t === '--data-urlencode') {
       const v = arg()
       const eq = v.indexOf('=')
@@ -886,9 +897,9 @@ export function parseCurl(input: string): ParsedCurlRequest | null {
     body = ''
   }
   if (!method) {
-    method = body ? 'POST' : 'GET'
+    method = body || bodyFile ? 'POST' : 'GET'
   }
-  return { method, url, headers, body }
+  return bodyFile ? { method, url, headers, body, bodyFile } : { method, url, headers, body }
 }
 
 /** Pretty-prints a JSON body when the headers declare a JSON content type. */
@@ -909,7 +920,9 @@ export function renderHttpRequest(req: ParsedCurlRequest, name = 'Imported from 
   for (const header of req.headers) {
     lines.push(`${header.name}: ${header.value}`)
   }
-  if (req.body) {
+  if (req.bodyFile) {
+    lines.push('', `< ${req.bodyFile}`)
+  } else if (req.body) {
     lines.push('', formatImportedBody(req.body, req.headers))
   }
   return lines.join('\n')
