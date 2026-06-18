@@ -1028,6 +1028,10 @@
         "title": "Toolkit: Compact Markdown Table"
       },
       {
+        "command": "toolkit.markdown.generateToc",
+        "title": "Toolkit: Generate Table of Contents"
+      },
+      {
         "command": "toolkit.localHistory.show",
         "title": "Toolkit: Show Local History"
       },
@@ -2135,6 +2139,11 @@
           "command": "toolkit.transform",
           "group": "0_toolkit@45",
           "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.markdown.generateToc",
+          "group": "0_toolkit@46",
+          "when": "editorLangId == markdown"
         }
       ]
     },

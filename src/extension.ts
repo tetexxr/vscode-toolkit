@@ -55,6 +55,7 @@ import { registerGitStashCommands } from './features/git/git-stash'
 import { registerEyedropperCommands } from './features/viewers/eyedropper'
 import { registerPasswordGeneratorCommands } from './features/editing/generate/password-generator'
 import { registerKillPortCommands } from './features/workspace/kill-port'
+import { registerTocCommands } from './features/editing/convert/toc'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -113,6 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerEyedropperCommands(context)
   registerPasswordGeneratorCommands(context)
   registerKillPortCommands(context)
+  registerTocCommands(context)
 }
 
 export function deactivate() {}

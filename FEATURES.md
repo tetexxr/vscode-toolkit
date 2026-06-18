@@ -53,6 +53,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | UUID / ULID Hover | — | Hover an id to see its kind and embedded creation time |
 | Format Markdown Table | — | Align table pipes to the widest cell, honoring GFM alignment |
 | Compact Markdown Table | — | Strip the padding back out for minimal tables and clean diffs |
+| Generate Table of Contents | — | Build a nested TOC of the markdown headings up to a chosen level; updates in place between markers |
 | JSON to Type | — | Generate TypeScript/C# types from a JSON sample |
 
 ## Code Generation

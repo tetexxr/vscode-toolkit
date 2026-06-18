@@ -44,6 +44,7 @@ All-in-one VS Code utility extension.
     - [Password Generator](#password-generator)
     - [UUID / ULID Hover](#uuid--ulid-hover)
     - [Format Markdown Table](#format-markdown-table)
+    - [Generate Table of Contents](#generate-table-of-contents)
     - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
@@ -1009,6 +1010,23 @@ The inverse also exists: **Toolkit: Compact Markdown Table** strips all alignmen
 - Escaped pipes (`\|`) and pipes inside inline code (`` `a|b` ``) don't break cells.
 - Rows with missing cells are padded with empty ones; leading indentation (tables inside lists) is preserved.
 - Tables with or without surrounding pipes are recognized; the output always uses surrounding pipes.
+
+#### Generate Table of Contents
+
+Run **Toolkit: Generate Table of Contents** in a Markdown file (Command Palette or editor context menu). It asks for the deepest heading level to include (H1–H6), then builds a nested bullet list linking to each heading.
+
+The TOC is wrapped in `<!-- toc -->` … `<!-- /toc -->` markers. Run the command again and the block is **regenerated in place** between those markers, so it's easy to keep up to date as the document changes. With no markers present yet, the block is inserted at the cursor.
+
+**Behavior:**
+
+- Anchor links use GitHub's slug algorithm — lowercased, punctuation stripped, spaces hyphenated, accented letters and intraword underscores kept, and duplicate headings disambiguated with `-1`, `-2`… so the links work on GitHub and in VS Code's preview.
+- Headings inside fenced code blocks (``` ``` ``` and `~~~`) are ignored.
+- Indentation is relative to the shallowest included heading, so a document whose headings start at `##` still produces a flush-left list.
+- Inline markdown in headings (links, `` `code` ``, `**bold**`) is stripped from the link text.
+
+**Limitations:**
+
+- Only ATX headings (`#`-prefixed) are recognized, not the Setext (`===` / `---`) underline style.
 
 #### JSON to TypeScript / C# Types
 

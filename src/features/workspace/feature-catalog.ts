@@ -59,6 +59,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Editing', name: 'UUID / ULID Hover', description: 'Hover an id to see its kind and embedded creation time (automatic)' },
   { category: 'Editing', name: 'Format Markdown Table', command: 'toolkit.markdown.formatTable', description: 'Align table pipes to the widest cell, honoring GFM alignment' },
   { category: 'Editing', name: 'Compact Markdown Table', command: 'toolkit.markdown.compactTable', description: 'Strip the padding back out for minimal tables and clean diffs' },
+  { category: 'Editing', name: 'Generate Table of Contents', command: 'toolkit.markdown.generateToc', description: 'Build a nested TOC of the markdown headings up to a chosen level; updates in place between markers' },
   { category: 'Editing', name: 'JSON to Type', command: 'toolkit.jsonToType', description: 'Generate TypeScript/C# types from a JSON sample' },
 
   // ── Code Generation ────────────────────────────────────
