@@ -87,6 +87,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Regex Playground | — | Live regex tester in a panel, safe against catastrophic backtracking |
 | Local History | — | JetBrains-style per-file revisions captured on every save; diff against or restore any past version |
 | Scratch Files | — | Throwaway files kept outside the workspace (never committed); listed in the Explorer, with new-from-selection |
+| Kill Port | — | List the processes listening on TCP ports and kill one or several (multi-select) |
 
 ## Viewers & Appearance
 

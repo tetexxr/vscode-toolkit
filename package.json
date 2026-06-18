@@ -1155,6 +1155,10 @@
       {
         "command": "toolkit.passwordGenerator.open",
         "title": "Toolkit: Open Password Generator"
+      },
+      {
+        "command": "toolkit.killPort",
+        "title": "Toolkit: Kill Port..."
       }
     ],
     "keybindings": [

@@ -63,6 +63,7 @@ All-in-one VS Code utility extension.
     - [Regex Playground](#regex-playground)
     - [Local History](#local-history)
     - [Scratch Files](#scratch-files)
+    - [Kill Port](#kill-port)
   - [Appearance & Viewers](#appearance--viewers)
     - [Diagnostic Highlight](#diagnostic-highlight)
     - [CSV Rainbow](#csv-rainbow)
@@ -1713,6 +1714,24 @@ Create one from:
 
 - Scratches are global to your machine, not synced or shared.
 - The list is not searchable beyond the Explorer's own filter.
+
+#### Kill Port
+
+The end of `Error: listen EADDRINUSE: address already in use :::3000`. Run **Toolkit: Kill Port** to see every process currently listening on a TCP port — each one shown as `:<port>` with its command name and pid — pick one (or several at once), confirm, and Toolkit sends them `SIGKILL`.
+
+Open it from the **Command Palette** (`Toolkit: Kill Port…`) or the **All Features** launcher.
+
+**Behavior:**
+
+- Cross-platform: uses `lsof` on macOS/Linux and `netstat` + `tasklist` on Windows, so the listing looks the same everywhere.
+- Multi-select — clear a whole range of dev servers in one go. A port already freed by the time you confirm is treated as success.
+- A process bound to both IPv4 and IPv6 on the same port shows up once; selecting several ports that share a pid kills that pid only once.
+- Type a port number in the picker to filter straight to it.
+
+**Limitations:**
+
+- Lists TCP listeners only (the usual "port in use" case), not UDP.
+- Killing a process you don't own reports a permission error — re-launch the owning process or VS Code with the right privileges.
 
 ### Appearance & Viewers
 

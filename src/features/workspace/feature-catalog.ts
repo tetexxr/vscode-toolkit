@@ -87,6 +87,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Workspace', name: 'Regex Playground', command: 'toolkit.regexPlayground.open', description: 'Live regex tester in a panel, safe against catastrophic backtracking' },
   { category: 'Workspace', name: 'Local History', command: 'toolkitLocalHistory.focus', description: 'JetBrains-style per-file revisions captured on every save; diff against or restore any past version' },
   { category: 'Workspace', name: 'Scratch Files', command: 'toolkit.scratch.new', description: 'Throwaway files kept outside the workspace (never committed); listed in the Explorer, with new-from-selection' },
+  { category: 'Workspace', name: 'Kill Port', command: 'toolkit.killPort', description: 'List the processes listening on TCP ports and kill one or several (multi-select)' },
 
   // ── Viewers & Appearance ───────────────────────────────
   { category: 'Viewers & Appearance', name: 'Diagnostic Highlight', command: 'toolkit.toggleDiagnosticHighlight', description: 'Make hint/info diagnostics actually visible (colored underlines)' },
