@@ -6,6 +6,7 @@ import {
   type PasswordOptions
 } from './password-utils'
 import { markClipboardSecret } from '../../workspace/clipboard-history'
+import { color } from '../../../utils/palette'
 
 const STORAGE_KEY = 'passwordGenerator.options'
 const MIN_LENGTH = 4
@@ -146,7 +147,7 @@ function buildHtml(nonce: string): string {
     const vscode = acquireVsCodeApi()
     const ids = ['length','lowercase','uppercase','digits','symbols','excludeAmbiguous','requireEachClass','excludeChars']
     const el = id => document.getElementById(id)
-    const colors = ['#e51400','#f0a30a','#e3c800','#60a917','#1ba1e2']
+    const colors = ['${color.error}','${color.orange}','${color.warning}','${color.success}','${color.accent}']
 
     function readOptions() {
       return {
