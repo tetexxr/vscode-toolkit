@@ -81,7 +81,7 @@ html, body {
   border-bottom: 2px solid transparent;
   font-family: inherit;
 }
-.nav-tab:hover { color: var(--vscode-button-background); }
+.nav-tab:hover { color: var(--vscode-button-background); background: transparent; }
 .nav-tab.active {
   color: var(--vscode-button-background);
   border-bottom-color: var(--vscode-button-background);
