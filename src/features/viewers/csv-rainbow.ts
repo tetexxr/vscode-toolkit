@@ -1,14 +1,17 @@
 import * as vscode from 'vscode'
 import { DEFAULT_DELIMITERS, detectDelimiter, parseCsvLine } from './csv-rainbow-utils'
+import { color } from '../../utils/palette'
 
+// Rainbow palette for CSV/TSV columns. The first seven come from the shared
+// One Dark token set; the last three extend it with extra distinct hues.
 const DEFAULT_COLORS = [
-  '#E06C75',
-  '#E5C07B',
-  '#98C379',
-  '#56B6C2',
-  '#61AFEF',
-  '#C678DD',
-  '#D19A66',
+  color.error,
+  color.warning,
+  color.success,
+  color.cyan,
+  color.info,
+  color.special,
+  color.orange,
   '#ABB2BF',
   '#BE5046',
   '#3E82C0'

@@ -1,21 +1,22 @@
 import * as vscode from 'vscode'
 import { escapeMd } from '../../utils/markdown'
+import { color, withAlpha } from '../../utils/palette'
 
 const DEFAULT_COLORS: Record<string, { background: string; border: string; ruler: string }> = {
   hint: {
-    background: 'rgba(78, 201, 176, 0.12)',
-    border: '#4EC9B0',
-    ruler: '#4EC9B0'
+    background: withAlpha(color.cyan, 0.12),
+    border: color.cyan,
+    ruler: color.cyan
   },
   info: {
-    background: 'rgba(55, 148, 255, 0.12)',
-    border: '#3794FF',
-    ruler: '#3794FF'
+    background: withAlpha(color.info, 0.12),
+    border: color.info,
+    ruler: color.info
   },
   warning: {
-    background: 'rgba(204, 167, 0, 0.12)',
-    border: '#CCA700',
-    ruler: '#CCA700'
+    background: withAlpha(color.warning, 0.12),
+    border: color.warning,
+    ruler: color.warning
   }
 }
 
