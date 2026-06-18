@@ -102,7 +102,7 @@ html, body {
 
 .project-header {
   background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid ${cssColor.border};
   border-bottom: none;
 }
 
@@ -122,7 +122,7 @@ html, body {
 .pkg-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid ${cssColor.border};
 }
 
 .pkg-table col.col-name    { width: 32%; }
@@ -137,14 +137,14 @@ html, body {
   font-weight: 600;
   text-align: center;
   padding: 0.4rem 0.75rem;
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid ${cssColor.border};
   white-space: nowrap;
 }
 .pkg-table th:first-child { text-align: left; }
 
 .pkg-table td {
   padding: 0.35rem 0.75rem;
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid ${cssColor.border};
   white-space: nowrap;
   text-align: center;
   overflow: hidden;
@@ -189,7 +189,7 @@ html, body {
 .badge-dep {
   font-size: 0.8rem;
   padding: 1px 6px;
-  border: 1px solid var(--vscode-panel-border);
+  border: 1px solid ${cssColor.border};
   border-radius: 3px;
   opacity: 0.7;
 }

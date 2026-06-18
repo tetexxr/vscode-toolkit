@@ -63,7 +63,7 @@ function buildEditWebviewHtml(
       z-index: 10;
       background: var(--vscode-editor-background);
       padding: 16px 0 12px;
-      border-bottom: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+      border-bottom: 1px solid ${cssColor.border};
     }
 
     .commit-info {
@@ -72,7 +72,7 @@ function buildEditWebviewHtml(
       gap: 8px;
       padding: 6px 12px;
       margin-bottom: 10px;
-      background: var(--vscode-textBlockQuote-background, rgba(128,128,128,0.1));
+      background: ${cssColor.surface};
       border-radius: 4px;
       border-left: 3px solid var(--vscode-textLink-foreground);
       font-size: 0.9em;
@@ -217,7 +217,7 @@ function buildEditWebviewHtml(
     }
 
     .file-list {
-      border: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+      border: 1px solid ${cssColor.border};
       border-radius: 4px;
       overflow: hidden;
     }
@@ -237,7 +237,7 @@ function buildEditWebviewHtml(
     }
 
     .file-entry + .file-entry {
-      border-top: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.1));
+      border-top: 1px solid ${cssColor.border};
     }
 
     .file-status {
@@ -277,7 +277,7 @@ function buildEditWebviewHtml(
       margin: 24px 0;
       border-radius: 4px;
       overflow: hidden;
-      border: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+      border: 1px solid ${cssColor.border};
       font-family: var(--vscode-editor-font-family, monospace);
       font-size: var(--vscode-editor-font-size, 13px);
     }

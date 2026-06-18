@@ -109,11 +109,11 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, sh
       top: 0;
       background: var(--vscode-editor-background);
       z-index: 1;
-      border-bottom: 1px solid var(--vscode-panel-border, transparent);
+      border-bottom: 1px solid ${cssColor.border};
     }
 
     .commit {
-      border-bottom: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+      border-bottom: 1px solid ${cssColor.border};
       padding: 16px 0;
     }
 
@@ -136,7 +136,7 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, sh
       margin: 8px 0;
       border-radius: 4px;
       overflow: hidden;
-      border: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.2));
+      border: 1px solid ${cssColor.border};
     }
 
     .diff-header, .diff-meta {

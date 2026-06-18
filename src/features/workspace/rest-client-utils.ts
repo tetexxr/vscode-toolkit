@@ -1264,7 +1264,7 @@ const DETAIL_STYLES = `
   button:disabled { opacity: .5; cursor: default; }
   h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 18px 0 6px; }
   table { border-collapse: collapse; width: 100%; font-size: 12px; }
-  td { padding: 3px 8px; border-bottom: 1px solid var(--vscode-panel-border); vertical-align: top; }
+  td { padding: 3px 8px; border-bottom: 1px solid ${cssColor.border}; vertical-align: top; }
   .hname { color: var(--vscode-symbolIcon-keywordForeground, var(--vscode-foreground)); white-space: nowrap; font-family: var(--vscode-editor-font-family); }
   .hval { font-family: var(--vscode-editor-font-family); word-break: break-all; }
   .muted { color: var(--vscode-descriptionForeground); }

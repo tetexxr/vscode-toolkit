@@ -6,7 +6,7 @@ import {
   type PasswordOptions
 } from './password-utils'
 import { markClipboardSecret } from '../../workspace/clipboard-history'
-import { color } from '../../../utils/palette'
+import { color, cssColor } from '../../../utils/palette'
 
 const STORAGE_KEY = 'passwordGenerator.options'
 const MIN_LENGTH = 4
@@ -110,7 +110,7 @@ function buildHtml(nonce: string): string {
   button.secondary { color: var(--vscode-button-secondaryForeground); background: var(--vscode-button-secondaryBackground); }
   button:hover { background: var(--vscode-button-hoverBackground); }
   .meter { display: flex; gap: 4px; margin: 6px 0; }
-  .seg { height: 6px; flex: 1; border-radius: 3px; background: var(--vscode-panel-border); }
+  .seg { height: 6px; flex: 1; border-radius: 3px; background: ${cssColor.border}; }
   .meta { color: var(--vscode-descriptionForeground); font-size: 0.9em; }
 </style>
 </head>
@@ -195,7 +195,7 @@ function buildHtml(nonce: string): string {
         el('entropy').textContent = msg.entropyBits
         el('strength').textContent = msg.label
         const segs = document.querySelectorAll('.seg')
-        segs.forEach((s, i) => { s.style.background = i <= msg.score ? colors[msg.score] : 'var(--vscode-panel-border)' })
+        segs.forEach((s, i) => { s.style.background = i <= msg.score ? colors[msg.score] : '${cssColor.border}' })
       }
     })
     vscode.postMessage({ type: 'ready' })

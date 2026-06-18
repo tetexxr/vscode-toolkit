@@ -46,6 +46,12 @@ export const cssColor = {
   info: color.info,
   orange: color.orange,
   special: color.special,
+  // Neutral UI surfaces. Deterministic translucent grays so they stay visible on
+  // any theme — unlike --vscode-panel-border, which some themes render near-invisible.
+  /** Visible hairline for grids, separators and table cell borders. */
+  border: 'rgba(140, 140, 140, 0.35)',
+  /** Subtle tint to lift header bands off the editor background. */
+  surface: 'rgba(140, 140, 140, 0.12)',
   // Git resource decorations — match the user's SCM colors when available.
   gitAdded: `var(--vscode-gitDecoration-addedResourceForeground, ${color.success})`,
   gitDeleted: `var(--vscode-gitDecoration-deletedResourceForeground, ${color.error})`,

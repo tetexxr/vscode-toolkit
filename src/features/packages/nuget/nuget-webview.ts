@@ -59,7 +59,7 @@ html, body {
 
 #header {
   flex-shrink: 0;
-  border-bottom: 1px solid var(--vscode-panel-border);
+  border-bottom: 1px solid ${cssColor.border};
 }
 
 #nav-bar {
@@ -201,7 +201,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 #resize-handle {
   width: 5px;
   cursor: col-resize;
-  background: var(--vscode-panel-border);
+  background: ${cssColor.border};
   flex-shrink: 0;
 }
 #resize-handle:hover { background: var(--vscode-focusBorder); }
@@ -220,7 +220,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   align-items: center;
   justify-content: space-between;
   padding: 0.4rem 0.75rem;
-  border-bottom: 1px solid var(--vscode-panel-border);
+  border-bottom: 1px solid ${cssColor.border};
 }
 .select-all-bar label {
   display: flex;
