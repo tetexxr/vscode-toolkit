@@ -102,24 +102,23 @@ function runQuery(query: string, data: unknown): unknown {
   return fn(data, data)
 }
 
-export function evaluateQuery(jsonText: string, query: string): JsonEvalResult {
-  if (jsonText.trim().length === 0) {
-    return { error: null, output: '', type: '', count: null, empty: true }
-  }
+export type ParseResult = { ok: true; data: unknown } | { ok: false; error: string }
 
-  let data: unknown
+/** Parses the JSON text. Split out so the worker can cache it across queries. */
+export function parseJson(jsonText: string): ParseResult {
   try {
-    data = JSON.parse(jsonText)
+    return { ok: true, data: JSON.parse(jsonText) }
   } catch (error) {
-    return { error: `Invalid JSON: ${(error as Error).message}`, output: '', type: '', count: null, empty: false }
+    return { ok: false, error: `Invalid JSON: ${(error as Error).message}` }
   }
+}
 
-  // No query yet → just pretty-print the parsed JSON.
+/** Runs a query against already-parsed data. An empty query pretty-prints it. */
+export function evaluateParsed(data: unknown, query: string): JsonEvalResult {
   if (query.trim().length === 0) {
     const { type, count } = describe(data)
     return { error: null, output: formatValue(data), type, count, empty: false }
   }
-
   let result: unknown
   try {
     result = runQuery(query, data)
@@ -127,7 +126,17 @@ export function evaluateQuery(jsonText: string, query: string): JsonEvalResult {
     const err = error as Error
     return { error: `${err.name}: ${err.message}`, output: '', type: '', count: null, empty: false }
   }
-
   const { type, count } = describe(result)
   return { error: null, output: formatValue(result), type, count, empty: false }
+}
+
+export function evaluateQuery(jsonText: string, query: string): JsonEvalResult {
+  if (jsonText.trim().length === 0) {
+    return { error: null, output: '', type: '', count: null, empty: true }
+  }
+  const parsed = parseJson(jsonText)
+  if (!parsed.ok) {
+    return { error: parsed.error, output: '', type: '', count: null, empty: false }
+  }
+  return evaluateParsed(parsed.data, query)
 }

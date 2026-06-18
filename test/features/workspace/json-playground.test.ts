@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert'
-import { evaluateQuery } from '../../../src/features/workspace/json-playground-utils'
+import { evaluateParsed, evaluateQuery, parseJson } from '../../../src/features/workspace/json-playground-utils'
 
 const DATA = JSON.stringify({
   users: [
@@ -84,5 +84,36 @@ describe('evaluateQuery', () => {
     const r = evaluateQuery('{"x":null}', '$.x')
     assert.equal(r.type, 'null')
     assert.equal(r.output, 'null')
+  })
+
+  it('should truncate very large output', () => {
+    // 300k elements → well past the 2 MB output cap.
+    const r = evaluateQuery('{}', 'Array.from({length: 300000}, (_, i) => i)')
+    assert.equal(r.type, 'array')
+    assert.match(r.output, /… \(output truncated\)$/)
+  })
+})
+
+describe('parseJson / evaluateParsed (the worker-cache split)', () => {
+  it('parseJson should report ok with data, or an error', () => {
+    assert.deepEqual(parseJson('{"a":1}'), { ok: true, data: { a: 1 } })
+    const bad = parseJson('{nope')
+    assert.equal(bad.ok, false)
+    assert.match((bad as { error: string }).error, /^Invalid JSON:/)
+  })
+
+  it('evaluateParsed should run against already-parsed data', () => {
+    const r = evaluateParsed({ users: [{ name: 'Alice' }] }, '$.users[0].name')
+    assert.equal(r.error, null)
+    assert.equal(r.output, '"Alice"')
+  })
+
+  it('evaluateQuery and evaluateParsed should agree', () => {
+    const json = '{"n": 5}'
+    const direct = evaluateQuery(json, '$.n * 2')
+    const parsed = parseJson(json)
+    assert.equal(parsed.ok, true)
+    const viaParsed = parsed.ok ? evaluateParsed(parsed.data, '$.n * 2') : null
+    assert.deepEqual(viaParsed, direct)
   })
 })
