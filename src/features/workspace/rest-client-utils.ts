@@ -1,5 +1,6 @@
 import { formatRelative } from '../editing/convert/timestamp-utils'
 import { cssColor } from '../../utils/palette'
+import { BUTTON_CSS } from '../../utils/webview-ui'
 
 export interface HttpHeader {
   name: string
@@ -1258,10 +1259,7 @@ const DETAIL_STYLES = `
   .retry-label { color: var(--vscode-descriptionForeground); font-size: 12px; margin-right: 2px; }
   .elapsed { color: var(--vscode-descriptionForeground); font-size: 12px; margin-left: 8px; font-variant-numeric: tabular-nums; }
   .truncated { color: var(--vscode-charts-yellow, #cca700); font-size: 12px; margin-top: 10px; padding: 6px 10px; border-left: 3px solid var(--vscode-charts-yellow, #cca700); background: var(--vscode-textBlockQuote-background, rgba(255,255,255,.04)); }
-  button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; }
-  button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
-  button:hover { background: var(--vscode-button-hoverBackground); }
-  button:disabled { opacity: .5; cursor: default; }
+  ${BUTTON_CSS}
   h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--vscode-descriptionForeground); margin: 18px 0 6px; }
   table { border-collapse: collapse; width: 100%; font-size: 12px; }
   td { padding: 3px 8px; border-bottom: 1px solid ${cssColor.border}; vertical-align: top; }

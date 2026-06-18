@@ -7,6 +7,7 @@ import {
 } from './password-utils'
 import { markClipboardSecret } from '../../workspace/clipboard-history'
 import { color, cssColor } from '../../../utils/palette'
+import { BUTTON_CSS } from '../../../utils/webview-ui'
 
 const STORAGE_KEY = 'passwordGenerator.options'
 const MIN_LENGTH = 4
@@ -103,12 +104,7 @@ function buildHtml(nonce: string): string {
     color: var(--vscode-input-foreground); background: var(--vscode-input-background);
     border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: 3px; padding: 3px 6px;
   }
-  button {
-    font: inherit; padding: 6px 14px; cursor: pointer; border: none; border-radius: 4px;
-    color: var(--vscode-button-foreground); background: var(--vscode-button-background);
-  }
-  button.secondary { color: var(--vscode-button-secondaryForeground); background: var(--vscode-button-secondaryBackground); }
-  button:hover { background: var(--vscode-button-hoverBackground); }
+  ${BUTTON_CSS}
   .meter { display: flex; gap: 4px; margin: 6px 0; }
   .seg { height: 6px; flex: 1; border-radius: 3px; background: ${cssColor.border}; }
   .meta { color: var(--vscode-descriptionForeground); font-size: 0.9em; }

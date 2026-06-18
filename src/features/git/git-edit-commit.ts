@@ -24,6 +24,7 @@ import { escapeHtml, createNonce } from '../../utils/html'
 import { escapeMd } from '../../utils/markdown'
 import { logError } from '../../utils/logger'
 import { cssColor } from '../../utils/palette'
+import { BUTTON_CSS } from '../../utils/webview-ui'
 
 function buildEditWebviewHtml(
   commit: CommitLogEntry,
@@ -117,22 +118,7 @@ function buildEditWebviewHtml(
       align-items: center;
     }
 
-    button {
-      padding: 4px 12px;
-      border: none;
-      border-radius: 2px;
-      font-size: var(--vscode-font-size, 13px);
-      cursor: pointer;
-      outline: none;
-    }
-
-    button:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 1px; }
-    button.primary { color: var(--vscode-button-foreground); background: var(--vscode-button-background); }
-    button.primary:hover { background: var(--vscode-button-hoverBackground); }
-    button.secondary { color: var(--vscode-button-secondaryForeground); background: var(--vscode-button-secondaryBackground); }
-    button.secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
-    button.danger { color: var(--vscode-button-foreground); background: ${cssColor.errorText}; }
-    button.danger:hover { opacity: 0.85; }
+    ${BUTTON_CSS}
 
     .shortcut-hint {
       color: var(--vscode-descriptionForeground);

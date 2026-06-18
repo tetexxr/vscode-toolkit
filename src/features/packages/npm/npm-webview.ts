@@ -5,6 +5,7 @@
  */
 
 import { cssColor } from '../../../utils/palette'
+import { BUTTON_CSS } from '../../../utils/webview-ui'
 
 export function generateWebviewHtml(nonce: string): string {
   return `<!DOCTYPE html>
@@ -143,34 +144,7 @@ html, body {
 
 /* ── Buttons & Inputs ───────────────────────────── */
 
-.btn {
-  font-size: 0.95rem;
-  background: var(--vscode-button-background);
-  color: var(--vscode-button-foreground);
-  border: none;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-}
-.btn:hover { background: var(--vscode-button-hoverBackground); }
-.btn:disabled { opacity: 0.5; cursor: default; }
-
-.btn-secondary {
-  background: var(--vscode-button-secondaryBackground);
-  color: var(--vscode-button-secondaryForeground);
-}
-.btn-secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
-
-.btn-icon {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  font-size: 1rem;
-}
+${BUTTON_CSS}
 
 select {
   background: var(--vscode-dropdown-background);

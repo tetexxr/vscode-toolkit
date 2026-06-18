@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import * as crypto from 'node:crypto'
 import { formatColor, parseColor, type ColorFormat } from './color-utils'
+import { BUTTON_CSS } from '../../utils/webview-ui'
 
 const VIEW_TYPE = 'toolkit.eyedropper'
 
@@ -23,11 +24,8 @@ function buildHtml(nonce: string): string {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
 <style>
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 16px; text-align: center; }
-  button {
-    font: inherit; padding: 8px 16px; margin-top: 8px; cursor: pointer;
-    color: var(--vscode-button-foreground); background: var(--vscode-button-background); border: none; border-radius: 4px;
-  }
-  button:hover { background: var(--vscode-button-hoverBackground); }
+  ${BUTTON_CSS}
+  #pick { margin-top: 8px; }
   p { color: var(--vscode-descriptionForeground); }
 </style>
 </head>

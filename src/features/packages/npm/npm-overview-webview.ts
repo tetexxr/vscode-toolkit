@@ -4,6 +4,7 @@
  */
 
 import { cssColor } from '../../../utils/palette'
+import { BUTTON_CSS } from '../../../utils/webview-ui'
 
 export function generateOverviewHtml(nonce: string): string {
   return `<!DOCTYPE html>
@@ -60,27 +61,7 @@ html, body {
   flex: 1;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.9rem;
-  background: var(--vscode-button-background);
-  color: var(--vscode-button-foreground);
-  border: none;
-  padding: 5px 12px;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-}
-.btn:hover { background: var(--vscode-button-hoverBackground); }
-.btn:disabled { opacity: 0.5; cursor: default; }
-
-.btn-secondary {
-  background: var(--vscode-button-secondaryBackground);
-  color: var(--vscode-button-secondaryForeground);
-}
-.btn-secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
+${BUTTON_CSS}
 
 .search-box {
   background: var(--vscode-input-background);
@@ -167,9 +148,10 @@ html, body {
 
 .badge {
   display: inline-block;
-  padding: 1px 8px;
+  padding: 2px 8px;
   font-size: 0.85em;
   font-weight: 600;
+  border-radius: 10px;
 }
 
 .badge-yes {
