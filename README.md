@@ -1717,13 +1717,18 @@ Create one from:
 
 #### Kill Port
 
-The end of `Error: listen EADDRINUSE: address already in use :::3000`. Run **Toolkit: Kill Port** to see every process currently listening on a TCP port — each one shown as `:<port>` with its command name and pid — pick one (or several at once), confirm, and Toolkit sends them `SIGKILL`.
+The end of `Error: listen EADDRINUSE: address already in use :::3000`. Run **Toolkit: Kill Port** to see every process currently listening on a TCP port — pick one (or several at once), confirm, and Toolkit sends them `SIGKILL`.
+
+Each entry is labelled with its port (`:3000`) and, on macOS/Linux, enriched with the details that tell you *what* you're about to kill:
+
+- The **full command line with arguments** (e.g. `node /Users/alice/proj/server.js --watch`) as the entry's detail line — far more telling than the truncated process name.
+- The **owning user**, **uptime** (`up 2h 15m`), and **parent pid** in the description.
 
 Open it from the **Command Palette** (`Toolkit: Kill Port…`) or the **All Features** launcher.
 
 **Behavior:**
 
-- Cross-platform: uses `lsof` on macOS/Linux and `netstat` + `tasklist` on Windows, so the listing looks the same everywhere.
+- Cross-platform: uses `lsof` (+ `ps` for the details above) on macOS/Linux and `netstat` + `tasklist` on Windows.
 - Multi-select — clear a whole range of dev servers in one go. A port already freed by the time you confirm is treated as success.
 - A process bound to both IPv4 and IPv6 on the same port shows up once; selecting several ports that share a pid kills that pid only once.
 - Type a port number in the picker to filter straight to it.
@@ -1731,6 +1736,7 @@ Open it from the **Command Palette** (`Toolkit: Kill Port…`) or the **All Feat
 **Limitations:**
 
 - Lists TCP listeners only (the usual "port in use" case), not UDP.
+- The command-line / user / uptime / parent enrichment is macOS/Linux only; on Windows entries show the image name from `tasklist`.
 - Killing a process you don't own reports a permission error — re-launch the owning process or VS Code with the right privileges.
 
 ### Appearance & Viewers

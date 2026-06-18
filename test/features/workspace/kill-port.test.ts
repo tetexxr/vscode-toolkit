@@ -1,7 +1,9 @@
 import { strict as assert } from 'assert'
 import {
+  humanizeElapsed,
   parseLsof,
   parseNetstat,
+  parsePs,
   parseTasklist,
   portFromAddress
 } from '../../../src/features/workspace/kill-port-utils'
@@ -95,5 +97,50 @@ describe('parseTasklist', () => {
 
   it('should skip malformed rows', () => {
     assert.equal(parseTasklist('garbage\n\n').size, 0)
+  })
+})
+
+describe('humanizeElapsed', () => {
+  it('should render mm:ss as minutes and seconds', () => {
+    assert.equal(humanizeElapsed('15:30'), '15m 30s')
+  })
+
+  it('should render seconds-only when under a minute', () => {
+    assert.equal(humanizeElapsed('00:42'), '42s')
+  })
+
+  it('should render hh:mm:ss as hours and minutes', () => {
+    assert.equal(humanizeElapsed('02:15:30'), '2h 15m')
+  })
+
+  it('should render dd-hh:mm:ss as days and hours', () => {
+    assert.equal(humanizeElapsed('1-02:15:30'), '1d 2h')
+  })
+
+  it('should return undefined for an unrecognized format', () => {
+    assert.equal(humanizeElapsed('whenever'), undefined)
+  })
+})
+
+describe('parsePs', () => {
+  it('should parse the fixed columns and keep the full command line with args', () => {
+    const stdout = [
+      ' 4321   900 alice       02:15:30 node /Users/alice/proj/server.js --watch --port 3000',
+      '  910     1 root           15:02 /usr/sbin/cupsd -l'
+    ].join('\n')
+    const map = parsePs(stdout)
+    assert.deepEqual(map.get(4321), {
+      pid: 4321,
+      ppid: 900,
+      user: 'alice',
+      elapsed: '2h 15m',
+      commandLine: 'node /Users/alice/proj/server.js --watch --port 3000'
+    })
+    assert.equal(map.get(910)?.commandLine, '/usr/sbin/cupsd -l')
+    assert.equal(map.get(910)?.elapsed, '15m 2s')
+  })
+
+  it('should ignore the header line and blank lines', () => {
+    assert.equal(parsePs('\n  PID  PPID USER ELAPSED COMMAND\n').size, 0)
   })
 })

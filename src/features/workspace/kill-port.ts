@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { execFile } from 'node:child_process'
-import { parseLsof, parseNetstat, parseTasklist, type ListeningProcess } from './kill-port-utils'
+import { parseLsof, parseNetstat, parsePs, parseTasklist, type ListeningProcess } from './kill-port-utils'
 import { logError } from '../../utils/logger'
 
 /**
@@ -29,7 +29,25 @@ async function listListeningProcesses(): Promise<ListeningProcess[]> {
     const names = parseTasklist(tasklist)
     return parseNetstat(netstat).map(p => ({ ...p, command: names.get(p.pid) ?? p.command }))
   }
-  return parseLsof(await run('lsof', ['-nP', '-iTCP', '-sTCP:LISTEN', '-F', 'pcn']))
+  const procs = parseLsof(await run('lsof', ['-nP', '-iTCP', '-sTCP:LISTEN', '-F', 'pcn']))
+  return enrichWithPs(procs)
+}
+
+/**
+ * Augments each process with its full command line, owner, uptime and parent
+ * pid via a single `ps` call. Best-effort: if `ps` is unavailable or its output
+ * doesn't parse, the base listing is returned untouched.
+ */
+async function enrichWithPs(procs: ListeningProcess[]): Promise<ListeningProcess[]> {
+  const pids = [...new Set(procs.map(p => p.pid))]
+  if (pids.length === 0) {
+    return procs
+  }
+  const details = parsePs(await run('ps', ['-p', pids.join(','), '-o', 'pid=,ppid=,user=,etime=,args=']))
+  return procs.map(p => {
+    const d = details.get(p.pid)
+    return d ? { ...p, ppid: d.ppid, user: d.user, elapsed: d.elapsed, commandLine: d.commandLine } : p
+  })
 }
 
 interface PortPickItem extends vscode.QuickPickItem {
@@ -39,12 +57,21 @@ interface PortPickItem extends vscode.QuickPickItem {
 function toPickItems(procs: ListeningProcess[]): PortPickItem[] {
   return [...procs]
     .sort((a, b) => a.port - b.port || a.pid - b.pid)
-    .map(proc => ({
-      label: `$(plug) :${proc.port}`,
-      description: proc.command ? `${proc.command} · pid ${proc.pid}` : `pid ${proc.pid}`,
-      detail: proc.address,
-      proc
-    }))
+    .map(proc => {
+      const meta = [
+        proc.command,
+        `pid ${proc.pid}`,
+        proc.user,
+        proc.elapsed && `up ${proc.elapsed}`,
+        proc.ppid && `parent ${proc.ppid}`
+      ].filter(Boolean)
+      return {
+        label: `$(plug) :${proc.port}`,
+        description: meta.join(' · '),
+        detail: proc.commandLine ?? proc.address,
+        proc
+      }
+    })
 }
 
 function killPid(pid: number): { ok: boolean; error?: string } {

@@ -12,10 +12,27 @@
 export interface ListeningProcess {
   port: number
   pid: number
-  /** Process/command name, when known. */
+  /** Short process/command name, when known (lsof's COMMAND, truncated by the OS). */
   command?: string
   /** The raw local address the port was bound to (e.g. `*:3000`, `[::1]:8080`). */
   address?: string
+  /** Full command line with arguments, when enriched via `ps`. */
+  commandLine?: string
+  /** Owning user, when enriched via `ps`. */
+  user?: string
+  /** Human-friendly uptime (e.g. `2h 15m`), when enriched via `ps`. */
+  elapsed?: string
+  /** Parent process id, when enriched via `ps`. */
+  ppid?: number
+}
+
+/** Per-process details pulled from `ps`, keyed by pid in {@link parsePs}. */
+export interface ProcessDetail {
+  pid: number
+  ppid?: number
+  user?: string
+  elapsed?: string
+  commandLine?: string
 }
 
 /** Extracts the port from a local address like `*:3000`, `127.0.0.1:8080`, `[::1]:3000`. */
@@ -99,6 +116,55 @@ export function parseNetstat(stdout: string): ListeningProcess[] {
     result.push({ pid, port, address: cols[1] })
   }
   return result
+}
+
+/**
+ * Turns a `ps`-style elapsed time (`[[dd-]hh:]mm:ss`) into a compact, two-unit
+ * label like `1d 2h`, `2h 15m`, `15m 30s`, or `30s`.
+ */
+export function humanizeElapsed(etime: string): string | undefined {
+  const m = etime.trim().match(/^(?:(\d+)-)?(?:(\d+):)?(\d+):(\d+)$/)
+  if (!m) {
+    return undefined
+  }
+  const days = parseInt(m[1] ?? '0', 10)
+  const hours = parseInt(m[2] ?? '0', 10)
+  const mins = parseInt(m[3], 10)
+  const secs = parseInt(m[4], 10)
+  if (days) {
+    return `${days}d ${hours}h`
+  }
+  if (hours) {
+    return `${hours}h ${mins}m`
+  }
+  if (mins) {
+    return `${mins}m ${secs}s`
+  }
+  return `${secs}s`
+}
+
+/**
+ * Parses `ps -o pid=,ppid=,user=,etime=,args=` output into a pid → detail map.
+ * The command line is the last, space-bearing field, so we split off exactly
+ * the four fixed leading columns and keep the rest verbatim.
+ */
+export function parsePs(stdout: string): Map<number, ProcessDetail> {
+  const map = new Map<number, ProcessDetail>()
+  for (const raw of stdout.split(/\r?\n/)) {
+    const m = raw.trim().match(/^(\d+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(.+)$/)
+    if (!m) {
+      continue
+    }
+    const pid = parseInt(m[1], 10)
+    map.set(pid, {
+      pid,
+      ppid: parseInt(m[2], 10),
+      user: m[3],
+      elapsed: humanizeElapsed(m[4]),
+      commandLine: m[5].trim()
+    })
+  }
+  return map
 }
 
 /**
