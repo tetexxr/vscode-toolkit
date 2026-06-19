@@ -42,21 +42,31 @@ export interface DotnetListPackage {
   latestVersion?: string
 }
 
-/** List every installed top-level package across the target (.sln, .slnx or .csproj). */
+/**
+ * List every installed top-level package across the target (.sln, .slnx or .csproj).
+ *
+ * `--no-restore` is critical: without it, `dotnet list package` triggers an
+ * implicit restore of any project missing `obj/project.assets.json`. On a large
+ * solution with unrestored projects that restore hits the network and can hang
+ * past our timeout — especially since the overview runs installed + outdated in
+ * parallel, contending for the global-packages lock. We read already-restored
+ * state instead; the user restores via a normal build.
+ */
 export function listInstalledPackages(target: string, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<DotnetListOutput> {
-  return runDotnetList(target, ['package', '--format', 'json'], timeoutMs)
+  return runDotnetList(target, ['package', '--no-restore', '--format', 'json'], timeoutMs)
 }
 
 /**
  * List every outdated top-level package across the target. Packages that are
- * already up to date do not appear in the output.
+ * already up to date do not appear in the output. See `listInstalledPackages`
+ * for why `--no-restore` is passed.
  */
 export function listOutdatedPackages(
   target: string,
   includePrerelease: boolean,
   timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<DotnetListOutput> {
-  const args = ['package', '--outdated', '--format', 'json']
+  const args = ['package', '--outdated', '--no-restore', '--format', 'json']
   if (includePrerelease) {
     args.push('--include-prerelease')
   }
