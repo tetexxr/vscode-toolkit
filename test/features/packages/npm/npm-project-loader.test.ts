@@ -2,7 +2,11 @@ import { strict as assert } from 'assert'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import { detectPackageManager, readPackageManagerField } from '../../../../src/features/packages/npm/npm-commands'
+import {
+  detectPackageManager,
+  readPackageManagerField,
+  detectYarnIsBerry
+} from '../../../../src/features/packages/npm/npm-commands'
 
 describe('detectPackageManager', () => {
   let root: string
@@ -102,6 +106,56 @@ describe('detectPackageManager', () => {
     writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: 'pnpm@8.0.0' }))
     writeFileSync(join(root, 'yarn.lock'), '')
     assert.equal(detectPackageManager(root), 'pnpm')
+  })
+})
+
+describe('detectYarnIsBerry', () => {
+  let root: string
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'toolkit-test-'))
+  })
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  it('should treat yarn@3.x as berry via the packageManager field', () => {
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: 'yarn@3.8.7' }))
+    assert.equal(detectYarnIsBerry(root), true)
+  })
+
+  it('should treat yarn@1.x as classic via the packageManager field', () => {
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: 'yarn@1.22.19' }))
+    assert.equal(detectYarnIsBerry(root), false)
+  })
+
+  it('should treat a .yarnrc.yml marker as berry', () => {
+    writeFileSync(join(root, '.yarnrc.yml'), 'nodeLinker: node-modules\n')
+    assert.equal(detectYarnIsBerry(root), true)
+  })
+
+  it('should treat a classic .yarnrc marker as not berry', () => {
+    writeFileSync(join(root, '.yarnrc'), '')
+    assert.equal(detectYarnIsBerry(root), false)
+  })
+
+  it('should prefer the packageManager field over rc markers', () => {
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: 'yarn@1.22.19' }))
+    writeFileSync(join(root, '.yarnrc.yml'), '')
+    assert.equal(detectYarnIsBerry(root), false)
+  })
+
+  it('should find the berry signal in a parent directory (monorepo)', () => {
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: 'yarn@4.1.0', private: true }))
+    const sub = join(root, 'packages', 'app')
+    mkdirSync(sub, { recursive: true })
+    writeFileSync(join(sub, 'package.json'), JSON.stringify({ name: '@myorg/app' }))
+    assert.equal(detectYarnIsBerry(sub), true)
+  })
+
+  it('should default to not-berry when there are no yarn signals', () => {
+    assert.equal(detectYarnIsBerry(root), false)
   })
 })
 

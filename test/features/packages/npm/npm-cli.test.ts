@@ -2,7 +2,8 @@ import { strict as assert } from 'assert'
 import {
   parseNpmOutdatedOutput,
   parsePnpmOutdatedOutput,
-  parseYarnOutdatedOutput
+  parseYarnOutdatedOutput,
+  parseNcuOutdatedOutput
 } from '../../../../src/features/packages/npm/npm-cli'
 
 describe('parseNpmOutdatedOutput', () => {
@@ -105,5 +106,49 @@ describe('parseYarnOutdatedOutput', () => {
     const stdout =
       '{"type":"table","data":{"head":["Package","Current","Wanted"],"body":[["lodash","4.17.20","4.17.21"]]}}'
     assert.throws(() => parseYarnOutdatedOutput(stdout), /Latest column/i)
+  })
+})
+
+// ── parseNcuOutdatedOutput (yarn berry path) ──────────────
+
+describe('parseNcuOutdatedOutput', () => {
+  it('should parse the flat name→targetRange map from ncu --jsonUpgraded', () => {
+    const stdout = `{
+      "@inquirer/prompts": "^8.5.2",
+      "axios": "1.18.0",
+      "zod": "^4.4.3"
+    }`
+    const result = parseNcuOutdatedOutput(stdout)
+    assert.equal(Object.keys(result).length, 3)
+    // The leading operator is stripped so latest is a bare comparable version.
+    assert.equal(result['@inquirer/prompts'].latest, '8.5.2')
+    assert.equal(result.axios.latest, '1.18.0')
+    assert.equal(result.zod.latest, '4.4.3')
+    // ncu doesn't report the installed version.
+    assert.equal(result.axios.current, undefined)
+  })
+
+  it('should default wanted to latest', () => {
+    const result = parseNcuOutdatedOutput('{"axios":"^1.18.0"}')
+    assert.equal(result.axios.wanted, '1.18.0')
+    assert.equal(result.axios.latest, '1.18.0')
+  })
+
+  it('should return an empty object when nothing is upgradable', () => {
+    assert.deepEqual(parseNcuOutdatedOutput('{}'), {})
+  })
+
+  it('should return an empty object for empty stdout', () => {
+    assert.deepEqual(parseNcuOutdatedOutput(''), {})
+    assert.deepEqual(parseNcuOutdatedOutput('   '), {})
+  })
+
+  it('should tolerate leading noise before the JSON body', () => {
+    const result = parseNcuOutdatedOutput('Using yarn\n{"axios":"1.18.0"}')
+    assert.equal(result.axios.latest, '1.18.0')
+  })
+
+  it('should return empty when there is no JSON body at all', () => {
+    assert.deepEqual(parseNcuOutdatedOutput('no json here'), {})
   })
 })

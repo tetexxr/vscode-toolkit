@@ -11,13 +11,14 @@
  *    outdated entries exist).
  *  - npm works even without `node_modules` installed (`current` is absent in
  *    that case). pnpm and yarn need the project to be installed.
- *  - yarn berry (v2+) has no built-in `outdated` command — we surface a
- *    friendly message asking the user to enable the relevant plugin or run
- *    a one-off `npx npm-check-updates`.
+ *  - yarn berry (v2+) has no built-in `outdated` command, so for those projects
+ *    we shell out to `npx npm-check-updates --jsonUpgraded` instead, which is
+ *    package-manager agnostic and reads package.json directly.
  */
 
 import { spawn } from 'child_process'
 import type { PackageManager } from './npm-types'
+import { detectYarnIsBerry } from './npm-commands'
 
 const DEFAULT_TIMEOUT_MS = 60_000
 
@@ -44,6 +45,11 @@ export function runOutdated(
     return runOne(cwd, 'pnpm', ['outdated', '--format', 'json'], timeoutMs, parsePnpmOutdatedOutput)
   }
   if (packageManager === 'yarn') {
+    // Berry (v2+) has no `yarn outdated`; fall back to npm-check-updates, which
+    // works for any manifest. Classic yarn keeps its native command.
+    if (detectYarnIsBerry(cwd)) {
+      return runOne(cwd, 'npx', ['--yes', 'npm-check-updates', '--jsonUpgraded'], timeoutMs, parseNcuOutdatedOutput)
+    }
     return runOne(cwd, 'yarn', ['outdated', '--json'], timeoutMs, parseYarnOutdatedOutput)
   }
   return runOne(cwd, 'npm', ['outdated', '--json'], timeoutMs, parseNpmOutdatedOutput)
@@ -222,4 +228,41 @@ export function parseYarnOutdatedOutput(stdoutText: string): Record<string, NpmO
     }
   }
   return result
+}
+
+/**
+ * `npm-check-updates --jsonUpgraded` prints a flat `{ name: targetRange }` map of
+ * every dependency whose latest exceeds its manifest range (keeping the original
+ * operator, e.g. `"^8.5.2"` or `"8.5.2"` for a pinned dep). We don't get the
+ * installed version, so `current` is left undefined — the merge logic then
+ * compares `latest` against the manifest range. When nothing is upgradable ncu
+ * prints `{}`.
+ */
+export function parseNcuOutdatedOutput(stdoutText: string): Record<string, NpmOutdatedEntry> {
+  const trimmed = stdoutText.trim()
+  if (trimmed === '') {
+    return {}
+  }
+  const start = trimmed.indexOf('{')
+  if (start < 0) {
+    return {}
+  }
+  const raw = JSON.parse(trimmed.slice(start)) as Record<string, string>
+  const result: Record<string, NpmOutdatedEntry> = {}
+  for (const [name, target] of Object.entries(raw)) {
+    const latest = stripRangeOperator(target)
+    if (!latest) {
+      continue
+    }
+    result[name] = { wanted: latest, latest, dependent: '' }
+  }
+  return result
+}
+
+/** Drop a leading semver operator (`^`, `~`, `>=`, …) so a range becomes a bare version. */
+function stripRangeOperator(range: string): string {
+  if (!range || range === '*' || range === 'latest') {
+    return ''
+  }
+  return range.replace(/^[~^>=<\s]+/, '').trim()
 }
