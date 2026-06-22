@@ -355,7 +355,9 @@ Click the list icon in the sidebar title bar (or run **Toolkit: NuGet Solution O
 
 #### NPM Package Manager
 
-Manage npm packages for Node.js projects directly from VS Code. Supports browsing, installing, updating, and uninstalling packages using the npm registry API. Automatically detects and uses the project's package manager — **npm**, **yarn**, or **pnpm** — based on the lock file present in the project directory.
+Manage npm packages for Node.js projects directly from VS Code. Supports browsing, installing, updating, and uninstalling packages using the npm registry API. Automatically detects and uses the project's package manager — **npm**, **yarn** (classic and berry/v2+), or **pnpm** — based on the `packageManager` field or the lock file present in the project directory.
+
+> **yarn berry (v2+):** berry removed the built-in `yarn outdated` command, so for those projects the update check runs `npx npm-check-updates` under the hood (no global install needed). Everything else works the same.
 
 **Access:**
 
@@ -419,7 +421,7 @@ Check a project's dependencies for known vulnerabilities using each ecosystem's 
 
 | Command | Tool used |
 |---|---|
-| Toolkit: npm Audit | `npm audit` / `yarn audit` / `pnpm audit` (auto-detected from the lock file) |
+| Toolkit: npm Audit | `npm audit` / `yarn audit` (classic) / `yarn npm audit` (berry v2+) / `pnpm audit` (auto-detected) |
 | Toolkit: NuGet Vulnerabilities | `dotnet list package --vulnerable --include-transitive` |
 
 **Access:**

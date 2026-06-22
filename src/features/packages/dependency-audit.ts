@@ -9,7 +9,7 @@ import {
   summarizeFindings,
   type VulnerabilityFinding
 } from './dependency-audit-utils'
-import { detectPackageManager } from './npm/npm-commands'
+import { detectPackageManager, detectYarnIsBerry } from './npm/npm-commands'
 import { logError } from '../../utils/logger'
 
 /**
@@ -137,18 +137,23 @@ async function npmAudit(uri?: vscode.Uri): Promise<void> {
 async function runNpmAudit(projectUri: vscode.Uri): Promise<void> {
   const cwd = path.dirname(projectUri.fsPath)
   const pm = detectPackageManager(cwd)
+  // yarn berry (v2+) dropped `yarn audit` in favour of `yarn npm audit`, which
+  // emits the npm-style JSON report rather than yarn classic's ND-JSON.
+  const berry = pm === 'yarn' && detectYarnIsBerry(cwd)
   const scopeLabel = vscode.workspace.asRelativePath(projectUri)
 
   const findings = await vscode.window.withProgress(
     { location: vscode.ProgressLocation.Notification, title: `Running ${pm} audit...` },
     async () => {
-      const result = await runCli(pm, ['audit', '--json'], cwd)
+      const auditArgs = berry ? ['npm', 'audit', '--json'] : ['audit', '--json']
+      const result = await runCli(pm, auditArgs, cwd)
       if (result.failed) {
         vscode.window.showWarningMessage(`Toolkit: ${pm} audit failed — ${firstLine(result.stderr) || 'no output'}.`)
         return null
       }
       try {
-        return pm === 'yarn' ? parseYarnAuditNdjson(result.stdout) : parseNpmAuditJson(result.stdout)
+        // Only yarn classic uses ND-JSON; npm, pnpm and yarn berry all use npm's JSON shape.
+        return pm === 'yarn' && !berry ? parseYarnAuditNdjson(result.stdout) : parseNpmAuditJson(result.stdout)
       } catch (err) {
         logError('dependency-audit:npm', err)
         vscode.window.showWarningMessage(`Toolkit: could not parse ${pm} audit output.`)
@@ -160,7 +165,7 @@ async function runNpmAudit(projectUri: vscode.Uri): Promise<void> {
     return
   }
 
-  // npm and pnpm ship an official auto-fix command; yarn classic has none.
+  // npm and pnpm ship an official auto-fix command; yarn (classic or berry) has none.
   const fixAction: FixAction | undefined =
     pm === 'yarn'
       ? undefined
