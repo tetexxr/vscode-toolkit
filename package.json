@@ -992,15 +992,15 @@
       },
       {
         "command": "toolkit.compareWithBranch",
-        "title": "Toolkit: Compare with Branch..."
+        "title": "Toolkit: Compare with Branch or Commit..."
       },
       {
         "command": "toolkit.compareProjectWithBranch",
-        "title": "Toolkit: Compare Project with Branch..."
+        "title": "Toolkit: Compare Project with Branch or Commit..."
       },
       {
         "command": "toolkit.compareFolderWithBranch",
-        "title": "Toolkit: Compare Folder with Branch..."
+        "title": "Toolkit: Compare Folder with Branch or Commit..."
       },
       {
         "command": "toolkit.peekCommit.showLast",
