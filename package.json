@@ -9,7 +9,7 @@
     "url": "https://github.com/tetexxr/vscode-toolkit.git"
   },
   "engines": {
-    "vscode": "^1.120.0"
+    "vscode": "^1.125.0"
   },
   "categories": [
     "Other",
