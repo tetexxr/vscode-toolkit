@@ -2,14 +2,14 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.17.1",
+  "version": "1.17.2",
   "publisher": "tete",
   "repository": {
     "type": "git",
     "url": "https://github.com/tetexxr/vscode-toolkit.git"
   },
   "engines": {
-    "vscode": "^1.120.0"
+    "vscode": "^1.125.0"
   },
   "categories": [
     "Other",
@@ -992,15 +992,15 @@
       },
       {
         "command": "toolkit.compareWithBranch",
-        "title": "Toolkit: Compare with Branch..."
+        "title": "Toolkit: Compare with Branch or Commit..."
       },
       {
         "command": "toolkit.compareProjectWithBranch",
-        "title": "Toolkit: Compare Project with Branch..."
+        "title": "Toolkit: Compare Project with Branch or Commit..."
       },
       {
         "command": "toolkit.compareFolderWithBranch",
-        "title": "Toolkit: Compare Folder with Branch..."
+        "title": "Toolkit: Compare Folder with Branch or Commit..."
       },
       {
         "command": "toolkit.peekCommit.showLast",
@@ -3127,8 +3127,8 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^25.9.3",
-    "@types/vscode": "^1.120.0",
+    "@types/node": "^26.0.0",
+    "@types/vscode": "^1.125.0",
     "@vscode/vsce": "^3.9.2",
     "esbuild": "^0.28.1",
     "eslint": "^10.5.0",
@@ -3137,7 +3137,7 @@
     "pdfjs-dist": "^6.0.227",
     "prettier": "^3.8.4",
     "tsx": "^4.22.4",
-    "typescript-eslint": "^8.61.0"
+    "typescript-eslint": "^8.61.1"
   },
   "overrides": {
     "diff": "^9.0.0",

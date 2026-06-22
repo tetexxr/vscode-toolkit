@@ -4,7 +4,8 @@ import {
   relativizeToRepo,
   buildDiffTitle,
   parseNameStatusZ,
-  buildMultiDiffTitle
+  buildMultiDiffTitle,
+  parseCommitLog
 } from '../../../src/features/git/compare-utils'
 
 describe('parseGitBranchList', () => {
@@ -137,5 +138,51 @@ describe('buildMultiDiffTitle', () => {
 
   it('should preserve branch names with slashes', () => {
     assert.equal(buildMultiDiffTitle('app', 'feature/x', 2), 'app ↔ feature/x · 2 files')
+  })
+
+  it('should accept a short commit hash as the ref label', () => {
+    assert.equal(buildMultiDiffTitle('src', 'a1b2c3d4', 5), 'src ↔ a1b2c3d4 · 5 files')
+  })
+})
+
+describe('parseCommitLog', () => {
+  const US = '\x1f'
+  const RS = '\x1e'
+  const entry = (fields: string[]) => fields.join(US) + RS
+
+  it('should parse a single commit record', () => {
+    const out = entry(['abc123full', 'abc123', 'Fix the bug', 'Ada', '3 days ago'])
+    assert.deepEqual(parseCommitLog(out), [
+      { hash: 'abc123full', short: 'abc123', subject: 'Fix the bug', author: 'Ada', relativeDate: '3 days ago' }
+    ])
+  })
+
+  it('should parse multiple records, newest first', () => {
+    const out =
+      entry(['h1', 's1', 'first', 'A', 'now']) + entry(['h2', 's2', 'second', 'B', 'yesterday'])
+    assert.deepEqual(parseCommitLog(out), [
+      { hash: 'h1', short: 's1', subject: 'first', author: 'A', relativeDate: 'now' },
+      { hash: 'h2', short: 's2', subject: 'second', author: 'B', relativeDate: 'yesterday' }
+    ])
+  })
+
+  it('should preserve subjects that contain spaces and punctuation', () => {
+    const out = entry(['h', 's', 'feat: add thing (#42), fast', 'Grace Hopper', '2 hours ago'])
+    assert.deepEqual(parseCommitLog(out), [
+      { hash: 'h', short: 's', subject: 'feat: add thing (#42), fast', author: 'Grace Hopper', relativeDate: '2 hours ago' }
+    ])
+  })
+
+  it('should tolerate the newline git inserts between records', () => {
+    const out = entry(['h1', 's1', 'first', 'A', 'now']) + '\n' + entry(['h2', 's2', 'second', 'B', 'then'])
+    assert.deepEqual(parseCommitLog(out), [
+      { hash: 'h1', short: 's1', subject: 'first', author: 'A', relativeDate: 'now' },
+      { hash: 'h2', short: 's2', subject: 'second', author: 'B', relativeDate: 'then' }
+    ])
+  })
+
+  it('should return an empty array for empty output', () => {
+    assert.deepEqual(parseCommitLog(''), [])
+    assert.deepEqual(parseCommitLog('\n'), [])
   })
 })

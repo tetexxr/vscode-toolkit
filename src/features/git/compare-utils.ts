@@ -21,8 +21,38 @@ export function relativizeToRepo(repoRoot: string, fileFsPath: string): string {
   return rel.split(path.sep).join('/')
 }
 
-export function buildDiffTitle(fileName: string, branch: string): string {
-  return `${fileName} (${branch}) ↔ ${fileName}`
+export function buildDiffTitle(fileName: string, ref: string): string {
+  return `${fileName} (${ref}) ↔ ${fileName}`
+}
+
+/** A single entry from the recent commit log, used to populate the commit quick pick. */
+export interface CommitEntry {
+  /** Full 40-char commit hash. */
+  hash: string
+  /** Abbreviated hash as git produced it (%h). */
+  short: string
+  subject: string
+  author: string
+  /** Human-friendly relative date (e.g. "3 days ago"). */
+  relativeDate: string
+}
+
+/**
+ * Parses the output of:
+ *   git log --max-count=N --format=%H%x1f%h%x1f%s%x1f%an%x1f%ar%x1e
+ * Fields are separated by US (0x1f) and records by RS (0x1e), so subjects can
+ * contain anything except those control bytes.
+ */
+export function parseCommitLog(output: string): CommitEntry[] {
+  return output
+    .split('\x1e')
+    .map(record => record.replace(/^\r?\n/, ''))
+    .filter(record => record.length > 0)
+    .map(record => {
+      const [hash, short, subject, author, relativeDate] = record.split('\x1f')
+      return { hash, short, subject, author, relativeDate }
+    })
+    .filter(entry => entry.hash !== undefined && entry.hash.length > 0)
 }
 
 /** The kind of change a file underwent between the merge-base and the working tree. */
@@ -93,7 +123,7 @@ export function parseNameStatusZ(output: string): FileChange[] {
 }
 
 /** Title for the multi-file diff view, e.g. "src ↔ main · 3 files". */
-export function buildMultiDiffTitle(scope: string, branch: string, count: number): string {
+export function buildMultiDiffTitle(scope: string, ref: string, count: number): string {
   const noun = count === 1 ? 'file' : 'files'
-  return `${scope} ↔ ${branch} · ${count} ${noun}`
+  return `${scope} ↔ ${ref} · ${count} ${noun}`
 }

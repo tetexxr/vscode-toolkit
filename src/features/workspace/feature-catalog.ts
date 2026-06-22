@@ -23,7 +23,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Git', name: 'Git Blame', command: 'toolkit.toggleGitBlame', description: 'Toggle JetBrains-style inline blame annotations on every line' },
   { category: 'Git', name: 'Commit History view', command: 'toolkitCommitList.focus', description: 'SCM sidebar: edit message/date, reset HEAD, squash/fixup, cherry-pick from branch' },
   { category: 'Git', name: 'Git Stash Manager', command: 'toolkitGitStash.focus', description: 'SCM sidebar: list stashes with diff preview; create, apply, pop, drop' },
-  { category: 'Git', name: 'Compare with Branch', command: 'toolkit.compareWithBranch', description: 'Diff the file (or a folder / the project, from the explorer) against another local branch' },
+  { category: 'Git', name: 'Compare with Branch or Commit', command: 'toolkit.compareWithBranch', description: 'Diff the file (or a folder / the project, from the explorer) against another local branch or a specific commit' },
   { category: 'Git', name: 'Diff Tools', command: 'toolkit.diff.withClipboard', description: 'Compare the selection/file with the clipboard, or the active file with another open tab' },
   { category: 'Git', name: 'Expand Changed Files', command: 'toolkit.expandChangedFiles', description: 'Expand only the explorer folders containing git changes' },
   { category: 'Git', name: 'Stage Changes', description: 'Stage files/folders from the explorer context menu (multi-select, multi-repo)' },

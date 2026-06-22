@@ -23,6 +23,16 @@ VERSION=$(sed -n 's|.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*|\1|p' pack
 step "Uninstalling $EXTENSION_ID"
 code --uninstall-extension "$EXTENSION_ID" || true
 
+# Reconcile node_modules with package.json before building: vsce package runs the
+# vscode:prepublish hook (tsc + esbuild), which compiles against node_modules, so a
+# dependency bump that wasn't installed would otherwise be packaged silently stale.
+# Fast (~1s) when already up to date.
+# --ignore-scripts hardens against a malicious postinstall in the dependency tree;
+# it's safe here because the build only needs esbuild, whose binary ships as an
+# (optional) package rather than via its postinstall.
+step "Installing dependencies"
+npm install --ignore-scripts
+
 step "Packaging $NAME@$VERSION"
 npx --yes vsce package --allow-missing-repository --skip-license
 

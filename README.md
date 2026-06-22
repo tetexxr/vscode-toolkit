@@ -15,8 +15,8 @@ All-in-one VS Code utility extension.
     - [Git Stash Manager](#git-stash-manager)
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
-    - [Compare with Branch](#compare-with-branch)
-    - [Compare Project / Folder with Branch](#compare-project--folder-with-branch)
+    - [Compare with Branch or Commit](#compare-with-branch-or-commit)
+    - [Compare Project / Folder with Branch or Commit](#compare-project--folder-with-branch-or-commit)
     - [Peek Last Commit on Line](#peek-last-commit-on-line)
     - [Diff Tools](#diff-tools)
   - [Package Management](#package-management)
@@ -251,22 +251,32 @@ Stage files or folders directly from the file explorer context menu. Works with 
 
 Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once. In multi-root workspaces the selection can span repositories: targets are grouped and staged per repository.
 
-#### Compare with Branch
+#### Compare with Branch or Commit
 
-Diff the active file against the same file in any other local branch.
+Diff the active file against the same file in another local branch or at a specific commit.
 
-Run **Toolkit: Compare with Branch...** from the Command Palette or the editor context menu. A quick pick shows every local branch (sorted by most recent commit, excluding the current one). Picking one opens a diff editor: `file (branch)` on the left (read-only) and your working-tree copy on the right.
+Run **Toolkit: Compare with Branch or Commit...** from the Command Palette or the editor context menu. A first quick pick asks whether to compare against a **Branch** or a **Commit**:
 
-If the file doesn't exist on the chosen branch — or the file is untracked / outside a git repo — a warning explains why and the diff is not opened.
+- **Branch** — a quick pick shows every local branch (sorted by most recent commit, excluding the current one).
+- **Commit** — a quick pick lists the 100 most recent commits (short hash, subject, author, and relative date). Its first entry, **Enter a commit hash or ref…**, lets you type any reference instead — a full or short SHA, a tag, `HEAD~3`, `origin/main`, etc. — which is validated before the diff opens.
 
-#### Compare Project / Folder with Branch
+Either way a diff editor opens: `file (ref)` on the left (read-only) and your working-tree copy on the right.
 
-Preview a merge before you make it: diff **every** changed file at once against any other local branch.
+If the file doesn't exist at the chosen ref — or the file is untracked / outside a git repo — a warning explains why and the diff is not opened.
 
-- Run **Toolkit: Compare Project with Branch...** from the Command Palette — or right-click any folder in the Explorer — to compare the whole project.
-- Right-click a folder in the Explorer and choose **Compare Folder with Branch...** to scope the comparison to that folder.
+#### Compare Project / Folder with Branch or Commit
 
-A quick pick shows the local branches (excluding the current one). Picking one opens a single multi-file diff view listing each changed file: its content at the merge-base on the left, your working-tree copy on the right — so you see exactly what your side has changed since the branches diverged, including unsaved edits. Added files show an empty left side, deleted files an empty right side.
+Diff **every** changed file at once against another local branch or a specific commit.
+
+- Run **Toolkit: Compare Project with Branch or Commit...** from the Command Palette — or right-click any folder in the Explorer — to compare the whole project.
+- Right-click a folder in the Explorer and choose **Compare Folder with Branch or Commit...** to scope the comparison to that folder.
+
+As with the single-file command, a first quick pick chooses **Branch** or **Commit**, then you pick the ref. A single multi-file diff view opens listing each changed file, with its content at the base on the left and your working-tree copy on the right. Added files show an empty left side, deleted files an empty right side.
+
+The base differs by kind:
+
+- **Branch** — the base is the **merge-base** of the branch and `HEAD`, so the view previews exactly what merging would bring in from your side, including unsaved edits.
+- **Commit** — the base is the **commit itself** (a direct comparison), so you see exactly what changed since that commit.
 
 If there are no differences a message says so, and above 100 changed files a confirmation is asked first. Untracked (never-committed) files are not included.
 
