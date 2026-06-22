@@ -4,9 +4,11 @@ import { execFile } from 'node:child_process'
 import {
   buildDiffTitle,
   buildMultiDiffTitle,
+  parseCommitLog,
   parseGitBranchList,
   parseNameStatusZ,
   relativizeToRepo,
+  type CommitEntry,
   type FileChange
 } from './compare-utils'
 import { mapWithConcurrency } from '../../utils/async'
@@ -115,77 +117,186 @@ async function showFromRef(repoRoot: string, ref: string, relPath: string): Prom
   return stdout
 }
 
-async function isTrackedInBranch(repoRoot: string, branch: string, relPath: string): Promise<boolean> {
-  const { code } = await runGit(['cat-file', '-e', `${branch}:${relPath}`], repoRoot)
+async function isTrackedInRef(repoRoot: string, ref: string, relPath: string): Promise<boolean> {
+  const { code } = await runGit(['cat-file', '-e', `${ref}:${relPath}`], repoRoot)
   return code === 0
 }
 
-async function compareWithBranch(provider: BranchContentProvider, uri?: vscode.Uri): Promise<void> {
+/** Lists the most recent commits reachable from HEAD, newest first. */
+async function listCommits(repoRoot: string, count: number): Promise<CommitEntry[]> {
+  const { stdout, code } = await runGit(
+    ['log', `--max-count=${count}`, '--format=%H%x1f%h%x1f%s%x1f%an%x1f%ar%x1e'],
+    repoRoot
+  )
+  if (code !== 0) {
+    return []
+  }
+  return parseCommitLog(stdout)
+}
+
+/** Resolves an arbitrary ref (hash, tag, HEAD~3, …) to a full commit hash, or null if it isn't one. */
+async function resolveCommit(repoRoot: string, ref: string): Promise<string | null> {
+  const { stdout, code } = await runGit(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], repoRoot)
+  if (code !== 0) {
+    return null
+  }
+  const trimmed = stdout.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+/**
+ * Lets the user pick a commit to compare against: the recent log, plus an entry to type
+ * an arbitrary hash or ref (a tag, `HEAD~3`, a SHA from another branch, …).
+ * Returns the full hash and a short label for titles, or null if cancelled.
+ */
+async function pickCommit(
+  repoRoot: string,
+  placeHolder: string
+): Promise<{ hash: string; short: string } | null> {
+  const commits = await listCommits(repoRoot, 100)
+
+  type Item = vscode.QuickPickItem & { commit?: CommitEntry; enter?: boolean }
+  const enterItem: Item = {
+    label: '$(edit) Enter a commit hash or ref…',
+    alwaysShow: true,
+    enter: true
+  }
+  const items: Item[] = [
+    enterItem,
+    ...commits.map(c => ({
+      label: `$(git-commit) ${c.short} ${c.subject}`,
+      description: `${c.author} · ${c.relativeDate}`,
+      commit: c
+    }))
+  ]
+  const picked = await vscode.window.showQuickPick(items, { placeHolder, matchOnDescription: true })
+  if (!picked) {
+    return null
+  }
+  if (picked.commit) {
+    return { hash: picked.commit.hash, short: picked.commit.short }
+  }
+
+  // Manual entry: validate that whatever the user typed resolves to a commit.
+  const entered = await vscode.window.showInputBox({
+    placeHolder: 'e.g. a1b2c3d, v1.2.0, HEAD~3, origin/main',
+    prompt: 'Commit hash or ref to compare against'
+  })
+  if (entered === undefined) {
+    return null
+  }
+  const trimmed = entered.trim()
+  if (trimmed.length === 0) {
+    return null
+  }
+  const hash = await resolveCommit(repoRoot, trimmed)
+  if (!hash) {
+    vscode.window.showWarningMessage(`Toolkit: "${trimmed}" is not a valid commit or ref.`)
+    return null
+  }
+  return { hash, short: hash.slice(0, 8) }
+}
+
+/** Validates a file target and locates its repo. Reports the reason and returns null on failure. */
+async function resolveFileTarget(
+  uri?: vscode.Uri
+): Promise<{ targetUri: vscode.Uri; repoRoot: string; relPath: string } | null> {
   const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri
   if (!targetUri || targetUri.scheme === 'untitled') {
     vscode.window.showInformationMessage('Toolkit: open or select a saved file first.')
-    return
+    return null
   }
   if (targetUri.scheme !== 'file') {
     vscode.window.showInformationMessage('Toolkit: this command only works on local files.')
-    return
+    return null
   }
 
   const fileFsPath = targetUri.fsPath
-  const fileDir = path.dirname(fileFsPath)
-
-  const repoRoot = await getRepoRoot(fileDir)
+  const repoRoot = await getRepoRoot(path.dirname(fileFsPath))
   if (!repoRoot) {
     vscode.window.showWarningMessage('Toolkit: the active file is not inside a git repository.')
-    return
+    return null
   }
+  return { targetUri, repoRoot, relPath: relativizeToRepo(repoRoot, fileFsPath) }
+}
 
-  const relPath = relativizeToRepo(repoRoot, fileFsPath)
-
-  const [currentBranch, branches] = await Promise.all([
-    getCurrentBranch(repoRoot),
-    listBranches(repoRoot)
-  ])
-
-  const candidates = branches.filter(b => b !== currentBranch)
-  if (candidates.length === 0) {
-    vscode.window.showInformationMessage('Toolkit: no other local branches to compare with.')
-    return
-  }
-
-  type Item = vscode.QuickPickItem & { branch: string }
-  const items: Item[] = candidates.map(b => ({
-    label: `$(git-branch) ${b}`,
-    branch: b
-  }))
-  const picked = await vscode.window.showQuickPick(items, {
-    placeHolder: `Compare ${path.basename(fileFsPath)} against which branch?`,
-    matchOnDescription: true
-  })
-  if (!picked) {
-    return
-  }
-
-  const tracked = await isTrackedInBranch(repoRoot, picked.branch, relPath)
+/**
+ * Opens a diff of the working-tree file against its content at `ref`. `refLabel` is what
+ * the diff title shows (a branch name or a short hash); `ref` is what git reads from.
+ */
+async function diffFileAgainstRef(
+  provider: BranchContentProvider,
+  targetUri: vscode.Uri,
+  repoRoot: string,
+  relPath: string,
+  ref: string,
+  refLabel: string
+): Promise<void> {
+  const fileName = path.basename(targetUri.fsPath)
+  const tracked = await isTrackedInRef(repoRoot, ref, relPath)
   if (!tracked) {
-    vscode.window.showWarningMessage(
-      `Toolkit: ${path.basename(fileFsPath)} does not exist on branch "${picked.branch}".`
-    )
+    vscode.window.showWarningMessage(`Toolkit: ${fileName} does not exist at "${refLabel}".`)
     return
   }
 
-  const content = await showFromRef(repoRoot, picked.branch, relPath)
+  const content = await showFromRef(repoRoot, ref, relPath)
   if (content === null) {
-    vscode.window.showWarningMessage(
-      `Toolkit: could not read ${path.basename(fileFsPath)} from branch "${picked.branch}".`
-    )
+    vscode.window.showWarningMessage(`Toolkit: could not read ${fileName} from "${refLabel}".`)
     return
   }
 
-  const leftUri = buildBranchUri(picked.branch, relPath)
+  const leftUri = buildBranchUri(refLabel, relPath)
   provider.set(leftUri, content)
-  const title = buildDiffTitle(path.basename(fileFsPath), picked.branch)
+  const title = buildDiffTitle(fileName, refLabel)
   await vscode.commands.executeCommand('vscode.diff', leftUri, targetUri, title)
+}
+
+type CompareKind = 'branch' | 'commit'
+
+/** First step of every comparison: choose whether to compare against a branch or a commit. */
+async function pickCompareKind(): Promise<CompareKind | null> {
+  // `kind` is taken by QuickPickItem (separators), so the choice travels as `value`.
+  type Item = vscode.QuickPickItem & { value: CompareKind }
+  const items: Item[] = [
+    { label: '$(git-branch) Branch', description: 'Another local branch', value: 'branch' },
+    { label: '$(git-commit) Commit', description: 'A specific commit', value: 'commit' }
+  ]
+  const picked = await vscode.window.showQuickPick(items, {
+    placeHolder: 'Compare against a branch or a commit?'
+  })
+  return picked ? picked.value : null
+}
+
+async function compareFile(provider: BranchContentProvider, uri?: vscode.Uri): Promise<void> {
+  const target = await resolveFileTarget(uri)
+  if (!target) {
+    return
+  }
+  const kind = await pickCompareKind()
+  if (!kind) {
+    return
+  }
+  const fileName = path.basename(target.targetUri.fsPath)
+  if (kind === 'branch') {
+    const branch = await pickBranch(target.repoRoot, `Compare ${fileName} against which branch?`)
+    if (!branch) {
+      return
+    }
+    await diffFileAgainstRef(provider, target.targetUri, target.repoRoot, target.relPath, branch, branch)
+    return
+  }
+  const commit = await pickCommit(target.repoRoot, `Compare ${fileName} against which commit?`)
+  if (!commit) {
+    return
+  }
+  await diffFileAgainstRef(
+    provider,
+    target.targetUri,
+    target.repoRoot,
+    target.relPath,
+    commit.hash,
+    commit.short
+  )
 }
 
 async function getMergeBase(repoRoot: string, branch: string): Promise<string | null> {
@@ -225,10 +336,63 @@ async function pickBranch(repoRoot: string, placeHolder: string): Promise<string
 }
 
 /**
- * Compares everything under `relFolder` (or the whole repo when omitted) against `branch`,
- * opening a single multi-file diff view. The left side is each file's content at the
- * merge-base of `branch` and HEAD; the right side is the file in the working tree — so the
- * view previews exactly what merging would bring in from the current branch's side.
+ * Compares everything under `relFolder` (or the whole repo when omitted) against `base`,
+ * opening a single multi-file diff view. The left side is each file's content at `base`;
+ * the right side is the file in the working tree. `refLabel` is what the title and the
+ * virtual left-hand URIs are tagged with (a branch name or a short hash).
+ */
+async function compareScopeAgainstBase(
+  provider: BranchContentProvider,
+  repoRoot: string,
+  base: string,
+  refLabel: string,
+  relFolder: string | undefined,
+  scopeLabel: string
+): Promise<void> {
+  const changes = await listChangedFiles(repoRoot, base, relFolder)
+  if (changes.length === 0) {
+    vscode.window.showInformationMessage(`Toolkit: no changes between ${scopeLabel} and "${refLabel}".`)
+    return
+  }
+
+  if (changes.length > MANY_FILES_THRESHOLD) {
+    const proceed = await vscode.window.showWarningMessage(
+      `Toolkit: ${changes.length} files changed between ${scopeLabel} and "${refLabel}". Open them all?`,
+      { modal: true },
+      'Open'
+    )
+    if (proceed !== 'Open') {
+      return
+    }
+  }
+
+  // Resolve every left-hand side (base content) with bounded concurrency:
+  // unbounded Promise.all would spawn one git process per changed file at once.
+  const resources = await mapWithConcurrency(changes, 8, async change => {
+      let left: vscode.Uri | undefined
+      if (change.oldPath !== null) {
+        const content = await showFromRef(repoRoot, base, change.oldPath)
+        if (content !== null) {
+          left = buildBranchUri(refLabel, change.oldPath)
+          provider.set(left, content)
+        }
+      }
+      const right =
+        change.newPath !== null ? vscode.Uri.file(path.join(repoRoot, change.newPath)) : undefined
+      // The label identifies the row in the multi-diff tree; prefer the working-tree path.
+      const labelPath = change.newPath ?? change.oldPath ?? ''
+      const label = vscode.Uri.file(path.join(repoRoot, labelPath))
+      return [label, left, right] as [vscode.Uri, vscode.Uri?, vscode.Uri?]
+  })
+
+  const title = buildMultiDiffTitle(scopeLabel, refLabel, resources.length)
+  await vscode.commands.executeCommand('vscode.changes', title, resources)
+}
+
+/**
+ * Compares a scope against `branch`. Unlike the commit variant, the left side is each file's
+ * content at the merge-base of `branch` and HEAD — so the view previews exactly what merging
+ * would bring in from the current branch's side, not every difference between the two tips.
  */
 async function compareScopeWithBranch(
   provider: BranchContentProvider,
@@ -242,45 +406,22 @@ async function compareScopeWithBranch(
     vscode.window.showWarningMessage(`Toolkit: could not find a common ancestor with branch "${branch}".`)
     return
   }
+  await compareScopeAgainstBase(provider, repoRoot, mergeBase, branch, relFolder, scopeLabel)
+}
 
-  const changes = await listChangedFiles(repoRoot, mergeBase, relFolder)
-  if (changes.length === 0) {
-    vscode.window.showInformationMessage(`Toolkit: no changes between ${scopeLabel} and "${branch}".`)
-    return
-  }
-
-  if (changes.length > MANY_FILES_THRESHOLD) {
-    const proceed = await vscode.window.showWarningMessage(
-      `Toolkit: ${changes.length} files changed between ${scopeLabel} and "${branch}". Open them all?`,
-      { modal: true },
-      'Open'
-    )
-    if (proceed !== 'Open') {
-      return
-    }
-  }
-
-  // Resolve every left-hand side (merge-base content) with bounded concurrency:
-  // unbounded Promise.all would spawn one git process per changed file at once.
-  const resources = await mapWithConcurrency(changes, 8, async change => {
-      let left: vscode.Uri | undefined
-      if (change.oldPath !== null) {
-        const content = await showFromRef(repoRoot, mergeBase, change.oldPath)
-        if (content !== null) {
-          left = buildBranchUri(branch, change.oldPath)
-          provider.set(left, content)
-        }
-      }
-      const right =
-        change.newPath !== null ? vscode.Uri.file(path.join(repoRoot, change.newPath)) : undefined
-      // The label identifies the row in the multi-diff tree; prefer the working-tree path.
-      const labelPath = change.newPath ?? change.oldPath ?? ''
-      const label = vscode.Uri.file(path.join(repoRoot, labelPath))
-      return [label, left, right] as [vscode.Uri, vscode.Uri?, vscode.Uri?]
-  })
-
-  const title = buildMultiDiffTitle(scopeLabel, branch, resources.length)
-  await vscode.commands.executeCommand('vscode.changes', title, resources)
+/**
+ * Compares a scope against a specific `commit`. The diff is direct (commit ↔ working tree) —
+ * "what changed since that commit" — because a commit is a fixed point in history rather than
+ * a divergent line, so merge-base semantics wouldn't match the user's intent.
+ */
+async function compareScopeWithCommit(
+  provider: BranchContentProvider,
+  repoRoot: string,
+  commit: { hash: string; short: string },
+  relFolder: string | undefined,
+  scopeLabel: string
+): Promise<void> {
+  await compareScopeAgainstBase(provider, repoRoot, commit.hash, commit.short, relFolder, scopeLabel)
 }
 
 /** Resolves the repo root for a project-wide comparison, prompting when several folders qualify. */
@@ -326,49 +467,90 @@ async function resourceDirectory(uri: vscode.Uri): Promise<string> {
   return path.dirname(uri.fsPath)
 }
 
-async function compareProjectWithBranch(provider: BranchContentProvider, uri?: vscode.Uri): Promise<void> {
+/** The repo and label for a project-wide comparison from an optional clicked resource. */
+async function resolveProjectScope(
+  uri?: vscode.Uri
+): Promise<{ repoRoot: string; relFolder: undefined; scopeLabel: string } | null> {
   // From a clicked resource, target the repo that contains it; otherwise fall
   // back to the active workspace folder (and prompt when there are several).
-  let resolved: { repoRoot: string; label: string } | null
   if (uri && uri.scheme === 'file') {
     const repoRoot = await getRepoRoot(await resourceDirectory(uri))
     if (!repoRoot) {
       vscode.window.showWarningMessage('Toolkit: this file is not inside a git repository.')
-      return
+      return null
     }
-    resolved = { repoRoot, label: path.basename(repoRoot) }
-  } else {
-    resolved = await resolveProjectRepoRoot()
+    return { repoRoot, relFolder: undefined, scopeLabel: path.basename(repoRoot) }
   }
+  const resolved = await resolveProjectRepoRoot()
   if (!resolved) {
-    return
+    return null
   }
-  const branch = await pickBranch(resolved.repoRoot, `Compare the whole project against which branch?`)
-  if (!branch) {
-    return
-  }
-  await compareScopeWithBranch(provider, resolved.repoRoot, branch, undefined, resolved.label)
+  return { repoRoot: resolved.repoRoot, relFolder: undefined, scopeLabel: resolved.label }
 }
 
-async function compareFolderWithBranch(provider: BranchContentProvider, resourceUri?: vscode.Uri): Promise<void> {
+/** The repo, relative folder, and label for a folder-scoped comparison. */
+async function resolveFolderScope(
+  resourceUri?: vscode.Uri
+): Promise<{ repoRoot: string; relFolder: string; scopeLabel: string } | null> {
   if (!resourceUri || resourceUri.scheme !== 'file') {
     vscode.window.showInformationMessage('Toolkit: right-click a file or folder in the Explorer to use this command.')
-    return
+    return null
   }
   // On a file, compare the folder it sits in.
   const folderPath = await resourceDirectory(resourceUri)
   const repoRoot = await getRepoRoot(folderPath)
   if (!repoRoot) {
     vscode.window.showWarningMessage('Toolkit: this folder is not inside a git repository.')
-    return
+    return null
   }
   const relFolder = relativizeToRepo(repoRoot, folderPath)
   const scopeLabel = relFolder.length > 0 ? relFolder : path.basename(repoRoot)
-  const branch = await pickBranch(repoRoot, `Compare "${scopeLabel}" against which branch?`)
-  if (!branch) {
+  return { repoRoot, relFolder, scopeLabel }
+}
+
+/**
+ * Shared tail of the folder/project commands: ask branch-or-commit, pick the ref, and open
+ * the multi-file diff. `scopeName` is woven into the picker prompt (e.g. `the whole project`
+ * or `"src/foo"`).
+ */
+async function compareScopeWithChosenRef(
+  provider: BranchContentProvider,
+  scope: { repoRoot: string; relFolder: string | undefined; scopeLabel: string },
+  scopeName: string
+): Promise<void> {
+  const kind = await pickCompareKind()
+  if (!kind) {
     return
   }
-  await compareScopeWithBranch(provider, repoRoot, branch, relFolder, scopeLabel)
+  if (kind === 'branch') {
+    const branch = await pickBranch(scope.repoRoot, `Compare ${scopeName} against which branch?`)
+    if (!branch) {
+      return
+    }
+    await compareScopeWithBranch(provider, scope.repoRoot, branch, scope.relFolder, scope.scopeLabel)
+    return
+  }
+  const commit = await pickCommit(scope.repoRoot, `Compare ${scopeName} against which commit?`)
+  if (!commit) {
+    return
+  }
+  await compareScopeWithCommit(provider, scope.repoRoot, commit, scope.relFolder, scope.scopeLabel)
+}
+
+async function compareProject(provider: BranchContentProvider, uri?: vscode.Uri): Promise<void> {
+  const scope = await resolveProjectScope(uri)
+  if (!scope) {
+    return
+  }
+  await compareScopeWithChosenRef(provider, scope, 'the whole project')
+}
+
+async function compareFolder(provider: BranchContentProvider, resourceUri?: vscode.Uri): Promise<void> {
+  const scope = await resolveFolderScope(resourceUri)
+  if (!scope) {
+    return
+  }
+  await compareScopeWithChosenRef(provider, scope, `"${scope.scopeLabel}"`)
 }
 
 export function registerCompareCommands(context: vscode.ExtensionContext): void {
@@ -382,13 +564,13 @@ export function registerCompareCommands(context: vscode.ExtensionContext): void 
       }
     }),
     vscode.commands.registerCommand('toolkit.compareWithBranch', (uri?: vscode.Uri) =>
-      compareWithBranch(provider, uri)
+      compareFile(provider, uri)
     ),
     vscode.commands.registerCommand('toolkit.compareProjectWithBranch', (uri?: vscode.Uri) =>
-      compareProjectWithBranch(provider, uri)
+      compareProject(provider, uri)
     ),
     vscode.commands.registerCommand('toolkit.compareFolderWithBranch', (uri?: vscode.Uri) =>
-      compareFolderWithBranch(provider, uri)
+      compareFolder(provider, uri)
     )
   )
 }
