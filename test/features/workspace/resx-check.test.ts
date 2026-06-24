@@ -2,6 +2,8 @@ import { strict as assert } from 'assert'
 import {
   detectFormat,
   diffResx,
+  escapeXmlText,
+  findValueOffsets,
   isDesignerResx,
   parseResx,
   parseResxName,
@@ -9,7 +11,8 @@ import {
   renderEmptyEntry,
   reorderToNeutral,
   sameResxGroup,
-  stringEntries
+  stringEntries,
+  unescapeXml
 } from '../../../src/features/workspace/resx-check-utils'
 
 const NEUTRAL = `<?xml version="1.0" encoding="utf-8"?>
@@ -219,6 +222,37 @@ describe('planInsertions', () => {
     const plan = planInsertions(locale, neutralKeys, ['Pagination'])
     assert.equal(plan.length, 1)
     assert.equal(plan[0].atLine, 2)
+  })
+})
+
+describe('escapeXmlText / unescapeXml', () => {
+  it('should escape the XML-significant characters in a value', () => {
+    assert.equal(escapeXmlText('a < b & c > d'), 'a &lt; b &amp; c &gt; d')
+  })
+
+  it('should round-trip through unescape', () => {
+    const original = 'Tom & Jerry < "x" >'
+    assert.equal(unescapeXml(escapeXmlText(original)), original)
+  })
+})
+
+describe('findValueOffsets', () => {
+  it('should locate the inner value text of a compact entry', () => {
+    const offsets = findValueOffsets(NEUTRAL, 'Filter')!
+    assert.equal(NEUTRAL.slice(offsets.start, offsets.end), 'Filtrar')
+  })
+
+  it('should not confuse a key with a longer key sharing its prefix', () => {
+    const text = `<root>
+  <data name="Title" xml:space="preserve"><value>short</value></data>
+  <data name="TitleLong" xml:space="preserve"><value>longer</value></data>
+</root>`
+    const offsets = findValueOffsets(text, 'Title')!
+    assert.equal(text.slice(offsets.start, offsets.end), 'short')
+  })
+
+  it('should return null for an absent key', () => {
+    assert.equal(findValueOffsets(NEUTRAL, 'Nope'), null)
   })
 })
 

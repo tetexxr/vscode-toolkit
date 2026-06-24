@@ -560,8 +560,9 @@ class ResxTreeProvider implements vscode.TreeDataProvider<ResxNode> {
         .map(m => `${m.locale} ${a.totalKeys === 0 ? 100 : Math.round(((a.totalKeys - m.missing) / a.totalKeys) * 100)}%`)
         .join(' · ')
       item.iconPath = new vscode.ThemeIcon(drift ? 'warning' : 'globe')
-      item.tooltip = `${a.totalKeys} key(s) in the neutral file`
+      item.tooltip = `${a.totalKeys} key(s) in the neutral file — click to open it`
       item.resourceUri = a.neutralUri
+      item.command = { title: 'Open neutral file', command: 'vscode.open', arguments: [a.neutralUri] }
       item.contextValue = 'resxGroup'
       return item
     }

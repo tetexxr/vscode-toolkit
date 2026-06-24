@@ -182,6 +182,16 @@
           }
         ],
         "priority": "default"
+      },
+      {
+        "viewType": "toolkit.resxEditor",
+        "displayName": "Resource Grid",
+        "selector": [
+          {
+            "filenamePattern": "*.resx"
+          }
+        ],
+        "priority": "default"
       }
     ],
     "commands": [
