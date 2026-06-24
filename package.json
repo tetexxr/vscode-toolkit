@@ -78,6 +78,11 @@
           "id": "rest-client",
           "title": "REST Client",
           "icon": "themes/icons/rest-client.svg"
+        },
+        {
+          "id": "toolkit-resx",
+          "title": "Resources",
+          "icon": "themes/icons/resx.svg"
         }
       ]
     },
@@ -131,6 +136,12 @@
           "name": "Response History"
         }
       ],
+      "toolkit-resx": [
+        {
+          "id": "toolkitResxGroups",
+          "name": "Localization Groups"
+        }
+      ],
       "explorer": [
         {
           "id": "toolkitScratchFiles",
@@ -155,6 +166,10 @@
       {
         "view": "toolkitRestFiles",
         "contents": "No .http or .rest files were found in this workspace.\n[New Request File](command:toolkit.restClient.files.create)"
+      },
+      {
+        "view": "toolkitResxGroups",
+        "contents": "No .resx localization groups were found.\nA group is a neutral file (Foo.resx) plus per-locale satellites (Foo.en.resx, Foo.ca.resx, ...).\n[Refresh](command:toolkit.resx.refresh)"
       }
     ],
     "customEditors": [
@@ -1015,6 +1030,19 @@
         "title": "Toolkit: Check .env Files"
       },
       {
+        "command": "toolkit.resx.checkWorkspace",
+        "title": "Toolkit: Check Resource Translations"
+      },
+      {
+        "command": "toolkit.resx.syncGroup",
+        "title": "Toolkit: Sync Missing Keys to All Languages"
+      },
+      {
+        "command": "toolkit.resx.refresh",
+        "title": "Toolkit: Refresh Localization Groups",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "toolkit.svgPreview.open",
         "title": "Toolkit: Preview SVG",
         "icon": "$(open-preview)"
@@ -1270,6 +1298,11 @@
           "command": "toolkit.todoTree.refresh",
           "when": "view == toolkitTodoTree",
           "group": "navigation@3"
+        },
+        {
+          "command": "toolkit.resx.refresh",
+          "when": "view == toolkitResxGroups",
+          "group": "navigation@1"
         },
         {
           "command": "toolkit.restClient.files.groupByTree",
@@ -1952,6 +1985,11 @@
           "command": "toolkit.envCheck.checkWorkspace",
           "group": "0_toolkit@4",
           "when": "resourceFilename =~ /^\\.env/"
+        },
+        {
+          "command": "toolkit.resx.syncGroup",
+          "group": "0_toolkit@4",
+          "when": "resourceExtname == .resx"
         },
         {
           "command": "toolkit.markdown.compactTable",
@@ -2775,6 +2813,22 @@
           ],
           "default": "warning",
           "description": "Severity of the missing-keys diagnostic. Undeclared keys are always reported as hints."
+        },
+        "toolkit.resx.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check .resx localization groups (a neutral Foo.resx plus its Foo.<locale>.resx satellites) for keys missing in some languages, a different key order, duplicates, and placeholder ({0}/{1}) drift. WinForms designer resx are skipped."
+        },
+        "toolkit.resx.severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warning",
+            "information",
+            "hint"
+          ],
+          "default": "warning",
+          "description": "Severity of the missing-keys and key-order diagnostics on a locale file. Orphan keys and not-yet-translated hints on the neutral file are always reported as hints."
         },
         "toolkit.jsonToType.extractNestedTypes": {
           "type": "boolean",

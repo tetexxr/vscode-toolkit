@@ -59,6 +59,7 @@ All-in-one VS Code utility extension.
     - [Clipboard History](#clipboard-history)
     - [Bookmarks](#bookmarks)
     - [.env Checker](#env-checker)
+    - [Resource Translations](#resource-translations)
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
@@ -1401,6 +1402,41 @@ Keeps your local `.env` files in sync with the committed example (`.env.example`
 | `toolkit.envCheck.enabled` | `true` | Toggle the .env diagnostics |
 | `toolkit.envCheck.exampleNames` | `[.env.example, .env.sample, .env.template, .env.dist]` | File names recognized as the example, in lookup order |
 | `toolkit.envCheck.severity` | `warning` | Severity of the missing-keys diagnostic (undeclared keys are always hints) |
+
+#### Resource Translations
+
+Manages .NET `.resx` localization groups — a **neutral** file (`Strings.resx`) plus its per-locale **satellites** (`Strings.en.resx`, `Strings.ca.resx`, …) in the same folder. The neutral file is the source of truth: every key it declares is expected in every language, in the same order. This is the side-by-side experience Visual Studio's managed resources editor gives you, brought to VS Code and extended with consistency checks.
+
+**Diagnostics (automatic, on open/save):**
+
+- Editing a **locale** file (`Strings.en.resx`): a warning on the first line lists keys **missing** versus the neutral file; another warns when the **key order differs**. Each key **not declared** in the neutral gets a hint on its line, **duplicate** keys get a warning, and a key whose **`{0}`/`{1}` placeholders** don't match the neutral value is flagged (a frequent cause of runtime formatting errors).
+- Editing the **neutral** file: each key not yet present in every language gets a hint — `Foo is missing in: ca, en`.
+
+**Quick fixes (`Ctrl+.`):**
+
+- On a locale file — **Add N missing keys (empty)** inserts the missing keys with empty values, each placed in the right spot to keep the neutral's order; **Reorder keys to match the neutral file** rewrites the file in the neutral order (values travel with their entry, untouched).
+- On the neutral file — **Add missing keys to all languages (empty)** creates the key in every satellite that lacks it, in one edit.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Toolkit: Sync Missing Keys to All Languages | For the active `.resx` group, add every key the neutral declares but a satellite lacks (empty values) — also on the editor context menu of any `.resx` file |
+| Toolkit: Check Resource Translations | Scan every group in the workspace; out-of-sync groups are listed in a quick pick (useful after a big pull) |
+| Toolkit: Refresh Localization Groups | Re-scan for the **Resources** sidebar |
+
+**Resources sidebar:** an activity-bar view lists every localization group with per-language **completeness** (`ca 100% · en 98%`); groups with drift are flagged and expanded to show which language is missing keys or out of order. Click a language to open that file. A badge shows how many groups are out of sync.
+
+**New keys are created with an empty value** so the missing translation is obvious (and forced) rather than silently inheriting the neutral text. The writer preserves each file's existing style — compact one-line entries stay one-line — so diffs stay minimal.
+
+**WinForms designer resx are skipped:** files with typed/binary entries (`type=`/`mimetype=`), `>>name` metadata or a `<metadata>` block have intentionally partial satellites, so they are never drift-checked.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.resx.enabled` | `true` | Toggle the .resx diagnostics |
+| `toolkit.resx.severity` | `warning` | Severity of the missing-keys and key-order diagnostics (orphan keys and not-yet-translated hints are always hints) |
 
 #### TODO Tree
 

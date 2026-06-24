@@ -32,6 +32,7 @@ import { registerInsertCommands } from './features/editing/generate/insert'
 import { registerTimestampCommands } from './features/editing/convert/timestamp'
 import { registerUuidHover } from './features/editing/convert/uuid-hover'
 import { registerEnvCheckCommands } from './features/workspace/env-check'
+import { registerResxCheckCommands } from './features/workspace/resx-check'
 import { registerDependencyAuditCommands } from './features/packages/dependency-audit'
 import { registerMarkdownTableCommands } from './features/editing/convert/markdown-table'
 import { registerFeatureLauncherCommands } from './features/workspace/feature-launcher'
@@ -93,6 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerTimestampCommands(context)
   registerUuidHover(context)
   registerEnvCheckCommands(context)
+  registerResxCheckCommands(context)
   registerDependencyAuditCommands(context)
   registerMarkdownTableCommands(context)
   registerJsonToTypeCommands(context)
