@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'node:path'
 import * as crypto from 'node:crypto'
+import { BUTTON_CSS } from '../../utils/webview-ui'
 import {
   diffResx,
   escapeXmlText,
@@ -444,27 +445,23 @@ class GridSession {
 
   private html(): string {
     const nonce = crypto.randomBytes(16).toString('hex')
-    const csp = [
-      `default-src 'none'`,
-      `style-src ${this.panel.webview.cspSource} 'unsafe-inline'`,
-      `script-src 'nonce-${nonce}'`
-    ].join('; ')
+    const csp = `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';`
     return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
+<style nonce="${nonce}">
+  ${BUTTON_CSS}
   body { margin: 0; padding: 0; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-foreground); }
-  .toolbar { position: sticky; top: 0; z-index: 3; display: flex; gap: 8px; align-items: center; padding: 6px 10px; background: var(--vscode-editor-background); border-bottom: 1px solid var(--vscode-panel-border); }
-  .toolbar input[type=search] { flex: 0 1 240px; padding: 3px 6px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, transparent); border-radius: 2px; }
-  .toolbar button { padding: 3px 10px; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; border-radius: 2px; cursor: pointer; }
-  .toolbar button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
-  .toolbar button:hover { background: var(--vscode-button-hoverBackground); }
+  .toolbar { position: sticky; top: 0; z-index: 3; display: flex; gap: 0.5rem; align-items: center; padding: 6px 10px; background: var(--vscode-editor-background); border-bottom: 1px solid var(--vscode-panel-border); }
+  .search-box { flex: 0 1 240px; padding: 4px 8px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-dropdown-border)); font-family: inherit; font-size: inherit; }
+  .search-box::placeholder { color: var(--vscode-input-placeholderForeground); }
+  .search-box:focus { outline: 1px solid var(--vscode-focusBorder); }
   .toolbar label { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; user-select: none; }
   .spacer { flex: 1; }
-  .count { opacity: 0.7; }
+  .count { color: var(--vscode-descriptionForeground); }
   table { border-collapse: collapse; width: 100%; }
   th, td { border: 1px solid var(--vscode-panel-border); padding: 0; text-align: left; vertical-align: top; }
   thead th { position: sticky; top: 37px; z-index: 2; background: var(--vscode-editorGroupHeader-tabsBackground, var(--vscode-editor-background)); padding: 5px 8px; font-weight: 600; }
@@ -472,26 +469,26 @@ class GridSession {
   thead th.keycol { z-index: 2; }
   td.keycol { display: flex; align-items: center; gap: 6px; }
   td.keycol .kname { flex: 1; }
-  .rowacts { display: inline-flex; gap: 2px; opacity: 0; }
-  tr:hover .rowacts { opacity: 0.75; }
-  .rowacts button { background: transparent; border: none; color: var(--vscode-foreground); cursor: pointer; padding: 0 3px; font-size: 0.95em; border-radius: 2px; }
-  .rowacts button:hover { background: var(--vscode-toolbar-hoverBackground, rgba(128,128,128,0.2)); opacity: 1; }
+  tbody tr:hover { background: var(--vscode-list-hoverBackground); }
+  .rowacts { display: inline-flex; gap: 2px; visibility: hidden; }
+  tr:hover .rowacts { visibility: visible; }
+  .rowacts button.icon { width: 20px; height: 20px; font-size: 12px; border-radius: 3px; }
   .cell { min-height: 1.4em; padding: 4px 8px; outline: none; white-space: pre-wrap; word-break: break-word; }
   .cell:focus { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
-  td.missing .cell:empty::before { content: '— missing —'; opacity: 0.5; font-style: italic; }
-  td.missing { background: color-mix(in srgb, var(--vscode-inputValidation-warningBackground, #5a4500) 35%, transparent); }
-  td.mismatch { box-shadow: inset 3px 0 0 var(--vscode-editorWarning-foreground, #cca700); }
-  th .pct { font-weight: normal; margin-left: 6px; font-size: 0.85em; opacity: 0.7; }
-  th .pct.low { color: var(--vscode-editorWarning-foreground, #cca700); opacity: 1; }
-  th .src { cursor: pointer; opacity: 0.6; margin-left: 6px; }
-  th .src:hover { opacity: 1; }
+  td.missing .cell:empty::before { content: '— missing —'; color: var(--vscode-descriptionForeground); font-style: italic; }
+  td.missing { background: var(--vscode-inputValidation-warningBackground, #4d3800); }
+  td.mismatch { box-shadow: inset 3px 0 0 var(--vscode-inputValidation-warningBorder, #ff8c00); }
+  th .pct { font-weight: normal; margin-left: 6px; font-size: 0.85em; color: var(--vscode-descriptionForeground); }
+  th .pct.low { color: var(--vscode-inputValidation-warningBorder, #ff8c00); }
+  th .src { cursor: pointer; color: var(--vscode-descriptionForeground); margin-left: 6px; }
+  th .src:hover { color: var(--vscode-foreground); }
   .dirty::after { content: ' ●'; color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d); }
-  .empty { padding: 20px; opacity: 0.7; }
+  .empty { padding: 20px; color: var(--vscode-descriptionForeground); }
 </style>
 </head>
 <body>
   <div class="toolbar">
-    <input type="search" id="filter" placeholder="Filter keys…" />
+    <input type="search" id="filter" class="search-box" placeholder="Filter keys…" />
     <label><input type="checkbox" id="onlyIssues" /> Only missing / mismatched</label>
     <span class="spacer"></span>
     <span class="count" id="count"></span>
@@ -564,10 +561,12 @@ class GridSession {
       const acts = document.createElement('span');
       acts.className = 'rowacts';
       const ren = document.createElement('button');
+      ren.className = 'icon';
       ren.textContent = '✎';
       ren.title = 'Rename key in all languages';
       ren.addEventListener('click', () => vscode.postMessage({ type: 'renameKey', key: r.key }));
       const del = document.createElement('button');
+      del.className = 'icon';
       del.textContent = '🗑';
       del.title = 'Delete key from all languages';
       del.addEventListener('click', () => vscode.postMessage({ type: 'deleteKey', key: r.key }));
