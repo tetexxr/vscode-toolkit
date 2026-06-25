@@ -100,13 +100,17 @@ async function promptForDelimiter(): Promise<string | undefined> {
     return undefined
   }
   if (picked.isCustom) {
-    return await vscode.window.showInputBox({
-      prompt: 'Enter the delimiter to align by',
-      placeHolder: 'e.g. =, :, =>, //, |',
-      validateInput: value => (value.length === 0 ? 'Delimiter cannot be empty' : null)
-    })
+    return await promptCustomDelimiter()
   }
   return picked.delimiter
+}
+
+function promptCustomDelimiter(): Thenable<string | undefined> {
+  return vscode.window.showInputBox({
+    prompt: 'Enter the delimiter to align by',
+    placeHolder: 'e.g. =, :, =>, //, |',
+    validateInput: value => (value.length === 0 ? 'Delimiter cannot be empty' : null)
+  })
 }
 
 export function registerAlignCommands(context: vscode.ExtensionContext): void {
@@ -126,4 +130,13 @@ export function registerAlignCommands(context: vscode.ExtensionContext): void {
       })
     )
   }
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.align.custom', async () => {
+      const delimiter = await promptCustomDelimiter()
+      if (delimiter) {
+        await applyAlignment(delimiter)
+      }
+    })
+  )
 }
