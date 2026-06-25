@@ -59,6 +59,7 @@ All-in-one VS Code utility extension.
     - [Clipboard History](#clipboard-history)
     - [Bookmarks](#bookmarks)
     - [.env Checker](#env-checker)
+    - [Resource Translations](#resource-translations)
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
@@ -1401,6 +1402,41 @@ Keeps your local `.env` files in sync with the committed example (`.env.example`
 | `toolkit.envCheck.enabled` | `true` | Toggle the .env diagnostics |
 | `toolkit.envCheck.exampleNames` | `[.env.example, .env.sample, .env.template, .env.dist]` | File names recognized as the example, in lookup order |
 | `toolkit.envCheck.severity` | `warning` | Severity of the missing-keys diagnostic (undeclared keys are always hints) |
+
+#### Resource Translations
+
+Manages .NET `.resx` localization groups — a **neutral** file (`Strings.resx`) plus its per-locale **satellites** (`Strings.en.resx`, `Strings.ca.resx`, …) in the same folder. The neutral file is the source of truth: every key it declares is expected in every language, in the same order. This is the side-by-side experience Visual Studio's managed resources editor gives you, brought to VS Code and extended with consistency checks.
+
+**Grid editor:** `.resx` files open as XML as usual; to edit a whole group as a **grid** — keys down the side, one column per language — run **Open as Resource Grid** from the editor or explorer right-click menu (or the table icon in the editor title bar, or *Reopen With… → Resource Grid*). Each language column header shows its **translation coverage** (e.g. `en 98%` = it has 98% of the neutral file's keys), highlighted when below 100%. Edit any cell to write straight into that language's file; **missing** cells are highlighted (and fillable in place), and cells whose `{0}`/`{1}` placeholders drift from the neutral are marked. Hovering a key row reveals **✎ rename** and **🗑 delete** actions that apply across *every* language at once (delete asks first). The toolbar has a key **filter**, an **Only missing / mismatched** toggle, **Add key** (adds it empty to every language), **Sort to neutral** (reorders the satellites), **Normalize** (rewrites the group to the canonical compact one-line format, leaving designer entries and comments untouched), and **Save all** (saves every dirty language file at once — each column shows a ● when it has unsaved changes). The ⤢ on a column header opens that file's raw XML; to edit the XML directly, use **Reopen With… → Text Editor**. New/blank cells are written with an empty value, never the neutral text, so an untranslated string stays obvious. *(WinForms designer resx open in the grid too, showing only their string entries; their satellites are partial by design, so the missing-cell highlighting there is informational.)*
+
+**Diagnostics (automatic, on open/save):**
+
+- Editing a **locale** file (`Strings.en.resx`): a warning on the first line lists keys **missing** versus the neutral file; another warns when the **key order differs**. Each key **not declared** in the neutral gets a hint on its line, **duplicate** keys get a warning, and a key whose **`{0}`/`{1}` placeholders** don't match the neutral value is flagged (a frequent cause of runtime formatting errors).
+- Editing the **neutral** file: each key not yet present in every language gets a hint — `Foo is missing in: ca, en`.
+
+**Quick fixes (`Ctrl+.`):**
+
+- On a locale file — **Add N missing keys (empty)** inserts the missing keys with empty values, each placed in the right spot to keep the neutral's order; **Reorder keys to match the neutral file** rewrites the file in the neutral order (values travel with their entry, untouched).
+- On the neutral file — **Add missing keys to all languages (empty)** creates the key in every satellite that lacks it, in one edit.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Toolkit: Sync Missing Keys to All Languages | For the active `.resx` group, add every key the neutral declares but a satellite lacks (empty values) — also on the editor context menu of any `.resx` file |
+| Toolkit: Normalize Resource Format | Rewrite the active group's files to the canonical compact one-line format (designer entries and comments untouched) — also on the `.resx` editor context menu |
+| Toolkit: Check Resource Translations | Scan every group in the workspace; out-of-sync groups are listed in a quick pick (useful after a big pull) |
+
+**New keys are created with an empty value** so the missing translation is obvious (and forced) rather than silently inheriting the neutral text. The writer preserves each file's existing style — compact one-line entries stay one-line — so diffs stay minimal.
+
+**WinForms designer resx are skipped:** files with typed/binary entries (`type=`/`mimetype=`), `>>name` metadata or a `<metadata>` block have intentionally partial satellites, so they are never drift-checked.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `toolkit.resx.enabled` | `true` | Toggle the .resx diagnostics |
+| `toolkit.resx.severity` | `warning` | Severity of the missing-keys and key-order diagnostics (orphan keys and not-yet-translated hints are always hints) |
 
 #### TODO Tree
 

@@ -167,6 +167,16 @@
           }
         ],
         "priority": "default"
+      },
+      {
+        "viewType": "toolkit.resxEditor",
+        "displayName": "Resource Grid",
+        "selector": [
+          {
+            "filenamePattern": "*.resx"
+          }
+        ],
+        "priority": "option"
       }
     ],
     "commands": [
@@ -1015,6 +1025,23 @@
         "title": "Toolkit: Check .env Files"
       },
       {
+        "command": "toolkit.resx.checkWorkspace",
+        "title": "Toolkit: Check Resource Translations"
+      },
+      {
+        "command": "toolkit.resx.syncGroup",
+        "title": "Toolkit: Sync Missing Keys to All Languages"
+      },
+      {
+        "command": "toolkit.resx.normalizeGroup",
+        "title": "Toolkit: Normalize Resource Format"
+      },
+      {
+        "command": "toolkit.resx.openGrid",
+        "title": "Toolkit: Open as Resource Grid",
+        "icon": "$(table)"
+      },
+      {
         "command": "toolkit.svgPreview.open",
         "title": "Toolkit: Preview SVG",
         "icon": "$(open-preview)"
@@ -1356,6 +1383,11 @@
         {
           "command": "toolkit.svgPreview.open",
           "when": "resourceExtname == .svg",
+          "group": "navigation"
+        },
+        {
+          "command": "toolkit.resx.openGrid",
+          "when": "resourceExtname == .resx && activeCustomEditorId != toolkit.resxEditor",
           "group": "navigation"
         }
       ],
@@ -1703,39 +1735,44 @@
           "group": "0_toolkit@13"
         },
         {
+          "command": "toolkit.resx.openGrid",
+          "when": "resourceExtname == .resx",
+          "group": "0_toolkit@14"
+        },
+        {
           "command": "toolkit.openInGitHub.explorerFile",
           "when": "explorerResourceIsRoot == false",
-          "group": "0_toolkit@14"
+          "group": "0_toolkit@15"
         },
         {
           "command": "toolkit.svgPreview.open",
           "when": "resourceExtname == .svg",
-          "group": "0_toolkit@15"
+          "group": "0_toolkit@16"
         },
         {
           "command": "toolkit.restClient.createPrivateEnv",
           "when": "resourceFilename == http-client.env.json",
-          "group": "0_toolkit@16"
+          "group": "0_toolkit@17"
         },
         {
           "command": "toolkit.localHistory.show",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@17"
+          "group": "0_toolkit@18"
         },
         {
           "command": "toolkit.git.stageChanges",
           "when": "gitOpenRepositoryCount != 0",
-          "group": "0_toolkit@18"
+          "group": "0_toolkit@19"
         },
         {
           "command": "toolkit.todoTree.excludeFolder",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@19"
+          "group": "0_toolkit@20"
         },
         {
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@20"
+          "group": "0_toolkit@21"
         }
       ],
       "commandPalette": [
@@ -2035,122 +2072,137 @@
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.npm.audit",
+          "command": "toolkit.resx.normalizeGroup",
           "group": "0_toolkit@22",
+          "when": "resourceExtname == .resx"
+        },
+        {
+          "command": "toolkit.npm.audit",
+          "group": "0_toolkit@23",
           "when": "resourceFilename == package.json"
         },
         {
           "command": "toolkit.nuget.vulnerabilities",
-          "group": "0_toolkit@23",
+          "group": "0_toolkit@24",
           "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj"
         },
         {
+          "command": "toolkit.resx.openGrid",
+          "group": "0_toolkit@25",
+          "when": "resourceExtname == .resx"
+        },
+        {
           "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@24"
-        },
-        {
-          "command": "toolkit.pasteImage",
-          "group": "0_toolkit@25"
-        },
-        {
-          "command": "toolkit.colorPicker.pickFromScreen",
           "group": "0_toolkit@26"
         },
         {
+          "command": "toolkit.pasteImage",
+          "group": "0_toolkit@27"
+        },
+        {
+          "command": "toolkit.colorPicker.pickFromScreen",
+          "group": "0_toolkit@28"
+        },
+        {
           "command": "toolkit.svgPreview.open",
-          "group": "0_toolkit@27",
+          "group": "0_toolkit@29",
           "when": "resourceExtname == .svg"
         },
         {
           "command": "toolkit.restClient.copyAsCurl",
-          "group": "0_toolkit@28",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.createPrivateEnv",
-          "group": "0_toolkit@29",
-          "when": "resourceFilename == http-client.env.json"
-        },
-        {
-          "command": "toolkit.restClient.importCurl",
           "group": "0_toolkit@30",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.selectEnvironment",
+          "command": "toolkit.restClient.createPrivateEnv",
           "group": "0_toolkit@31",
+          "when": "resourceFilename == http-client.env.json"
+        },
+        {
+          "command": "toolkit.restClient.importCurl",
+          "group": "0_toolkit@32",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.runScripts.pick",
-          "group": "0_toolkit@32",
-          "when": "resourceFilename == package.json"
-        },
-        {
-          "command": "toolkit.restClient.sendAll",
+          "command": "toolkit.restClient.selectEnvironment",
           "group": "0_toolkit@33",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
-          "command": "toolkit.restClient.send",
+          "command": "toolkit.runScripts.pick",
           "group": "0_toolkit@34",
+          "when": "resourceFilename == package.json"
+        },
+        {
+          "command": "toolkit.restClient.sendAll",
+          "group": "0_toolkit@35",
+          "when": "resourceExtname == .http || resourceExtname == .rest"
+        },
+        {
+          "command": "toolkit.restClient.send",
+          "group": "0_toolkit@36",
           "when": "resourceExtname == .http || resourceExtname == .rest"
         },
         {
           "command": "toolkit.localHistory.show",
-          "group": "0_toolkit@35"
+          "group": "0_toolkit@37"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@36",
+          "group": "0_toolkit@38",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.sumNumbers",
-          "group": "0_toolkit@37",
+          "group": "0_toolkit@39",
           "when": "editorHasSelection"
         },
         {
+          "command": "toolkit.resx.syncGroup",
+          "group": "0_toolkit@40",
+          "when": "resourceExtname == .resx"
+        },
+        {
           "command": "toolkit.toggleCsvRainbow",
-          "group": "0_toolkit@38",
+          "group": "0_toolkit@41",
           "when": "resourceExtname == .csv || resourceExtname == .tsv"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@39"
+          "group": "0_toolkit@42"
         },
         {
           "command": "toolkit.toggleQuotes",
-          "group": "0_toolkit@40"
+          "group": "0_toolkit@43"
         },
         {
           "command": "toolkit.transform.jsonMinify",
-          "group": "0_toolkit@41",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
-        },
-        {
-          "command": "toolkit.transform.jsonPrettify",
-          "group": "0_toolkit@42",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
-        },
-        {
-          "command": "toolkit.transform.jsonSortKeys",
-          "group": "0_toolkit@43",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
-        },
-        {
-          "command": "toolkit.transform.jsonToYaml",
           "group": "0_toolkit@44",
           "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
         },
         {
-          "command": "toolkit.transform.yamlToJson",
+          "command": "toolkit.transform.jsonPrettify",
           "group": "0_toolkit@45",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.jsonSortKeys",
+          "group": "0_toolkit@46",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.jsonToYaml",
+          "group": "0_toolkit@47",
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+        },
+        {
+          "command": "toolkit.transform.yamlToJson",
+          "group": "0_toolkit@48",
           "when": "editorHasSelection && editorLangId == yaml"
         },
         {
           "command": "toolkit.transform",
-          "group": "0_toolkit@46",
+          "group": "0_toolkit@49",
           "when": "editorHasSelection"
         }
       ]
@@ -2775,6 +2827,22 @@
           ],
           "default": "warning",
           "description": "Severity of the missing-keys diagnostic. Undeclared keys are always reported as hints."
+        },
+        "toolkit.resx.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check .resx localization groups (a neutral Foo.resx plus its Foo.<locale>.resx satellites) for keys missing in some languages, a different key order, duplicates, and placeholder ({0}/{1}) drift. WinForms designer resx are skipped."
+        },
+        "toolkit.resx.severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warning",
+            "information",
+            "hint"
+          ],
+          "default": "warning",
+          "description": "Severity of the missing-keys and key-order diagnostics on a locale file. Orphan keys and not-yet-translated hints on the neutral file are always reported as hints."
         },
         "toolkit.jsonToType.extractNestedTypes": {
           "type": "boolean",
