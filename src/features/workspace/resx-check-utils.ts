@@ -169,13 +169,6 @@ export function parseResxName(fileName: string): ResxName | null {
   return { base: stem, locale: null }
 }
 
-/** Whether two resx file names belong to the same localization group. */
-export function sameResxGroup(a: string, b: string): boolean {
-  const pa = parseResxName(a)
-  const pb = parseResxName(b)
-  return pa !== null && pb !== null && pa.base === pb.base
-}
-
 export interface ResxDiff {
   /** Keys in the neutral file but absent from the locale file. */
   missing: string[]
@@ -227,7 +220,7 @@ export function diffResx(neutralText: string, localeText: string): ResxDiff {
   // Order: compare the shared keys in each file's own sequence.
   const sharedInNeutral = neutralKeys.filter(k => localeSet.has(k))
   const sharedInLocale = localeKeys.filter(k => neutralSet.has(k))
-  const orderDiffers = sharedInNeutral.join(' ') !== sharedInLocale.join(' ')
+  const orderDiffers = sharedInNeutral.join(' ') !== sharedInLocale.join(' ')
 
   const placeholderMismatch: string[] = []
   for (const e of locale) {

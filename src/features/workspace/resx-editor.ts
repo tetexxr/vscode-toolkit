@@ -52,8 +52,6 @@ interface GridPayload {
   base: string
   columns: { id: string; label: string; dirty: boolean; complete: number | null }[]
   rows: RowPayload[]
-  /** Column ids that are missing at least one key. */
-  hasNeutral: boolean
 }
 
 class GridSession {
@@ -208,8 +206,7 @@ class GridSession {
         dirty: pc.col.document.isDirty,
         complete: pc.complete
       })),
-      rows,
-      hasNeutral: !!neutral
+      rows
     }
   }
 
@@ -649,6 +646,13 @@ class ResxEditorProvider implements vscode.CustomTextEditorProvider {
     document: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel
   ): Promise<void> {
+    // The grid only makes sense for a real file on disk. A non-file scheme
+    // (e.g. the git: side of a Source Control diff) falls back to plain text.
+    if (document.uri.scheme !== 'file') {
+      webviewPanel.dispose()
+      await vscode.commands.executeCommand('vscode.openWith', document.uri, 'default')
+      return
+    }
     const session = new GridSession(document, webviewPanel)
     await session.init()
   }

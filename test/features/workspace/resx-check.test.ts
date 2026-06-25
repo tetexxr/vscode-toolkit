@@ -13,7 +13,6 @@ import {
   renameKeyInText,
   renderEmptyEntry,
   reorderToNeutral,
-  sameResxGroup,
   stringEntries,
   unescapeXml
 } from '../../../src/features/workspace/resx-check-utils'
@@ -106,17 +105,6 @@ describe('parseResxName', () => {
 
   it('should return null for non-resx files', () => {
     assert.equal(parseResxName('List.txt'), null)
-  })
-})
-
-describe('sameResxGroup', () => {
-  it('should group a neutral file with its locale satellites', () => {
-    assert.equal(sameResxGroup('List.resx', 'List.en.resx'), true)
-    assert.equal(sameResxGroup('List.en.resx', 'List.ca.resx'), true)
-  })
-
-  it('should not group different bases', () => {
-    assert.equal(sameResxGroup('List.resx', 'Detail.resx'), false)
   })
 })
 
