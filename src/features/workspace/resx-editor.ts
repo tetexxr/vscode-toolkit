@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import * as path from 'node:path'
 import * as crypto from 'node:crypto'
 import { BUTTON_CSS } from '../../utils/webview-ui'
+import { cssColor } from '../../utils/palette'
 import {
   diffResx,
   escapeXmlText,
@@ -459,8 +460,8 @@ class GridSession {
   .toolbar label { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; user-select: none; }
   .spacer { flex: 1; }
   .count { color: var(--vscode-descriptionForeground); }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { border: 1px solid var(--vscode-panel-border); padding: 0; text-align: left; vertical-align: top; }
+  table { border-collapse: collapse; width: 100%; border: 1px solid ${cssColor.border}; }
+  th, td { border: 1px solid ${cssColor.border}; padding: 0; text-align: left; vertical-align: top; }
   thead th { position: sticky; top: 37px; z-index: 2; background: var(--vscode-editorGroupHeader-tabsBackground, var(--vscode-editor-background)); padding: 5px 8px; font-weight: 600; }
   th.keycol, td.keycol { position: sticky; left: 0; z-index: 1; background: var(--vscode-editor-background); font-family: var(--vscode-editor-font-family); white-space: nowrap; padding: 5px 8px; }
   thead th.keycol { z-index: 2; }
