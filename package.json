@@ -262,33 +262,33 @@
       },
       {
         "command": "toolkit.openInGitHub.file",
-        "title": "Open in GitHub - File",
-        "category": "Toolkit"
+        "title": "Open File",
+        "category": "GitHub"
       },
       {
         "command": "toolkit.openInGitHub.repo",
-        "title": "Open in GitHub - Repository",
-        "category": "Toolkit"
+        "title": "Open Repository",
+        "category": "GitHub"
       },
       {
         "command": "toolkit.openInGitHub.blame",
-        "title": "Open in GitHub - Blame",
-        "category": "Toolkit"
+        "title": "Open Blame",
+        "category": "GitHub"
       },
       {
         "command": "toolkit.openInGitHub.history",
-        "title": "Open in GitHub - File History",
-        "category": "Toolkit"
+        "title": "Open File History",
+        "category": "GitHub"
       },
       {
         "command": "toolkit.openInGitHub.copyFileLink",
-        "title": "Open in GitHub - Copy File Link",
-        "category": "Toolkit"
+        "title": "Copy File Link",
+        "category": "GitHub"
       },
       {
         "command": "toolkit.openInGitHub.copyPermalink",
-        "title": "Open in GitHub - Copy Permalink",
-        "category": "Toolkit"
+        "title": "Copy Permalink",
+        "category": "GitHub"
       },
       {
         "command": "toolkit.formatFiles.workspace",
@@ -1577,6 +1577,10 @@
       {
         "id": "toolkit.menu.gitExplorer",
         "label": "Git"
+      },
+      {
+        "id": "toolkit.menu.github",
+        "label": "GitHub"
       }
     ],
     "menus": {
@@ -2301,80 +2305,85 @@
           "group": "0_toolkit@7"
         },
         {
-          "submenu": "toolkit.menu.insert",
+          "submenu": "toolkit.menu.github",
+          "when": "gitOpenRepositoryCount != 0",
           "group": "0_toolkit@8"
         },
         {
+          "submenu": "toolkit.menu.insert",
+          "group": "0_toolkit@9"
+        },
+        {
           "command": "toolkit.jsonToType",
-          "group": "0_toolkit@9",
+          "group": "0_toolkit@10",
           "when": "editorLangId =~ /^(json|jsonc)$/"
         },
         {
           "submenu": "toolkit.menu.lines",
           "when": "editorHasSelection",
-          "group": "0_toolkit@10"
+          "group": "0_toolkit@11"
         },
         {
           "submenu": "toolkit.menu.markdown",
           "when": "editorLangId == markdown",
-          "group": "0_toolkit@11"
+          "group": "0_toolkit@12"
         },
         {
           "command": "toolkit.scratch.newFromSelection",
-          "group": "0_toolkit@12",
+          "group": "0_toolkit@13",
           "when": "editorHasSelection"
         },
         {
           "submenu": "toolkit.menu.packagesEditor",
           "when": "resourceFilename == package.json || resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
-          "group": "0_toolkit@13"
-        },
-        {
-          "command": "toolkit.pasteImage",
           "group": "0_toolkit@14"
         },
         {
-          "command": "toolkit.colorPicker.pickFromScreen",
+          "command": "toolkit.pasteImage",
           "group": "0_toolkit@15"
         },
         {
+          "command": "toolkit.colorPicker.pickFromScreen",
+          "group": "0_toolkit@16"
+        },
+        {
           "command": "toolkit.svgPreview.open",
-          "group": "0_toolkit@16",
+          "group": "0_toolkit@17",
           "when": "resourceExtname == .svg"
         },
         {
           "submenu": "toolkit.menu.resources",
           "when": "resourceExtname == .resx",
-          "group": "0_toolkit@17"
+          "group": "0_toolkit@18"
         },
         {
           "submenu": "toolkit.menu.rest",
           "when": "resourceExtname == .http || resourceExtname == .rest || resourceFilename == http-client.env.json",
-          "group": "0_toolkit@18"
+          "group": "0_toolkit@19"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@19",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.sumNumbers",
           "group": "0_toolkit@20",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.toggleCsvRainbow",
+          "command": "toolkit.sumNumbers",
           "group": "0_toolkit@21",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.toggleCsvRainbow",
+          "group": "0_toolkit@22",
           "when": "resourceExtname == .csv || resourceExtname == .tsv"
         },
         {
           "command": "toolkit.toggleQuotes",
-          "group": "0_toolkit@22"
+          "group": "0_toolkit@23"
         },
         {
           "submenu": "toolkit.menu.transform",
           "when": "editorHasSelection",
-          "group": "0_toolkit@23"
+          "group": "0_toolkit@24"
         }
       ],
       "toolkit.menu.transform": [
@@ -2828,10 +2837,6 @@
           "group": "1_g@1"
         },
         {
-          "command": "toolkit.openInGitHub.file",
-          "group": "1_g@2"
-        },
-        {
           "command": "toolkit.toggleGitBlame",
           "group": "1_g@3"
         },
@@ -2865,6 +2870,32 @@
           "command": "toolkit.localHistory.show",
           "when": "!explorerResourceIsFolder",
           "group": "2_h@1"
+        }
+      ],
+      "toolkit.menu.github": [
+        {
+          "command": "toolkit.openInGitHub.file",
+          "group": "1_open@1"
+        },
+        {
+          "command": "toolkit.openInGitHub.repo",
+          "group": "1_open@2"
+        },
+        {
+          "command": "toolkit.openInGitHub.blame",
+          "group": "1_open@3"
+        },
+        {
+          "command": "toolkit.openInGitHub.history",
+          "group": "1_open@4"
+        },
+        {
+          "command": "toolkit.openInGitHub.copyFileLink",
+          "group": "2_copy@1"
+        },
+        {
+          "command": "toolkit.openInGitHub.copyPermalink",
+          "group": "2_copy@2"
         }
       ]
     },
