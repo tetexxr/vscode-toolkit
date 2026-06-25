@@ -1258,7 +1258,43 @@
     "submenus": [
       {
         "id": "toolkit.csharp.new",
-        "label": "Toolkit: New C#"
+        "label": "C#"
+      },
+      {
+        "id": "toolkit.menu.transform",
+        "label": "Transform"
+      },
+      {
+        "id": "toolkit.menu.convert",
+        "label": "Convert"
+      },
+      {
+        "id": "toolkit.menu.compareEditor",
+        "label": "Compare"
+      },
+      {
+        "id": "toolkit.menu.packagesEditor",
+        "label": "Packages"
+      },
+      {
+        "id": "toolkit.menu.rest",
+        "label": "REST Client"
+      },
+      {
+        "id": "toolkit.menu.resources",
+        "label": "Resources"
+      },
+      {
+        "id": "toolkit.menu.markdown",
+        "label": "Markdown"
+      },
+      {
+        "id": "toolkit.menu.compareExplorer",
+        "label": "Compare"
+      },
+      {
+        "id": "toolkit.menu.packagesExplorer",
+        "label": "Packages"
       }
     ],
     "menus": {
@@ -1670,109 +1706,84 @@
       ],
       "explorer/context": [
         {
-          "command": "toolkit.collapseRecursively",
+          "submenu": "toolkit.csharp.new",
           "when": "explorerResourceIsFolder",
           "group": "0_toolkit@1"
         },
         {
-          "command": "toolkit.compareFolderWithBranch",
-          "when": "gitOpenRepositoryCount != 0",
+          "command": "toolkit.collapseRecursively",
+          "when": "explorerResourceIsFolder",
           "group": "0_toolkit@2"
         },
         {
-          "command": "toolkit.compareProjectWithBranch",
+          "submenu": "toolkit.menu.compareExplorer",
           "when": "gitOpenRepositoryCount != 0",
           "group": "0_toolkit@3"
         },
         {
-          "command": "toolkit.compareWithBranch",
-          "when": "!explorerResourceIsFolder && gitOpenRepositoryCount != 0",
-          "group": "0_toolkit@4"
-        },
-        {
           "command": "toolkit.expandChangedFiles",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@5"
+          "group": "0_toolkit@4"
         },
         {
           "command": "toolkit.expandRecursively",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@6"
+          "group": "0_toolkit@5"
         },
         {
           "command": "toolkit.formatFiles.thisFolder",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@7"
+          "group": "0_toolkit@6"
         },
         {
           "command": "toolkit.gitHistory",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@8"
-        },
-        {
-          "command": "toolkit.npm.managePackages",
-          "when": "resourceFilename == package.json",
-          "group": "0_toolkit@9"
-        },
-        {
-          "command": "toolkit.nuget.managePackages",
-          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
-          "group": "0_toolkit@10"
-        },
-        {
-          "submenu": "toolkit.csharp.new",
-          "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@11"
-        },
-        {
-          "command": "toolkit.npm.audit",
-          "when": "resourceFilename == package.json",
-          "group": "0_toolkit@12"
-        },
-        {
-          "command": "toolkit.nuget.vulnerabilities",
-          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj || resourceExtname == .sln || resourceExtname == .slnx",
-          "group": "0_toolkit@13"
+          "group": "0_toolkit@7"
         },
         {
           "command": "toolkit.resx.openGrid",
           "when": "resourceExtname == .resx",
-          "group": "0_toolkit@14"
+          "group": "0_toolkit@8"
         },
         {
           "command": "toolkit.openInGitHub.explorerFile",
           "when": "explorerResourceIsRoot == false",
-          "group": "0_toolkit@15"
+          "group": "0_toolkit@9"
+        },
+        {
+          "submenu": "toolkit.menu.packagesExplorer",
+          "when": "resourceFilename == package.json || resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
+          "group": "0_toolkit@10"
         },
         {
           "command": "toolkit.svgPreview.open",
           "when": "resourceExtname == .svg",
-          "group": "0_toolkit@16"
+          "group": "0_toolkit@11"
         },
         {
           "command": "toolkit.restClient.createPrivateEnv",
           "when": "resourceFilename == http-client.env.json",
-          "group": "0_toolkit@17"
+          "group": "0_toolkit@12"
         },
         {
           "command": "toolkit.localHistory.show",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@18"
+          "group": "0_toolkit@13"
         },
         {
           "command": "toolkit.git.stageChanges",
           "when": "gitOpenRepositoryCount != 0",
-          "group": "0_toolkit@19"
+          "group": "0_toolkit@14"
         },
         {
           "command": "toolkit.todoTree.excludeFolder",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@20"
+          "group": "0_toolkit@15"
         },
         {
           "command": "toolkit.toggleGitBlame",
           "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@21"
+          "group": "0_toolkit@16"
         }
       ],
       "commandPalette": [
@@ -1991,219 +2002,308 @@
           "when": "resourceFilename =~ /^\\.env/"
         },
         {
-          "command": "toolkit.markdown.compactTable",
-          "group": "0_toolkit@5",
-          "when": "editorLangId == markdown"
+          "submenu": "toolkit.menu.compareEditor",
+          "group": "0_toolkit@5"
         },
         {
-          "command": "toolkit.compareWithBranch",
-          "group": "0_toolkit@6",
-          "when": "gitOpenRepositoryCount != 0"
-        },
-        {
-          "command": "toolkit.diff.withClipboard",
-          "group": "0_toolkit@7"
-        },
-        {
-          "command": "toolkit.diff.withOpenFile",
-          "group": "0_toolkit@8"
-        },
-        {
-          "command": "toolkit.convertImportsToAlias",
-          "group": "0_toolkit@9",
-          "when": "editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/"
-        },
-        {
-          "command": "toolkit.convertImportsToRelative",
-          "group": "0_toolkit@10",
-          "when": "editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/"
-        },
-        {
-          "command": "toolkit.numberBase.convert",
-          "group": "0_toolkit@11",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.timestamp.convert",
-          "group": "0_toolkit@12",
-          "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.markdown.formatTable",
-          "group": "0_toolkit@13",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "toolkit.markdown.generateToc",
-          "group": "0_toolkit@14",
-          "when": "editorLangId == markdown"
+          "submenu": "toolkit.menu.convert",
+          "when": "editorHasSelection || editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/",
+          "group": "0_toolkit@6"
         },
         {
           "command": "toolkit.gitHistory",
-          "group": "0_toolkit@15"
+          "group": "0_toolkit@7"
         },
         {
           "command": "toolkit.insert",
-          "group": "0_toolkit@16"
+          "group": "0_toolkit@8"
         },
         {
           "command": "toolkit.jsonToType",
-          "group": "0_toolkit@17",
+          "group": "0_toolkit@9",
           "when": "editorLangId =~ /^(json|jsonc)$/"
         },
         {
           "command": "toolkit.lines",
-          "group": "0_toolkit@18",
+          "group": "0_toolkit@10",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.npm.managePackages",
-          "group": "0_toolkit@19",
-          "when": "resourceFilename == package.json"
-        },
-        {
-          "command": "toolkit.nuget.managePackages",
-          "group": "0_toolkit@20",
-          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj"
+          "submenu": "toolkit.menu.markdown",
+          "when": "editorLangId == markdown",
+          "group": "0_toolkit@11"
         },
         {
           "command": "toolkit.scratch.newFromSelection",
+          "group": "0_toolkit@12",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "toolkit.openInGitHub.file",
+          "group": "0_toolkit@13"
+        },
+        {
+          "submenu": "toolkit.menu.packagesEditor",
+          "when": "resourceFilename == package.json || resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
+          "group": "0_toolkit@14"
+        },
+        {
+          "command": "toolkit.pasteImage",
+          "group": "0_toolkit@15"
+        },
+        {
+          "command": "toolkit.colorPicker.pickFromScreen",
+          "group": "0_toolkit@16"
+        },
+        {
+          "command": "toolkit.svgPreview.open",
+          "group": "0_toolkit@17",
+          "when": "resourceExtname == .svg"
+        },
+        {
+          "submenu": "toolkit.menu.resources",
+          "when": "resourceExtname == .resx",
+          "group": "0_toolkit@18"
+        },
+        {
+          "submenu": "toolkit.menu.rest",
+          "when": "resourceExtname == .http || resourceExtname == .rest || resourceFilename == http-client.env.json",
+          "group": "0_toolkit@19"
+        },
+        {
+          "command": "toolkit.localHistory.show",
+          "group": "0_toolkit@20"
+        },
+        {
+          "command": "toolkit.slugify",
           "group": "0_toolkit@21",
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.resx.normalizeGroup",
-          "group": "0_toolkit@22",
-          "when": "resourceExtname == .resx"
-        },
-        {
-          "command": "toolkit.npm.audit",
-          "group": "0_toolkit@23",
-          "when": "resourceFilename == package.json"
-        },
-        {
-          "command": "toolkit.nuget.vulnerabilities",
-          "group": "0_toolkit@24",
-          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj"
-        },
-        {
-          "command": "toolkit.resx.openGrid",
-          "group": "0_toolkit@25",
-          "when": "resourceExtname == .resx"
-        },
-        {
-          "command": "toolkit.openInGitHub.file",
-          "group": "0_toolkit@26"
-        },
-        {
-          "command": "toolkit.pasteImage",
-          "group": "0_toolkit@27"
-        },
-        {
-          "command": "toolkit.colorPicker.pickFromScreen",
-          "group": "0_toolkit@28"
-        },
-        {
-          "command": "toolkit.svgPreview.open",
-          "group": "0_toolkit@29",
-          "when": "resourceExtname == .svg"
-        },
-        {
-          "command": "toolkit.restClient.copyAsCurl",
-          "group": "0_toolkit@30",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.createPrivateEnv",
-          "group": "0_toolkit@31",
-          "when": "resourceFilename == http-client.env.json"
-        },
-        {
-          "command": "toolkit.restClient.importCurl",
-          "group": "0_toolkit@32",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.selectEnvironment",
-          "group": "0_toolkit@33",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.runScripts.pick",
-          "group": "0_toolkit@34",
-          "when": "resourceFilename == package.json"
-        },
-        {
-          "command": "toolkit.restClient.sendAll",
-          "group": "0_toolkit@35",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.restClient.send",
-          "group": "0_toolkit@36",
-          "when": "resourceExtname == .http || resourceExtname == .rest"
-        },
-        {
-          "command": "toolkit.localHistory.show",
-          "group": "0_toolkit@37"
-        },
-        {
-          "command": "toolkit.slugify",
-          "group": "0_toolkit@38",
-          "when": "editorHasSelection"
-        },
-        {
           "command": "toolkit.sumNumbers",
-          "group": "0_toolkit@39",
+          "group": "0_toolkit@22",
           "when": "editorHasSelection"
-        },
-        {
-          "command": "toolkit.resx.syncGroup",
-          "group": "0_toolkit@40",
-          "when": "resourceExtname == .resx"
         },
         {
           "command": "toolkit.toggleCsvRainbow",
-          "group": "0_toolkit@41",
+          "group": "0_toolkit@23",
           "when": "resourceExtname == .csv || resourceExtname == .tsv"
         },
         {
           "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@42"
+          "group": "0_toolkit@24"
         },
         {
           "command": "toolkit.toggleQuotes",
-          "group": "0_toolkit@43"
+          "group": "0_toolkit@25"
         },
         {
+          "submenu": "toolkit.menu.transform",
+          "when": "editorHasSelection",
+          "group": "0_toolkit@26"
+        }
+      ],
+      "toolkit.menu.transform": [
+        {
           "command": "toolkit.transform.jsonMinify",
-          "group": "0_toolkit@44",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/",
+          "group": "1_items@1"
         },
         {
           "command": "toolkit.transform.jsonPrettify",
-          "group": "0_toolkit@45",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/",
+          "group": "1_items@2"
         },
         {
           "command": "toolkit.transform.jsonSortKeys",
-          "group": "0_toolkit@46",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/",
+          "group": "1_items@3"
         },
         {
           "command": "toolkit.transform.jsonToYaml",
-          "group": "0_toolkit@47",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/"
+          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/",
+          "group": "1_items@4"
         },
         {
           "command": "toolkit.transform.yamlToJson",
-          "group": "0_toolkit@48",
-          "when": "editorHasSelection && editorLangId == yaml"
+          "when": "editorHasSelection && editorLangId == yaml",
+          "group": "1_items@5"
         },
         {
           "command": "toolkit.transform",
-          "group": "0_toolkit@49",
-          "when": "editorHasSelection"
+          "when": "editorHasSelection",
+          "group": "1_items@6"
+        }
+      ],
+      "toolkit.menu.convert": [
+        {
+          "command": "toolkit.convertImportsToAlias",
+          "when": "editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/",
+          "group": "1_items@1"
+        },
+        {
+          "command": "toolkit.convertImportsToRelative",
+          "when": "editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/",
+          "group": "1_items@2"
+        },
+        {
+          "command": "toolkit.numberBase.convert",
+          "when": "editorHasSelection",
+          "group": "1_items@3"
+        },
+        {
+          "command": "toolkit.timestamp.convert",
+          "when": "editorHasSelection",
+          "group": "1_items@4"
+        }
+      ],
+      "toolkit.menu.compareEditor": [
+        {
+          "command": "toolkit.compareWithBranch",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "1_items@1"
+        },
+        {
+          "command": "toolkit.diff.withClipboard",
+          "when": "",
+          "group": "1_items@2"
+        },
+        {
+          "command": "toolkit.diff.withOpenFile",
+          "when": "",
+          "group": "1_items@3"
+        }
+      ],
+      "toolkit.menu.packagesEditor": [
+        {
+          "command": "toolkit.npm.managePackages",
+          "when": "resourceFilename == package.json",
+          "group": "1_items@1"
+        },
+        {
+          "command": "toolkit.nuget.managePackages",
+          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
+          "group": "1_items@2"
+        },
+        {
+          "command": "toolkit.npm.audit",
+          "when": "resourceFilename == package.json",
+          "group": "1_items@3"
+        },
+        {
+          "command": "toolkit.nuget.vulnerabilities",
+          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
+          "group": "1_items@4"
+        },
+        {
+          "command": "toolkit.runScripts.pick",
+          "when": "resourceFilename == package.json",
+          "group": "1_items@5"
+        }
+      ],
+      "toolkit.menu.rest": [
+        {
+          "command": "toolkit.restClient.copyAsCurl",
+          "when": "resourceExtname == .http || resourceExtname == .rest",
+          "group": "1_items@1"
+        },
+        {
+          "command": "toolkit.restClient.createPrivateEnv",
+          "when": "resourceFilename == http-client.env.json",
+          "group": "1_items@2"
+        },
+        {
+          "command": "toolkit.restClient.importCurl",
+          "when": "resourceExtname == .http || resourceExtname == .rest",
+          "group": "1_items@3"
+        },
+        {
+          "command": "toolkit.restClient.selectEnvironment",
+          "when": "resourceExtname == .http || resourceExtname == .rest",
+          "group": "1_items@4"
+        },
+        {
+          "command": "toolkit.restClient.sendAll",
+          "when": "resourceExtname == .http || resourceExtname == .rest",
+          "group": "1_items@5"
+        },
+        {
+          "command": "toolkit.restClient.send",
+          "when": "resourceExtname == .http || resourceExtname == .rest",
+          "group": "1_items@6"
+        }
+      ],
+      "toolkit.menu.resources": [
+        {
+          "command": "toolkit.resx.normalizeGroup",
+          "when": "resourceExtname == .resx",
+          "group": "1_items@1"
+        },
+        {
+          "command": "toolkit.resx.openGrid",
+          "when": "resourceExtname == .resx",
+          "group": "1_items@2"
+        },
+        {
+          "command": "toolkit.resx.syncGroup",
+          "when": "resourceExtname == .resx",
+          "group": "1_items@3"
+        }
+      ],
+      "toolkit.menu.markdown": [
+        {
+          "command": "toolkit.markdown.compactTable",
+          "when": "editorLangId == markdown",
+          "group": "1_items@1"
+        },
+        {
+          "command": "toolkit.markdown.formatTable",
+          "when": "editorLangId == markdown",
+          "group": "1_items@2"
+        },
+        {
+          "command": "toolkit.markdown.generateToc",
+          "when": "editorLangId == markdown",
+          "group": "1_items@3"
+        }
+      ],
+      "toolkit.menu.compareExplorer": [
+        {
+          "command": "toolkit.compareFolderWithBranch",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "1_items@1"
+        },
+        {
+          "command": "toolkit.compareProjectWithBranch",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "1_items@2"
+        },
+        {
+          "command": "toolkit.compareWithBranch",
+          "when": "!explorerResourceIsFolder && gitOpenRepositoryCount != 0",
+          "group": "1_items@3"
+        }
+      ],
+      "toolkit.menu.packagesExplorer": [
+        {
+          "command": "toolkit.npm.managePackages",
+          "when": "resourceFilename == package.json",
+          "group": "1_items@1"
+        },
+        {
+          "command": "toolkit.nuget.managePackages",
+          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
+          "group": "1_items@2"
+        },
+        {
+          "command": "toolkit.npm.audit",
+          "when": "resourceFilename == package.json",
+          "group": "1_items@3"
+        },
+        {
+          "command": "toolkit.nuget.vulnerabilities",
+          "when": "resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj || resourceExtname == .sln || resourceExtname == .slnx",
+          "group": "1_items@4"
         }
       ]
     },

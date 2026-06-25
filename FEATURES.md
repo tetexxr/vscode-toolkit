@@ -108,6 +108,6 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 
 ## Where to find things
 
-- Most actions live in the **right-click menus** — the editor menu shows the actions for that file type (`.http`, `.json`, `.md`, `package.json`, `.csproj`...), the explorer menu the file/folder ones.
+- Most actions live in the **right-click menus** — the editor menu shows the actions for that file type (`.http`, `.json`, `.md`, `package.json`, `.csproj`...), the explorer menu the file/folder ones. Related actions are grouped into submenus (**Transform**, **Convert**, **Compare**, **Packages**, **REST Client**, **Resources**, **Markdown**, **C#**); common single actions stay at the top level.
 - Tree views (Commit History, TODOs, NuGet, npm, REST Requests, REST Response History) have **inline icons** on hover.
 - Everything is also in the **Command Palette** under `Toolkit:`.
