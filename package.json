@@ -992,7 +992,7 @@
       {
         "command": "toolkit.restClient.cancelAll",
         "title": "Cancel Pending Requests",
-        "category": "REST Client"
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.restClient.selectEnvironment",
@@ -1243,8 +1243,8 @@
       },
       {
         "command": "toolkit.resx.checkWorkspace",
-        "title": "Check Translations",
-        "category": "Resources"
+        "title": "Check Resource Translations",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.resx.syncGroup",
@@ -1378,8 +1378,8 @@
       },
       {
         "command": "toolkit.numberBase.convert",
-        "title": "Number Base…",
-        "category": "Convert"
+        "title": "Convert Number Base…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.numberBase.toDecimal",
