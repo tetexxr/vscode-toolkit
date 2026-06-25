@@ -3,11 +3,14 @@ import {
   detectFormat,
   diffResx,
   escapeXmlText,
+  findEntryLineRange,
   findValueOffsets,
   isDesignerResx,
+  normalizeResx,
   parseResx,
   parseResxName,
   planInsertions,
+  renameKeyInText,
   renderEmptyEntry,
   reorderToNeutral,
   sameResxGroup,
@@ -253,6 +256,87 @@ describe('findValueOffsets', () => {
 
   it('should return null for an absent key', () => {
     assert.equal(findValueOffsets(NEUTRAL, 'Nope'), null)
+  })
+})
+
+describe('findEntryLineRange', () => {
+  it('should return the line span of a one-line entry', () => {
+    assert.deepEqual(findEntryLineRange(NEUTRAL, 'Filter'), { startLine: 3, endLine: 3 })
+  })
+
+  it('should span a multi-line entry', () => {
+    const text = `<root>
+  <data name="A" xml:space="preserve">
+    <value>x</value>
+  </data>
+</root>`
+    assert.deepEqual(findEntryLineRange(text, 'A'), { startLine: 1, endLine: 3 })
+  })
+
+  it('should return null for an absent key', () => {
+    assert.equal(findEntryLineRange(NEUTRAL, 'Nope'), null)
+  })
+})
+
+describe('renameKeyInText', () => {
+  it('should rename a key, keeping its value untouched', () => {
+    const renamed = renameKeyInText(NEUTRAL, 'Filter', 'FilterBy')
+    const entries = parseResx(renamed)
+    assert.ok(entries.some(e => e.name === 'FilterBy'))
+    assert.ok(!entries.some(e => e.name === 'Filter'))
+    assert.equal(entries.find(e => e.name === 'FilterBy')!.value, 'Filtrar')
+  })
+
+  it('should not touch a longer key that contains the old name', () => {
+    const text = `<root>
+  <data name="Filter" xml:space="preserve"><value>a</value></data>
+  <data name="FilterBy" xml:space="preserve"><value>b</value></data>
+</root>`
+    const renamed = renameKeyInText(text, 'Filter', 'Search')
+    const names = parseResx(renamed).map(e => e.name)
+    assert.deepEqual(names, ['Search', 'FilterBy'])
+  })
+
+  it('should escape special characters in the new key', () => {
+    const renamed = renameKeyInText(NEUTRAL, 'Filter', 'A&B')
+    assert.ok(parseResx(renamed).some(e => e.name === 'A&amp;B'))
+  })
+})
+
+describe('normalizeResx', () => {
+  it('should leave an already-canonical file unchanged', () => {
+    assert.equal(normalizeResx(NEUTRAL), NEUTRAL)
+  })
+
+  it('should collapse a multi-line entry into the compact one-line form', () => {
+    const text = `<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="A" xml:space="preserve">
+        <value>hello</value>
+  </data>
+</root>`
+    const normalized = normalizeResx(text)
+    assert.ok(normalized.includes('  <data name="A" xml:space="preserve"><value>hello</value></data>'))
+    assert.deepEqual(parseResx(normalized).map(e => [e.name, e.value]), [['A', 'hello']])
+  })
+
+  it('should preserve a comment when collapsing', () => {
+    const text = `<root>
+  <data name="A" xml:space="preserve">
+    <value>hi</value>
+    <comment>note</comment>
+  </data>
+</root>`
+    assert.ok(normalizeResx(text).includes('<value>hi</value><comment>note</comment></data>'))
+  })
+
+  it('should leave designer entries untouched', () => {
+    const text = `<root>
+  <data name="$img" type="System.Drawing.Bitmap" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>AAAA</value>
+  </data>
+</root>`
+    assert.equal(normalizeResx(text), text)
   })
 })
 

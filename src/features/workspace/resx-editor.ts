@@ -4,10 +4,13 @@ import * as crypto from 'node:crypto'
 import {
   diffResx,
   escapeXmlText,
+  findEntryLineRange,
   findValueOffsets,
+  normalizeResx,
   parseResx,
   parseResxName,
   planInsertions,
+  renameKeyInText,
   reorderToNeutral,
   stringEntries,
   unescapeXml
@@ -225,6 +228,15 @@ class GridSession {
       case 'addKey':
         await this.addKey()
         return
+      case 'renameKey':
+        await this.renameKey(String(m.key))
+        return
+      case 'deleteKey':
+        await this.deleteKey(String(m.key))
+        return
+      case 'normalize':
+        await this.normalize()
+        return
       case 'saveAll':
         await this.saveAll()
         return
@@ -294,6 +306,86 @@ class GridSession {
       if (plan.length > 0) {
         edit.insert(col.uri, new vscode.Position(plan[0].atLine, 0), plan[0].text + '\n')
       }
+    }
+    await vscode.workspace.applyEdit(edit)
+  }
+
+  /** Rename a key across every language file. */
+  private async renameKey(oldKey: string): Promise<void> {
+    const newKey = await vscode.window.showInputBox({
+      title: 'Rename resource key',
+      prompt: 'Renamed across every language',
+      value: oldKey,
+      validateInput: value => {
+        const trimmed = value.trim()
+        if (!trimmed) {
+          return 'Enter a key name.'
+        }
+        if (trimmed === oldKey) {
+          return null
+        }
+        if (this.columns.some(c => stringEntries(parseResx(c.document.getText())).some(e => e.name === trimmed))) {
+          return 'That key already exists.'
+        }
+        return null
+      }
+    })
+    const trimmed = newKey?.trim()
+    if (!trimmed || trimmed === oldKey) {
+      return
+    }
+    const edit = new vscode.WorkspaceEdit()
+    for (const col of this.columns) {
+      const text = col.document.getText()
+      const renamed = renameKeyInText(text, oldKey, trimmed)
+      if (renamed !== text) {
+        edit.replace(col.uri, new vscode.Range(col.document.positionAt(0), col.document.positionAt(text.length)), renamed)
+      }
+    }
+    if (edit.size > 0) {
+      await vscode.workspace.applyEdit(edit)
+    }
+  }
+
+  /** Delete a key from every language file (with confirmation). */
+  private async deleteKey(key: string): Promise<void> {
+    const present = this.columns.filter(c => findEntryLineRange(c.document.getText(), key))
+    if (present.length === 0) {
+      return
+    }
+    const choice = await vscode.window.showWarningMessage(
+      `Delete "${key}" from ${present.length} language file(s)?`,
+      { modal: true },
+      'Delete'
+    )
+    if (choice !== 'Delete') {
+      return
+    }
+    const edit = new vscode.WorkspaceEdit()
+    for (const col of present) {
+      const range = findEntryLineRange(col.document.getText(), key)!
+      const end =
+        range.endLine + 1 < col.document.lineCount
+          ? new vscode.Position(range.endLine + 1, 0)
+          : col.document.lineAt(range.endLine).range.end
+      edit.delete(col.uri, new vscode.Range(new vscode.Position(range.startLine, 0), end))
+    }
+    await vscode.workspace.applyEdit(edit)
+  }
+
+  /** Rewrite every file in the group to the canonical compact format. */
+  private async normalize(): Promise<void> {
+    const edit = new vscode.WorkspaceEdit()
+    for (const col of this.columns) {
+      const text = col.document.getText()
+      const normalized = normalizeResx(text)
+      if (normalized !== text) {
+        edit.replace(col.uri, new vscode.Range(col.document.positionAt(0), col.document.positionAt(text.length)), normalized)
+      }
+    }
+    if (edit.size === 0) {
+      vscode.window.showInformationMessage('Toolkit: the group is already in canonical format.')
+      return
     }
     await vscode.workspace.applyEdit(edit)
   }
@@ -368,6 +460,12 @@ class GridSession {
   thead th { position: sticky; top: 37px; z-index: 2; background: var(--vscode-editorGroupHeader-tabsBackground, var(--vscode-editor-background)); padding: 5px 8px; font-weight: 600; }
   th.keycol, td.keycol { position: sticky; left: 0; z-index: 1; background: var(--vscode-editor-background); font-family: var(--vscode-editor-font-family); white-space: nowrap; padding: 5px 8px; }
   thead th.keycol { z-index: 2; }
+  td.keycol { display: flex; align-items: center; gap: 6px; }
+  td.keycol .kname { flex: 1; }
+  .rowacts { display: inline-flex; gap: 2px; opacity: 0; }
+  tr:hover .rowacts { opacity: 0.75; }
+  .rowacts button { background: transparent; border: none; color: var(--vscode-foreground); cursor: pointer; padding: 0 3px; font-size: 0.95em; border-radius: 2px; }
+  .rowacts button:hover { background: var(--vscode-toolbar-hoverBackground, rgba(128,128,128,0.2)); opacity: 1; }
   .cell { min-height: 1.4em; padding: 4px 8px; outline: none; white-space: pre-wrap; word-break: break-word; }
   .cell:focus { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
   td.missing .cell:empty::before { content: '— missing —'; opacity: 0.5; font-style: italic; }
@@ -388,6 +486,7 @@ class GridSession {
     <span class="count" id="count"></span>
     <button class="secondary" id="addKey">Add key</button>
     <button class="secondary" id="sort">Sort to neutral</button>
+    <button class="secondary" id="normalize">Normalize</button>
     <button id="save">Save all</button>
   </div>
   <div id="root"></div>
@@ -439,7 +538,21 @@ class GridSession {
       const tr = document.createElement('tr');
       const kc = document.createElement('td');
       kc.className = 'keycol';
-      kc.textContent = r.key;
+      const kname = document.createElement('span');
+      kname.className = 'kname';
+      kname.textContent = r.key;
+      const acts = document.createElement('span');
+      acts.className = 'rowacts';
+      const ren = document.createElement('button');
+      ren.textContent = '✎';
+      ren.title = 'Rename key in all languages';
+      ren.addEventListener('click', () => vscode.postMessage({ type: 'renameKey', key: r.key }));
+      const del = document.createElement('button');
+      del.textContent = '🗑';
+      del.title = 'Delete key from all languages';
+      del.addEventListener('click', () => vscode.postMessage({ type: 'deleteKey', key: r.key }));
+      acts.append(ren, del);
+      kc.append(kname, acts);
       tr.appendChild(kc);
       for (const col of grid.columns) {
         const cell = r.cells[col.id];
@@ -481,6 +594,7 @@ class GridSession {
   document.getElementById('onlyIssues').addEventListener('change', render);
   document.getElementById('addKey').addEventListener('click', () => vscode.postMessage({ type: 'addKey' }));
   document.getElementById('sort').addEventListener('click', () => vscode.postMessage({ type: 'sort' }));
+  document.getElementById('normalize').addEventListener('click', () => vscode.postMessage({ type: 'normalize' }));
   document.getElementById('save').addEventListener('click', () => vscode.postMessage({ type: 'saveAll' }));
 
   window.addEventListener('message', e => {

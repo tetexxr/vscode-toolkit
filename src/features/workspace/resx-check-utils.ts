@@ -82,6 +82,11 @@ export function escapeXmlText(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
+/** Escape text destined for an XML attribute value (e.g. a `name="…"`). */
+export function escapeXmlAttr(text: string): string {
+  return escapeXmlText(text).replace(/"/g, '&quot;')
+}
+
 /** Decode the XML entities that appear in resx values, for display/editing. */
 export function unescapeXml(text: string): string {
   return text
@@ -259,7 +264,7 @@ export function detectFormat(text: string): ResxFormat {
 
 /** Render a new, empty string entry for `key` in the given style. */
 export function renderEmptyEntry(key: string, format: ResxFormat): string {
-  const escaped = key.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  const escaped = escapeXmlAttr(key)
   if (format.oneLine) {
     return `${format.indent}<data name="${escaped}" xml:space="preserve"><value></value></data>`
   }
@@ -368,4 +373,46 @@ export function reorderToNeutral(localeText: string, neutralKeys: string[]): str
   const after = lines.slice(spanEnd + 1)
   const body = sorted.flatMap(e => e.rawLines)
   return [...before, ...body, ...after].join('\n')
+}
+
+/** The 0-based line span of a key's entry, for deletion. Null when absent. */
+export function findEntryLineRange(text: string, key: string): { startLine: number; endLine: number } | null {
+  const entry = parseResx(text).find(e => e.name === key)
+  return entry ? { startLine: entry.startLine, endLine: entry.endLine } : null
+}
+
+/** Rename a key in place, leaving everything else (value, attributes) untouched. */
+export function renameKeyInText(text: string, oldKey: string, newKey: string): string {
+  const escapedNew = escapeXmlAttr(newKey)
+  const re = new RegExp(`(<data\\b[^>]*\\bname=")${escapeRegExp(oldKey)}("[^>]*>)`, 'g')
+  return text.replace(re, (_match, before: string, after: string) => before + escapedNew + after)
+}
+
+/**
+ * Rewrite every string entry to the canonical compact one-line form with a
+ * consistent indent, preserving the value (and any `<comment>`) verbatim.
+ * Designer entries, the header, comments and blank lines are left untouched.
+ * Idempotent: a file already in canonical form is returned unchanged.
+ */
+export function normalizeResx(text: string, indent = '  '): string {
+  const lines = text.split(/\r?\n/)
+  const byStart = new Map(parseResx(text).map(e => [e.startLine, e]))
+  const out: string[] = []
+  for (let i = 0; i < lines.length; i++) {
+    const entry = byStart.get(i)
+    if (!entry) {
+      out.push(lines[i])
+      continue
+    }
+    if (entry.designer) {
+      out.push(...entry.rawLines)
+    } else {
+      const block = entry.rawLines.join('\n')
+      const commentMatch = /<comment>([\s\S]*?)<\/comment>/i.exec(block)
+      const comment = commentMatch ? `<comment>${commentMatch[1]}</comment>` : ''
+      out.push(`${indent}<data name="${entry.name}" xml:space="preserve"><value>${entry.value}</value>${comment}</data>`)
+    }
+    i = entry.endLine
+  }
+  return out.join('\n')
 }

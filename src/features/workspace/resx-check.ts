@@ -364,18 +364,33 @@ async function buildSyncEdit(group: ResxGroup, neutralText: string): Promise<vsc
 /*  Sync command (editor context + palette)                                   */
 /* -------------------------------------------------------------------------- */
 
-async function syncActiveGroup(diagnostics: vscode.DiagnosticCollection): Promise<void> {
+/**
+ * The .resx that's currently in focus — works whether it's open as text or in
+ * the grid custom editor (whose webview leaves `activeTextEditor` undefined).
+ */
+function activeResxUri(): vscode.Uri | undefined {
   const editor = vscode.window.activeTextEditor
-  if (!editor) {
+  if (editor && parseResxName(path.basename(editor.document.uri.fsPath))) {
+    return editor.document.uri
+  }
+  const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input
+  if (input && typeof input === 'object' && 'uri' in input) {
+    const uri = (input as { uri: vscode.Uri }).uri
+    if (parseResxName(path.basename(uri.fsPath))) {
+      return uri
+    }
+  }
+  return undefined
+}
+
+async function syncActiveGroup(diagnostics: vscode.DiagnosticCollection): Promise<void> {
+  const uri = activeResxUri()
+  if (!uri) {
     vscode.window.showInformationMessage('Toolkit: open a .resx file to sync its languages.')
     return
   }
-  const parsed = parseResxName(path.basename(editor.document.uri.fsPath))
-  if (!parsed) {
-    vscode.window.showInformationMessage('Toolkit: the active file is not a .resx file.')
-    return
-  }
-  const group = await resolveGroup(editor.document.uri, parsed)
+  const parsed = parseResxName(path.basename(uri.fsPath))!
+  const group = await resolveGroup(uri, parsed)
   if (!group || !group.neutral) {
     vscode.window.showInformationMessage('Toolkit: no neutral .resx found for this group.')
     return
