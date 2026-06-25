@@ -688,102 +688,102 @@
       },
       {
         "command": "toolkit.transform.base64Encode",
-        "title": "Transform - Base64 Encode",
+        "title": "Base64 Encode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.base64Decode",
-        "title": "Transform - Base64 Decode",
+        "title": "Base64 Decode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.base64UrlEncode",
-        "title": "Transform - Base64 URL Encode",
+        "title": "Base64 URL Encode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.base64UrlDecode",
-        "title": "Transform - Base64 URL Decode",
+        "title": "Base64 URL Decode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.urlEncode",
-        "title": "Transform - URL Encode",
+        "title": "URL Encode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.urlDecode",
-        "title": "Transform - URL Decode",
+        "title": "URL Decode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.htmlEncode",
-        "title": "Transform - HTML Encode",
+        "title": "HTML Encode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.htmlDecode",
-        "title": "Transform - HTML Decode",
+        "title": "HTML Decode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.hexEncode",
-        "title": "Transform - Hex Encode",
+        "title": "Hex Encode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.hexDecode",
-        "title": "Transform - Hex Decode",
+        "title": "Hex Decode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.md5",
-        "title": "Transform - MD5",
+        "title": "MD5",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.sha1",
-        "title": "Transform - SHA-1",
+        "title": "SHA-1",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.sha256",
-        "title": "Transform - SHA-256",
+        "title": "SHA-256",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.sha512",
-        "title": "Transform - SHA-512",
+        "title": "SHA-512",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.jwtDecode",
-        "title": "Transform - JWT Decode",
+        "title": "JWT Decode",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.jsonToYaml",
-        "title": "Transform - JSON to YAML",
+        "title": "JSON to YAML",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.yamlToJson",
-        "title": "Transform - YAML to JSON",
+        "title": "YAML to JSON",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.jsonPrettify",
-        "title": "Transform - JSON Prettify",
+        "title": "JSON Prettify",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.jsonMinify",
-        "title": "Transform - JSON Minify",
+        "title": "JSON Minify",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.jsonSortKeys",
-        "title": "Transform - JSON Sort Keys",
+        "title": "JSON Sort Keys",
         "category": "Toolkit"
       },
       {
