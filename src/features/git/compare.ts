@@ -267,12 +267,16 @@ async function pickCompareKind(): Promise<CompareKind | null> {
   return picked ? picked.value : null
 }
 
-async function compareFile(provider: BranchContentProvider, uri?: vscode.Uri): Promise<void> {
+async function compareFile(
+  provider: BranchContentProvider,
+  uri?: vscode.Uri,
+  fixedKind?: CompareKind
+): Promise<void> {
   const target = await resolveFileTarget(uri)
   if (!target) {
     return
   }
-  const kind = await pickCompareKind()
+  const kind = fixedKind ?? (await pickCompareKind())
   if (!kind) {
     return
   }
@@ -516,9 +520,10 @@ async function resolveFolderScope(
 async function compareScopeWithChosenRef(
   provider: BranchContentProvider,
   scope: { repoRoot: string; relFolder: string | undefined; scopeLabel: string },
-  scopeName: string
+  scopeName: string,
+  fixedKind?: CompareKind
 ): Promise<void> {
-  const kind = await pickCompareKind()
+  const kind = fixedKind ?? (await pickCompareKind())
   if (!kind) {
     return
   }
@@ -537,20 +542,28 @@ async function compareScopeWithChosenRef(
   await compareScopeWithCommit(provider, scope.repoRoot, commit, scope.relFolder, scope.scopeLabel)
 }
 
-async function compareProject(provider: BranchContentProvider, uri?: vscode.Uri): Promise<void> {
+async function compareProject(
+  provider: BranchContentProvider,
+  uri?: vscode.Uri,
+  fixedKind?: CompareKind
+): Promise<void> {
   const scope = await resolveProjectScope(uri)
   if (!scope) {
     return
   }
-  await compareScopeWithChosenRef(provider, scope, 'the whole project')
+  await compareScopeWithChosenRef(provider, scope, 'the whole project', fixedKind)
 }
 
-async function compareFolder(provider: BranchContentProvider, resourceUri?: vscode.Uri): Promise<void> {
+async function compareFolder(
+  provider: BranchContentProvider,
+  resourceUri?: vscode.Uri,
+  fixedKind?: CompareKind
+): Promise<void> {
   const scope = await resolveFolderScope(resourceUri)
   if (!scope) {
     return
   }
-  await compareScopeWithChosenRef(provider, scope, `"${scope.scopeLabel}"`)
+  await compareScopeWithChosenRef(provider, scope, `"${scope.scopeLabel}"`, fixedKind)
 }
 
 export function registerCompareCommands(context: vscode.ExtensionContext): void {
@@ -563,6 +576,7 @@ export function registerCompareCommands(context: vscode.ExtensionContext): void 
         provider.delete(doc.uri)
       }
     }),
+    // Combined commands (palette / All Features): ask branch-or-commit first.
     vscode.commands.registerCommand('toolkit.compareWithBranch', (uri?: vscode.Uri) =>
       compareFile(provider, uri)
     ),
@@ -571,6 +585,25 @@ export function registerCompareCommands(context: vscode.ExtensionContext): void 
     ),
     vscode.commands.registerCommand('toolkit.compareFolderWithBranch', (uri?: vscode.Uri) =>
       compareFolder(provider, uri)
+    ),
+    // Split variants (context menus only): go straight to branch or commit.
+    vscode.commands.registerCommand('toolkit.compare.fileBranch', (uri?: vscode.Uri) =>
+      compareFile(provider, uri, 'branch')
+    ),
+    vscode.commands.registerCommand('toolkit.compare.fileCommit', (uri?: vscode.Uri) =>
+      compareFile(provider, uri, 'commit')
+    ),
+    vscode.commands.registerCommand('toolkit.compare.folderBranch', (uri?: vscode.Uri) =>
+      compareFolder(provider, uri, 'branch')
+    ),
+    vscode.commands.registerCommand('toolkit.compare.folderCommit', (uri?: vscode.Uri) =>
+      compareFolder(provider, uri, 'commit')
+    ),
+    vscode.commands.registerCommand('toolkit.compare.projectBranch', (uri?: vscode.Uri) =>
+      compareProject(provider, uri, 'branch')
+    ),
+    vscode.commands.registerCommand('toolkit.compare.projectCommit', (uri?: vscode.Uri) =>
+      compareProject(provider, uri, 'commit')
     )
   )
 }

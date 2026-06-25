@@ -1197,6 +1197,36 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.compare.fileBranch",
+        "title": "Compare with Branch…",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.compare.fileCommit",
+        "title": "Compare with Commit…",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.compare.folderBranch",
+        "title": "Compare Folder with Branch…",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.compare.folderCommit",
+        "title": "Compare Folder with Commit…",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.compare.projectBranch",
+        "title": "Compare Project with Branch…",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.compare.projectCommit",
+        "title": "Compare Project with Commit…",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.peekCommit.showLast",
         "title": "Show Last Commit for Line",
         "category": "Toolkit"
@@ -2222,6 +2252,30 @@
         {
           "command": "toolkit.gitStash.drop",
           "when": "false"
+        },
+        {
+          "command": "toolkit.compare.fileBranch",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.compare.fileCommit",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.compare.folderBranch",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.compare.folderCommit",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.compare.projectBranch",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.compare.projectCommit",
+          "when": "false"
         }
       ],
       "editor/context": [
@@ -2468,19 +2522,22 @@
       ],
       "toolkit.menu.compareEditor": [
         {
-          "command": "toolkit.compareWithBranch",
+          "command": "toolkit.compare.fileBranch",
           "when": "gitOpenRepositoryCount != 0",
-          "group": "1_items@1"
+          "group": "1_ref@1"
+        },
+        {
+          "command": "toolkit.compare.fileCommit",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "1_ref@2"
         },
         {
           "command": "toolkit.diff.withClipboard",
-          "when": "",
-          "group": "1_items@2"
+          "group": "2_other@1"
         },
         {
           "command": "toolkit.diff.withOpenFile",
-          "when": "",
-          "group": "1_items@3"
+          "group": "2_other@2"
         }
       ],
       "toolkit.menu.packagesEditor": [
@@ -2578,19 +2635,34 @@
       ],
       "toolkit.menu.compareExplorer": [
         {
-          "command": "toolkit.compareFolderWithBranch",
-          "when": "gitOpenRepositoryCount != 0",
-          "group": "1_items@1"
-        },
-        {
-          "command": "toolkit.compareProjectWithBranch",
-          "when": "gitOpenRepositoryCount != 0",
-          "group": "1_items@2"
-        },
-        {
-          "command": "toolkit.compareWithBranch",
+          "command": "toolkit.compare.fileBranch",
           "when": "!explorerResourceIsFolder && gitOpenRepositoryCount != 0",
-          "group": "1_items@3"
+          "group": "1_file@1"
+        },
+        {
+          "command": "toolkit.compare.fileCommit",
+          "when": "!explorerResourceIsFolder && gitOpenRepositoryCount != 0",
+          "group": "1_file@2"
+        },
+        {
+          "command": "toolkit.compare.folderBranch",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "2_folder@1"
+        },
+        {
+          "command": "toolkit.compare.folderCommit",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "2_folder@2"
+        },
+        {
+          "command": "toolkit.compare.projectBranch",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "3_project@1"
+        },
+        {
+          "command": "toolkit.compare.projectCommit",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "3_project@2"
         }
       ],
       "toolkit.menu.packagesExplorer": [
