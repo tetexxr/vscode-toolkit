@@ -358,4 +358,53 @@ describe('reorderToNeutral', () => {
       ['Title', 'Filter', 'Extra']
     )
   })
+
+  it('should leave the file untouched when a designer entry sits among the strings', () => {
+    // Bailout: reordering across a designer entry could misplace it, so the
+    // whole file is returned verbatim instead.
+    const text = `<root>
+  <data name="B" xml:space="preserve"><value>b</value></data>
+  <data name="$img" type="System.Drawing.Bitmap" mimetype="application/x-microsoft.net.object.bytearray.base64"><value>AAA</value></data>
+  <data name="A" xml:space="preserve"><value>a</value></data>
+</root>`
+    assert.equal(reorderToNeutral(text, ['A', 'B']), text)
+  })
+
+  it('should leave the file untouched when there are fewer than two string entries', () => {
+    const text = `<root>
+  <data name="Only" xml:space="preserve"><value>x</value></data>
+</root>`
+    assert.equal(reorderToNeutral(text, ['A', 'Only']), text)
+  })
+})
+
+describe('diffResx (designer entries)', () => {
+  it('should ignore designer entries when computing missing/orphan keys', () => {
+    const neutral = `<root>
+  <data name="$img" type="System.Drawing.Bitmap" mimetype="x"><value>AAA</value></data>
+  <data name="Title" xml:space="preserve"><value>T</value></data>
+</root>`
+    const locale = `<root>
+  <data name="Title" xml:space="preserve"><value>X</value></data>
+</root>`
+    const diff = diffResx(neutral, locale)
+    assert.deepEqual(diff.missing, []) // the designer key is not expected in the locale
+    assert.deepEqual(diff.orphan, [])
+  })
+})
+
+describe('planInsertions (grouping)', () => {
+  it('should group consecutive missing keys before a shared anchor, in neutral order', () => {
+    const locale = `<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="A" xml:space="preserve"><value>x</value></data>
+  <data name="D" xml:space="preserve"><value>x</value></data>
+</root>`
+    const plan = planInsertions(locale, ['A', 'B', 'C', 'D'], ['B', 'C'])
+    assert.equal(plan.length, 1) // B and C both anchor before D → one insertion
+    assert.deepEqual(
+      plan[0].text.split('\n').map(line => /name="([^"]+)"/.exec(line)![1]),
+      ['B', 'C']
+    )
+  })
 })
