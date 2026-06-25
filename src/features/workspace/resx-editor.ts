@@ -453,7 +453,8 @@ class GridSession {
 <style nonce="${nonce}">
   ${BUTTON_CSS}
   body { margin: 0; padding: 0; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-foreground); }
-  .toolbar { position: sticky; top: 0; z-index: 3; display: flex; gap: 0.5rem; align-items: center; padding: 6px 10px; background: var(--vscode-editor-background); border-bottom: 1px solid ${cssColor.border}; }
+  .toolbar { position: sticky; top: 0; z-index: 3; display: flex; gap: 0.5rem; align-items: center; padding: 6px 1rem; background: var(--vscode-editor-background); border-bottom: 1px solid ${cssColor.border}; }
+  #root { padding: 1rem; }
   .search-box { flex: 0 1 240px; padding: 4px 8px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-dropdown-border)); font-family: inherit; font-size: inherit; }
   .search-box::placeholder { color: var(--vscode-input-placeholderForeground); }
   .search-box:focus { outline: 1px solid var(--vscode-focusBorder); }
@@ -481,7 +482,7 @@ class GridSession {
   th .src { cursor: pointer; color: var(--vscode-descriptionForeground); margin-left: 6px; }
   th .src:hover { color: var(--vscode-foreground); }
   .dirty::after { content: ' ●'; color: ${cssColor.gitModified}; }
-  .empty { padding: 20px; color: var(--vscode-descriptionForeground); }
+  .empty { color: var(--vscode-descriptionForeground); }
 </style>
 </head>
 <body>
@@ -565,7 +566,7 @@ class GridSession {
       ren.addEventListener('click', () => vscode.postMessage({ type: 'renameKey', key: r.key }));
       const del = document.createElement('button');
       del.className = 'icon';
-      del.textContent = '🗑';
+      del.textContent = '✕';
       del.title = 'Delete key from all languages';
       del.addEventListener('click', () => vscode.postMessage({ type: 'deleteKey', key: r.key }));
       acts.append(ren, del);
