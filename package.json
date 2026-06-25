@@ -176,7 +176,7 @@
             "filenamePattern": "*.resx"
           }
         ],
-        "priority": "default"
+        "priority": "option"
       }
     ],
     "commands": [
@@ -1037,6 +1037,11 @@
         "title": "Toolkit: Normalize Resource Format"
       },
       {
+        "command": "toolkit.resx.openGrid",
+        "title": "Toolkit: Open as Resource Grid",
+        "icon": "$(table)"
+      },
+      {
         "command": "toolkit.svgPreview.open",
         "title": "Toolkit: Preview SVG",
         "icon": "$(open-preview)"
@@ -1379,6 +1384,11 @@
           "command": "toolkit.svgPreview.open",
           "when": "resourceExtname == .svg",
           "group": "navigation"
+        },
+        {
+          "command": "toolkit.resx.openGrid",
+          "when": "resourceExtname == .resx && activeCustomEditorId != toolkit.resxEditor",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -1662,6 +1672,11 @@
         {
           "command": "toolkit.collapseRecursively",
           "when": "explorerResourceIsFolder",
+          "group": "0_toolkit@1"
+        },
+        {
+          "command": "toolkit.resx.openGrid",
+          "when": "resourceExtname == .resx",
           "group": "0_toolkit@1"
         },
         {
@@ -1974,6 +1989,11 @@
           "command": "toolkit.envCheck.checkWorkspace",
           "group": "0_toolkit@4",
           "when": "resourceFilename =~ /^\\.env/"
+        },
+        {
+          "command": "toolkit.resx.openGrid",
+          "group": "0_toolkit@4",
+          "when": "resourceExtname == .resx"
         },
         {
           "command": "toolkit.resx.syncGroup",

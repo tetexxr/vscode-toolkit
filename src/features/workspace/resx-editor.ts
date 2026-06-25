@@ -660,6 +660,14 @@ export function registerResxEditor(context: vscode.ExtensionContext): void {
     vscode.window.registerCustomEditorProvider(ResxEditorProvider.viewType, new ResxEditorProvider(), {
       webviewOptions: { retainContextWhenHidden: true },
       supportsMultipleEditorsPerDocument: false
+    }),
+    vscode.commands.registerCommand('toolkit.resx.openGrid', async (uri?: vscode.Uri) => {
+      const target = uri ?? vscode.window.activeTextEditor?.document.uri
+      if (!target || !target.fsPath.toLowerCase().endsWith('.resx')) {
+        vscode.window.showInformationMessage('Toolkit: open or select a .resx file to view it as a grid.')
+        return
+      }
+      await vscode.commands.executeCommand('vscode.openWith', target, ResxEditorProvider.viewType)
     })
   )
 }
