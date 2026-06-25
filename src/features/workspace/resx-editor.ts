@@ -453,7 +453,7 @@ class GridSession {
 <style nonce="${nonce}">
   ${BUTTON_CSS}
   body { margin: 0; padding: 0; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-foreground); }
-  .toolbar { position: sticky; top: 0; z-index: 3; display: flex; gap: 0.5rem; align-items: center; padding: 6px 10px; background: var(--vscode-editor-background); border-bottom: 1px solid var(--vscode-panel-border); }
+  .toolbar { position: sticky; top: 0; z-index: 3; display: flex; gap: 0.5rem; align-items: center; padding: 6px 10px; background: var(--vscode-editor-background); border-bottom: 1px solid ${cssColor.border}; }
   .search-box { flex: 0 1 240px; padding: 4px 8px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-dropdown-border)); font-family: inherit; font-size: inherit; }
   .search-box::placeholder { color: var(--vscode-input-placeholderForeground); }
   .search-box:focus { outline: 1px solid var(--vscode-focusBorder); }
@@ -475,12 +475,12 @@ class GridSession {
   .cell:focus { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
   td.missing .cell:empty::before { content: '— missing —'; color: var(--vscode-descriptionForeground); font-style: italic; }
   td.missing { background: var(--vscode-inputValidation-warningBackground, #4d3800); }
-  td.mismatch { box-shadow: inset 3px 0 0 var(--vscode-inputValidation-warningBorder, #ff8c00); }
+  td.mismatch { box-shadow: inset 3px 0 0 ${cssColor.warning}; }
   th .pct { font-weight: normal; margin-left: 6px; font-size: 0.85em; color: var(--vscode-descriptionForeground); }
-  th .pct.low { color: var(--vscode-inputValidation-warningBorder, #ff8c00); }
+  th .pct.low { color: ${cssColor.warning}; }
   th .src { cursor: pointer; color: var(--vscode-descriptionForeground); margin-left: 6px; }
   th .src:hover { color: var(--vscode-foreground); }
-  .dirty::after { content: ' ●'; color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d); }
+  .dirty::after { content: ' ●'; color: ${cssColor.gitModified}; }
   .empty { padding: 20px; color: var(--vscode-descriptionForeground); }
 </style>
 </head>
