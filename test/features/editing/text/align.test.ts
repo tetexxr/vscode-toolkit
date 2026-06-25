@@ -40,6 +40,12 @@ describe('alignLines', () => {
     assert.deepEqual(aligned, ['foo()               // do foo', 'doSomethingLonger() // do it'])
   })
 
+  it('should align hash comments at the end of script lines', () => {
+    const input = ['PORT=8080 # web server', 'HOST=localhost # bind address']
+    const aligned = alignLines(input, '#')
+    assert.deepEqual(aligned, ['PORT=8080      # web server', 'HOST=localhost # bind address'])
+  })
+
   it('should align by colon with no space before when configured', () => {
     const input = ['name: string', 'longField: number']
     const aligned = alignLines(input, ':', { spacesBefore: 0, spacesAfter: 1 })

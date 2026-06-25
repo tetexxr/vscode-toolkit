@@ -47,7 +47,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Editing', name: 'Convert Imports to Alias', command: 'toolkit.convertImportsToAlias', description: 'The inverse: relative imports back to aliases' },
   { category: 'Editing', name: 'Type-Only Imports', command: 'toolkit.typeOnlyImports.analyzeCurrentFile', description: 'Flags imports usable as `import type` automatically; command for a verbose pass' },
   { category: 'Editing', name: 'Lines', command: 'toolkit.lines', description: 'Sort, dedupe, shuffle, reverse, trim the selected lines' },
-  { category: 'Editing', name: 'Align by Character', command: 'toolkit.align', description: 'Vertically align lines by =, :, comma, =>, // or a custom delimiter' },
+  { category: 'Editing', name: 'Align by Character', command: 'toolkit.align', description: 'Vertically align lines by =, :, comma, =>, //, # or a custom delimiter' },
   { category: 'Editing', name: 'Toggle Quotes', command: 'toolkit.toggleQuotes', description: "Cycle ' → \" → ` on the string under the cursor" },
   { category: 'Editing', name: 'Transform Selection', command: 'toolkit.transform', description: 'Base64/URL/HTML/hex encode-decode, hashes, JWT decode, JSON ⇄ YAML, JSON prettify/minify/sort' },
   { category: 'Editing', name: 'Sum Numbers', command: 'toolkit.sumNumbers', description: 'Sum the leading number of each selected line' },

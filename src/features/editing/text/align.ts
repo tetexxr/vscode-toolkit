@@ -13,7 +13,8 @@ const PRESETS: DelimiterPreset[] = [
   { command: 'toolkit.align.colon', delimiter: ':', label: ':', description: 'Object key / type annotation' },
   { command: 'toolkit.align.comma', delimiter: ',', label: ',', description: 'Comma' },
   { command: 'toolkit.align.arrow', delimiter: '=>', label: '=>', description: 'Arrow function' },
-  { command: 'toolkit.align.lineComment', delimiter: '//', label: '//', description: 'Line comment' }
+  { command: 'toolkit.align.lineComment', delimiter: '//', label: '//', description: 'Line comment' },
+  { command: 'toolkit.align.hash', delimiter: '#', label: '#', description: 'Hash comment (shell, scripts)' }
 ]
 
 interface LineBlock {

@@ -701,6 +701,7 @@ const LONG_NAME = 3;
 | Align by , | Comma |
 | Align by => | Arrow function |
 | Align by // | Line comment |
+| Align by # | Hash comment (shell, scripts) |
 
 Available from:
 
