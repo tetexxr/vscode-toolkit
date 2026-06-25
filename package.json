@@ -78,11 +78,6 @@
           "id": "rest-client",
           "title": "REST Client",
           "icon": "themes/icons/rest-client.svg"
-        },
-        {
-          "id": "toolkit-resx",
-          "title": "Resources",
-          "icon": "themes/icons/resx.svg"
         }
       ]
     },
@@ -136,12 +131,6 @@
           "name": "Response History"
         }
       ],
-      "toolkit-resx": [
-        {
-          "id": "toolkitResxGroups",
-          "name": "Localization Groups"
-        }
-      ],
       "explorer": [
         {
           "id": "toolkitScratchFiles",
@@ -166,10 +155,6 @@
       {
         "view": "toolkitRestFiles",
         "contents": "No .http or .rest files were found in this workspace.\n[New Request File](command:toolkit.restClient.files.create)"
-      },
-      {
-        "view": "toolkitResxGroups",
-        "contents": "No .resx localization groups were found.\nA group is a neutral file (Foo.resx) plus per-locale satellites (Foo.en.resx, Foo.ca.resx, ...).\n[Refresh](command:toolkit.resx.refresh)"
       }
     ],
     "customEditors": [
@@ -1048,9 +1033,8 @@
         "title": "Toolkit: Sync Missing Keys to All Languages"
       },
       {
-        "command": "toolkit.resx.refresh",
-        "title": "Toolkit: Refresh Localization Groups",
-        "icon": "$(refresh)"
+        "command": "toolkit.resx.normalizeGroup",
+        "title": "Toolkit: Normalize Resource Format"
       },
       {
         "command": "toolkit.svgPreview.open",
@@ -1308,11 +1292,6 @@
           "command": "toolkit.todoTree.refresh",
           "when": "view == toolkitTodoTree",
           "group": "navigation@3"
-        },
-        {
-          "command": "toolkit.resx.refresh",
-          "when": "view == toolkitResxGroups",
-          "group": "navigation@1"
         },
         {
           "command": "toolkit.restClient.files.groupByTree",
@@ -1998,6 +1977,11 @@
         },
         {
           "command": "toolkit.resx.syncGroup",
+          "group": "0_toolkit@4",
+          "when": "resourceExtname == .resx"
+        },
+        {
+          "command": "toolkit.resx.normalizeGroup",
           "group": "0_toolkit@4",
           "when": "resourceExtname == .resx"
         },

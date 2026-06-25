@@ -1424,10 +1424,8 @@ Manages .NET `.resx` localization groups — a **neutral** file (`Strings.resx`)
 | Command | Description |
 |---|---|
 | Toolkit: Sync Missing Keys to All Languages | For the active `.resx` group, add every key the neutral declares but a satellite lacks (empty values) — also on the editor context menu of any `.resx` file |
+| Toolkit: Normalize Resource Format | Rewrite the active group's files to the canonical compact one-line format (designer entries and comments untouched) — also on the `.resx` editor context menu |
 | Toolkit: Check Resource Translations | Scan every group in the workspace; out-of-sync groups are listed in a quick pick (useful after a big pull) |
-| Toolkit: Refresh Localization Groups | Re-scan for the **Resources** sidebar |
-
-**Resources sidebar:** an activity-bar view lists every localization group with per-language **completeness** (`ca 100% · en 98%`); groups with drift are flagged and expanded to show which language is missing keys or out of order. Click a language to open that file. A badge shows how many groups are out of sync.
 
 **New keys are created with an empty value** so the missing translation is obvious (and forced) rather than silently inheriting the neutral text. The writer preserves each file's existing style — compact one-line entries stay one-line — so diffs stay minimal.
 

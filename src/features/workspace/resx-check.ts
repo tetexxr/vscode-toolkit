@@ -3,6 +3,7 @@ import * as path from 'node:path'
 import {
   diffResx,
   isDesignerResx,
+  normalizeResx,
   parseResx,
   parseResxName,
   planInsertions,
@@ -438,15 +439,45 @@ async function syncActiveGroup(diagnostics: vscode.DiagnosticCollection): Promis
   vscode.window.showInformationMessage(`Toolkit: added ${added} empty key(s) across the language files.`)
 }
 
+/** Rewrite every file in the active group to the canonical compact format. */
+async function normalizeActiveGroup(): Promise<void> {
+  const uri = activeResxUri()
+  if (!uri) {
+    vscode.window.showInformationMessage('Toolkit: open a .resx file to normalize its group.')
+    return
+  }
+  const parsed = parseResxName(path.basename(uri.fsPath))!
+  const group = await resolveGroup(uri, parsed)
+  if (!group) {
+    return
+  }
+  const members = [group.neutral, ...group.locales].filter((m): m is GroupMember => m !== null)
+  const edit = new vscode.WorkspaceEdit()
+  for (const member of members) {
+    const text = await readFileText(member.uri)
+    if (text === null) {
+      continue
+    }
+    const normalized = normalizeResx(text)
+    if (normalized !== text) {
+      const doc = await vscode.workspace.openTextDocument(member.uri)
+      edit.replace(member.uri, new vscode.Range(doc.positionAt(0), doc.positionAt(text.length)), normalized)
+    }
+  }
+  if (edit.size === 0) {
+    vscode.window.showInformationMessage('Toolkit: the group is already in canonical format.')
+    return
+  }
+  await vscode.workspace.applyEdit(edit)
+  vscode.window.showInformationMessage('Toolkit: normalized the resource group.')
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Workspace audit                                                           */
 /* -------------------------------------------------------------------------- */
 
 interface GroupAudit {
-  base: string
-  dir: vscode.Uri
   neutralUri: vscode.Uri
-  totalKeys: number
   /** Per locale: how many neutral keys it lacks. */
   missingByLocale: { locale: string; missing: number; order: boolean }[]
 }
@@ -480,7 +511,6 @@ async function auditGroup(group: ResxGroup): Promise<GroupAudit | null> {
   if (neutralText === null || isDesignerResx(neutralText)) {
     return null
   }
-  const totalKeys = stringEntries(parseResx(neutralText)).length
   const missingByLocale = []
   for (const locale of group.locales) {
     const text = await readFileText(locale.uri)
@@ -491,7 +521,7 @@ async function auditGroup(group: ResxGroup): Promise<GroupAudit | null> {
     missingByLocale.push({ locale: locale.locale!, missing: diff.missing.length, order: diff.orderDiffers })
   }
   missingByLocale.sort((a, b) => a.locale.localeCompare(b.locale))
-  return { base: group.base, dir: group.dir, neutralUri: group.neutral!.uri, totalKeys, missingByLocale }
+  return { neutralUri: group.neutral!.uri, missingByLocale }
 }
 
 async function checkWorkspace(): Promise<void> {
@@ -524,125 +554,16 @@ async function checkWorkspace(): Promise<void> {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Resources tree                                                            */
-/* -------------------------------------------------------------------------- */
-
-const VIEW_ID = 'toolkitResxGroups'
-
-type ResxNode = AuditNode | LocaleNode
-
-interface AuditNode {
-  kind: 'group'
-  audit: GroupAudit
-}
-
-interface LocaleNode {
-  kind: 'locale'
-  uri: vscode.Uri
-  locale: string
-  missing: number
-  order: boolean
-  total: number
-}
-
-class ResxTreeProvider implements vscode.TreeDataProvider<ResxNode> {
-  private audits: GroupAudit[] = []
-  private localesByBase = new Map<string, GroupMember[]>()
-  private emitter = new vscode.EventEmitter<ResxNode | undefined | null | void>()
-  readonly onDidChangeTreeData = this.emitter.event
-
-  setAudits(audits: GroupAudit[], groups: ResxGroup[]): void {
-    this.audits = audits.sort((a, b) =>
-      vscode.workspace.asRelativePath(a.neutralUri).localeCompare(vscode.workspace.asRelativePath(b.neutralUri))
-    )
-    this.localesByBase = new Map(groups.map(g => [`${g.dir.fsPath}::${g.base}`, g.locales]))
-    this.emitter.fire()
-  }
-
-  outOfSyncCount(): number {
-    return this.audits.filter(a => a.missingByLocale.some(m => m.missing > 0 || m.order)).length
-  }
-
-  getTreeItem(node: ResxNode): vscode.TreeItem {
-    if (node.kind === 'group') {
-      const a = node.audit
-      const drift = a.missingByLocale.some(m => m.missing > 0 || m.order)
-      const item = new vscode.TreeItem(
-        vscode.workspace.asRelativePath(a.neutralUri),
-        drift ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed
-      )
-      item.description = a.missingByLocale
-        .map(m => `${m.locale} ${a.totalKeys === 0 ? 100 : Math.round(((a.totalKeys - m.missing) / a.totalKeys) * 100)}%`)
-        .join(' · ')
-      item.iconPath = new vscode.ThemeIcon(drift ? 'warning' : 'globe')
-      item.tooltip = `${a.totalKeys} key(s) in the neutral file — click to open it`
-      item.resourceUri = a.neutralUri
-      item.command = { title: 'Open neutral file', command: 'vscode.open', arguments: [a.neutralUri] }
-      item.contextValue = 'resxGroup'
-      return item
-    }
-    const item = new vscode.TreeItem(node.locale, vscode.TreeItemCollapsibleState.None)
-    const issues = [
-      node.missing > 0 ? `${node.missing} missing` : '',
-      node.order ? 'order differs' : ''
-    ].filter(Boolean)
-    item.description = issues.length > 0 ? issues.join(' · ') : `${Math.round(((node.total - node.missing) / Math.max(1, node.total)) * 100)}%`
-    item.iconPath = new vscode.ThemeIcon(node.missing > 0 || node.order ? 'circle-filled' : 'pass-filled')
-    item.resourceUri = node.uri
-    item.command = { title: 'Open', command: 'vscode.open', arguments: [node.uri] }
-    return item
-  }
-
-  getChildren(parent?: ResxNode): ResxNode[] {
-    if (!parent) {
-      return this.audits.map<ResxNode>(audit => ({ kind: 'group', audit }))
-    }
-    if (parent.kind === 'group') {
-      const a = parent.audit
-      const locales = this.localesByBase.get(`${a.dir.fsPath}::${a.base}`) ?? []
-      return locales.map<ResxNode>(loc => {
-        const m = a.missingByLocale.find(x => x.locale === loc.locale)
-        return {
-          kind: 'locale',
-          uri: loc.uri,
-          locale: loc.locale!,
-          missing: m?.missing ?? 0,
-          order: m?.order ?? false,
-          total: a.totalKeys
-        }
-      })
-    }
-    return []
-  }
-}
-
-async function refreshTree(provider: ResxTreeProvider, treeView: vscode.TreeView<ResxNode>): Promise<void> {
-  const groups = await scanGroups()
-  const audits = (await Promise.all(groups.map(auditGroup))).filter((a): a is GroupAudit => a !== null)
-  provider.setAudits(audits, groups)
-  const count = provider.outOfSyncCount()
-  treeView.badge = count > 0 ? { value: count, tooltip: `${count} resx group(s) out of sync` } : undefined
-}
-
-/* -------------------------------------------------------------------------- */
 /*  Registration                                                              */
 /* -------------------------------------------------------------------------- */
 
 export function registerResxCheckCommands(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection(SOURCE)
-  const provider = new ResxTreeProvider()
-  const treeView = vscode.window.createTreeView<ResxNode>(VIEW_ID, { treeDataProvider: provider })
 
   context.subscriptions.push(
     diagnostics,
-    treeView,
     vscode.workspace.onDidOpenTextDocument(doc => void analyzeDocument(doc, diagnostics)),
-    vscode.workspace.onDidSaveTextDocument(doc => {
-      void analyzeDocument(doc, diagnostics)
-      if (parseResxName(path.basename(doc.uri.fsPath))) {
-        void refreshTree(provider, treeView)
-      }
-    }),
+    vscode.workspace.onDidSaveTextDocument(doc => void analyzeDocument(doc, diagnostics)),
     vscode.workspace.onDidCloseTextDocument(doc => diagnostics.delete(doc.uri)),
     vscode.languages.registerCodeActionsProvider(
       { scheme: 'file', pattern: '**/*.resx' },
@@ -651,25 +572,10 @@ export function registerResxCheckCommands(context: vscode.ExtensionContext): voi
     ),
     vscode.commands.registerCommand('toolkit.resx.checkWorkspace', () => checkWorkspace()),
     vscode.commands.registerCommand('toolkit.resx.syncGroup', () => syncActiveGroup(diagnostics)),
-    vscode.commands.registerCommand('toolkit.resx.refresh', () => refreshTree(provider, treeView))
+    vscode.commands.registerCommand('toolkit.resx.normalizeGroup', () => normalizeActiveGroup())
   )
 
   for (const doc of vscode.workspace.textDocuments) {
     void analyzeDocument(doc, diagnostics)
-  }
-
-  // Populate the tree lazily when it first becomes visible.
-  let scanned = false
-  const runScan = () => {
-    if (scanned) {
-      return
-    }
-    scanned = true
-    void refreshTree(provider, treeView)
-  }
-  if (treeView.visible) {
-    runScan()
-  } else {
-    context.subscriptions.push(treeView.onDidChangeVisibility(e => e.visible && runScan()))
   }
 }

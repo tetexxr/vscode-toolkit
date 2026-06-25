@@ -81,7 +81,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Next Bookmark | `Alt+F7` | Jump to the next bookmark (across files, wraps around) |
 | Previous Bookmark | `Shift+Alt+F7` | Jump to the previous one |
 | .env Checker | — | Diagnostics when .env drifts from .env.example, with quick fix |
-| Resource Translations | — | Keeps .resx localization groups (neutral + .en/.ca/... satellites) in sync: diagnostics for keys missing in some languages, different key order, duplicates and placeholder drift; quick fixes to add the missing keys (empty) and reorder; a command to sync a whole group; a Resources sidebar with per-language completeness; workspace audit. WinForms designer resx are skipped |
+| Resource Translations | — | Edit .resx localization groups (neutral + .en/.ca/... satellites) as a grid — one column per language — with add/rename/delete key across all languages, sort, normalize and save-all. Plus diagnostics for keys missing in some languages, different key order, duplicates and placeholder drift; quick fixes; group sync and a workspace audit. WinForms designer resx are skipped |
 | TODO Tree | — | TODO/FIXME/HACK... comments in a sidebar tree, grouped by tag or file |
 | REST Client | — | Run .http requests; rich response panel with live timer/cancel and retry-on-timeout, environments (env.json, with a gitignored private overlay you can scaffold from the env file's context menu), variables, file bodies, @assert checks on status/headers/body, copy as curl |
 | REST Requests | — | Sidebar tree of every workspace .http/.rest file and its requests — open, jump to, or send each |
