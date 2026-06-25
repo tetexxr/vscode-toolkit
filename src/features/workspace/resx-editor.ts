@@ -453,7 +453,7 @@ class GridSession {
 <style nonce="${nonce}">
   ${BUTTON_CSS}
   body { margin: 0; padding: 0; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-foreground); }
-  .toolbar { position: sticky; top: 0; z-index: 3; display: flex; gap: 0.5rem; align-items: center; padding: 6px 1rem; background: var(--vscode-editor-background); border-bottom: 1px solid ${cssColor.border}; }
+  .toolbar { position: sticky; top: 0; z-index: 3; display: flex; gap: 0.5rem; align-items: center; padding: 6px 1rem; background: var(--vscode-editor-background); }
   #root { padding: 1rem; }
   .search-box { flex: 0 1 240px; padding: 4px 8px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-dropdown-border)); font-family: inherit; font-size: inherit; }
   .search-box::placeholder { color: var(--vscode-input-placeholderForeground); }
