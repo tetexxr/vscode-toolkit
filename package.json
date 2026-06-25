@@ -1183,48 +1183,48 @@
       },
       {
         "command": "toolkit.compareWithBranch",
-        "title": "with Branch or Commit…",
-        "category": "Compare"
+        "title": "Compare with Branch or Commit…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.compareProjectWithBranch",
-        "title": "Project with Branch or Commit…",
-        "category": "Compare"
+        "title": "Compare Project with Branch or Commit…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.compareFolderWithBranch",
-        "title": "Folder with Branch or Commit…",
-        "category": "Compare"
+        "title": "Compare Folder with Branch or Commit…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.compare.fileBranch",
-        "title": "with Branch…",
-        "category": "Compare"
+        "title": "Compare with Branch…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.compare.fileCommit",
-        "title": "with Commit…",
-        "category": "Compare"
+        "title": "Compare with Commit…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.compare.folderBranch",
-        "title": "Folder with Branch…",
-        "category": "Compare"
+        "title": "Compare Folder with Branch…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.compare.folderCommit",
-        "title": "Folder with Commit…",
-        "category": "Compare"
+        "title": "Compare Folder with Commit…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.compare.projectBranch",
-        "title": "Project with Branch…",
-        "category": "Compare"
+        "title": "Compare Project with Branch…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.compare.projectCommit",
-        "title": "Project with Commit…",
-        "category": "Compare"
+        "title": "Compare Project with Commit…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.peekCommit.showLast",
@@ -1403,13 +1403,13 @@
       },
       {
         "command": "toolkit.diff.withClipboard",
-        "title": "with Clipboard",
-        "category": "Compare"
+        "title": "Compare with Clipboard",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.diff.withOpenFile",
-        "title": "with Open File…",
-        "category": "Compare"
+        "title": "Compare with Open File…",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.gitStash.create",
