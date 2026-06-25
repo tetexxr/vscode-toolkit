@@ -2349,34 +2349,84 @@
       ],
       "toolkit.menu.transform": [
         {
-          "command": "toolkit.transform.jsonMinify",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/",
-          "group": "1_items@1"
+          "command": "toolkit.transform.base64Encode",
+          "group": "1_encode@1"
+        },
+        {
+          "command": "toolkit.transform.base64Decode",
+          "group": "1_encode@2"
+        },
+        {
+          "command": "toolkit.transform.base64UrlEncode",
+          "group": "1_encode@3"
+        },
+        {
+          "command": "toolkit.transform.base64UrlDecode",
+          "group": "1_encode@4"
+        },
+        {
+          "command": "toolkit.transform.urlEncode",
+          "group": "1_encode@5"
+        },
+        {
+          "command": "toolkit.transform.urlDecode",
+          "group": "1_encode@6"
+        },
+        {
+          "command": "toolkit.transform.htmlEncode",
+          "group": "1_encode@7"
+        },
+        {
+          "command": "toolkit.transform.htmlDecode",
+          "group": "1_encode@8"
+        },
+        {
+          "command": "toolkit.transform.hexEncode",
+          "group": "1_encode@9"
+        },
+        {
+          "command": "toolkit.transform.hexDecode",
+          "group": "1_encode@10"
+        },
+        {
+          "command": "toolkit.transform.md5",
+          "group": "2_hash@1"
+        },
+        {
+          "command": "toolkit.transform.sha1",
+          "group": "2_hash@2"
+        },
+        {
+          "command": "toolkit.transform.sha256",
+          "group": "2_hash@3"
+        },
+        {
+          "command": "toolkit.transform.sha512",
+          "group": "2_hash@4"
+        },
+        {
+          "command": "toolkit.transform.jwtDecode",
+          "group": "3_token@1"
         },
         {
           "command": "toolkit.transform.jsonPrettify",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/",
-          "group": "1_items@2"
+          "group": "4_json@1"
+        },
+        {
+          "command": "toolkit.transform.jsonMinify",
+          "group": "4_json@2"
         },
         {
           "command": "toolkit.transform.jsonSortKeys",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/",
-          "group": "1_items@3"
+          "group": "4_json@3"
         },
         {
           "command": "toolkit.transform.jsonToYaml",
-          "when": "editorHasSelection && editorLangId =~ /^(json|jsonc)$/",
-          "group": "1_items@4"
+          "group": "4_json@4"
         },
         {
           "command": "toolkit.transform.yamlToJson",
-          "when": "editorHasSelection && editorLangId == yaml",
-          "group": "1_items@5"
-        },
-        {
-          "command": "toolkit.transform",
-          "when": "editorHasSelection",
-          "group": "1_items@6"
+          "group": "4_json@5"
         }
       ],
       "toolkit.menu.convert": [
