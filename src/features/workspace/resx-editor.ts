@@ -49,7 +49,7 @@ interface RowPayload {
 interface GridPayload {
   type: 'grid'
   base: string
-  columns: { id: string; label: string; dirty: boolean }[]
+  columns: { id: string; label: string; dirty: boolean; complete: number | null }[]
   rows: RowPayload[]
   /** Column ids that are missing at least one key. */
   hasNeutral: boolean
@@ -165,7 +165,12 @@ class GridSession {
       const values = new Map(entries.map(e => [e.name, unescapeXml(e.value)]))
       const diff = neutral && col.locale !== null ? diffResx(neutralText, text) : null
       const mismatched = new Set(diff?.placeholderMismatch ?? [])
-      return { col, keys: entries.map(e => e.name), values, mismatched }
+      // Translation coverage: how many of the neutral's keys this language has.
+      const complete =
+        col.locale === null || neutralKeys.length === 0
+          ? null
+          : Math.round(((neutralKeys.length - (diff?.missing.length ?? 0)) / neutralKeys.length) * 100)
+      return { col, keys: entries.map(e => e.name), values, mismatched, complete }
     })
 
     // Row order: neutral keys first, then any keys only present in locales.
@@ -196,7 +201,12 @@ class GridSession {
     return {
       type: 'grid',
       base: parseResxName(path.basename(this.document.uri.fsPath))?.base ?? '',
-      columns: this.columns.map(c => ({ id: c.id, label: c.label, dirty: c.document.isDirty })),
+      columns: perColumn.map(pc => ({
+        id: pc.col.id,
+        label: pc.col.label,
+        dirty: pc.col.document.isDirty,
+        complete: pc.complete
+      })),
       rows,
       hasNeutral: !!neutral
     }
@@ -471,7 +481,8 @@ class GridSession {
   td.missing .cell:empty::before { content: '— missing —'; opacity: 0.5; font-style: italic; }
   td.missing { background: color-mix(in srgb, var(--vscode-inputValidation-warningBackground, #5a4500) 35%, transparent); }
   td.mismatch { box-shadow: inset 3px 0 0 var(--vscode-editorWarning-foreground, #cca700); }
-  th .lang { opacity: 0.6; font-weight: normal; margin-left: 6px; font-size: 0.85em; }
+  th .pct { font-weight: normal; margin-left: 6px; font-size: 0.85em; opacity: 0.7; }
+  th .pct.low { color: var(--vscode-editorWarning-foreground, #cca700); opacity: 1; }
   th .src { cursor: pointer; opacity: 0.6; margin-left: 6px; }
   th .src:hover { opacity: 1; }
   .dirty::after { content: ' ●'; color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d); }
@@ -520,8 +531,17 @@ class GridSession {
     htr.appendChild(th('Key', 'keycol'));
     for (const col of grid.columns) {
       const h = th('');
-      h.textContent = col.label;
       if (col.dirty) h.classList.add('dirty');
+      const name = document.createElement('span');
+      name.textContent = col.label;
+      h.appendChild(name);
+      if (col.complete !== null) {
+        const pct = document.createElement('span');
+        pct.className = 'pct' + (col.complete < 100 ? ' low' : '');
+        pct.textContent = col.complete + '%';
+        pct.title = col.complete + '% of the neutral keys are translated in this language';
+        h.appendChild(pct);
+      }
       const src = document.createElement('span');
       src.className = 'src';
       src.title = 'Open the raw .resx file';
