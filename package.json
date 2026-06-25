@@ -182,78 +182,78 @@
     "commands": [
       {
         "command": "toolkit.showAllFeatures",
-        "title": "All Features...",
+        "title": "All Features…",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.changeCase",
-        "title": "Change Case...",
+        "title": "Change Case…",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.changeCaseCamel",
-        "title": "Change Case to camelCase",
-        "category": "Toolkit"
+        "title": "camelCase",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCaseSnake",
-        "title": "Change Case to snake_case",
-        "category": "Toolkit"
+        "title": "snake_case",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCasePascal",
-        "title": "Change Case to PascalCase",
-        "category": "Toolkit"
+        "title": "PascalCase",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCaseConstant",
-        "title": "Change Case to CONSTANT_CASE",
-        "category": "Toolkit"
+        "title": "CONSTANT_CASE",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCaseKebab",
-        "title": "Change Case to kebab-case",
-        "category": "Toolkit"
+        "title": "kebab-case",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCaseTitle",
-        "title": "Change Case to Title Case",
-        "category": "Toolkit"
+        "title": "Title Case",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCaseLower",
-        "title": "Change Case to lowercase",
-        "category": "Toolkit"
+        "title": "lowercase",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCaseUpper",
-        "title": "Change Case to UPPERCASE",
-        "category": "Toolkit"
+        "title": "UPPERCASE",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCaseDot",
-        "title": "Change Case to dot.case",
-        "category": "Toolkit"
+        "title": "dot.case",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCasePath",
-        "title": "Change Case to path/case",
-        "category": "Toolkit"
+        "title": "path/case",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCaseSentence",
-        "title": "Change Case to Sentence case",
-        "category": "Toolkit"
+        "title": "Sentence case",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCaseSwap",
-        "title": "Change Case to sWAP cASE",
-        "category": "Toolkit"
+        "title": "sWAP cASE",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.changeCaseNo",
-        "title": "Change Case to no case",
-        "category": "Toolkit"
+        "title": "no case",
+        "category": "Change Case"
       },
       {
         "command": "toolkit.slugify",
@@ -457,13 +457,13 @@
       },
       {
         "command": "toolkit.convertImportsToRelative",
-        "title": "Convert Imports to Relative Paths",
-        "category": "Toolkit"
+        "title": "Imports to Relative Paths",
+        "category": "Convert"
       },
       {
         "command": "toolkit.convertImportsToAlias",
-        "title": "Convert Imports to Alias Paths",
-        "category": "Toolkit"
+        "title": "Imports to Alias Paths",
+        "category": "Convert"
       },
       {
         "command": "toolkit.moveSymbolUp",
@@ -504,7 +504,7 @@
       },
       {
         "command": "toolkit.gitCommitList.resetTo",
-        "title": "Reset HEAD to Commit...",
+        "title": "Reset HEAD to Commit…",
         "category": "Toolkit",
         "icon": "$(discard)"
       },
@@ -516,13 +516,13 @@
       },
       {
         "command": "toolkit.gitCommitList.squashInto",
-        "title": "Squash into Parent...",
+        "title": "Squash into Parent…",
         "category": "Toolkit",
         "icon": "$(fold-down)"
       },
       {
         "command": "toolkit.gitCommitList.cherryPickFromBranch",
-        "title": "Cherry-pick from Branch...",
+        "title": "Cherry-pick from Branch…",
         "category": "Toolkit",
         "icon": "$(git-pull-request-create)"
       },
@@ -533,7 +533,7 @@
       },
       {
         "command": "toolkit.findFileOrFolder",
-        "title": "Find File or Folder...",
+        "title": "Find File or Folder…",
         "category": "Toolkit"
       },
       {
@@ -558,108 +558,108 @@
       },
       {
         "command": "toolkit.lines",
-        "title": "Lines...",
+        "title": "Lines…",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.lines.sortAsc",
-        "title": "Sort Lines - Ascending",
-        "category": "Toolkit"
+        "title": "Sort Ascending",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.sortDesc",
-        "title": "Sort Lines - Descending",
-        "category": "Toolkit"
+        "title": "Sort Descending",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.sortAscCaseInsensitive",
-        "title": "Sort Lines - Ascending (Case-Insensitive)",
-        "category": "Toolkit"
+        "title": "Sort Ascending (Case-Insensitive)",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.sortDescCaseInsensitive",
-        "title": "Sort Lines - Descending (Case-Insensitive)",
-        "category": "Toolkit"
+        "title": "Sort Descending (Case-Insensitive)",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.sortByLength",
-        "title": "Sort Lines - By Length",
-        "category": "Toolkit"
+        "title": "Sort by Length",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.sortByLengthDesc",
-        "title": "Sort Lines - By Length (Descending)",
-        "category": "Toolkit"
+        "title": "Sort by Length (Descending)",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.sortNumerically",
-        "title": "Sort Lines - Numerically",
-        "category": "Toolkit"
+        "title": "Sort Numerically",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.reverse",
-        "title": "Reverse Lines",
-        "category": "Toolkit"
+        "title": "Reverse",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.shuffle",
-        "title": "Shuffle Lines",
-        "category": "Toolkit"
+        "title": "Shuffle",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.removeDuplicates",
-        "title": "Remove Duplicate Lines",
-        "category": "Toolkit"
+        "title": "Remove Duplicates",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.removeDuplicatesCaseInsensitive",
-        "title": "Remove Duplicate Lines (Case-Insensitive)",
-        "category": "Toolkit"
+        "title": "Remove Duplicates (Case-Insensitive)",
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.removeEmpty",
         "title": "Remove Empty Lines",
-        "category": "Toolkit"
+        "category": "Lines"
       },
       {
         "command": "toolkit.lines.trimTrailingWhitespace",
-        "title": "Trim Trailing Whitespace (Selection)",
-        "category": "Toolkit"
+        "title": "Trim Trailing Whitespace",
+        "category": "Lines"
       },
       {
         "command": "toolkit.align",
-        "title": "Align by Character...",
+        "title": "Align by Character…",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.align.equals",
-        "title": "Align by =",
-        "category": "Toolkit"
+        "title": "=",
+        "category": "Align"
       },
       {
         "command": "toolkit.align.colon",
-        "title": "Align by :",
-        "category": "Toolkit"
+        "title": ":",
+        "category": "Align"
       },
       {
         "command": "toolkit.align.comma",
-        "title": "Align by ,",
-        "category": "Toolkit"
+        "title": ",",
+        "category": "Align"
       },
       {
         "command": "toolkit.align.arrow",
-        "title": "Align by =>",
-        "category": "Toolkit"
+        "title": "=>",
+        "category": "Align"
       },
       {
         "command": "toolkit.align.lineComment",
-        "title": "Align by //",
-        "category": "Toolkit"
+        "title": "//",
+        "category": "Align"
       },
       {
         "command": "toolkit.align.custom",
-        "title": "Align by Custom Character…",
-        "category": "Toolkit"
+        "title": "Custom Character…",
+        "category": "Align"
       },
       {
         "command": "toolkit.toggleQuotes",
@@ -683,158 +683,158 @@
       },
       {
         "command": "toolkit.transform",
-        "title": "Transform Selection...",
+        "title": "Transform Selection…",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.transform.base64Encode",
         "title": "Base64 Encode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.base64Decode",
         "title": "Base64 Decode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.base64UrlEncode",
         "title": "Base64 URL Encode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.base64UrlDecode",
         "title": "Base64 URL Decode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.urlEncode",
         "title": "URL Encode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.urlDecode",
         "title": "URL Decode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.htmlEncode",
         "title": "HTML Encode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.htmlDecode",
         "title": "HTML Decode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.hexEncode",
         "title": "Hex Encode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.hexDecode",
         "title": "Hex Decode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.md5",
         "title": "MD5",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.sha1",
         "title": "SHA-1",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.sha256",
         "title": "SHA-256",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.sha512",
         "title": "SHA-512",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.jwtDecode",
         "title": "JWT Decode",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.jsonToYaml",
         "title": "JSON to YAML",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.yamlToJson",
         "title": "YAML to JSON",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.jsonPrettify",
         "title": "JSON Prettify",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.jsonMinify",
         "title": "JSON Minify",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.transform.jsonSortKeys",
         "title": "JSON Sort Keys",
-        "category": "Toolkit"
+        "category": "Transform"
       },
       {
         "command": "toolkit.insert",
-        "title": "Insert...",
+        "title": "Insert…",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.insert.uuidV4",
-        "title": "Insert UUID v4",
-        "category": "Toolkit"
+        "title": "UUID v4",
+        "category": "Insert"
       },
       {
         "command": "toolkit.insert.uuidV7",
-        "title": "Insert UUID v7",
-        "category": "Toolkit"
+        "title": "UUID v7",
+        "category": "Insert"
       },
       {
         "command": "toolkit.insert.ulid",
-        "title": "Insert ULID",
-        "category": "Toolkit"
+        "title": "ULID",
+        "category": "Insert"
       },
       {
         "command": "toolkit.insert.isoTimestamp",
-        "title": "Insert ISO Timestamp",
-        "category": "Toolkit"
+        "title": "ISO Timestamp",
+        "category": "Insert"
       },
       {
         "command": "toolkit.insert.unixSeconds",
-        "title": "Insert Unix Epoch (seconds)",
-        "category": "Toolkit"
+        "title": "Unix Epoch (seconds)",
+        "category": "Insert"
       },
       {
         "command": "toolkit.insert.unixMillis",
-        "title": "Insert Unix Epoch (milliseconds)",
-        "category": "Toolkit"
+        "title": "Unix Epoch (milliseconds)",
+        "category": "Insert"
       },
       {
         "command": "toolkit.insert.randomHex",
-        "title": "Insert Random Hex...",
-        "category": "Toolkit"
+        "title": "Random Hex…",
+        "category": "Insert"
       },
       {
         "command": "toolkit.insert.randomBase64",
-        "title": "Insert Random Base64...",
-        "category": "Toolkit"
+        "title": "Random Base64…",
+        "category": "Insert"
       },
       {
         "command": "toolkit.timestamp.convert",
-        "title": "Convert Timestamp...",
-        "category": "Toolkit"
+        "title": "Timestamp…",
+        "category": "Convert"
       },
       {
         "command": "toolkit.timestamp.toIsoUtc",
@@ -863,7 +863,7 @@
       },
       {
         "command": "toolkit.jsonToType",
-        "title": "JSON to Type...",
+        "title": "JSON to Type…",
         "category": "Toolkit"
       },
       {
@@ -918,12 +918,12 @@
       },
       {
         "command": "toolkit.bookmarks.toggleWithLabel",
-        "title": "Toggle Bookmark with Label...",
+        "title": "Toggle Bookmark with Label…",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.bookmarks.editLabel",
-        "title": "Edit Bookmark Label...",
+        "title": "Edit Bookmark Label…",
         "category": "Toolkit"
       },
       {
@@ -971,189 +971,189 @@
       },
       {
         "command": "toolkit.todoTree.excludeFolder",
-        "title": "TODO Tree - Exclude Folder...",
+        "title": "TODO Tree - Exclude Folder…",
         "category": "Toolkit"
       },
       {
         "command": "toolkit.restClient.send",
         "title": "Send Request",
-        "category": "Toolkit"
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.sendAll",
         "title": "Send All Requests",
-        "category": "Toolkit"
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.sendByIndex",
         "title": "Send Request (internal)",
-        "category": "Toolkit"
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.cancelAll",
         "title": "Cancel Pending Requests",
-        "category": "Toolkit"
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.selectEnvironment",
-        "title": "REST Client - Select Environment...",
-        "category": "Toolkit"
+        "title": "Select Environment…",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.createPrivateEnv",
-        "title": "REST Client - Create Private Environment File",
-        "category": "Toolkit"
+        "title": "Create Private Environment File",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.copyAsCurl",
-        "title": "REST Client - Copy as curl",
-        "category": "Toolkit"
+        "title": "Copy as curl",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.importCurl",
-        "title": "REST Client - Import cURL as Request",
-        "category": "Toolkit"
+        "title": "Import cURL as Request",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.copyAsCurlByIndex",
-        "title": "REST Client - Copy as curl (internal)",
-        "category": "Toolkit"
+        "title": "Copy as curl (internal)",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.clearHistory",
-        "title": "REST Client - Clear Response History",
-        "category": "Toolkit",
+        "title": "Clear Response History",
+        "category": "REST Client",
         "icon": "$(clear-all)"
       },
       {
         "command": "toolkit.restClient.history.open",
-        "title": "REST Client - Open Response",
-        "category": "Toolkit"
+        "title": "Open Response",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.history.refresh",
-        "title": "REST Client - Refresh History",
-        "category": "Toolkit",
+        "title": "Refresh History",
+        "category": "REST Client",
         "icon": "$(refresh)"
       },
       {
         "command": "toolkit.restClient.history.groupByRequest",
-        "title": "REST Client - Group History by Request",
-        "category": "Toolkit",
+        "title": "Group History by Request",
+        "category": "REST Client",
         "icon": "$(list-tree)"
       },
       {
         "command": "toolkit.restClient.history.groupByFlat",
-        "title": "REST Client - Show History as Timeline",
-        "category": "Toolkit",
+        "title": "Show History as Timeline",
+        "category": "REST Client",
         "icon": "$(list-flat)"
       },
       {
         "command": "toolkit.restClient.history.filter",
-        "title": "REST Client - Filter History...",
-        "category": "Toolkit",
+        "title": "Filter History…",
+        "category": "REST Client",
         "icon": "$(filter)"
       },
       {
         "command": "toolkit.restClient.history.clearFilter",
-        "title": "REST Client - Clear History Filter",
-        "category": "Toolkit",
+        "title": "Clear History Filter",
+        "category": "REST Client",
         "icon": "$(filter-filled)"
       },
       {
         "command": "toolkit.restClient.history.deleteEntry",
-        "title": "REST Client - Delete Response",
-        "category": "Toolkit",
+        "title": "Delete Response",
+        "category": "REST Client",
         "icon": "$(trash)"
       },
       {
         "command": "toolkit.restClient.history.diffWithPrevious",
-        "title": "REST Client - Diff with Previous Response",
-        "category": "Toolkit",
+        "title": "Diff with Previous Response",
+        "category": "REST Client",
         "icon": "$(git-compare)"
       },
       {
         "command": "toolkit.restClient.history.resend",
-        "title": "REST Client - Re-send Request",
-        "category": "Toolkit",
+        "title": "Re-send Request",
+        "category": "REST Client",
         "icon": "$(run)"
       },
       {
         "command": "toolkit.restClient.history.openPanel",
-        "title": "REST Client - Open Response in Panel",
-        "category": "Toolkit",
+        "title": "Open Response in Panel",
+        "category": "REST Client",
         "icon": "$(preview)"
       },
       {
         "command": "toolkit.restClient.history.openText",
-        "title": "REST Client - Open Response as Text",
-        "category": "Toolkit"
+        "title": "Open Response as Text",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.history.copyCurl",
-        "title": "REST Client - Copy as curl",
-        "category": "Toolkit"
+        "title": "Copy as curl",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.history.copyBody",
-        "title": "REST Client - Copy Response Body",
-        "category": "Toolkit"
+        "title": "Copy Response Body",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.history.copyUrl",
-        "title": "REST Client - Copy Request URL",
-        "category": "Toolkit"
+        "title": "Copy Request URL",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.history.saveBody",
-        "title": "REST Client - Save Response Body to File...",
-        "category": "Toolkit"
+        "title": "Save Response Body to File…",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.history.goToSource",
-        "title": "REST Client - Go to Source Request",
-        "category": "Toolkit"
+        "title": "Go to Source Request",
+        "category": "REST Client"
       },
       {
         "command": "toolkit.restClient.files.refresh",
-        "title": "REST Client - Refresh Requests",
-        "category": "Toolkit",
+        "title": "Refresh Requests",
+        "category": "REST Client",
         "icon": "$(refresh)"
       },
       {
         "command": "toolkit.restClient.files.groupByFlat",
-        "title": "REST Client - Show Requests as Flat List",
-        "category": "Toolkit",
+        "title": "Show Requests as Flat List",
+        "category": "REST Client",
         "icon": "$(list-flat)"
       },
       {
         "command": "toolkit.restClient.files.groupByTree",
-        "title": "REST Client - Show Requests as Folder Tree",
-        "category": "Toolkit",
+        "title": "Show Requests as Folder Tree",
+        "category": "REST Client",
         "icon": "$(list-tree)"
       },
       {
         "command": "toolkit.restClient.files.create",
-        "title": "REST Client - New Request File",
-        "category": "Toolkit",
+        "title": "New Request File",
+        "category": "REST Client",
         "icon": "$(add)"
       },
       {
         "command": "toolkit.restClient.files.sendRequest",
-        "title": "REST Client - Send Request",
-        "category": "Toolkit",
+        "title": "Send Request",
+        "category": "REST Client",
         "icon": "$(run)"
       },
       {
         "command": "toolkit.restClient.files.copyCurl",
-        "title": "REST Client - Copy as curl",
-        "category": "Toolkit",
+        "title": "Copy as curl",
+        "category": "REST Client",
         "icon": "$(terminal)"
       },
       {
         "command": "toolkit.restClient.files.sendAll",
-        "title": "REST Client - Send All Requests in File",
-        "category": "Toolkit",
+        "title": "Send All Requests in File",
+        "category": "REST Client",
         "icon": "$(run-all)"
       },
       {
@@ -1183,48 +1183,48 @@
       },
       {
         "command": "toolkit.compareWithBranch",
-        "title": "Compare with Branch or Commit...",
-        "category": "Toolkit"
+        "title": "with Branch or Commit…",
+        "category": "Compare"
       },
       {
         "command": "toolkit.compareProjectWithBranch",
-        "title": "Compare Project with Branch or Commit...",
-        "category": "Toolkit"
+        "title": "Project with Branch or Commit…",
+        "category": "Compare"
       },
       {
         "command": "toolkit.compareFolderWithBranch",
-        "title": "Compare Folder with Branch or Commit...",
-        "category": "Toolkit"
+        "title": "Folder with Branch or Commit…",
+        "category": "Compare"
       },
       {
         "command": "toolkit.compare.fileBranch",
-        "title": "Compare with Branch…",
-        "category": "Toolkit"
+        "title": "with Branch…",
+        "category": "Compare"
       },
       {
         "command": "toolkit.compare.fileCommit",
-        "title": "Compare with Commit…",
-        "category": "Toolkit"
+        "title": "with Commit…",
+        "category": "Compare"
       },
       {
         "command": "toolkit.compare.folderBranch",
-        "title": "Compare Folder with Branch…",
-        "category": "Toolkit"
+        "title": "Folder with Branch…",
+        "category": "Compare"
       },
       {
         "command": "toolkit.compare.folderCommit",
-        "title": "Compare Folder with Commit…",
-        "category": "Toolkit"
+        "title": "Folder with Commit…",
+        "category": "Compare"
       },
       {
         "command": "toolkit.compare.projectBranch",
-        "title": "Compare Project with Branch…",
-        "category": "Toolkit"
+        "title": "Project with Branch…",
+        "category": "Compare"
       },
       {
         "command": "toolkit.compare.projectCommit",
-        "title": "Compare Project with Commit…",
-        "category": "Toolkit"
+        "title": "Project with Commit…",
+        "category": "Compare"
       },
       {
         "command": "toolkit.peekCommit.showLast",
@@ -1243,23 +1243,23 @@
       },
       {
         "command": "toolkit.resx.checkWorkspace",
-        "title": "Check Resource Translations",
-        "category": "Toolkit"
+        "title": "Check Translations",
+        "category": "Resources"
       },
       {
         "command": "toolkit.resx.syncGroup",
         "title": "Sync Missing Keys to All Languages",
-        "category": "Toolkit"
+        "category": "Resources"
       },
       {
         "command": "toolkit.resx.normalizeGroup",
-        "title": "Normalize Resource Format",
-        "category": "Toolkit"
+        "title": "Normalize Format",
+        "category": "Resources"
       },
       {
         "command": "toolkit.resx.openGrid",
-        "title": "Open as Resource Grid",
-        "category": "Toolkit",
+        "title": "Open as Grid",
+        "category": "Resources",
         "icon": "$(table)"
       },
       {
@@ -1280,18 +1280,18 @@
       },
       {
         "command": "toolkit.markdown.formatTable",
-        "title": "Format Markdown Table",
-        "category": "Toolkit"
+        "title": "Format Table",
+        "category": "Markdown"
       },
       {
         "command": "toolkit.markdown.compactTable",
-        "title": "Compact Markdown Table",
-        "category": "Toolkit"
+        "title": "Compact Table",
+        "category": "Markdown"
       },
       {
         "command": "toolkit.markdown.generateToc",
         "title": "Generate Table of Contents",
-        "category": "Toolkit"
+        "category": "Markdown"
       },
       {
         "command": "toolkit.localHistory.show",
@@ -1378,38 +1378,38 @@
       },
       {
         "command": "toolkit.numberBase.convert",
-        "title": "Convert Number Base…",
-        "category": "Toolkit"
+        "title": "Number Base…",
+        "category": "Convert"
       },
       {
         "command": "toolkit.numberBase.toDecimal",
-        "title": "Convert Number to Decimal",
-        "category": "Toolkit"
+        "title": "Number to Decimal",
+        "category": "Convert"
       },
       {
         "command": "toolkit.numberBase.toHex",
-        "title": "Convert Number to Hex",
-        "category": "Toolkit"
+        "title": "Number to Hex",
+        "category": "Convert"
       },
       {
         "command": "toolkit.numberBase.toBinary",
-        "title": "Convert Number to Binary",
-        "category": "Toolkit"
+        "title": "Number to Binary",
+        "category": "Convert"
       },
       {
         "command": "toolkit.numberBase.toOctal",
-        "title": "Convert Number to Octal",
-        "category": "Toolkit"
+        "title": "Number to Octal",
+        "category": "Convert"
       },
       {
         "command": "toolkit.diff.withClipboard",
-        "title": "Compare with Clipboard",
-        "category": "Toolkit"
+        "title": "with Clipboard",
+        "category": "Compare"
       },
       {
         "command": "toolkit.diff.withOpenFile",
-        "title": "Compare with Open File…",
-        "category": "Toolkit"
+        "title": "with Open File…",
+        "category": "Compare"
       },
       {
         "command": "toolkit.gitStash.create",
@@ -1458,7 +1458,7 @@
       },
       {
         "command": "toolkit.killPort",
-        "title": "Kill Port...",
+        "title": "Kill Port…",
         "category": "Toolkit"
       }
     ],
@@ -1516,7 +1516,7 @@
     "submenus": [
       {
         "id": "toolkit.csharp.new",
-        "label": "C#"
+        "label": "New C# File"
       },
       {
         "id": "toolkit.menu.transform",
@@ -1569,6 +1569,14 @@
       {
         "id": "toolkit.menu.insert",
         "label": "Insert"
+      },
+      {
+        "id": "toolkit.menu.gitEditor",
+        "label": "Git"
+      },
+      {
+        "id": "toolkit.menu.gitExplorer",
+        "label": "Git"
       }
     ],
     "menus": {
@@ -1980,18 +1988,18 @@
       ],
       "explorer/context": [
         {
-          "submenu": "toolkit.csharp.new",
+          "command": "toolkit.collapseRecursively",
           "when": "explorerResourceIsFolder",
           "group": "0_toolkit@1"
         },
         {
-          "command": "toolkit.collapseRecursively",
-          "when": "explorerResourceIsFolder",
+          "submenu": "toolkit.menu.compareExplorer",
+          "when": "gitOpenRepositoryCount != 0",
           "group": "0_toolkit@2"
         },
         {
-          "submenu": "toolkit.menu.compareExplorer",
-          "when": "gitOpenRepositoryCount != 0",
+          "command": "toolkit.restClient.createPrivateEnv",
+          "when": "resourceFilename == http-client.env.json",
           "group": "0_toolkit@3"
         },
         {
@@ -2010,18 +2018,18 @@
           "group": "0_toolkit@6"
         },
         {
-          "command": "toolkit.gitHistory",
-          "when": "!explorerResourceIsFolder",
+          "submenu": "toolkit.menu.gitExplorer",
+          "when": "explorerResourceIsRoot == false || gitOpenRepositoryCount != 0",
           "group": "0_toolkit@7"
+        },
+        {
+          "submenu": "toolkit.csharp.new",
+          "when": "explorerResourceIsFolder",
+          "group": "0_toolkit@8"
         },
         {
           "command": "toolkit.resx.openGrid",
           "when": "resourceExtname == .resx",
-          "group": "0_toolkit@8"
-        },
-        {
-          "command": "toolkit.openInGitHub.explorerFile",
-          "when": "explorerResourceIsRoot == false",
           "group": "0_toolkit@9"
         },
         {
@@ -2035,29 +2043,9 @@
           "group": "0_toolkit@11"
         },
         {
-          "command": "toolkit.restClient.createPrivateEnv",
-          "when": "resourceFilename == http-client.env.json",
-          "group": "0_toolkit@12"
-        },
-        {
-          "command": "toolkit.localHistory.show",
-          "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@13"
-        },
-        {
-          "command": "toolkit.git.stageChanges",
-          "when": "gitOpenRepositoryCount != 0",
-          "group": "0_toolkit@14"
-        },
-        {
           "command": "toolkit.todoTree.excludeFolder",
           "when": "explorerResourceIsFolder",
-          "group": "0_toolkit@15"
-        },
-        {
-          "command": "toolkit.toggleGitBlame",
-          "when": "!explorerResourceIsFolder",
-          "group": "0_toolkit@16"
+          "group": "0_toolkit@12"
         }
       ],
       "commandPalette": [
@@ -2309,7 +2297,7 @@
           "group": "0_toolkit@6"
         },
         {
-          "command": "toolkit.gitHistory",
+          "submenu": "toolkit.menu.gitEditor",
           "group": "0_toolkit@7"
         },
         {
@@ -2337,68 +2325,56 @@
           "when": "editorHasSelection"
         },
         {
-          "command": "toolkit.openInGitHub.file",
+          "submenu": "toolkit.menu.packagesEditor",
+          "when": "resourceFilename == package.json || resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
           "group": "0_toolkit@13"
         },
         {
-          "submenu": "toolkit.menu.packagesEditor",
-          "when": "resourceFilename == package.json || resourceExtname == .csproj || resourceExtname == .fsproj || resourceExtname == .vbproj",
+          "command": "toolkit.pasteImage",
           "group": "0_toolkit@14"
         },
         {
-          "command": "toolkit.pasteImage",
+          "command": "toolkit.colorPicker.pickFromScreen",
           "group": "0_toolkit@15"
         },
         {
-          "command": "toolkit.colorPicker.pickFromScreen",
-          "group": "0_toolkit@16"
-        },
-        {
           "command": "toolkit.svgPreview.open",
-          "group": "0_toolkit@17",
+          "group": "0_toolkit@16",
           "when": "resourceExtname == .svg"
         },
         {
           "submenu": "toolkit.menu.resources",
           "when": "resourceExtname == .resx",
-          "group": "0_toolkit@18"
+          "group": "0_toolkit@17"
         },
         {
           "submenu": "toolkit.menu.rest",
           "when": "resourceExtname == .http || resourceExtname == .rest || resourceFilename == http-client.env.json",
-          "group": "0_toolkit@19"
-        },
-        {
-          "command": "toolkit.localHistory.show",
-          "group": "0_toolkit@20"
+          "group": "0_toolkit@18"
         },
         {
           "command": "toolkit.slugify",
-          "group": "0_toolkit@21",
+          "group": "0_toolkit@19",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.sumNumbers",
-          "group": "0_toolkit@22",
+          "group": "0_toolkit@20",
           "when": "editorHasSelection"
         },
         {
           "command": "toolkit.toggleCsvRainbow",
-          "group": "0_toolkit@23",
+          "group": "0_toolkit@21",
           "when": "resourceExtname == .csv || resourceExtname == .tsv"
         },
         {
-          "command": "toolkit.toggleGitBlame",
-          "group": "0_toolkit@24"
-        },
-        {
           "command": "toolkit.toggleQuotes",
-          "group": "0_toolkit@25"
+          "group": "0_toolkit@22"
         },
         {
           "submenu": "toolkit.menu.transform",
           "when": "editorHasSelection",
-          "group": "0_toolkit@26"
+          "group": "0_toolkit@23"
         }
       ],
       "toolkit.menu.transform": [
@@ -2487,37 +2463,37 @@
         {
           "command": "toolkit.convertImportsToAlias",
           "when": "editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/",
-          "group": "1_items@1"
+          "group": "1_imports@1"
         },
         {
           "command": "toolkit.convertImportsToRelative",
           "when": "editorLangId =~ /^(typescript|typescriptreact|javascript|javascriptreact|vue|svelte)$/",
-          "group": "1_items@2"
-        },
-        {
-          "command": "toolkit.numberBase.toBinary",
-          "when": "editorHasSelection",
-          "group": "1_items@3"
+          "group": "1_imports@2"
         },
         {
           "command": "toolkit.numberBase.toDecimal",
           "when": "editorHasSelection",
-          "group": "1_items@4"
+          "group": "2_number@1"
         },
         {
           "command": "toolkit.numberBase.toHex",
           "when": "editorHasSelection",
-          "group": "1_items@5"
+          "group": "2_number@2"
+        },
+        {
+          "command": "toolkit.numberBase.toBinary",
+          "when": "editorHasSelection",
+          "group": "2_number@3"
         },
         {
           "command": "toolkit.numberBase.toOctal",
           "when": "editorHasSelection",
-          "group": "1_items@6"
+          "group": "2_number@4"
         },
         {
           "command": "toolkit.timestamp.convert",
           "when": "editorHasSelection",
-          "group": "1_items@7"
+          "group": "3_time@1"
         }
       ],
       "toolkit.menu.compareEditor": [
@@ -2569,51 +2545,42 @@
       ],
       "toolkit.menu.rest": [
         {
-          "command": "toolkit.restClient.copyAsCurl",
-          "when": "resourceExtname == .http || resourceExtname == .rest",
-          "group": "1_items@1"
-        },
-        {
-          "command": "toolkit.restClient.createPrivateEnv",
-          "when": "resourceFilename == http-client.env.json",
-          "group": "1_items@2"
-        },
-        {
-          "command": "toolkit.restClient.importCurl",
-          "when": "resourceExtname == .http || resourceExtname == .rest",
-          "group": "1_items@3"
-        },
-        {
-          "command": "toolkit.restClient.selectEnvironment",
-          "when": "resourceExtname == .http || resourceExtname == .rest",
-          "group": "1_items@4"
+          "command": "toolkit.restClient.send",
+          "group": "1_send@1"
         },
         {
           "command": "toolkit.restClient.sendAll",
-          "when": "resourceExtname == .http || resourceExtname == .rest",
-          "group": "1_items@5"
+          "group": "1_send@2"
         },
         {
-          "command": "toolkit.restClient.send",
-          "when": "resourceExtname == .http || resourceExtname == .rest",
-          "group": "1_items@6"
+          "command": "toolkit.restClient.copyAsCurl",
+          "group": "2_tools@1"
+        },
+        {
+          "command": "toolkit.restClient.importCurl",
+          "group": "2_tools@2"
+        },
+        {
+          "command": "toolkit.restClient.selectEnvironment",
+          "group": "3_env@1"
+        },
+        {
+          "command": "toolkit.restClient.createPrivateEnv",
+          "group": "3_env@2"
         }
       ],
       "toolkit.menu.resources": [
         {
-          "command": "toolkit.resx.normalizeGroup",
-          "when": "resourceExtname == .resx",
-          "group": "1_items@1"
-        },
-        {
           "command": "toolkit.resx.openGrid",
-          "when": "resourceExtname == .resx",
-          "group": "1_items@2"
+          "group": "1_open@1"
         },
         {
           "command": "toolkit.resx.syncGroup",
-          "when": "resourceExtname == .resx",
-          "group": "1_items@3"
+          "group": "2_ops@1"
+        },
+        {
+          "command": "toolkit.resx.normalizeGroup",
+          "group": "2_ops@2"
         }
       ],
       "toolkit.menu.markdown": [
@@ -2853,6 +2820,51 @@
         {
           "command": "toolkit.insert.randomBase64",
           "group": "1_items@8"
+        }
+      ],
+      "toolkit.menu.gitEditor": [
+        {
+          "command": "toolkit.gitHistory",
+          "group": "1_g@1"
+        },
+        {
+          "command": "toolkit.openInGitHub.file",
+          "group": "1_g@2"
+        },
+        {
+          "command": "toolkit.toggleGitBlame",
+          "group": "1_g@3"
+        },
+        {
+          "command": "toolkit.localHistory.show",
+          "group": "2_h@1"
+        }
+      ],
+      "toolkit.menu.gitExplorer": [
+        {
+          "command": "toolkit.gitHistory",
+          "when": "!explorerResourceIsFolder",
+          "group": "1_g@1"
+        },
+        {
+          "command": "toolkit.openInGitHub.explorerFile",
+          "when": "explorerResourceIsRoot == false",
+          "group": "1_g@2"
+        },
+        {
+          "command": "toolkit.toggleGitBlame",
+          "when": "!explorerResourceIsFolder",
+          "group": "1_g@3"
+        },
+        {
+          "command": "toolkit.git.stageChanges",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "1_g@4"
+        },
+        {
+          "command": "toolkit.localHistory.show",
+          "when": "!explorerResourceIsFolder",
+          "group": "2_h@1"
         }
       ]
     },
