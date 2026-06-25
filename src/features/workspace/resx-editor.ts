@@ -464,14 +464,14 @@ class GridSession {
   table { border-collapse: collapse; width: 100%; border: 1px solid ${cssColor.border}; }
   th, td { border: 1px solid ${cssColor.border}; padding: 0; text-align: left; vertical-align: top; }
   thead th { position: sticky; top: 37px; z-index: 2; background: var(--vscode-editorGroupHeader-tabsBackground, var(--vscode-editor-background)); padding: 5px 8px; font-weight: 600; }
-  th.keycol, td.keycol { position: sticky; left: 0; z-index: 1; background: var(--vscode-editor-background); font-family: var(--vscode-editor-font-family); white-space: nowrap; padding: 5px 8px; }
-  thead th.keycol { z-index: 2; }
-  td.keycol { display: flex; align-items: center; gap: 6px; }
-  td.keycol .kname { flex: 1; }
+  th.keycol, td.keycol { position: sticky; left: 0; z-index: 1; background: var(--vscode-editor-background); font-family: var(--vscode-editor-font-family); white-space: nowrap; }
+  thead th.keycol { z-index: 2; padding: 5px 8px; }
+  .keywrap { display: flex; align-items: center; gap: 6px; padding: 4px 8px; }
+  .keywrap .kname { flex: 1; }
   tbody tr:hover { background: var(--vscode-list-hoverBackground); }
   .rowacts { display: inline-flex; gap: 2px; visibility: hidden; }
   tr:hover .rowacts { visibility: visible; }
-  .rowacts button.icon { width: 20px; height: 20px; font-size: 12px; border-radius: 3px; }
+  .rowacts button.icon { width: 18px; height: 18px; font-size: 11px; border-radius: 3px; }
   .cell { min-height: 1.4em; padding: 4px 8px; outline: none; white-space: pre-wrap; word-break: break-word; }
   .cell:focus { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
   td.missing .cell:empty::before { content: '— missing —'; color: var(--vscode-descriptionForeground); font-style: italic; }
@@ -570,7 +570,10 @@ class GridSession {
       del.title = 'Delete key from all languages';
       del.addEventListener('click', () => vscode.postMessage({ type: 'deleteKey', key: r.key }));
       acts.append(ren, del);
-      kc.append(kname, acts);
+      const wrap = document.createElement('div');
+      wrap.className = 'keywrap';
+      wrap.append(kname, acts);
+      kc.appendChild(wrap);
       tr.appendChild(kc);
       for (const col of grid.columns) {
         const cell = r.cells[col.id];
