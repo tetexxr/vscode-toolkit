@@ -532,6 +532,12 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.git.commitPushAllRepos",
+        "title": "Commit & Push Staged — Selected Repos…",
+        "category": "Toolkit",
+        "icon": "$(git-commit)"
+      },
+      {
         "command": "toolkit.findFileOrFolder",
         "title": "Find File or Folder…",
         "category": "Toolkit"
@@ -1585,6 +1591,13 @@
       }
     ],
     "menus": {
+      "scm/title": [
+        {
+          "command": "toolkit.git.commitPushAllRepos",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "navigation@99"
+        }
+      ],
       "view/title": [
         {
           "command": "toolkit.gitCommitList.refresh",
@@ -2054,6 +2067,10 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "toolkit.git.commitPushAllRepos",
+          "when": "gitOpenRepositoryCount != 0"
+        },
         {
           "command": "toolkit.nuget.managePackages",
           "when": "false"

@@ -389,6 +389,43 @@ export async function stageFile(cwd: string, ...filePaths: string[]): Promise<vo
   await gitExec(cwd, ['add', ...filePaths])
 }
 
+/** Paths (relative to repo root) currently staged for the next commit. */
+export async function getStagedFiles(cwd: string): Promise<string[]> {
+  // -z: NUL-separated, unquoted paths so accents/spaces survive.
+  const out = await gitExec(cwd, ['diff', '--cached', '--name-only', '-z'])
+  return out.split('\0').filter(Boolean)
+}
+
+export async function commit(cwd: string, message: string): Promise<void> {
+  await gitExec(cwd, ['commit', '-m', message], 30000)
+}
+
+/** The configured upstream (e.g. `origin/main`), or undefined when none is set. */
+export async function getUpstream(cwd: string): Promise<string | undefined> {
+  try {
+    return await gitExec(cwd, ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}'])
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Pushes the current branch. When it already tracks an upstream, a plain push;
+ * otherwise sets `origin/<branch>` as upstream (`-u`) on the way out.
+ * Network operations get a generous timeout.
+ */
+export async function push(cwd: string): Promise<void> {
+  if (await getUpstream(cwd)) {
+    await gitExec(cwd, ['push'], 120000)
+    return
+  }
+  const branch = await getCurrentBranch(cwd)
+  if (!branch) {
+    throw new Error('Detached HEAD: no branch to push.')
+  }
+  await gitExec(cwd, ['push', '-u', 'origin', branch], 120000)
+}
+
 export async function resetToCommit(cwd: string, hash: string, mode: 'soft' | 'hard' | 'mixed'): Promise<void> {
   await gitExec(cwd, ['reset', `--${mode}`, hash], 30000)
 }

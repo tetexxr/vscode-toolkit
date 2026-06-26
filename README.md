@@ -15,6 +15,7 @@ All-in-one VS Code utility extension.
     - [Git Stash Manager](#git-stash-manager)
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
+    - [Commit & Push — Selected Repos](#commit--push--selected-repos)
     - [Compare with Branch or Commit](#compare-with-branch-or-commit)
     - [Compare Project / Folder with Branch or Commit](#compare-project--folder-with-branch-or-commit)
     - [Peek Last Commit on Line](#peek-last-commit-on-line)
@@ -251,6 +252,26 @@ Stage files or folders directly from the file explorer context menu. Works with 
 - **Explorer context menu** — right-click a file, folder, or multi-selection and select **Toolkit: Stage Changes**.
 
 Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once. In multi-root workspaces the selection can span repositories: targets are grouped and staged per repository.
+
+#### Commit & Push — Selected Repos
+
+Commit and push the **staged** changes of several repositories at once, with a single shared commit message. Built for the common case of one folder containing many sibling repositories (and multi-root workspaces): edit and stage what you want in each repo, then commit + push them all in one action.
+
+The repositories you select in the Source Control **Repositories** view drive which repos are targeted — exactly the multi-selection VS Code already offers there.
+
+**Access:**
+
+- **Source Control title bar** — the **Commit & Push Staged** button (`$(git-commit)`), shown whenever a repository is open.
+- **Command Palette** — **Toolkit: Commit & Push Staged — Selected Repos…**
+
+How it works:
+
+1. Stage what you want to commit in each repository (e.g. with **Stage Changes** above, or normally).
+2. Run the command. A confirmation quick pick lists every repository that has staged changes, showing each repo's staged file count and a preview of the first few paths. Repositories you selected in the SCM view come **pre-checked** (if you selected none, all are pre-checked); uncheck any you want to skip. Repositories you selected in SCM but with nothing staged are shown as a non-committable info row, so they are never silently dropped.
+3. Enter the commit message used for **every** selected repository.
+4. Each repository commits its staged changes and pushes. A repo that already tracks an upstream does a plain `push`; one without an upstream is pushed with `-u origin <branch>`. The staged set is committed as-is — nothing is auto-staged.
+
+A progress notification tracks the run, and a summary reports the result per repository. If one repository fails (e.g. a rejected push), the others still complete and the failures are listed with their error — the run is never aborted halfway.
 
 #### Compare with Branch or Commit
 
