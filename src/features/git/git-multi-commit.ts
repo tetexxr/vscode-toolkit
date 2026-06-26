@@ -111,14 +111,14 @@ function reportResults(results: RepoResult[], action: Action): void {
   const failed = results.filter(r => !r.ok)
   if (failed.length === 0) {
     vscode.window.showInformationMessage(
-      `${action.doneVerb} in ${ok.length} repo${ok.length === 1 ? '' : 's'}: ${ok.map(r => r.name).join(', ')}`
+      `${action.doneVerb} in ${ok.length} repositor${ok.length === 1 ? 'y' : 'ies'}: ${ok.map(r => r.name).join(', ')}`
     )
     return
   }
   const detail = failed.map(r => `• ${r.name}: ${r.error}`).join('\n')
   vscode.window
     .showWarningMessage(
-      `${action.doneVerb} in ${ok.length}/${results.length} repos. ${failed.length} failed.`,
+      `${action.doneVerb} in ${ok.length}/${results.length} repositories. ${failed.length} failed.`,
       { modal: false, detail },
       'Show Details'
     )
@@ -165,8 +165,8 @@ async function commitAcrossRepos(action: Action): Promise<void> {
     canPickMany: true,
     title: `${action.title} — select repositories`,
     placeHolder: action.push
-      ? 'Each repo commits its staged changes, then pushes'
-      : 'Each repo commits its staged changes'
+      ? 'Each repository commits its staged changes, then pushes'
+      : 'Each repository commits its staged changes'
   })
   if (!chosen) {
     return // cancelled
@@ -179,8 +179,8 @@ async function commitAcrossRepos(action: Action): Promise<void> {
   }
 
   const message = await vscode.window.showInputBox({
-    title: `Commit message for ${targets.length} repo${targets.length === 1 ? '' : 's'}`,
-    placeHolder: 'Same message used for every selected repo',
+    title: `Commit message for ${targets.length} repositor${targets.length === 1 ? 'y' : 'ies'}`,
+    placeHolder: 'Same message used for every selected repository',
     validateInput: value => (value.trim().length === 0 ? 'A commit message is required.' : undefined)
   })
   if (message === undefined) {

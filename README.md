@@ -15,7 +15,7 @@ All-in-one VS Code utility extension.
     - [Git Stash Manager](#git-stash-manager)
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
-    - [Commit & Push — Selected Repos](#commit--push--selected-repos)
+    - [Commit & Push — Selected Repositories](#commit--push--selected-repositories)
     - [Compare with Branch or Commit](#compare-with-branch-or-commit)
     - [Compare Project / Folder with Branch or Commit](#compare-project--folder-with-branch-or-commit)
     - [Peek Last Commit on Line](#peek-last-commit-on-line)
@@ -253,7 +253,7 @@ Stage files or folders directly from the file explorer context menu. Works with 
 
 Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once. In multi-root workspaces the selection can span repositories: targets are grouped and staged per repository.
 
-#### Commit & Push — Selected Repos
+#### Commit & Push — Selected Repositories
 
 Commit and push the **staged** changes of several repositories at once, with a single shared commit message. Built for the common case of one folder containing many sibling repositories (and multi-root workspaces): edit and stage what you want in each repo, then commit + push them all in one action.
 
@@ -262,7 +262,7 @@ The repositories you select in the Source Control **Repositories** view drive wh
 **Access:**
 
 - **Source Control title bar** — the **Commit & Push Staged** button (`$(git-commit)`), shown whenever a repository is open.
-- **Command Palette** — **Toolkit: Commit & Push Staged — Selected Repos…**, or **Toolkit: Commit Staged — Selected Repos…** for the commit-only variant (same flow, no push).
+- **Command Palette** — **Toolkit: Commit & Push Staged — Selected Repositories…**, or **Toolkit: Commit Staged — Selected Repositories…** for the commit-only variant (same flow, no push).
 
 How it works:
 
@@ -273,7 +273,7 @@ How it works:
 
 A progress notification tracks the run, and a summary reports the result per repository. If one repository fails (e.g. a rejected push), the others still complete and the failures are listed with their error — the run is never aborted halfway.
 
-A **commit-only** variant (**Toolkit: Commit Staged — Selected Repos…**) runs the exact same flow without the push step, for when you want to review the commits before sending them.
+A **commit-only** variant (**Toolkit: Commit Staged — Selected Repositories…**) runs the exact same flow without the push step, for when you want to review the commits before sending them.
 
 #### Compare with Branch or Commit
 

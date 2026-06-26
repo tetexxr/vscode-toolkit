@@ -533,13 +533,13 @@
       },
       {
         "command": "toolkit.git.commitPushAllRepos",
-        "title": "Commit & Push Staged — Selected Repos…",
+        "title": "Commit & Push Staged — Selected Repositories…",
         "category": "Toolkit",
         "icon": "$(git-commit)"
       },
       {
         "command": "toolkit.git.commitAllRepos",
-        "title": "Commit Staged — Selected Repos…",
+        "title": "Commit Staged — Selected Repositories…",
         "category": "Toolkit"
       },
       {
