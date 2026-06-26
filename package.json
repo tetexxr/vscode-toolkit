@@ -538,6 +538,11 @@
         "icon": "$(git-commit)"
       },
       {
+        "command": "toolkit.git.commitAllRepos",
+        "title": "Commit Staged — Selected Repos…",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.findFileOrFolder",
         "title": "Find File or Folder…",
         "category": "Toolkit"
@@ -2069,6 +2074,10 @@
       "commandPalette": [
         {
           "command": "toolkit.git.commitPushAllRepos",
+          "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "toolkit.git.commitAllRepos",
           "when": "gitOpenRepositoryCount != 0"
         },
         {

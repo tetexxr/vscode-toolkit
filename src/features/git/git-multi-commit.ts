@@ -66,9 +66,21 @@ function buildQuickPickItems(
   return items
 }
 
-async function runCommitPush(repos: RepoCandidate[], message: string): Promise<RepoResult[]> {
+/** Distinguishes the commit-only command from the commit + push one. */
+interface Action {
+  /** Title shown in pickers/progress, e.g. "Commit & Push". */
+  readonly title: string
+  /** Past-tense verb for the result summary, e.g. "committed & pushed". */
+  readonly doneVerb: string
+  readonly push: boolean
+}
+
+const COMMIT_ONLY: Action = { title: 'Commit', doneVerb: 'committed', push: false }
+const COMMIT_PUSH: Action = { title: 'Commit & Push', doneVerb: 'committed & pushed', push: true }
+
+async function runAction(repos: RepoCandidate[], message: string, action: Action): Promise<RepoResult[]> {
   return vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: 'Commit & Push', cancellable: false },
+    { location: vscode.ProgressLocation.Notification, title: action.title, cancellable: false },
     async progress => {
       const results: RepoResult[] = []
       let done = 0
@@ -79,11 +91,13 @@ async function runCommitPush(repos: RepoCandidate[], message: string): Promise<R
         })
         try {
           await commit(repo.root, message)
-          await push(repo.root)
+          if (action.push) {
+            await push(repo.root)
+          }
           results.push({ name: repo.name, ok: true })
         } catch (err) {
           const error = err instanceof Error ? err.message : String(err)
-          logError('git-multi-commit.runCommitPush', err)
+          logError('git-multi-commit.runAction', err)
           results.push({ name: repo.name, ok: false, error })
         }
       }
@@ -92,19 +106,19 @@ async function runCommitPush(repos: RepoCandidate[], message: string): Promise<R
   )
 }
 
-function reportResults(results: RepoResult[]): void {
+function reportResults(results: RepoResult[], action: Action): void {
   const ok = results.filter(r => r.ok)
   const failed = results.filter(r => !r.ok)
   if (failed.length === 0) {
     vscode.window.showInformationMessage(
-      `Committed & pushed in ${ok.length} repo${ok.length === 1 ? '' : 's'}: ${ok.map(r => r.name).join(', ')}`
+      `${action.doneVerb} in ${ok.length} repo${ok.length === 1 ? '' : 's'}: ${ok.map(r => r.name).join(', ')}`
     )
     return
   }
   const detail = failed.map(r => `• ${r.name}: ${r.error}`).join('\n')
   vscode.window
     .showWarningMessage(
-      `Committed & pushed in ${ok.length}/${results.length} repos. ${failed.length} failed.`,
+      `${action.doneVerb} in ${ok.length}/${results.length} repos. ${failed.length} failed.`,
       { modal: false, detail },
       'Show Details'
     )
@@ -115,7 +129,7 @@ function reportResults(results: RepoResult[]): void {
     })
 }
 
-async function commitPushAllRepos(): Promise<void> {
+async function commitAcrossRepos(action: Action): Promise<void> {
   const api = await getGitApi()
   if (!api || api.repositories.length === 0) {
     vscode.window.showInformationMessage('No git repositories are open.')
@@ -149,8 +163,10 @@ async function commitPushAllRepos(): Promise<void> {
   const items = buildQuickPickItems(candidates, emptySelected)
   const chosen = await vscode.window.showQuickPick(items, {
     canPickMany: true,
-    title: 'Commit & Push — select repositories',
-    placeHolder: 'Each repo commits its staged changes, then pushes'
+    title: `${action.title} — select repositories`,
+    placeHolder: action.push
+      ? 'Each repo commits its staged changes, then pushes'
+      : 'Each repo commits its staged changes'
   })
   if (!chosen) {
     return // cancelled
@@ -171,10 +187,13 @@ async function commitPushAllRepos(): Promise<void> {
     return // cancelled
   }
 
-  const results = await runCommitPush(targets, message.trim())
-  reportResults(results)
+  const results = await runAction(targets, message.trim(), action)
+  reportResults(results, action)
 }
 
 export function registerGitMultiCommitCommands(context: vscode.ExtensionContext) {
-  context.subscriptions.push(vscode.commands.registerCommand('toolkit.git.commitPushAllRepos', commitPushAllRepos))
+  context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.git.commitPushAllRepos', () => commitAcrossRepos(COMMIT_PUSH)),
+    vscode.commands.registerCommand('toolkit.git.commitAllRepos', () => commitAcrossRepos(COMMIT_ONLY))
+  )
 }

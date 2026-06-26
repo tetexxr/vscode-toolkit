@@ -15,7 +15,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Diff Tools | — | Compare the selection/file with the clipboard, or the active file with another open tab |
 | Expand Changed Files | — | Expand only the explorer folders containing git changes |
 | Stage Changes | — | Stage files/folders from the explorer (multi-select, multi-repo) |
-| Commit & Push — Selected Repos | — | One commit message + push across every selected repo's staged changes; button in the Source Control title bar |
+| Commit & Push — Selected Repos | — | One commit message + push across every selected repo's staged changes; button in the Source Control title bar. Commit-only variant available |
 | Peek Last Commit | — | Hover any line to see the commit that last touched it |
 
 ## Packages

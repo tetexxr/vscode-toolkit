@@ -262,7 +262,7 @@ The repositories you select in the Source Control **Repositories** view drive wh
 **Access:**
 
 - **Source Control title bar** — the **Commit & Push Staged** button (`$(git-commit)`), shown whenever a repository is open.
-- **Command Palette** — **Toolkit: Commit & Push Staged — Selected Repos…**
+- **Command Palette** — **Toolkit: Commit & Push Staged — Selected Repos…**, or **Toolkit: Commit Staged — Selected Repos…** for the commit-only variant (same flow, no push).
 
 How it works:
 
@@ -272,6 +272,8 @@ How it works:
 4. Each repository commits its staged changes and pushes. A repo that already tracks an upstream does a plain `push`; one without an upstream is pushed with `-u origin <branch>`. The staged set is committed as-is — nothing is auto-staged.
 
 A progress notification tracks the run, and a summary reports the result per repository. If one repository fails (e.g. a rejected push), the others still complete and the failures are listed with their error — the run is never aborted halfway.
+
+A **commit-only** variant (**Toolkit: Commit Staged — Selected Repos…**) runs the exact same flow without the push step, for when you want to review the commits before sending them.
 
 #### Compare with Branch or Commit
 
