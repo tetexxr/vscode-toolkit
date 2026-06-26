@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.18.1",
+  "version": "1.18.2",
   "publisher": "tete",
   "repository": {
     "type": "git",
@@ -530,6 +530,24 @@
         "command": "toolkit.git.stageChanges",
         "title": "Stage Changes",
         "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.git.syncAllRepos",
+        "title": "Synchronize — Selected Repositories…",
+        "category": "Toolkit",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "toolkit.git.commitPushAllRepos",
+        "title": "Commit & Push Staged — Selected Repositories…",
+        "category": "Toolkit",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "toolkit.git.commitAllRepos",
+        "title": "Commit Staged — Selected Repositories…",
+        "category": "Toolkit",
+        "icon": "$(check)"
       },
       {
         "command": "toolkit.findFileOrFolder",
@@ -1585,6 +1603,23 @@
       }
     ],
     "menus": {
+      "scm/sourceControl": [
+        {
+          "command": "toolkit.git.syncAllRepos",
+          "when": "scmProvider == git",
+          "group": "1_toolkit@1"
+        },
+        {
+          "command": "toolkit.git.commitAllRepos",
+          "when": "scmProvider == git",
+          "group": "1_toolkit@2"
+        },
+        {
+          "command": "toolkit.git.commitPushAllRepos",
+          "when": "scmProvider == git",
+          "group": "1_toolkit@3"
+        }
+      ],
       "view/title": [
         {
           "command": "toolkit.gitCommitList.refresh",
@@ -2054,6 +2089,18 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "toolkit.git.syncAllRepos",
+          "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "toolkit.git.commitPushAllRepos",
+          "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "toolkit.git.commitAllRepos",
+          "when": "gitOpenRepositoryCount != 0"
+        },
         {
           "command": "toolkit.nuget.managePackages",
           "when": "false"

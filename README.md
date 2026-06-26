@@ -15,6 +15,8 @@ All-in-one VS Code utility extension.
     - [Git Stash Manager](#git-stash-manager)
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
+    - [Commit & Push — Selected Repositories](#commit--push--selected-repositories)
+    - [Synchronize — Selected Repositories](#synchronize--selected-repositories)
     - [Compare with Branch or Commit](#compare-with-branch-or-commit)
     - [Compare Project / Folder with Branch or Commit](#compare-project--folder-with-branch-or-commit)
     - [Peek Last Commit on Line](#peek-last-commit-on-line)
@@ -251,6 +253,39 @@ Stage files or folders directly from the file explorer context menu. Works with 
 - **Explorer context menu** — right-click a file, folder, or multi-selection and select **Toolkit: Stage Changes**.
 
 Supports multi-select — select several files and/or folders with `Cmd+Click` or `Shift+Click`, right-click, and stage them all at once. In multi-root workspaces the selection can span repositories: targets are grouped and staged per repository.
+
+#### Commit & Push — Selected Repositories
+
+Commit and push the **staged** changes of several repositories at once, with a single shared commit message. Built for the common case of one folder containing many sibling repositories (and multi-root workspaces): edit and stage what you want in each repo, then commit + push them all in one action.
+
+The repositories you select in the Source Control **Repositories** view drive which repos are targeted — exactly the multi-selection VS Code already offers there.
+
+**Access:**
+
+- **Source Control context menu** — right-click a repository in the Source Control view and pick **Commit & Push Staged — Selected Repositories…** (or the commit-only / synchronize entries). The action runs over every repository selected in the SCM view, so right-clicking any one of the selected repositories applies it to the whole selection.
+- **Command Palette** — **Toolkit: Commit & Push Staged — Selected Repositories…**, or **Toolkit: Commit Staged — Selected Repositories…** for the commit-only variant (same flow, no push).
+
+How it works:
+
+1. Stage what you want to commit in each repository (e.g. with **Stage Changes** above, or normally).
+2. Run the command. A confirmation quick pick lists every repository that has staged changes, showing each repo's staged file count and a preview of the first few paths. Repositories you selected in the SCM view come **pre-checked** (if you selected none, all are pre-checked); uncheck any you want to skip. Repositories you selected in SCM but with nothing staged are shown as a non-committable info row, so they are never silently dropped.
+3. Enter the commit message used for **every** selected repository.
+4. Each repository commits its staged changes and pushes. A repo that already tracks an upstream does a plain `push`; one without an upstream is pushed with `-u origin <branch>`. The staged set is committed as-is — nothing is auto-staged.
+
+A progress notification tracks the run, and a summary reports the result per repository. If one repository fails (e.g. a rejected push), the others still complete and the failures are listed with their error — the run is never aborted halfway.
+
+A **commit-only** variant (**Toolkit: Commit Staged — Selected Repositories…**) runs the exact same flow without the push step, for when you want to review the commits before sending them.
+
+#### Synchronize — Selected Repositories
+
+Pull then push several repositories at once — VS Code's **Synchronize Changes**, but across every repository you select instead of one at a time. Useful for keeping a folder full of sibling repositories up to date with their remotes in a single action.
+
+**Access:**
+
+- **Source Control context menu** — right-click a repository in the Source Control view and pick **Synchronize — Selected Repositories…**, alongside the Commit and Commit & Push entries.
+- **Command Palette** — **Toolkit: Synchronize — Selected Repositories…**
+
+Unlike the commit actions, sync doesn't depend on staged changes — every open repository is a candidate. The confirmation quick pick lists them (each showing its branch → upstream, or *no upstream*), pre-checked according to your SCM selection. For each chosen repository it runs `git pull` and then `git push`. The pull honours your own git configuration (`pull.rebase`) — no strategy is forced. A branch with no upstream has nothing to pull, so it is only pushed (setting the upstream with `-u`). The same per-repository progress and ✓/✗ summary apply; a repository that hits a conflict is reported without aborting the others.
 
 #### Compare with Branch or Commit
 

@@ -20,6 +20,7 @@ import { registerExpandChangedFilesCommands } from './features/workspace/expand-
 import { registerDiagnosticHighlightCommands } from './features/viewers/diagnostic-highlight'
 import { registerGitEditCommitCommands } from './features/git/git-edit-commit'
 import { registerGitStageCommands } from './features/git/git-stage'
+import { registerGitMultiCommitCommands } from './features/git/git-multi-commit'
 import { registerFindFileOrFolderCommands } from './features/workspace/find-file-or-folder'
 import { registerSumNumbersCommands } from './features/editing/text/sum-numbers'
 import { registerCsvRainbowCommands } from './features/viewers/csv-rainbow'
@@ -83,6 +84,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerDiagnosticHighlightCommands(context)
   registerGitEditCommitCommands(context)
   registerGitStageCommands(context)
+  registerGitMultiCommitCommands(context)
   registerFindFileOrFolderCommands(context)
   registerSumNumbersCommands(context)
   registerCsvRainbowCommands(context)
