@@ -1603,21 +1603,21 @@
       }
     ],
     "menus": {
-      "scm/title": [
+      "scm/sourceControl": [
         {
           "command": "toolkit.git.syncAllRepos",
-          "when": "gitOpenRepositoryCount != 0",
-          "group": "navigation@97"
+          "when": "scmProvider == git",
+          "group": "1_toolkit@1"
         },
         {
           "command": "toolkit.git.commitAllRepos",
-          "when": "gitOpenRepositoryCount != 0",
-          "group": "navigation@98"
+          "when": "scmProvider == git",
+          "group": "1_toolkit@2"
         },
         {
           "command": "toolkit.git.commitPushAllRepos",
-          "when": "gitOpenRepositoryCount != 0",
-          "group": "navigation@99"
+          "when": "scmProvider == git",
+          "group": "1_toolkit@3"
         }
       ],
       "view/title": [

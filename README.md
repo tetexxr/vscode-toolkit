@@ -262,7 +262,7 @@ The repositories you select in the Source Control **Repositories** view drive wh
 
 **Access:**
 
-- **Source Control title bar** — three buttons appear whenever a repository is open, mirroring VS Code's own single-repo toolbar: **Synchronize** (`$(sync)`), **Commit** (`$(check)`) and **Commit & Push** (`$(git-commit)`).
+- **Source Control context menu** — right-click a repository in the Source Control view and pick **Commit & Push Staged — Selected Repositories…** (or the commit-only / synchronize entries). The action runs over every repository selected in the SCM view, so right-clicking any one of the selected repositories applies it to the whole selection.
 - **Command Palette** — **Toolkit: Commit & Push Staged — Selected Repositories…**, or **Toolkit: Commit Staged — Selected Repositories…** for the commit-only variant (same flow, no push).
 
 How it works:
@@ -282,7 +282,7 @@ Pull then push several repositories at once — VS Code's **Synchronize Changes*
 
 **Access:**
 
-- **Source Control title bar** — the **Synchronize** button (`$(sync)`), alongside the Commit and Commit & Push buttons above.
+- **Source Control context menu** — right-click a repository in the Source Control view and pick **Synchronize — Selected Repositories…**, alongside the Commit and Commit & Push entries.
 - **Command Palette** — **Toolkit: Synchronize — Selected Repositories…**
 
 Unlike the commit actions, sync doesn't depend on staged changes — every open repository is a candidate. The confirmation quick pick lists them (each showing its branch → upstream, or *no upstream*), pre-checked according to your SCM selection. For each chosen repository it runs `git pull` and then `git push`. The pull honours your own git configuration (`pull.rebase`) — no strategy is forced. A branch with no upstream has nothing to pull, so it is only pushed (setting the upstream with `-u`). The same per-repository progress and ✓/✗ summary apply; a repository that hits a conflict is reported without aborting the others.
