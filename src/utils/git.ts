@@ -426,6 +426,23 @@ export async function push(cwd: string): Promise<void> {
   await gitExec(cwd, ['push', '-u', 'origin', branch], 120000)
 }
 
+/** Plain `git pull` — honours the user's `pull.rebase` config (no forced strategy). */
+export async function pull(cwd: string): Promise<void> {
+  await gitExec(cwd, ['pull'], 120000)
+}
+
+/**
+ * Synchronizes with the remote like VS Code's "Synchronize Changes": pulls then
+ * pushes. A branch with no upstream has nothing to pull, so it is only pushed
+ * (which sets the upstream via `-u`).
+ */
+export async function sync(cwd: string): Promise<void> {
+  if (await getUpstream(cwd)) {
+    await pull(cwd)
+  }
+  await push(cwd)
+}
+
 export async function resetToCommit(cwd: string, hash: string, mode: 'soft' | 'hard' | 'mixed'): Promise<void> {
   await gitExec(cwd, ['reset', `--${mode}`, hash], 30000)
 }

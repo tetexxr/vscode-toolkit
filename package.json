@@ -532,6 +532,12 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.git.syncAllRepos",
+        "title": "Synchronize — Selected Repositories…",
+        "category": "Toolkit",
+        "icon": "$(sync)"
+      },
+      {
         "command": "toolkit.git.commitPushAllRepos",
         "title": "Commit & Push Staged — Selected Repositories…",
         "category": "Toolkit",
@@ -540,7 +546,8 @@
       {
         "command": "toolkit.git.commitAllRepos",
         "title": "Commit Staged — Selected Repositories…",
-        "category": "Toolkit"
+        "category": "Toolkit",
+        "icon": "$(check)"
       },
       {
         "command": "toolkit.findFileOrFolder",
@@ -1598,6 +1605,16 @@
     "menus": {
       "scm/title": [
         {
+          "command": "toolkit.git.syncAllRepos",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "navigation@97"
+        },
+        {
+          "command": "toolkit.git.commitAllRepos",
+          "when": "gitOpenRepositoryCount != 0",
+          "group": "navigation@98"
+        },
+        {
           "command": "toolkit.git.commitPushAllRepos",
           "when": "gitOpenRepositoryCount != 0",
           "group": "navigation@99"
@@ -2072,6 +2089,10 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "toolkit.git.syncAllRepos",
+          "when": "gitOpenRepositoryCount != 0"
+        },
         {
           "command": "toolkit.git.commitPushAllRepos",
           "when": "gitOpenRepositoryCount != 0"

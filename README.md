@@ -16,6 +16,7 @@ All-in-one VS Code utility extension.
     - [Expand Changed Files](#expand-changed-files)
     - [Stage Changes](#stage-changes)
     - [Commit & Push — Selected Repositories](#commit--push--selected-repositories)
+    - [Synchronize — Selected Repositories](#synchronize--selected-repositories)
     - [Compare with Branch or Commit](#compare-with-branch-or-commit)
     - [Compare Project / Folder with Branch or Commit](#compare-project--folder-with-branch-or-commit)
     - [Peek Last Commit on Line](#peek-last-commit-on-line)
@@ -261,7 +262,7 @@ The repositories you select in the Source Control **Repositories** view drive wh
 
 **Access:**
 
-- **Source Control title bar** — the **Commit & Push Staged** button (`$(git-commit)`), shown whenever a repository is open.
+- **Source Control title bar** — three buttons appear whenever a repository is open, mirroring VS Code's own single-repo toolbar: **Synchronize** (`$(sync)`), **Commit** (`$(check)`) and **Commit & Push** (`$(git-commit)`).
 - **Command Palette** — **Toolkit: Commit & Push Staged — Selected Repositories…**, or **Toolkit: Commit Staged — Selected Repositories…** for the commit-only variant (same flow, no push).
 
 How it works:
@@ -274,6 +275,17 @@ How it works:
 A progress notification tracks the run, and a summary reports the result per repository. If one repository fails (e.g. a rejected push), the others still complete and the failures are listed with their error — the run is never aborted halfway.
 
 A **commit-only** variant (**Toolkit: Commit Staged — Selected Repositories…**) runs the exact same flow without the push step, for when you want to review the commits before sending them.
+
+#### Synchronize — Selected Repositories
+
+Pull then push several repositories at once — VS Code's **Synchronize Changes**, but across every repository you select instead of one at a time. Useful for keeping a folder full of sibling repositories up to date with their remotes in a single action.
+
+**Access:**
+
+- **Source Control title bar** — the **Synchronize** button (`$(sync)`), alongside the Commit and Commit & Push buttons above.
+- **Command Palette** — **Toolkit: Synchronize — Selected Repositories…**
+
+Unlike the commit actions, sync doesn't depend on staged changes — every open repository is a candidate. The confirmation quick pick lists them (each showing its branch → upstream, or *no upstream*), pre-checked according to your SCM selection. For each chosen repository it runs `git pull` and then `git push`. The pull honours your own git configuration (`pull.rebase`) — no strategy is forced. A branch with no upstream has nothing to pull, so it is only pushed (setting the upstream with `-u`). The same per-repository progress and ✓/✗ summary apply; a repository that hits a conflict is reported without aborting the others.
 
 #### Compare with Branch or Commit
 
