@@ -283,6 +283,23 @@ describe('getChangedFiles', () => {
     assert.equal(result[0].path, 'new.txt')
     assert.equal(result[0].status, 'R')
   })
+
+  it('should preserve the full path of a worktree-modified tracked file', async () => {
+    // Regression: a worktree-only modification is reported as " M <path>" with a
+    // leading space for the index column. Trimming that space used to drop the
+    // path's first character (e.g. "src/..." → "rc/...").
+    const dir = path.join(tmpRepo, 'src', 'Web', 'Infrastructure')
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, 'DependencyInjection.cs'), 'initial')
+    git('add', '-A')
+    git('commit', '-m', 'add file')
+    fs.writeFileSync(path.join(dir, 'DependencyInjection.cs'), 'changed')
+
+    const result = await getChangedFiles(tmpRepo)
+    assert.equal(result.length, 1)
+    assert.equal(result[0].path, 'src/Web/Infrastructure/DependencyInjection.cs')
+    assert.equal(result[0].status, 'M')
+  })
 })
 
 describe('parseRemoteUrl', () => {

@@ -20,7 +20,10 @@ function gitExec(cwd: string, args: string[], timeout = 5000, env?: Record<strin
       if (err) {
         reject(err instanceof Error ? err : new Error('git command failed'))
       } else {
-        resolve(stdout.trim())
+        // trimEnd, not trim: only the trailing newline is noise. Leading whitespace
+        // is significant — `git status --porcelain` uses a leading space for the
+        // index column (e.g. " M path"), and trimming it would shift the path parse.
+        resolve(stdout.trimEnd())
       }
     })
   })
