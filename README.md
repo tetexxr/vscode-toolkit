@@ -17,7 +17,6 @@ All-in-one VS Code utility extension.
     - [Stage Changes](#stage-changes)
     - [Commit & Push — Selected Repositories](#commit--push--selected-repositories)
     - [Synchronize — Selected Repositories](#synchronize--selected-repositories)
-    - [Stage All, Commit & Push — Selected Repositories](#commit--push--selected-repositories)
     - [Compare with Branch or Commit](#compare-with-branch-or-commit)
     - [Compare Project / Folder with Branch or Commit](#compare-project--folder-with-branch-or-commit)
     - [Peek Last Commit on Line](#peek-last-commit-on-line)
