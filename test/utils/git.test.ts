@@ -17,6 +17,7 @@ import {
   editCommitMessage,
   resetToCommit,
   stageFile,
+  stageAll,
   getChangedFiles,
   getChangedFileDirectories,
   countCommitsBetween,
@@ -1126,6 +1127,61 @@ describe('stageFile', () => {
 
   it('should reject for a nonexistent file', async () => {
     await assert.rejects(() => stageFile(tmpRepo, 'nonexistent.txt'))
+  })
+})
+
+describe('stageAll', () => {
+  let tmpRepo: string
+
+  function git(...args: string[]): string {
+    return execFileSync('git', args, { cwd: tmpRepo }).toString().trim()
+  }
+
+  beforeEach(() => {
+    tmpRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-stage-all-test-'))
+    git('init')
+    git('config', 'user.email', 'test@test.com')
+    git('config', 'user.name', 'Test User')
+
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'initial')
+    git('add', 'file.txt')
+    git('commit', '-m', 'initial commit')
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpRepo, { recursive: true, force: true })
+  })
+
+  it('should stage modifications, new files and deletions in one call', async () => {
+    fs.writeFileSync(path.join(tmpRepo, 'file.txt'), 'modified')
+    fs.writeFileSync(path.join(tmpRepo, 'new.txt'), 'new file')
+    fs.writeFileSync(path.join(tmpRepo, 'gone.txt'), 'to delete')
+    git('add', 'gone.txt')
+    git('commit', '-m', 'add gone.txt')
+    fs.rmSync(path.join(tmpRepo, 'gone.txt'))
+
+    await stageAll(tmpRepo)
+
+    const staged = git('diff', '--cached', '--name-status')
+    assert.ok(/M\s+file\.txt/.test(staged), 'modification staged')
+    assert.ok(/A\s+new\.txt/.test(staged), 'new file staged')
+    assert.ok(/D\s+gone\.txt/.test(staged), 'deletion staged')
+  })
+
+  it('should stage nested files recursively', async () => {
+    const nested = path.join(tmpRepo, 'src', 'deep')
+    fs.mkdirSync(nested, { recursive: true })
+    fs.writeFileSync(path.join(nested, 'file.txt'), 'deep')
+
+    await stageAll(tmpRepo)
+
+    const staged = git('diff', '--cached', '--name-only')
+    assert.ok(staged.includes('src/deep/file.txt'))
+  })
+
+  it('should do nothing when the working tree is clean', async () => {
+    await stageAll(tmpRepo)
+    assert.equal(git('diff', '--cached', '--name-only'), '')
   })
 })
 
