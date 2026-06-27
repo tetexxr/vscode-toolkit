@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
-import { commit, getCurrentBranch, getStagedFiles, getUpstream, push, sync } from '../../utils/git'
+import { commit, getChangedFiles, getCurrentBranch, getStagedFiles, getUpstream, push, stageAll, sync } from '../../utils/git'
 import { logError } from '../../utils/logger'
 import { computePrechecked } from './git-multi-commit-utils'
 
@@ -32,6 +32,7 @@ interface RepoInfo {
   name: string
   selectedInScm: boolean
   staged: string[]
+  changed: string[]
   branch: string
   upstream?: string
 }
@@ -47,15 +48,21 @@ async function gatherRepos(api: GitApi): Promise<RepoInfo[]> {
   return Promise.all(
     api.repositories.map(async repo => {
       const root = repo.rootUri.fsPath
-      const [staged, branch, upstream] = await Promise.all([
+      const [staged, changed, branch, upstream] = await Promise.all([
         getStagedFiles(root).catch(err => {
           logError('git-multi-commit.getStagedFiles', err)
           return [] as string[]
         }),
+        getChangedFiles(root)
+          .then(files => files.map(f => f.path))
+          .catch(err => {
+            logError('git-multi-commit.getChangedFiles', err)
+            return [] as string[]
+          }),
         getCurrentBranch(root).catch(() => ''),
         getUpstream(root)
       ])
-      return { root, name: path.basename(root), selectedInScm: repo.ui.selected, staged, branch, upstream }
+      return { root, name: path.basename(root), selectedInScm: repo.ui.selected, staged, changed, branch, upstream }
     })
   )
 }
@@ -159,10 +166,18 @@ interface CommitAction {
   readonly title: string
   readonly doneVerb: string
   readonly push: boolean
+  /** Stage every working-tree change before committing, instead of committing only what is already staged. */
+  readonly stageAll: boolean
 }
 
-const COMMIT_ONLY: CommitAction = { title: 'Commit', doneVerb: 'Committed', push: false }
-const COMMIT_PUSH: CommitAction = { title: 'Commit & Push', doneVerb: 'Committed & pushed', push: true }
+const COMMIT_ONLY: CommitAction = { title: 'Commit', doneVerb: 'Committed', push: false, stageAll: false }
+const COMMIT_PUSH: CommitAction = { title: 'Commit & Push', doneVerb: 'Committed & pushed', push: true, stageAll: false }
+const STAGE_COMMIT_PUSH: CommitAction = {
+  title: 'Stage All, Commit & Push',
+  doneVerb: 'Staged, committed & pushed',
+  push: true,
+  stageAll: true
+}
 
 async function commitAcrossRepos(action: CommitAction): Promise<void> {
   const api = await getGitApi()
@@ -171,28 +186,43 @@ async function commitAcrossRepos(action: CommitAction): Promise<void> {
     return
   }
 
+  // "Stage all" commits whatever is in the working tree, so candidacy is driven by
+  // changed files; the other actions commit only what the user already staged.
+  const noun = action.stageAll ? 'changed' : 'staged'
+  const filesOf = (r: RepoInfo) => (action.stageAll ? r.changed : r.staged)
+
   const repos = await gatherRepos(api)
-  const candidates = repos.filter(r => r.staged.length > 0)
+  const candidates = repos.filter(r => filesOf(r).length > 0)
   if (candidates.length === 0) {
-    vscode.window.showInformationMessage('No staged changes in any repository. Stage what you want to commit first.')
+    const hint = action.stageAll
+      ? 'No changes in any repository.'
+      : 'No staged changes in any repository. Stage what you want to commit first.'
+    vscode.window.showInformationMessage(hint)
     return
   }
 
-  // SCM-selected repos with nothing staged → shown as info rows only.
+  // SCM-selected repos with nothing to do → shown as info rows only.
   const candidateRoots = new Set(candidates.map(c => c.root))
   const infoRows = repos
     .filter(r => r.selectedInScm && !candidateRoots.has(r.root))
-    .map(r => ({ label: r.name, description: 'nothing staged — ignored' }))
+    .map(r => ({ label: r.name, description: `nothing ${noun} — ignored` }))
 
   const targets = await pickTargets(
     candidates,
-    c => ({
-      description: `${c.staged.length} staged file${c.staged.length === 1 ? '' : 's'}`,
-      detail: c.staged.slice(0, 5).join(', ') + (c.staged.length > 5 ? ', …' : '')
-    }),
+    c => {
+      const files = filesOf(c)
+      return {
+        description: `${files.length} ${noun} file${files.length === 1 ? '' : 's'}`,
+        detail: files.slice(0, 5).join(', ') + (files.length > 5 ? ', …' : '')
+      }
+    },
     infoRows,
     `${action.title} — select repositories`,
-    action.push ? 'Each repository commits its staged changes, then pushes' : 'Each repository commits its staged changes'
+    action.stageAll
+      ? 'Each repository stages all its changes, commits, then pushes'
+      : action.push
+        ? 'Each repository commits its staged changes, then pushes'
+        : 'Each repository commits its staged changes'
   )
   if (!targets || targets.length === 0) {
     return
@@ -208,6 +238,9 @@ async function commitAcrossRepos(action: CommitAction): Promise<void> {
   }
 
   const results = await runPerRepo(targets, action.title, async repo => {
+    if (action.stageAll) {
+      await stageAll(repo.root)
+    }
     await commit(repo.root, message.trim())
     if (action.push) {
       await push(repo.root)
@@ -249,6 +282,7 @@ export function registerGitMultiCommitCommands(context: vscode.ExtensionContext)
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.git.syncAllRepos', () => syncAcrossRepos()),
     vscode.commands.registerCommand('toolkit.git.commitAllRepos', () => commitAcrossRepos(COMMIT_ONLY)),
-    vscode.commands.registerCommand('toolkit.git.commitPushAllRepos', () => commitAcrossRepos(COMMIT_PUSH))
+    vscode.commands.registerCommand('toolkit.git.commitPushAllRepos', () => commitAcrossRepos(COMMIT_PUSH)),
+    vscode.commands.registerCommand('toolkit.git.stageCommitPushAllRepos', () => commitAcrossRepos(STAGE_COMMIT_PUSH))
   )
 }
