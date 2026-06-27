@@ -37,7 +37,6 @@ interface RepoInfo {
   upstream?: string
 }
 
-
 interface RepoResult {
   name: string
   ok: boolean
