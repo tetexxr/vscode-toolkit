@@ -264,7 +264,7 @@ The repositories you select in the Source Control **Repositories** view drive wh
 **Access:**
 
 - **Source Control context menu** — right-click a repository in the Source Control view and pick **Commit & Push Staged — Selected Repositories…** (or the commit-only / synchronize entries). The action runs over every repository selected in the SCM view, so right-clicking any one of the selected repositories applies it to the whole selection.
-- **Command Palette** — **Toolkit: Commit & Push Staged — Selected Repositories…**, **Toolkit: Commit Staged — Selected Repositories…** for the commit-only variant (same flow, no push), or **Toolkit: Stage All, Commit & Push — Selected Repositories…** to skip manual staging (see below).
+- **Command Palette** — **Toolkit: Commit & Push Staged — Selected Repositories…**, **Toolkit: Commit Staged — Selected Repositories…** for the commit-only variant (same flow, no push), or the **Stage All…** variants to skip manual staging (see below).
 
 How it works:
 
@@ -277,7 +277,7 @@ A progress notification tracks the run, and a summary reports the result per rep
 
 A **commit-only** variant (**Toolkit: Commit Staged — Selected Repositories…**) runs the exact same flow without the push step, for when you want to review the commits before sending them.
 
-A **stage-all** variant (**Toolkit: Stage All, Commit & Push — Selected Repositories…**) skips the manual staging step entirely: candidacy is driven by each repository's **changed** files (not what's staged), and for every selected repository it runs `git add -A`, commits, then pushes. Use it for the fast path of "I have edits scattered across several repos — stage everything, commit with one message, and push it all". The quick pick shows each repo's changed-file count and preview; everything else (pre-selection, per-repo progress, ✓/✗ summary, non-aborting failures) behaves exactly like the staged variants.
+Two **stage-all** variants skip the manual staging step entirely: candidacy is driven by each repository's **changed** files (not what's staged), and for every selected repository they run `git add -A` before committing. **Toolkit: Stage All, Commit & Push — Selected Repositories…** then pushes; **Toolkit: Stage All & Commit — Selected Repositories…** stops after the commit, for when you want to review before sending. Use them for the fast path of "I have edits scattered across several repos — stage everything and commit with one message". The quick pick shows each repo's changed-file count and preview; everything else (pre-selection, per-repo progress, ✓/✗ summary, non-aborting failures) behaves exactly like the staged variants.
 
 #### Synchronize — Selected Repositories
 

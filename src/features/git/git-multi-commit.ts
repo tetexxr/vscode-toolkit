@@ -172,6 +172,7 @@ interface CommitAction {
 
 const COMMIT_ONLY: CommitAction = { title: 'Commit', doneVerb: 'Committed', push: false, stageAll: false }
 const COMMIT_PUSH: CommitAction = { title: 'Commit & Push', doneVerb: 'Committed & pushed', push: true, stageAll: false }
+const STAGE_COMMIT: CommitAction = { title: 'Stage All & Commit', doneVerb: 'Staged & committed', push: false, stageAll: true }
 const STAGE_COMMIT_PUSH: CommitAction = {
   title: 'Stage All, Commit & Push',
   doneVerb: 'Staged, committed & pushed',
@@ -218,11 +219,7 @@ async function commitAcrossRepos(action: CommitAction): Promise<void> {
     },
     infoRows,
     `${action.title} — select repositories`,
-    action.stageAll
-      ? 'Each repository stages all its changes, commits, then pushes'
-      : action.push
-        ? 'Each repository commits its staged changes, then pushes'
-        : 'Each repository commits its staged changes'
+    `Each repository ${action.stageAll ? 'stages all its changes, commits' : 'commits its staged changes'}${action.push ? ', then pushes' : ''}`
   )
   if (!targets || targets.length === 0) {
     return
@@ -283,6 +280,7 @@ export function registerGitMultiCommitCommands(context: vscode.ExtensionContext)
     vscode.commands.registerCommand('toolkit.git.syncAllRepos', () => syncAcrossRepos()),
     vscode.commands.registerCommand('toolkit.git.commitAllRepos', () => commitAcrossRepos(COMMIT_ONLY)),
     vscode.commands.registerCommand('toolkit.git.commitPushAllRepos', () => commitAcrossRepos(COMMIT_PUSH)),
+    vscode.commands.registerCommand('toolkit.git.stageCommitAllRepos', () => commitAcrossRepos(STAGE_COMMIT)),
     vscode.commands.registerCommand('toolkit.git.stageCommitPushAllRepos', () => commitAcrossRepos(STAGE_COMMIT_PUSH))
   )
 }

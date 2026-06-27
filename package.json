@@ -550,6 +550,12 @@
         "icon": "$(check)"
       },
       {
+        "command": "toolkit.git.stageCommitAllRepos",
+        "title": "Stage All & Commit — Selected Repositories…",
+        "category": "Toolkit",
+        "icon": "$(check)"
+      },
+      {
         "command": "toolkit.git.stageCommitPushAllRepos",
         "title": "Stage All, Commit & Push — Selected Repositories…",
         "category": "Toolkit",
@@ -1626,9 +1632,14 @@
           "group": "1_toolkit@3"
         },
         {
-          "command": "toolkit.git.stageCommitPushAllRepos",
+          "command": "toolkit.git.stageCommitAllRepos",
           "when": "scmProvider == git",
           "group": "1_toolkit@4"
+        },
+        {
+          "command": "toolkit.git.stageCommitPushAllRepos",
+          "when": "scmProvider == git",
+          "group": "1_toolkit@5"
         }
       ],
       "view/title": [
@@ -2110,6 +2121,10 @@
         },
         {
           "command": "toolkit.git.commitAllRepos",
+          "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "toolkit.git.stageCommitAllRepos",
           "when": "gitOpenRepositoryCount != 0"
         },
         {
