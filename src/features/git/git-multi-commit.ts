@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { commit, getChangedFiles, getCurrentBranch, getStagedFiles, getUpstream, push, stageAll, sync } from '../../utils/git'
 import { logError } from '../../utils/logger'
-import { computePrechecked } from './git-multi-commit-utils'
+import { autoSelectedTargets, computePrechecked, selectedRootsFromArgs } from './git-multi-commit-utils'
 
 /** Minimal shape of a vscode.git repository we need here. */
 interface GitRepository {
@@ -36,6 +36,7 @@ interface RepoInfo {
   branch: string
   upstream?: string
 }
+
 
 interface RepoResult {
   name: string
@@ -93,7 +94,14 @@ function buildQuickPickItems(
   return items
 }
 
-/** Shows the confirmation quick pick and returns the chosen repositories. */
+/**
+ * Shows the confirmation quick pick and returns the chosen repositories.
+ *
+ * When the user has explicitly multi-selected (2+) candidate repositories in the
+ * SCM "Repositories" view, that selection is already an unambiguous choice, so the
+ * picker is skipped and those repos are returned directly. With 0 or 1 selected the
+ * picker is shown so the user can pick (or broaden) the targets.
+ */
 async function pickTargets(
   candidates: RepoInfo[],
   describe: (repo: RepoInfo) => Pick<vscode.QuickPickItem, 'description' | 'detail'>,
@@ -101,6 +109,11 @@ async function pickTargets(
   title: string,
   placeHolder: string
 ): Promise<RepoInfo[] | undefined> {
+  const auto = autoSelectedTargets(candidates)
+  if (auto) {
+    return auto
+  }
+
   const items = buildQuickPickItems(candidates, describe, infoRows)
   const chosen = await vscode.window.showQuickPick(items, { canPickMany: true, title, placeHolder })
   if (!chosen) {
@@ -180,7 +193,24 @@ const STAGE_COMMIT_PUSH: CommitAction = {
   stageAll: true
 }
 
-async function commitAcrossRepos(action: CommitAction): Promise<void> {
+/**
+ * Reconciles each repo's `selectedInScm` with the actual command invocation.
+ * When the command carried SCM arguments (i.e. it was run from the Repositories
+ * context menu), those roots are the authoritative selection and override the
+ * single-repo `ui.selected` signal. With no args (Command Palette) we keep
+ * whatever `ui.selected` reported.
+ */
+function applyScmSelection(repos: RepoInfo[], scmArgs: unknown[]): void {
+  const roots = selectedRootsFromArgs(scmArgs)
+  if (roots.size === 0) {
+    return
+  }
+  for (const r of repos) {
+    r.selectedInScm = roots.has(r.root)
+  }
+}
+
+async function commitAcrossRepos(action: CommitAction, scmArgs: unknown[] = []): Promise<void> {
   const api = await getGitApi()
   if (!api || api.repositories.length === 0) {
     vscode.window.showInformationMessage('No git repositories are open.')
@@ -193,6 +223,7 @@ async function commitAcrossRepos(action: CommitAction): Promise<void> {
   const filesOf = (r: RepoInfo) => (action.stageAll ? r.changed : r.staged)
 
   const repos = await gatherRepos(api)
+  applyScmSelection(repos, scmArgs)
   const candidates = repos.filter(r => filesOf(r).length > 0)
   if (candidates.length === 0) {
     const hint = action.stageAll
@@ -250,7 +281,7 @@ async function commitAcrossRepos(action: CommitAction): Promise<void> {
 /*  Synchronize (pull + push)                                                 */
 /* -------------------------------------------------------------------------- */
 
-async function syncAcrossRepos(): Promise<void> {
+async function syncAcrossRepos(scmArgs: unknown[] = []): Promise<void> {
   const api = await getGitApi()
   if (!api || api.repositories.length === 0) {
     vscode.window.showInformationMessage('No git repositories are open.')
@@ -259,6 +290,7 @@ async function syncAcrossRepos(): Promise<void> {
 
   // Sync doesn't depend on staged changes — every open repository is a candidate.
   const candidates = await gatherRepos(api)
+  applyScmSelection(candidates, scmArgs)
 
   const targets = await pickTargets(
     candidates,
@@ -277,10 +309,12 @@ async function syncAcrossRepos(): Promise<void> {
 
 export function registerGitMultiCommitCommands(context: vscode.ExtensionContext) {
   context.subscriptions.push(
-    vscode.commands.registerCommand('toolkit.git.syncAllRepos', () => syncAcrossRepos()),
-    vscode.commands.registerCommand('toolkit.git.commitAllRepos', () => commitAcrossRepos(COMMIT_ONLY)),
-    vscode.commands.registerCommand('toolkit.git.commitPushAllRepos', () => commitAcrossRepos(COMMIT_PUSH)),
-    vscode.commands.registerCommand('toolkit.git.stageCommitAllRepos', () => commitAcrossRepos(STAGE_COMMIT)),
-    vscode.commands.registerCommand('toolkit.git.stageCommitPushAllRepos', () => commitAcrossRepos(STAGE_COMMIT_PUSH))
+    vscode.commands.registerCommand('toolkit.git.syncAllRepos', (...args) => syncAcrossRepos(args)),
+    vscode.commands.registerCommand('toolkit.git.commitAllRepos', (...args) => commitAcrossRepos(COMMIT_ONLY, args)),
+    vscode.commands.registerCommand('toolkit.git.commitPushAllRepos', (...args) => commitAcrossRepos(COMMIT_PUSH, args)),
+    vscode.commands.registerCommand('toolkit.git.stageCommitAllRepos', (...args) => commitAcrossRepos(STAGE_COMMIT, args)),
+    vscode.commands.registerCommand('toolkit.git.stageCommitPushAllRepos', (...args) =>
+      commitAcrossRepos(STAGE_COMMIT_PUSH, args)
+    )
   )
 }
