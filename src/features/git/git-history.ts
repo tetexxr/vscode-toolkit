@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { getRepoRoot, getFileLogPatch, getFileCommitCount } from '../../utils/git'
+import { openCommitFileDiff } from './git-commit-diff-view'
 import { escapeHtml, createNonce } from '../../utils/html'
 import { cssColor } from '../../utils/palette'
 import { BUTTON_CSS } from '../../utils/webview-ui'
@@ -24,7 +25,12 @@ function renderPatch(raw: string): string {
     }
 
     if (line.startsWith('commit ')) {
-      html.push(`<div class="commit-header">${escapeHtml(line)}</div>`)
+      const hash = line.slice('commit '.length).trim()
+      html.push(
+        `<div class="commit-header">${escapeHtml(line)}` +
+          `<button class="commit-diff-btn" data-diff-hash="${escapeHtml(hash)}" title="Open in diff editor">⇄</button>` +
+          `</div>`
+      )
       continue
     }
 
@@ -123,6 +129,22 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, sh
       font-weight: 600;
     }
 
+    .commit-diff-btn {
+      margin-left: 8px;
+      padding: 0 4px;
+      border: none;
+      border-radius: 3px;
+      background: transparent;
+      color: var(--vscode-descriptionForeground);
+      font-size: 1em;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 0.6;
+    }
+
+    .commit-diff-btn:hover { background: transparent; color: var(--vscode-textLink-foreground); }
+    .commit-diff-btn:focus-visible { outline: 1px solid var(--vscode-focusBorder); }
+
     .commit-meta {
       color: var(--vscode-descriptionForeground);
     }
@@ -210,6 +232,14 @@ function buildWebviewHtml(fileName: string, patchHtml: string, nonce: string, sh
       const btn = document.getElementById('loadMore')
       const errorEl = document.getElementById('error')
       const statusEl = document.getElementById('status')
+
+      // Delegated so it also fires for commit sections appended via "Load more".
+      document.getElementById('content').addEventListener('click', e => {
+        const diffBtn = e.target.closest && e.target.closest('.commit-diff-btn')
+        if (diffBtn) {
+          vscode.postMessage({ type: 'openDiff', hash: diffBtn.dataset.diffHash })
+        }
+      })
       let shown = ${shown}
       const total = ${total}
 
@@ -320,7 +350,15 @@ export function registerGitHistoryCommands(context: vscode.ExtensionContext): vo
 
       let shown = countCommits(raw)
       panel.webview.onDidReceiveMessage(async (msg: unknown) => {
-        if (!msg || (msg as { type?: unknown }).type !== 'loadMore') {
+        const type = (msg as { type?: unknown } | null)?.type
+        if (type === 'openDiff') {
+          const hash = (msg as { hash?: unknown }).hash
+          if (typeof hash === 'string') {
+            void openCommitFileDiff(repoRoot, hash, relativePath)
+          }
+          return
+        }
+        if (type !== 'loadMore') {
           return
         }
         try {

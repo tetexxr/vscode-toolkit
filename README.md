@@ -124,7 +124,7 @@ Available from:
 - **Editor context menu** — right-click inside an editor
 - **Command Palette** — run **Toolkit: Git File History**
 
-Reuses the same panel if the file is already open. Supports VS Code's built-in find widget (`Ctrl+F` / `Cmd+F`) inside the history view.
+Reuses the same panel if the file is already open. Supports VS Code's built-in find widget (`Ctrl+F` / `Cmd+F`) inside the history view. Each commit header has a **⇄** button that opens that revision in VS Code's native diff editor — fully syntax-highlighted with the file's own language and your theme.
 
 History is loaded in pages of 50 commits — files with a long history open instantly, and a **Load more** button at the bottom fetches the next page.
 
