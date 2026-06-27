@@ -388,6 +388,15 @@ export async function getCommitDiff(cwd: string, hash: string, filePath?: string
   return gitExec(cwd, args, 30000)
 }
 
+/**
+ * Contents of a file as it existed at a given ref. Rejects when the path did
+ * not exist at that ref (e.g. a file added in the commit has no parent-side
+ * blob) — callers that build a diff side should treat that as empty content.
+ */
+export async function getFileAtRef(cwd: string, ref: string, relativePath: string): Promise<string> {
+  return gitExec(cwd, ['show', `${ref}:${relativePath}`], 30000)
+}
+
 export async function stageFile(cwd: string, ...filePaths: string[]): Promise<void> {
   await gitExec(cwd, ['add', ...filePaths])
 }

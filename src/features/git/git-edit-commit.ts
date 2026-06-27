@@ -20,6 +20,7 @@ import {
   listLocalBranches
 } from '../../utils/git'
 import { renderFileList, renderDiffContent, renderDiffPlaceholders, pickRepoRoot } from './git-edit-commit-utils'
+import { openCommitFileDiff } from './git-commit-diff-view'
 import { escapeHtml, createNonce } from '../../utils/html'
 import { escapeMd } from '../../utils/markdown'
 import { logError } from '../../utils/logger'
@@ -257,6 +258,25 @@ function buildEditWebviewHtml(
     .stat-add { color: ${cssColor.gitAdded}; }
     .stat-del { color: ${cssColor.gitDeleted}; }
 
+    .file-diff-btn {
+      flex-shrink: 0;
+      width: auto;
+      height: auto;
+      padding: 0 4px;
+      border: none;
+      border-radius: 3px;
+      background: transparent;
+      color: var(--vscode-descriptionForeground);
+      font-size: 1.05em;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 0.55;
+    }
+
+    .file-entry:hover .file-diff-btn { opacity: 1; }
+    .file-diff-btn:hover { background: transparent; color: var(--vscode-textLink-foreground); }
+    .file-diff-btn:focus-visible { outline: 1px solid var(--vscode-focusBorder); }
+
     /* --- Diff section --- */
 
     .diff-block {
@@ -425,6 +445,15 @@ function buildEditWebviewHtml(
         const filePath = entry.dataset.path;
         const target = [...diffBlocks].find(el => el.dataset.diffPath === filePath);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // Open the file's change in the native diff editor (syntax-highlighted),
+    // without triggering the row's scroll-to-inline-diff handler.
+    document.querySelectorAll('.file-diff-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        vscode.postMessage({ command: 'openDiff', path: btn.dataset.diffOpen });
       });
     });
 
@@ -888,6 +917,11 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
           return
         }
 
+        if (parsed.command === 'openDiff') {
+          void openCommitFileDiff(repoRoot, item.commit.hash, parsed.path)
+          return
+        }
+
         if (parsed.command === 'reset') {
           void performResetWithConfirm(repoRoot, item.commit.hash, parsed.mode, () => {
             provider.refresh()
@@ -950,6 +984,7 @@ export function registerGitEditCommitCommands(context: vscode.ExtensionContext):
 type EditCommitMessage =
   | { command: 'discard' }
   | { command: 'loadDiff'; path: string }
+  | { command: 'openDiff'; path: string }
   | { command: 'reset'; mode: 'soft' | 'hard' }
   | { command: 'apply'; message: string; date: string | null }
 
@@ -961,6 +996,8 @@ function parseEditCommitMessage(value: unknown): EditCommitMessage | undefined {
       return { command: 'discard' }
     case 'loadDiff':
       return typeof msg.path === 'string' ? { command: 'loadDiff', path: msg.path } : undefined
+    case 'openDiff':
+      return typeof msg.path === 'string' ? { command: 'openDiff', path: msg.path } : undefined
     case 'reset':
       return msg.mode === 'soft' || msg.mode === 'hard' ? { command: 'reset', mode: msg.mode } : undefined
     case 'apply':

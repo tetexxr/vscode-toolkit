@@ -19,6 +19,7 @@ import { registerMoveSymbolCommands } from './features/editing/text/move-symbol'
 import { registerExpandChangedFilesCommands } from './features/workspace/expand-changed'
 import { registerDiagnosticHighlightCommands } from './features/viewers/diagnostic-highlight'
 import { registerGitEditCommitCommands } from './features/git/git-edit-commit'
+import { registerCommitDiffView } from './features/git/git-commit-diff-view'
 import { registerGitStageCommands } from './features/git/git-stage'
 import { registerGitMultiCommitCommands } from './features/git/git-multi-commit'
 import { registerFindFileOrFolderCommands } from './features/workspace/find-file-or-folder'
@@ -83,6 +84,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerExpandChangedFilesCommands(context)
   registerDiagnosticHighlightCommands(context)
   registerGitEditCommitCommands(context)
+  registerCommitDiffView(context)
   registerGitStageCommands(context)
   registerGitMultiCommitCommands(context)
   registerFindFileOrFolderCommands(context)

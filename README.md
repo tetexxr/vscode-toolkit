@@ -184,7 +184,7 @@ Pick a local branch, then one of the commits that branch has and the current bra
 - **Commit message** — editable text area (supports multi-line).
 - **Change date** — optional checkbox with a date picker to modify the commit timestamp.
 - **Reset HEAD here** — Soft / Hard buttons (hidden when the selected commit is already HEAD). For `--mixed`, use the inline reset icon in the tree view.
-- **Changed Files** — list of files affected by the commit with status (M/A/D), directory and file name, and per-file addition/deletion counts. Click a file to scroll to its diff.
+- **Changed Files** — list of files affected by the commit with status (M/A/D), directory and file name, and per-file addition/deletion counts. Click a file to scroll to its inline diff, or use the **⇄** button on the row to open the change in VS Code's native diff editor — fully syntax-highlighted with the file's own language and your theme, just like the built-in Source Control graph.
 - **Changes** — diffs rendered per file with syntax-highlighted patches (additions in green, deletions in red, hunk headers in blue). Diffs are loaded lazily as you scroll into view, so the panel opens instantly even for commits with hundreds of changed files. Files with more than 5,000 modified lines and binary files are not auto-loaded — they show a "Load diff" button or a "Binary file" placeholder.
 
 **Changing the commit date:**
