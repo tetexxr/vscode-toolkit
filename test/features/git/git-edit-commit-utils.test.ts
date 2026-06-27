@@ -81,6 +81,17 @@ describe('renderFileList', () => {
     assert.ok(!html.includes('stat-del'))
   })
 
+  it('should render an open-in-diff button carrying the file path', () => {
+    const html = renderFileList([file({ path: 'src/utils/git.ts' })])
+    assert.ok(html.includes('class="file-diff-btn"'))
+    assert.ok(html.includes('data-diff-open="src/utils/git.ts"'))
+  })
+
+  it('should escape special characters in the open-in-diff button path', () => {
+    const html = renderFileList([file({ path: 'src/<x>.ts' })])
+    assert.ok(html.includes('data-diff-open="src/&lt;x&gt;.ts"'))
+  })
+
   it('should return empty string for empty file list', () => {
     assert.equal(renderFileList([]), '')
   })

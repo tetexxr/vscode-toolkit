@@ -36,6 +36,7 @@ export function renderFileList(files: CommitFileInfo[]): string {
         `<span class="file-status ${statusClass}">${escapeHtml(file.status)}</span>` +
         `<span class="file-path"><span class="file-dir">${escapeHtml(dir)}</span>${escapeHtml(name)}</span>` +
         `<span class="file-stats">${additions}${deletions}</span>` +
+        `<button class="file-diff-btn" data-diff-open="${escapeHtml(file.path)}" title="Open in diff editor">⇄</button>` +
         `</div>`
     )
   }
