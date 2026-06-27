@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.18.2",
+  "version": "1.18.3",
   "publisher": "tete",
   "repository": {
     "type": "git",
@@ -548,6 +548,18 @@
         "title": "Commit Staged — Selected Repositories…",
         "category": "Toolkit",
         "icon": "$(check)"
+      },
+      {
+        "command": "toolkit.git.stageCommitAllRepos",
+        "title": "Stage All & Commit — Selected Repositories…",
+        "category": "Toolkit",
+        "icon": "$(check)"
+      },
+      {
+        "command": "toolkit.git.stageCommitPushAllRepos",
+        "title": "Stage All, Commit & Push — Selected Repositories…",
+        "category": "Toolkit",
+        "icon": "$(git-commit)"
       },
       {
         "command": "toolkit.findFileOrFolder",
@@ -1618,6 +1630,16 @@
           "command": "toolkit.git.commitPushAllRepos",
           "when": "scmProvider == git",
           "group": "1_toolkit@3"
+        },
+        {
+          "command": "toolkit.git.stageCommitAllRepos",
+          "when": "scmProvider == git",
+          "group": "1_toolkit@4"
+        },
+        {
+          "command": "toolkit.git.stageCommitPushAllRepos",
+          "when": "scmProvider == git",
+          "group": "1_toolkit@5"
         }
       ],
       "view/title": [
@@ -2099,6 +2121,14 @@
         },
         {
           "command": "toolkit.git.commitAllRepos",
+          "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "toolkit.git.stageCommitAllRepos",
+          "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "toolkit.git.stageCommitPushAllRepos",
           "when": "gitOpenRepositoryCount != 0"
         },
         {

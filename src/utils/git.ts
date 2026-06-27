@@ -20,7 +20,10 @@ function gitExec(cwd: string, args: string[], timeout = 5000, env?: Record<strin
       if (err) {
         reject(err instanceof Error ? err : new Error('git command failed'))
       } else {
-        resolve(stdout.trim())
+        // trimEnd, not trim: only the trailing newline is noise. Leading whitespace
+        // is significant — `git status --porcelain` uses a leading space for the
+        // index column (e.g. " M path"), and trimming it would shift the path parse.
+        resolve(stdout.trimEnd())
       }
     })
   })
@@ -387,6 +390,11 @@ export async function getCommitDiff(cwd: string, hash: string, filePath?: string
 
 export async function stageFile(cwd: string, ...filePaths: string[]): Promise<void> {
   await gitExec(cwd, ['add', ...filePaths])
+}
+
+/** Stages every change in the working tree (modifications, additions and deletions). */
+export async function stageAll(cwd: string): Promise<void> {
+  await gitExec(cwd, ['add', '-A'])
 }
 
 /** Paths (relative to repo root) currently staged for the next commit. */
