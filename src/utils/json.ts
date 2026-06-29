@@ -3,15 +3,30 @@
  * Counterpart to xml.ts for .NET project files.
  */
 
+/**
+ * The package.json sections we surface as dependency "types".
+ * `bundledDependencies` is intentionally excluded: it's an array of names, not
+ * a name→range map, so it has no version to track.
+ */
+export type DependencyType = 'dependencies' | 'devDependencies' | 'peerDependencies' | 'optionalDependencies'
+
+const DEPENDENCY_SECTIONS: readonly DependencyType[] = [
+  'dependencies',
+  'devDependencies',
+  'peerDependencies',
+  'optionalDependencies'
+]
+
 export interface PackageJsonDependency {
   name: string
   versionRange: string
-  dependencyType: 'dependencies' | 'devDependencies'
+  dependencyType: DependencyType
 }
 
 /**
- * Extracts all dependency entries from a package.json string.
- * Returns entries from both `dependencies` and `devDependencies`.
+ * Extracts all dependency entries from a package.json string, across the
+ * `dependencies`, `devDependencies`, `peerDependencies` and
+ * `optionalDependencies` sections.
  * Returns empty array if JSON is invalid or has no dependencies.
  */
 export function parsePackageJsonDependencies(json: string): PackageJsonDependency[] {
@@ -20,7 +35,7 @@ export function parsePackageJsonDependencies(json: string): PackageJsonDependenc
 
   const results: PackageJsonDependency[] = []
 
-  for (const depType of ['dependencies', 'devDependencies'] as const) {
+  for (const depType of DEPENDENCY_SECTIONS) {
     const deps = pkg[depType]
     if (isObject(deps)) {
       for (const [name, range] of Object.entries(deps)) {

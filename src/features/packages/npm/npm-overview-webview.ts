@@ -3,7 +3,7 @@
  * Shows a table per project with installed packages, versions and update status.
  */
 
-import { cssColor } from '../../../utils/palette'
+import { color, cssColor, withAlpha } from '../../../utils/palette'
 import { BUTTON_CSS } from '../../../utils/webview-ui'
 
 export function generateOverviewHtml(nonce: string): string {
@@ -168,12 +168,49 @@ ${BUTTON_CSS}
   opacity: 0.6;
 }
 
-.badge-dep {
+/* ── Dependency types (badges + filter chips share colours) ── */
+
+/* Per-type colour tokens, consumed by both the table badge and the chip. */
+.t-prod { --t-fg: ${color.info};    --t-bg: ${withAlpha(color.accent, 0.18)};  --t-bd: ${withAlpha(color.accent, 0.55)}; }
+.t-dev  { --t-fg: ${color.special}; --t-bg: ${withAlpha(color.special, 0.18)}; --t-bd: ${withAlpha(color.special, 0.55)}; }
+.t-peer { --t-fg: ${color.warning}; --t-bg: ${withAlpha(color.warning, 0.18)}; --t-bd: ${withAlpha(color.warning, 0.55)}; }
+.t-opt  { --t-fg: ${color.cyan};    --t-bg: ${withAlpha(color.cyan, 0.18)};    --t-bd: ${withAlpha(color.cyan, 0.55)}; }
+
+.badge-type {
+  display: inline-block;
   font-size: 0.8rem;
-  padding: 1px 6px;
-  border: 1px solid ${cssColor.border};
+  font-weight: 600;
+  padding: 1px 7px;
   border-radius: 3px;
-  opacity: 0.7;
+  background: var(--t-bg);
+  color: var(--t-fg);
+  border: 1px solid var(--t-bd);
+}
+
+.type-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.type-chip {
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--vscode-foreground);
+  border: 1px solid ${cssColor.border};
+  opacity: 0.6;
+}
+.type-chip:hover { opacity: 0.9; }
+.type-chip.active {
+  opacity: 1;
+  background: var(--t-bg);
+  color: var(--t-fg);
+  border-color: var(--t-bd);
 }
 
 /* ── Loading / Empty ──────────────────────────── */
@@ -243,7 +280,20 @@ const JS = /*js*/ `
     // panel opens, even before the backend responds.
     loading: true,
     filter: '',
+    // Active dependency-type filters. Empty = show every type.
+    typeFilters: [],
   };
+
+  // Single source of truth for each package.json section: display order,
+  // short label, colour class (shared by badge + chip) and tooltip.
+  const TYPE_ORDER = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
+  const TYPE_META = {
+    dependencies:         { label: 'prod', tcls: 't-prod', title: 'dependencies' },
+    devDependencies:      { label: 'dev',  tcls: 't-dev',  title: 'devDependencies' },
+    peerDependencies:     { label: 'peer', tcls: 't-peer', title: 'peerDependencies' },
+    optionalDependencies: { label: 'opt',  tcls: 't-opt',  title: 'optionalDependencies' },
+  };
+  function typeBadge(type) { return TYPE_META[type] || TYPE_META.dependencies; }
 
   const PIN_ICON = '<span class="pin-icon" title="Version pinned to an exact value in package.json"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>';
 
@@ -285,6 +335,31 @@ const JS = /*js*/ `
     return pkgs;
   }
 
+  // The dependency types actually present in the workspace, in display order.
+  function presentTypes() {
+    var seen = {};
+    for (var i = 0; i < state.projects.length; i++) {
+      var pkgs = state.projects[i].packages;
+      for (var j = 0; j < pkgs.length; j++) seen[pkgs[j].dependencyType] = true;
+    }
+    return TYPE_ORDER.filter(function(t) { return seen[t]; });
+  }
+
+  // Filter chips, one per present type. Hidden when there's nothing to filter
+  // between (a single type or none).
+  function renderTypeChips() {
+    var types = presentTypes();
+    if (types.length < 2) return '';
+    var chips = types.map(function(t) {
+      var meta = TYPE_META[t];
+      var active = state.typeFilters.indexOf(t) !== -1;
+      return '<button class="type-chip ' + meta.tcls + (active ? ' active' : '') +
+        '" data-type="' + t + '" title="Filter by ' + meta.title + '" aria-pressed="' +
+        (active ? 'true' : 'false') + '">' + meta.label + '</button>';
+    }).join('');
+    return '<div class="type-filters">' + chips + '</div>';
+  }
+
   function renderToolbar() {
     var outdated = getOutdatedPackages();
     var hasOutdated = outdated.length > 0;
@@ -292,6 +367,7 @@ const JS = /*js*/ `
     $toolbar.innerHTML =
       '<span class="toolbar-title">Workspace Overview</span>' +
       '<input id="filter-input" class="search-box" type="search" placeholder="Filter packages..." value="' + esc(state.filter) + '" />' +
+      renderTypeChips() +
       '<button class="btn" id="load-versions-btn"' + (state.loading ? ' disabled' : '') + '>' +
         (state.loading ? '<span class="spinner"></span> Loading...' : 'Refresh') +
       '</button>' +
@@ -303,6 +379,16 @@ const JS = /*js*/ `
     document.getElementById('filter-input').addEventListener('input', (e) => {
       state.filter = e.target.value;
       renderContent();
+    });
+
+    $toolbar.querySelectorAll('.type-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        var t = chip.dataset.type;
+        var idx = state.typeFilters.indexOf(t);
+        if (idx === -1) state.typeFilters.push(t); else state.typeFilters.splice(idx, 1);
+        renderToolbar();
+        renderContent();
+      });
     });
     document.getElementById('load-versions-btn').addEventListener('click', () => {
       state.loading = true;
@@ -329,14 +415,17 @@ const JS = /*js*/ `
     }
 
     const filter = state.filter.trim().toLowerCase();
+    const types = state.typeFilters;
+    const filtering = filter !== '' || types.length > 0;
     let html = '';
 
     for (const proj of state.projects) {
-      const filtered = filter
-        ? proj.packages.filter(p => p.name.toLowerCase().includes(filter))
-        : proj.packages;
+      const filtered = proj.packages.filter(p =>
+        (filter === '' || p.name.toLowerCase().includes(filter)) &&
+        (types.length === 0 || types.indexOf(p.dependencyType) !== -1)
+      );
 
-      if (filter && filtered.length === 0) continue;
+      if (filtering && filtered.length === 0) continue;
 
       html += '<div class="project-section">';
       html += '<div class="project-header">';
@@ -374,14 +463,14 @@ const JS = /*js*/ `
           statusBadge = '<span class="badge badge-yes">Yes</span>';
         }
 
-        const typeBadge = pkg.dependencyType === 'devDependencies' ? 'dev' : 'dep';
+        const type = typeBadge(pkg.dependencyType);
 
         const bumpClass = pkg.versionBump ? ' bump-' + pkg.versionBump : '';
         const latestCell = pkg.isPinned ? PIN_ICON : (hasLatest ? esc(pkg.latestVersion) : '-');
 
         html += '<tr>';
         html += '<td class="col-name">' + esc(pkg.name) + '</td>';
-        html += '<td class="col-type"><span class="badge-dep">' + typeBadge + '</span></td>';
+        html += '<td class="col-type"><span class="badge-type ' + type.tcls + '" title="' + type.title + '">' + type.label + '</span></td>';
         html += '<td class="col-version">' + esc(pkg.installedVersionRange) + '</td>';
         html += '<td class="col-latest' + bumpClass + '">' + latestCell + '</td>';
         html += '<td class="col-status">' + statusBadge + '</td>';

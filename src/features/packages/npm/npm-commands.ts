@@ -5,7 +5,7 @@
 
 import { existsSync, readFileSync } from 'fs'
 import { join, dirname, parse } from 'path'
-import type { PackageManager } from './npm-types'
+import type { DependencyType, PackageManager } from './npm-types'
 
 /**
  * Detect the package manager by searching up the directory tree.
@@ -112,21 +112,35 @@ function readYarnMajorFromPackageManager(packageJsonPath: string): number | null
   }
 }
 
+/**
+ * The `--save-*` flag each package manager needs to install into a given
+ * package.json section. `dependencies` is the default for every manager, so it
+ * carries no flag.
+ */
+const SAVE_FLAGS: Record<DependencyType, Partial<Record<PackageManager, string>>> = {
+  dependencies: {},
+  devDependencies: { npm: '--save-dev', yarn: '--dev', pnpm: '--save-dev' },
+  peerDependencies: { npm: '--save-peer', yarn: '--peer', pnpm: '--save-peer' },
+  optionalDependencies: { npm: '--save-optional', yarn: '--optional', pnpm: '--save-optional' }
+}
+
 export function buildInstallArgs(
   pm: PackageManager,
   packageName: string,
   version: string,
-  devDependency: boolean
+  dependencyType: DependencyType
 ): { cmd: string; args: string[] } {
   const spec = `${packageName}@${version}`
+  const flag = SAVE_FLAGS[dependencyType][pm]
+  const extra = flag ? [flag] : []
 
   switch (pm) {
     case 'yarn':
-      return { cmd: 'yarn', args: ['add', spec, ...(devDependency ? ['--dev'] : [])] }
+      return { cmd: 'yarn', args: ['add', spec, ...extra] }
     case 'pnpm':
-      return { cmd: 'pnpm', args: ['add', spec, ...(devDependency ? ['--save-dev'] : [])] }
+      return { cmd: 'pnpm', args: ['add', spec, ...extra] }
     default:
-      return { cmd: 'npm', args: ['install', spec, ...(devDependency ? ['--save-dev'] : [])] }
+      return { cmd: 'npm', args: ['install', spec, ...extra] }
   }
 }
 
