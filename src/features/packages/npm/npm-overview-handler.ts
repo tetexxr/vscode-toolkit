@@ -156,12 +156,16 @@ export class NpmOverviewHandler implements vscode.Disposable {
 
     const project = await loadNpmProject(vscode.Uri.file(projectFsPath))
     const existing = project.packages.find(p => p.name === packageName)
-    const isDev = existing ? existing.dependencyType === 'devDependencies' : devDependency
+    const dependencyType = existing
+      ? existing.dependencyType
+      : devDependency
+        ? 'devDependencies'
+        : 'dependencies'
     const task = NpmTaskManager.buildInstallTask(
       project.directoryPath,
       packageName,
       version,
-      isDev,
+      dependencyType,
       project.packageManager
     )
 
@@ -182,12 +186,16 @@ export class NpmOverviewHandler implements vscode.Disposable {
 
       const project = await loadNpmProject(vscode.Uri.file(pkg.projectFsPath))
       const existing = project.packages.find(p => p.name === pkg.packageName)
-      const isDev = existing ? existing.dependencyType === 'devDependencies' : pkg.devDependency
+      const dependencyType = existing
+        ? existing.dependencyType
+        : pkg.devDependency
+          ? 'devDependencies'
+          : 'dependencies'
       const task = NpmTaskManager.buildInstallTask(
         project.directoryPath,
         pkg.packageName,
         pkg.version,
-        isDev,
+        dependencyType,
         project.packageManager
       )
       const isLast = pkg === packages[packages.length - 1]

@@ -18,7 +18,10 @@ export interface NpmConfig {
 
 // ── Project ────────────────────────────────────────────────
 
-export type DependencyType = 'dependencies' | 'devDependencies'
+// Single source of truth for the dependency-type union lives in utils/json.ts,
+// which is where package.json is parsed.
+import type { DependencyType } from '../../../utils/json'
+export type { DependencyType }
 export type PackageManager = 'npm' | 'yarn' | 'pnpm'
 
 export interface InstalledNpmPackage {

@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode'
-import type { PackageManager } from './npm-types'
+import type { DependencyType, PackageManager } from './npm-types'
 import { buildInstallArgs, buildUninstallArgs } from './npm-commands'
 
 const TASK_NAME = 'toolkit-npm'
@@ -83,10 +83,10 @@ export class NpmTaskManager implements vscode.Disposable {
     projectDir: string,
     packageName: string,
     version: string,
-    devDependency: boolean,
+    dependencyType: DependencyType,
     pm: PackageManager
   ): vscode.Task {
-    const { cmd, args } = buildInstallArgs(pm, packageName, version, devDependency)
+    const { cmd, args } = buildInstallArgs(pm, packageName, version, dependencyType)
 
     return new vscode.Task(
       { type: 'npm', task: 'install' },

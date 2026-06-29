@@ -337,12 +337,16 @@ export class NpmMessageHandler implements vscode.Disposable {
 
     const project = await reloadNpmProject(this.projectFsPath)
     const existing = project.packages.find(p => p.name === packageName)
-    const isDev = existing ? existing.dependencyType === 'devDependencies' : devDependency
+    const dependencyType = existing
+      ? existing.dependencyType
+      : devDependency
+        ? 'devDependencies'
+        : 'dependencies'
     const task = NpmTaskManager.buildInstallTask(
       project.directoryPath,
       packageName,
       version,
-      isDev,
+      dependencyType,
       project.packageManager
     )
 

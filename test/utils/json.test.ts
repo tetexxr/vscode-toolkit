@@ -127,16 +127,43 @@ describe('parsePackageJsonDependencies', () => {
     assert.equal(result.length, 50)
   })
 
-  it('should ignore non-dependency fields', () => {
+  it('should parse peer and optional dependencies', () => {
     const json = JSON.stringify({
       dependencies: { express: '^4.0.0' },
       peerDependencies: { react: '>=16' },
-      optionalDependencies: { fsevents: '^2.0.0' },
-      bundleDependencies: ['bundled-pkg']
+      optionalDependencies: { fsevents: '^2.0.0' }
+    })
+    const result = parsePackageJsonDependencies(json)
+    assert.deepEqual(result, [
+      { name: 'express', versionRange: '^4.0.0', dependencyType: 'dependencies' },
+      { name: 'react', versionRange: '>=16', dependencyType: 'peerDependencies' },
+      { name: 'fsevents', versionRange: '^2.0.0', dependencyType: 'optionalDependencies' }
+    ])
+  })
+
+  it('should ignore bundledDependencies (array form has no versions)', () => {
+    const json = JSON.stringify({
+      dependencies: { express: '^4.0.0' },
+      bundleDependencies: ['bundled-pkg'],
+      bundledDependencies: ['another-pkg']
     })
     const result = parsePackageJsonDependencies(json)
     assert.equal(result.length, 1)
     assert.equal(result[0].name, 'express')
+  })
+
+  it('should order sections: dependencies, dev, peer, optional', () => {
+    const json = JSON.stringify({
+      optionalDependencies: { opt: '1.0.0' },
+      peerDependencies: { peer: '1.0.0' },
+      devDependencies: { dev: '1.0.0' },
+      dependencies: { prod: '1.0.0' }
+    })
+    const result = parsePackageJsonDependencies(json)
+    assert.deepEqual(
+      result.map(d => d.dependencyType),
+      ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
+    )
   })
 
   it('should handle a realistic full package.json', () => {
