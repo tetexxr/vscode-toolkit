@@ -1007,12 +1007,13 @@ A KeePassXC-style password generator in a panel (run **Toolkit: Open Password Ge
 - **Exclude look-alikes** (`I l 1 O 0 o |`) and **exclude custom characters**.
 - **Require each class** — guarantees at least one character from every selected class.
 - **Regenerate**, **Copy**, and **Insert at cursor**.
-- A live **strength meter** showing the password's **exact entropy in bits**.
+- An **editable, bidirectional** password field — type or paste your own and the strength meter recalculates live.
+- A live **strength meter** showing the password's **entropy in bits**.
 
 **Security:**
 
 - Passwords use the operating system's cryptographically-secure RNG (`crypto.randomInt`, unbiased) — never `Math.random`.
-- Because the password is randomly generated, the strength meter reports its **exact** entropy (`length × log₂(pool size)`), not a heuristic guess.
+- For a **generated** password the meter reports its **exact** entropy (`length × log₂(pool size)`). For a password you **type or paste**, the pool is inferred from the character classes present, so the entropy is an **upper-bound estimate** — it measures the alphabet, not predictability, and won't catch dictionary words or repetition (e.g. `Password123` scores higher than it deserves).
 - Generated passwords are **never stored** (no settings, history, or logs) — only your chosen options are remembered.
 - Copying a password **excludes it from the Toolkit [Clipboard History](#clipboard-history)**, so secrets don't linger there.
 
