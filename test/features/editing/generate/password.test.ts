@@ -1,6 +1,7 @@
 import { strict as assert } from 'assert'
 import {
   AMBIGUOUS,
+  analyzePassword,
   buildPool,
   classPools,
   estimateStrength,
@@ -77,6 +78,50 @@ describe('generatePassword', () => {
     const result = generatePassword({ ...base, lowercase: false, uppercase: false, digits: false, symbols: false }, counterRng())
     assert.equal(result.password, '')
     assert.equal(result.entropyBits, 0)
+  })
+})
+
+describe('analyzePassword', () => {
+  it('should return zero for an empty password', () => {
+    const result = analyzePassword('')
+    assert.equal(result.password, '')
+    assert.equal(result.poolSize, 0)
+    assert.equal(result.entropyBits, 0)
+  })
+
+  it('should infer the pool from the classes present', () => {
+    assert.equal(analyzePassword('abcdef').poolSize, 26)
+    assert.equal(analyzePassword('ABCabc').poolSize, 52)
+    assert.equal(analyzePassword('Abc123').poolSize, 62)
+    // lowercase + uppercase + digits + symbols = 26 + 26 + 10 + 26
+    assert.equal(analyzePassword('Abc123!@').poolSize, 88)
+  })
+
+  it('should compute entropy as length × log2(poolSize)', () => {
+    const result = analyzePassword('abcdefghij') // 10 lowercase chars, pool 26
+    assert.equal(result.poolSize, 26)
+    assert.equal(result.entropyBits, Math.round(10 * Math.log2(26)))
+  })
+
+  it('should credit each distinct out-of-class character once', () => {
+    // two lowercase + two distinct unknown chars (space, é) → pool 26 + 2
+    assert.equal(analyzePassword('ab é').poolSize, 26 + 2)
+    // repeated unknown chars are not double-counted
+    assert.equal(analyzePassword('a   ').poolSize, 26 + 1)
+  })
+
+  it('should preserve the analysed password on the result', () => {
+    assert.equal(analyzePassword('Hunter2!').password, 'Hunter2!')
+  })
+
+  it('should agree with generatePassword when every class is present', () => {
+    // An all-classes generated password has the same inferred pool as the
+    // exact pool, so the meter stays consistent across generate vs. edit.
+    const options: PasswordOptions = { ...base, symbols: true, requireEachClass: true, length: 20 }
+    const generated = generatePassword(options, (max: number) => max - 1)
+    const analysed = analyzePassword(generated.password)
+    assert.equal(analysed.poolSize, generated.poolSize)
+    assert.equal(analysed.entropyBits, generated.entropyBits)
   })
 })
 
