@@ -91,6 +91,63 @@ export function generatePassword(options: PasswordOptions, rng: RandomInt): Gene
   return { password: chars.join(''), entropyBits, poolSize: pool.length }
 }
 
+/**
+ * Estimates the entropy of an arbitrary, user-supplied password (one we did not
+ * generate, so its pool is unknown). The pool size is *inferred* from the
+ * character classes that actually appear, then the same search-space formula is
+ * applied: length × log2(poolSize). This is what powers the editable field — it
+ * lets the strength meter react to anything the user types or pastes.
+ *
+ * It is deliberately a simple upper bound: it measures the size of the assumed
+ * alphabet, not predictability. It does NOT detect dictionary words, keyboard
+ * walks, or repetition — "Password123" scores as if it were random — so a
+ * real-world password can be far weaker than its inferred entropy suggests. For
+ * randomly generated passwords prefer generatePassword, whose entropy is exact.
+ */
+export function analyzePassword(password: string): GeneratedPassword {
+  if (password.length === 0) {
+    return { password, entropyBits: 0, poolSize: 0 }
+  }
+  const symbols = new Set(SYMBOLS)
+  let hasLower = false
+  let hasUpper = false
+  let hasDigit = false
+  let hasSymbol = false
+  // Characters outside the known classes (spaces, accented letters, other
+  // Unicode). Each distinct one widens the assumed alphabet by one — enough to
+  // credit them without wildly overstating the search space.
+  const others = new Set<string>()
+  for (const ch of password) {
+    if (ch >= 'a' && ch <= 'z') {
+      hasLower = true
+    } else if (ch >= 'A' && ch <= 'Z') {
+      hasUpper = true
+    } else if (ch >= '0' && ch <= '9') {
+      hasDigit = true
+    } else if (symbols.has(ch)) {
+      hasSymbol = true
+    } else {
+      others.add(ch)
+    }
+  }
+  let poolSize = 0
+  if (hasLower) {
+    poolSize += LOWERCASE.length
+  }
+  if (hasUpper) {
+    poolSize += UPPERCASE.length
+  }
+  if (hasDigit) {
+    poolSize += DIGITS.length
+  }
+  if (hasSymbol) {
+    poolSize += SYMBOLS.length
+  }
+  poolSize += others.size
+  const entropyBits = Math.round(password.length * Math.log2(poolSize))
+  return { password, entropyBits, poolSize }
+}
+
 export interface Strength {
   label: string
   /** 0 (Poor) … 4 (Excellent), for a five-segment meter. */

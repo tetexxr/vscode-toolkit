@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import { randomBytes, randomInt } from 'node:crypto'
 import {
+  analyzePassword,
   estimateStrength,
   generatePassword,
   type PasswordOptions
@@ -46,6 +47,17 @@ function generate(options: PasswordOptions): { password: string; entropyBits: nu
   const strength = estimateStrength(result.entropyBits)
   lastPassword = result.password
   return { password: result.password, entropyBits: result.entropyBits, label: strength.label, score: strength.score }
+}
+
+// Recomputes strength for a password the user typed or pasted into the field.
+// Updates lastPassword so Copy/Insert act on the edited value. The password is
+// not echoed back — the field already holds it, and rewriting it would reset
+// the caret on every keystroke.
+function analyze(password: string): { entropyBits: number; label: string; score: number } {
+  const result = analyzePassword(password)
+  const strength = estimateStrength(result.entropyBits)
+  lastPassword = password
+  return { entropyBits: result.entropyBits, label: strength.label, score: strength.score }
 }
 
 async function copyPassword(): Promise<void> {
@@ -95,8 +107,10 @@ function buildHtml(nonce: string): string {
   .password {
     font-family: var(--vscode-editor-font-family, monospace); font-size: 1.3em; word-break: break-all;
     padding: 10px 12px; border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
-    border-radius: 4px; background: var(--vscode-input-background); min-height: 1.4em;
+    border-radius: 4px; background: var(--vscode-input-background); color: var(--vscode-input-foreground);
+    width: 100%; box-sizing: border-box; resize: vertical; min-height: 2.4em;
   }
+  .password:focus { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
   .row { display: flex; align-items: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
   .classes label { margin-right: 14px; white-space: nowrap; }
   input[type="range"] { flex: 1; }
@@ -111,7 +125,9 @@ function buildHtml(nonce: string): string {
 </style>
 </head>
 <body>
-  <div class="password" id="password">&nbsp;</div>
+  <textarea class="password" id="password" rows="2" spellcheck="false" autocomplete="off"
+    autocapitalize="off" autocorrect="off" aria-label="Password (editable)"
+    placeholder="Generated password — or type your own"></textarea>
   <div class="meter" id="meter"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span></div>
   <div class="meta"><span id="strength"></span> · <span id="entropy"></span> bits of entropy</div>
 
@@ -172,11 +188,23 @@ function buildHtml(nonce: string): string {
       el('lengthValue').textContent = el('length').value
       vscode.postMessage({ type: 'generate', options: readOptions() })
     }
+    // The field is bidirectional: typing or pasting re-estimates strength from
+    // the field's own value rather than from the generator options.
+    function analyze() {
+      vscode.postMessage({ type: 'analyze', password: el('password').value })
+    }
+    function renderStrength(msg) {
+      el('entropy').textContent = msg.entropyBits
+      el('strength').textContent = msg.label
+      const segs = document.querySelectorAll('.seg')
+      segs.forEach((s, i) => { s.style.background = i <= msg.score ? colors[msg.score] : '${cssColor.border}' })
+    }
 
     for (const id of ids) {
       const ev = (id === 'length' || id === 'excludeChars') ? 'input' : 'change'
       el(id).addEventListener(ev, generate)
     }
+    el('password').addEventListener('input', analyze)
     el('regenerate').addEventListener('click', generate)
     el('copy').addEventListener('click', () => vscode.postMessage({ type: 'copy' }))
     el('insert').addEventListener('click', () => vscode.postMessage({ type: 'insert' }))
@@ -187,11 +215,12 @@ function buildHtml(nonce: string): string {
         applyOptions(msg.options)
         generate()
       } else if (msg.type === 'result') {
-        el('password').textContent = msg.password || '—'
-        el('entropy').textContent = msg.entropyBits
-        el('strength').textContent = msg.label
-        const segs = document.querySelectorAll('.seg')
-        segs.forEach((s, i) => { s.style.background = i <= msg.score ? colors[msg.score] : '${cssColor.border}' })
+        // A freshly generated password replaces the field contents.
+        el('password').value = msg.password || ''
+        renderStrength(msg)
+      } else if (msg.type === 'strength') {
+        // Re-estimate for an edited field: update the meter, leave the text.
+        renderStrength(msg)
       }
     })
     vscode.postMessage({ type: 'ready' })
@@ -219,6 +248,7 @@ function createPanel(context: vscode.ExtensionContext): vscode.WebviewPanel {
   type Incoming =
     | { type: 'ready' }
     | { type: 'generate'; options: Partial<PasswordOptions> }
+    | { type: 'analyze'; password: string }
     | { type: 'copy' }
     | { type: 'insert' }
   panel.webview.onDidReceiveMessage(async (msg: Incoming) => {
@@ -229,6 +259,8 @@ function createPanel(context: vscode.ExtensionContext): vscode.WebviewPanel {
       const options = normalizeOptions(msg.options)
       await context.globalState.update(STORAGE_KEY, options)
       void panel.webview.postMessage({ type: 'result', ...generate(options) })
+    } else if (msg.type === 'analyze') {
+      void panel.webview.postMessage({ type: 'strength', ...analyze(msg.password) })
     } else if (msg.type === 'copy') {
       await copyPassword()
     } else if (msg.type === 'insert') {
