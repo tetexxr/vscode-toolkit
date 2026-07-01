@@ -116,15 +116,16 @@ tbody tr:hover { background: ${cssColor.surface}; }
 
 .badge {
   display: inline-block;
-  padding: 1px 8px;
+  padding: 2px 10px;
   border-radius: 10px;
-  font-size: 0.8rem;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
+  color: #fff;
 }
-.badge-ok       { color: ${cssColor.success}; border: 1px solid ${cssColor.success}; }
-.badge-error    { color: ${cssColor.error};   border: 1px solid ${cssColor.error}; }
-.badge-warning  { color: ${cssColor.warning}; border: 1px solid ${cssColor.warning}; }
+.badge-ok       { background: ${cssColor.success}; color: #fff; }
+.badge-error    { background: ${cssColor.error};   color: #fff; }
+.badge-warning  { background: ${cssColor.warning}; color: #000; }
 
 .btn-fix { font-size: 0.8rem; padding: 2px 10px; }
 
