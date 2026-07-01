@@ -4007,6 +4007,7 @@
   },
   "dependencies": {
     "fflate": "^0.8.3",
+    "pdf-lib": "^1.17.1",
     "typescript": "^6.0.3"
   },
   "devDependencies": {
