@@ -34,6 +34,18 @@ export interface PdfFieldInfo {
   /** Current value, shown in the table; empty when the field holds nothing. */
   value: string
   hasValue: boolean
+  /** Whether the field's value can be edited (false for buttons, signatures and read-only fields). */
+  editable: boolean
+  /** True when the PDF marks the field read-only. */
+  readOnly: boolean
+  /** Available options for RadioGroup / Dropdown / OptionList. */
+  options?: string[]
+  /** Currently selected options (RadioGroup / Dropdown / OptionList). */
+  selected?: string[]
+  /** Current checkbox state. */
+  checked?: boolean
+  /** True for OptionList (multiple selection allowed). */
+  multi?: boolean
 }
 
 export interface PdfFieldsResult {
@@ -45,41 +57,62 @@ export interface PdfFieldsResult {
 interface FieldReading {
   type: string
   value: string
+  editable: boolean
+  options?: string[]
+  selected?: string[]
+  checked?: boolean
+  multi?: boolean
 }
 
 function readField(field: PDFField): FieldReading {
   if (field instanceof PDFTextField) {
-    return { type: 'Text', value: field.getText() ?? '' }
+    return { type: 'Text', value: field.getText() ?? '', editable: true }
   }
   if (field instanceof PDFCheckBox) {
-    return { type: 'CheckBox', value: field.isChecked() ? 'checked' : '' }
+    const checked = field.isChecked()
+    return { type: 'CheckBox', value: checked ? 'checked' : '', checked, editable: true }
   }
   if (field instanceof PDFRadioGroup) {
-    return { type: 'RadioGroup', value: field.getSelected() ?? '' }
+    const selected = field.getSelected()
+    return { type: 'RadioGroup', value: selected ?? '', options: field.getOptions(), selected: selected ? [selected] : [], editable: true }
   }
   if (field instanceof PDFDropdown) {
-    return { type: 'Dropdown', value: field.getSelected().join(', ') }
+    const selected = field.getSelected()
+    return { type: 'Dropdown', value: selected.join(', '), options: field.getOptions(), selected, editable: true }
   }
   if (field instanceof PDFOptionList) {
-    return { type: 'OptionList', value: field.getSelected().join(', ') }
+    const selected = field.getSelected()
+    return { type: 'OptionList', value: selected.join(', '), options: field.getOptions(), selected, multi: true, editable: true }
   }
   if (field instanceof PDFSignature) {
-    return { type: 'Signature', value: '' }
+    return { type: 'Signature', value: '', editable: false }
   }
   if (field instanceof PDFButton) {
-    return { type: 'Button', value: '' }
+    return { type: 'Button', value: '', editable: false }
   }
-  return { type: 'Unknown', value: '' }
+  return { type: 'Unknown', value: '', editable: false }
 }
 
-/** Read every AcroForm field's name, type and current value. */
+/** Read every AcroForm field's name, type, current value and editing metadata. */
 export async function readPdfFields(bytes: Uint8Array): Promise<PdfFieldsResult> {
   const document = await PDFDocument.load(bytes, { updateMetadata: false })
   const form = document.getForm()
   const fields = form.getFields()
   const infos: PdfFieldInfo[] = fields.map(field => {
     const reading = readField(field)
-    return { name: field.getName(), type: reading.type, value: reading.value, hasValue: reading.value !== '' }
+    const readOnly = field.isReadOnly()
+    return {
+      name: field.getName(),
+      type: reading.type,
+      value: reading.value,
+      hasValue: reading.value !== '',
+      editable: reading.editable && !readOnly,
+      readOnly,
+      options: reading.options,
+      selected: reading.selected,
+      checked: reading.checked,
+      multi: reading.multi
+    }
   })
   return { fields: infos, hasForm: fields.length > 0 }
 }
@@ -89,18 +122,14 @@ export async function readPdfFields(bytes: Uint8Array): Promise<PdfFieldsResult>
  * emptied; checkboxes unchecked; radio groups, dropdowns and option lists
  * deselected.
  *
- * To keep the field's original look (font, size, color, border, background),
- * we drop each cleared widget's stale appearance stream (`/AP`) and set the
- * form's `/NeedAppearances` flag, then save WITHOUT letting pdf-lib regenerate
- * appearances. The viewer then rebuilds the appearance from the field's own
- * `/DA` and `/MK` styling — pdf-lib's generic generator would otherwise flatten
- * those details. This mirrors what PdfSharpCore does on the talento page.
+ * Preserves the field's original look via {@link refreshAppearances}.
  */
 export async function clearPdfFields(bytes: Uint8Array, fieldsToClear: string[]): Promise<Uint8Array> {
   const document = await PDFDocument.load(bytes)
   const form = document.getForm()
   const wanted = new Set(fieldsToClear)
 
+  const touched: PDFField[] = []
   for (const field of form.getFields()) {
     if (!wanted.has(field.getName())) {
       continue
@@ -118,15 +147,102 @@ export async function clearPdfFields(bytes: Uint8Array, fieldsToClear: string[])
     } else {
       continue
     }
+    touched.push(field)
+  }
 
-    // Remove the stale appearance so the old value doesn't linger and the
-    // viewer regenerates a fresh one from the field's own styling.
+  refreshAppearances(form, touched)
+  return document.save({ updateFieldAppearances: false })
+}
+
+/** Text-rendered fields whose appearance is a text stream, not a baked on/off state. */
+function isTextRendered(field: PDFField): boolean {
+  return field instanceof PDFTextField || field instanceof PDFDropdown || field instanceof PDFOptionList
+}
+
+/**
+ * Keep each touched field's original look. Text-rendered fields (Text,
+ * Dropdown, OptionList) get their stale `/AP` stream removed so the viewer
+ * redraws them from `/DA` and `/MK` instead of pdf-lib's generic generator;
+ * checkbox/radio keep their `/AP` (their on/off appearance states are baked in
+ * and carry the value mapping, so removing them would break it). Setting the
+ * form's `/NeedAppearances` flag asks the viewer to (re)build what it needs.
+ */
+function refreshAppearances(form: ReturnType<PDFDocument['getForm']>, touched: PDFField[]): void {
+  for (const field of touched) {
+    if (!isTextRendered(field)) {
+      continue
+    }
     for (const widget of field.acroField.getWidgets()) {
       widget.dict.delete(PDFName.of('AP'))
     }
   }
-
   form.acroForm.dict.set(PDFName.of('NeedAppearances'), PDFBool.True)
+}
 
+/** A value to write into a form field; the shape depends on the field type. */
+export interface PdfFieldValue {
+  name: string
+  /** string for Text/RadioGroup/Dropdown, boolean for CheckBox, string[] for OptionList. */
+  value: string | boolean | string[]
+}
+
+function applyValue(field: PDFField, value: string | boolean | string[]): void {
+  if (field instanceof PDFTextField) {
+    field.setText(typeof value === 'string' ? value : String(value))
+  } else if (field instanceof PDFCheckBox) {
+    if (value) {
+      field.check()
+    } else {
+      field.uncheck()
+    }
+  } else if (field instanceof PDFRadioGroup) {
+    const option = Array.isArray(value) ? value[0] : value
+    if (typeof option === 'string' && option) {
+      field.select(option)
+    } else {
+      field.clear()
+    }
+  } else if (field instanceof PDFDropdown) {
+    const option = Array.isArray(value) ? value[0] : value
+    if (typeof option === 'string' && option) {
+      field.select(option)
+    } else {
+      field.clear()
+    }
+  } else if (field instanceof PDFOptionList) {
+    const options = Array.isArray(value) ? value : typeof value === 'string' && value ? [value] : []
+    if (options.length > 0) {
+      field.select(options)
+    } else {
+      field.clear()
+    }
+  }
+}
+
+/**
+ * Write values into the named fields and return the re-saved PDF bytes. Uses
+ * the same appearance-preserving strategy as {@link clearPdfFields}: drop stale
+ * appearance streams and set `/NeedAppearances` so the viewer redraws each field
+ * with its own styling — clearing is just setting an empty value.
+ */
+export async function setPdfFields(bytes: Uint8Array, values: PdfFieldValue[]): Promise<Uint8Array> {
+  const document = await PDFDocument.load(bytes)
+  const form = document.getForm()
+  const byName = new Map(values.map(v => [v.name, v.value]))
+
+  const touched: PDFField[] = []
+  for (const field of form.getFields()) {
+    if (!byName.has(field.getName())) {
+      continue
+    }
+    const value = byName.get(field.getName())
+    if (value === undefined) {
+      continue
+    }
+    applyValue(field, value)
+    touched.push(field)
+  }
+
+  refreshAppearances(form, touched)
   return document.save({ updateFieldAppearances: false })
 }
