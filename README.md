@@ -1489,17 +1489,17 @@ This feature reads the `.docx` (a ZIP), inspects the bookmark XML in `document.x
 - **Orphaned start/end** — a `bookmarkStart` with no matching `bookmarkEnd` or vice versa.
 - **Name too long** — over Word's 40-character limit, which exporters truncate.
 
-Word's own structural bookmarks (`_GoBack`, `_Toc…`, …) are ignored. Findings are written to the **Toolkit: Word Bookmarks** output channel.
+Word's own structural bookmarks (`_GoBack`, `_Toc…`, …) are ignored. Findings open in the **Word Bookmarks** panel: a filterable table with one row per bookmark (File · Bookmark · Location · Status · Runs · Action), colored status badges, a search box, an *Issues / Fixable / All* filter, and sortable columns. Click a file name to reveal it in the Explorer.
 
-**Fixing** consolidates each split bookmark back into a single run, keeping the first run's formatting (`<w:rPr>`) and concatenating the text. It only merges runs that are plain text — a bookmark containing a line break, tab, field or image is reported but never rewritten — and asks for confirmation before rewriting the file in place.
+**Fixing** consolidates each split bookmark back into a single run, keeping the first run's formatting (`<w:rPr>`) and concatenating the text. It only merges runs that are plain text — a bookmark containing a line break, tab, field or image is reported but never rewritten. Click **Fix** on a row to consolidate that one bookmark (the row updates live), or **Fix all** to do every fixable one at once after a confirmation; both rewrite the `.docx` in place.
 
 **Commands:**
 
 | Command | Description |
 |---|---|
-| Toolkit: Check Word Bookmarks | Scan every `.docx` in the workspace, report issues, and offer to fix the fixable ones |
-| Word Document ▸ Check Bookmarks | Explorer right-click on one or more `.docx` files — check just those |
-| Word Document ▸ Fix Split Bookmarks | Explorer right-click — consolidate the split bookmarks in the selected file(s) |
+| Toolkit: Check Word Bookmarks | Open the panel scanning every `.docx` in the workspace |
+| Word Document ▸ Check Bookmarks | Explorer right-click on one or more `.docx` files — open the panel scoped to those |
+| Word Document ▸ Fix Split Bookmarks | Explorer right-click — open the panel on the selection and immediately offer to consolidate the split bookmarks |
 
 #### TODO Tree
 
