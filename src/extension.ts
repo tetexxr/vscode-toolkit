@@ -62,6 +62,7 @@ import { registerKillPortCommands } from './features/workspace/kill-port'
 import { registerTocCommands } from './features/editing/convert/toc'
 import { registerJsonPlaygroundCommands } from './features/workspace/json-playground'
 import { registerDocxBookmarkCommands } from './features/workspace/docx-bookmarks'
+import { registerPdfFieldCommands } from './features/workspace/pdf-fields'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -127,6 +128,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerTocCommands(context)
   registerJsonPlaygroundCommands(context)
   registerDocxBookmarkCommands(context)
+  registerPdfFieldCommands(context)
 }
 
 export function deactivate() {}

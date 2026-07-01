@@ -1287,6 +1287,11 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.pdf.inspectFields",
+        "title": "Inspect PDF Fields",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.docx.checkFile",
         "title": "Check Bookmarks",
         "category": "Word Document"
@@ -2132,6 +2137,11 @@
           "submenu": "toolkit.menu.docx",
           "when": "resourceExtname == .docx",
           "group": "0_toolkit@13"
+        },
+        {
+          "command": "toolkit.pdf.inspectFields",
+          "when": "resourceExtname == .pdf",
+          "group": "0_toolkit@14"
         }
       ],
       "commandPalette": [
