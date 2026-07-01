@@ -6,9 +6,9 @@
  */
 
 import * as vscode from 'vscode'
-import { readPdfFields, clearPdfFields, type PdfFieldInfo } from './pdf-fields-utils'
+import { readPdfFields, setPdfFields, type PdfFieldInfo, type PdfFieldValue } from './pdf-fields-utils'
 
-type WebviewMessage = { command: 'ready' } | { command: 'clear'; names: string[] }
+type WebviewMessage = { command: 'ready' } | { command: 'save'; values: PdfFieldValue[] }
 
 type ExtensionMessage = {
   type: 'state'
@@ -40,8 +40,8 @@ export class PdfFieldsHandler implements vscode.Disposable {
     switch (msg.command) {
       case 'ready':
         return this.load()
-      case 'clear':
-        return this.clear(msg.names)
+      case 'save':
+        return this.save(msg.values)
     }
   }
 
@@ -59,30 +59,30 @@ export class PdfFieldsHandler implements vscode.Disposable {
     }
   }
 
-  private async clear(names: string[]): Promise<void> {
-    if (names.length === 0) {
+  private async save(values: PdfFieldValue[]): Promise<void> {
+    if (values.length === 0) {
       return
     }
     const fileName = this.basename(this.target)
-    const plural = names.length === 1 ? 'field' : 'fields'
+    const plural = values.length === 1 ? 'field' : 'fields'
     const choice = await vscode.window.showWarningMessage(
-      `Clear ${names.length} ${plural} in ${fileName}? This overwrites the original PDF.`,
-      { modal: true, detail: 'The selected fields are blanked and the file is saved in place.' },
-      'Clear'
+      `Save ${values.length} changed ${plural} in ${fileName}? This overwrites the original PDF.`,
+      { modal: true, detail: 'The edited values are written and the file is saved in place.' },
+      'Save'
     )
-    if (choice !== 'Clear') {
-      await this.load() // re-enable the button in the webview
+    if (choice !== 'Save') {
+      await this.load() // discard the pending edits and re-enable the button
       return
     }
 
     try {
       const bytes = await vscode.workspace.fs.readFile(this.target)
-      const cleared = await clearPdfFields(bytes, names)
-      await vscode.workspace.fs.writeFile(this.target, cleared)
+      const updated = await setPdfFields(bytes, values)
+      await vscode.workspace.fs.writeFile(this.target, updated)
       await this.load()
-      vscode.window.showInformationMessage(`Toolkit: cleared ${names.length} ${plural} in ${fileName}.`)
+      vscode.window.showInformationMessage(`Toolkit: saved ${values.length} ${plural} in ${fileName}.`)
     } catch (error) {
-      vscode.window.showErrorMessage(`Toolkit: could not clear fields — ${String(error)}`)
+      vscode.window.showErrorMessage(`Toolkit: could not save fields — ${String(error)}`)
       await this.load()
     }
   }

@@ -117,43 +117,6 @@ export async function readPdfFields(bytes: Uint8Array): Promise<PdfFieldsResult>
   return { fields: infos, hasForm: fields.length > 0 }
 }
 
-/**
- * Blank out the named fields and return the re-saved PDF bytes. Text fields are
- * emptied; checkboxes unchecked; radio groups, dropdowns and option lists
- * deselected.
- *
- * Preserves the field's original look via {@link refreshAppearances}.
- */
-export async function clearPdfFields(bytes: Uint8Array, fieldsToClear: string[]): Promise<Uint8Array> {
-  const document = await PDFDocument.load(bytes)
-  const form = document.getForm()
-  const wanted = new Set(fieldsToClear)
-
-  const touched: PDFField[] = []
-  for (const field of form.getFields()) {
-    if (!wanted.has(field.getName())) {
-      continue
-    }
-    if (field instanceof PDFTextField) {
-      field.setText('')
-    } else if (field instanceof PDFCheckBox) {
-      field.uncheck()
-    } else if (field instanceof PDFRadioGroup) {
-      field.clear()
-    } else if (field instanceof PDFDropdown) {
-      field.clear()
-    } else if (field instanceof PDFOptionList) {
-      field.clear()
-    } else {
-      continue
-    }
-    touched.push(field)
-  }
-
-  refreshAppearances(form, touched)
-  return document.save({ updateFieldAppearances: false })
-}
-
 /** Text-rendered fields whose appearance is a text stream, not a baked on/off state. */
 function isTextRendered(field: PDFField): boolean {
   return field instanceof PDFTextField || field instanceof PDFDropdown || field instanceof PDFOptionList
@@ -220,10 +183,10 @@ function applyValue(field: PDFField, value: string | boolean | string[]): void {
 }
 
 /**
- * Write values into the named fields and return the re-saved PDF bytes. Uses
- * the same appearance-preserving strategy as {@link clearPdfFields}: drop stale
- * appearance streams and set `/NeedAppearances` so the viewer redraws each field
- * with its own styling — clearing is just setting an empty value.
+ * Write values into the named fields and return the re-saved PDF bytes. Text
+ * fields are set (an empty string clears them); checkboxes toggled; radio
+ * groups, dropdowns and option lists selected or cleared. Preserves each field's
+ * original look via {@link refreshAppearances}.
  */
 export async function setPdfFields(bytes: Uint8Array, values: PdfFieldValue[]): Promise<Uint8Array> {
   const document = await PDFDocument.load(bytes)

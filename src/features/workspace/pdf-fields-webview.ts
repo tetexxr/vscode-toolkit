@@ -1,8 +1,9 @@
 /**
  * Generates the HTML/CSS/JS for the PDF Fields panel — inspects one PDF's
- * AcroForm fields in a table (name, type, current value) and lets the user
- * select fields that hold a value and clear them. Reuses the shared button and
- * badge styling so it matches the rest of the toolkit's panels.
+ * AcroForm fields in a table and lets the user edit their values inline (text,
+ * checkbox, radio, dropdown, option list). Edits are tracked and applied in one
+ * "Save changes" that overwrites the PDF; "Clear all" stages empties for every
+ * editable field. Reuses the shared button and badge styling.
  */
 
 import { cssColor } from '../../utils/palette'
@@ -84,13 +85,30 @@ thead th {
 tbody td { padding: 6px 10px; border-bottom: 1px solid ${cssColor.surface}; vertical-align: middle; }
 tbody tr:hover { background: ${cssColor.surface}; }
 
-.col-check { width: 34px; text-align: center; }
 .col-index { width: 40px; color: var(--vscode-descriptionForeground); text-align: right; }
-.col-type { text-align: center; }
+.col-type { text-align: center; white-space: nowrap; }
+.col-value { width: 45%; }
 .cell-name { font-family: var(--vscode-editor-font-family, monospace); }
-.cell-value { font-family: var(--vscode-editor-font-family, monospace); word-break: break-word; }
-.cell-empty { color: var(--vscode-descriptionForeground); }
-.truncate { max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.truncate { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.field-input, .field-select {
+  width: 100%;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 2px;
+  padding: 3px 6px;
+  font-family: inherit;
+  font-size: inherit;
+}
+.field-input:focus-visible, .field-select:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
+select[multiple].field-select { min-height: 3.6em; }
+.field-check { width: 16px; height: 16px; vertical-align: middle; }
+.field-dirty { border-color: ${cssColor.warning}; }
+
+.readonly-value { color: var(--vscode-descriptionForeground); font-family: var(--vscode-editor-font-family, monospace); }
+.lock { opacity: 0.6; margin-left: 6px; }
+.dirty-dot { color: ${cssColor.warning}; margin-left: 6px; }
 
 .empty-message {
   text-align: center;
@@ -124,7 +142,7 @@ const JS = /*js*/ `
     loading: true,
     error: '',
     search: '',
-    selected: {}
+    edits: {}   // name -> canonical edited value (string | boolean | string[])
   };
 
   const $toolbar = document.getElementById('toolbar');
@@ -147,124 +165,175 @@ const JS = /*js*/ `
       state.hasForm = msg.hasForm;
       state.loading = msg.loading;
       state.error = msg.error || '';
-      state.selected = {};   // reset selection whenever the document is (re)read
+      state.edits = {};   // fresh baseline whenever the document is (re)read
       render();
     }
   });
 
-  function valuedFields() { return state.fields.filter(function (f) { return f.hasValue; }); }
-  function selectedNames() { return Object.keys(state.selected).filter(function (n) { return state.selected[n]; }); }
-
-  function visibleFields() {
-    const q = state.search.trim().toLowerCase();
-    if (!q) { return state.fields; }
-    return state.fields.filter(function (f) {
-      return (f.name + ' ' + f.type + ' ' + f.value).toLowerCase().indexOf(q) !== -1;
-    });
+  // ── value model ────────────────────────────────────────
+  function originalValue(f) {
+    if (f.type === 'CheckBox') { return !!f.checked; }
+    if (f.type === 'OptionList') { return (f.selected || []).slice(); }
+    if (f.type === 'RadioGroup' || f.type === 'Dropdown') { return (f.selected && f.selected[0]) || ''; }
+    return f.value || '';
   }
+  function currentValue(f) {
+    return Object.prototype.hasOwnProperty.call(state.edits, f.name) ? state.edits[f.name] : originalValue(f);
+  }
+  function eq(a, b) {
+    if (Array.isArray(a) || Array.isArray(b)) {
+      const aa = a || [], bb = b || [];
+      return aa.length === bb.length && aa.every(function (v, i) { return v === bb[i]; });
+    }
+    return a === b;
+  }
+  function isDirty(f) { return !eq(currentValue(f), originalValue(f)); }
+  function dirtyFields() { return state.fields.filter(isDirty); }
 
+  function setEdit(name, value) { state.edits[name] = value; }
+
+  // ── toolbar ────────────────────────────────────────────
   function renderToolbar() {
-    const selCount = selectedNames().length;
-    const canClear = valuedFields().length > 0;
+    const dirty = dirtyFields().length;
+    const editable = state.fields.filter(function (f) { return f.editable; }).length;
+    const canAct = state.hasForm && !state.loading && !state.error;
     $toolbar.innerHTML =
       '<span class="toolbar-title">PDF Fields</span>' +
       '<input id="search" class="search-box" type="search" placeholder="Filter by name, type or value…" value="' + esc(state.search) + '" />' +
-      (canClear
-        ? '<button class="btn" id="clear-btn"' + (selCount === 0 ? ' disabled' : '') + '>' +
-            'Clear ' + (selCount > 0 ? selCount + ' field' + (selCount > 1 ? 's' : '') : 'selected') +
-          '</button>'
-        : '');
+      (canAct && editable > 0 ? '<button class="btn btn-secondary" id="clear-all-btn">Clear all</button>' : '') +
+      (canAct ? '<button class="btn btn-secondary" id="reset-btn"' + (dirty === 0 ? ' disabled' : '') + '>Reset</button>' : '') +
+      (canAct ? '<button class="btn" id="save-btn"' + (dirty === 0 ? ' disabled' : '') + '>Save changes' + (dirty > 0 ? ' (' + dirty + ')' : '') + '</button>' : '');
 
-    document.getElementById('search').addEventListener('input', function (e) { state.search = e.target.value; renderContent(); });
-    const clearBtn = document.getElementById('clear-btn');
-    if (clearBtn) {
-      clearBtn.addEventListener('click', function () {
-        const names = selectedNames();
-        if (names.length === 0) { return; }
-        clearBtn.disabled = true;
-        clearBtn.innerHTML = '<span class="spinner"></span> Clearing…';
-        post({ command: 'clear', names: names });
+    const search = document.getElementById('search');
+    if (search) { search.addEventListener('input', function (e) { state.search = e.target.value; renderContent(); }); }
+
+    const clearAll = document.getElementById('clear-all-btn');
+    if (clearAll) {
+      clearAll.addEventListener('click', function () {
+        state.fields.forEach(function (f) {
+          if (!f.editable) { return; }
+          setEdit(f.name, f.type === 'CheckBox' ? false : f.type === 'OptionList' ? [] : '');
+        });
+        render();
+      });
+    }
+    const reset = document.getElementById('reset-btn');
+    if (reset) { reset.addEventListener('click', function () { state.edits = {}; render(); }); }
+    const save = document.getElementById('save-btn');
+    if (save) {
+      save.addEventListener('click', function () {
+        const values = dirtyFields().map(function (f) { return { name: f.name, value: currentValue(f) }; });
+        if (values.length === 0) { return; }
+        save.disabled = true;
+        save.innerHTML = '<span class="spinner"></span> Saving…';
+        post({ command: 'save', values: values });
       });
     }
   }
 
   function renderSummary() {
     if (state.loading || state.error || !state.hasForm) { $summary.textContent = ''; return; }
-    $summary.textContent =
-      esc(state.relPath) + ' · ' + state.fields.length + ' field(s) · ' + valuedFields().length + ' with a value';
+    const editable = state.fields.filter(function (f) { return f.editable; }).length;
+    $summary.textContent = esc(state.relPath) + ' · ' + state.fields.length + ' field(s) · ' + editable + ' editable';
+  }
+
+  // ── field controls ─────────────────────────────────────
+  function controlHtml(f) {
+    if (!f.editable) {
+      const v = f.hasValue ? esc(f.value) : '—';
+      return '<span class="readonly-value">' + v + '</span>' +
+        (f.readOnly ? '<span class="lock" title="Read-only field">🔒</span>' : '');
+    }
+    const val = currentValue(f);
+    if (f.type === 'CheckBox') {
+      return '<input type="checkbox" class="field-check" data-name="' + esc(f.name) + '"' + (val ? ' checked' : '') + ' />';
+    }
+    if (f.type === 'RadioGroup' || f.type === 'Dropdown') {
+      let html = '<select class="field-select" data-name="' + esc(f.name) + '"><option value="">— none —</option>';
+      (f.options || []).forEach(function (opt) {
+        html += '<option value="' + esc(opt) + '"' + (opt === val ? ' selected' : '') + '>' + esc(opt) + '</option>';
+      });
+      return html + '</select>';
+    }
+    if (f.type === 'OptionList') {
+      const sel = Array.isArray(val) ? val : [];
+      let html = '<select multiple class="field-select" data-name="' + esc(f.name) + '">';
+      (f.options || []).forEach(function (opt) {
+        html += '<option value="' + esc(opt) + '"' + (sel.indexOf(opt) !== -1 ? ' selected' : '') + '>' + esc(opt) + '</option>';
+      });
+      return html + '</select>';
+    }
+    return '<input type="text" class="field-input" data-name="' + esc(f.name) + '" value="' + esc(val) + '" />';
   }
 
   function renderContent() {
-    if (state.loading) {
-      $content.innerHTML = '<div class="empty-message"><span class="spinner"></span> Reading PDF…</div>';
-      return;
-    }
-    if (state.error) {
-      $content.innerHTML = '<div class="empty-message error-message">' + esc(state.error) + '</div>';
-      return;
-    }
-    if (!state.hasForm) {
-      $content.innerHTML = '<div class="empty-message">This PDF has no form fields.</div>';
-      return;
-    }
+    if (state.loading) { $content.innerHTML = '<div class="empty-message"><span class="spinner"></span> Reading PDF…</div>'; return; }
+    if (state.error) { $content.innerHTML = '<div class="empty-message error-message">' + esc(state.error) + '</div>'; return; }
+    if (!state.hasForm) { $content.innerHTML = '<div class="empty-message">This PDF has no form fields.</div>'; return; }
 
-    const rows = visibleFields();
-    if (rows.length === 0) {
-      $content.innerHTML = '<div class="empty-message">Nothing matches the filter.</div>';
-      return;
-    }
+    const q = state.search.trim().toLowerCase();
+    const rows = q
+      ? state.fields.filter(function (f) { return (f.name + ' ' + f.type + ' ' + f.value).toLowerCase().indexOf(q) !== -1; })
+      : state.fields;
+    if (rows.length === 0) { $content.innerHTML = '<div class="empty-message">Nothing matches the filter.</div>'; return; }
 
-    const anyValued = valuedFields().length > 0;
     let html = '<table><thead><tr>' +
-      (anyValued ? '<th class="col-check"><input type="checkbox" id="select-all" title="Select all fields with a value" /></th>' : '') +
-      '<th class="col-index">#</th>' +
-      '<th>Field Name</th>' +
-      '<th class="col-type">Type</th>' +
-      '<th>Current Value</th>' +
+      '<th class="col-index">#</th><th>Field Name</th><th class="col-type">Type</th><th class="col-value">Value</th>' +
       '</tr></thead><tbody>';
-
     for (let i = 0; i < rows.length; i++) {
       const f = rows[i];
       html += '<tr>' +
-        (anyValued
-          ? '<td class="col-check">' + (f.hasValue
-              ? '<input type="checkbox" class="field-check" data-name="' + esc(f.name) + '"' + (state.selected[f.name] ? ' checked' : '') + ' />'
-              : '') + '</td>'
-          : '') +
         '<td class="col-index">' + (i + 1) + '</td>' +
-        '<td class="cell-name truncate" title="' + esc(f.name) + '">' + esc(f.name) + '</td>' +
+        '<td class="cell-name truncate" title="' + esc(f.name) + '">' + esc(f.name) +
+          (isDirty(f) ? '<span class="dirty-dot" title="Unsaved change">●</span>' : '') + '</td>' +
         '<td class="col-type"><span class="badge badge-neutral">' + esc(f.type) + '</span></td>' +
-        '<td class="cell-value">' + (f.hasValue ? esc(f.value) : '<span class="cell-empty">—</span>') + '</td>' +
+        '<td class="col-value">' + controlHtml(f) + '</td>' +
       '</tr>';
     }
     html += '</tbody></table>';
     $content.innerHTML = html;
-
-    const checks = $content.querySelectorAll('.field-check');
-    for (let i = 0; i < checks.length; i++) {
-      checks[i].addEventListener('change', function () {
-        state.selected[this.getAttribute('data-name')] = this.checked;
-        syncSelectAll();
-        renderToolbar();
-      });
-    }
-    const selectAll = document.getElementById('select-all');
-    if (selectAll) {
-      syncSelectAll();
-      selectAll.addEventListener('change', function () {
-        const on = this.checked;
-        valuedFields().forEach(function (f) { state.selected[f.name] = on; });
-        renderContent();
-        renderToolbar();
-      });
-    }
+    wireControls();
   }
 
-  function syncSelectAll() {
-    const selectAll = document.getElementById('select-all');
-    if (!selectAll) { return; }
-    const valued = valuedFields();
-    selectAll.checked = valued.length > 0 && valued.every(function (f) { return state.selected[f.name]; });
+  // Update edits without re-rendering the table, so text inputs keep focus.
+  function onEdited(name) {
+    const f = state.fields.find(function (x) { return x.name === name; });
+    const row = $content.querySelector('[data-name="' + cssEscape(name) + '"]');
+    if (row) { row.classList.toggle('field-dirty', f && isDirty(f)); }
+    const nameCell = row ? row.closest('tr').querySelector('.cell-name') : null;
+    if (nameCell) {
+      const existing = nameCell.querySelector('.dirty-dot');
+      if (f && isDirty(f) && !existing) {
+        const dot = document.createElement('span');
+        dot.className = 'dirty-dot'; dot.title = 'Unsaved change'; dot.textContent = '●';
+        nameCell.appendChild(dot);
+      } else if ((!f || !isDirty(f)) && existing) {
+        existing.remove();
+      }
+    }
+    renderToolbar();
+  }
+  function cssEscape(s) { return String(s).replace(/["\\\\]/g, '\\\\$&'); }
+
+  function wireControls() {
+    $content.querySelectorAll('.field-input').forEach(function (el) {
+      el.addEventListener('input', function () { setEdit(this.getAttribute('data-name'), this.value); onEdited(this.getAttribute('data-name')); });
+    });
+    $content.querySelectorAll('.field-check').forEach(function (el) {
+      el.addEventListener('change', function () { setEdit(this.getAttribute('data-name'), this.checked); onEdited(this.getAttribute('data-name')); });
+    });
+    $content.querySelectorAll('select.field-select').forEach(function (el) {
+      el.addEventListener('change', function () {
+        const name = this.getAttribute('data-name');
+        if (this.multiple) {
+          const vals = Array.prototype.filter.call(this.options, function (o) { return o.selected; }).map(function (o) { return o.value; });
+          setEdit(name, vals);
+        } else {
+          setEdit(name, this.value);
+        }
+        onEdited(name);
+      });
+    });
   }
 
   function render() { renderToolbar(); renderSummary(); renderContent(); }

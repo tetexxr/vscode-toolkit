@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert'
 import { PDFDocument, PDFName } from 'pdf-lib'
-import { readPdfFields, clearPdfFields, setPdfFields } from '../../../src/features/workspace/pdf-fields-utils'
+import { readPdfFields, setPdfFields } from '../../../src/features/workspace/pdf-fields-utils'
 
 /** Build an in-memory PDF with a filled AcroForm to exercise the utils. */
 async function formPdf(): Promise<Uint8Array> {
@@ -72,41 +72,6 @@ describe('readPdfFields', () => {
     const result = await readPdfFields(await noFormPdf())
     assert.equal(result.hasForm, false)
     assert.equal(result.fields.length, 0)
-  })
-})
-
-describe('clearPdfFields', () => {
-  it('clears only the selected fields, leaving the rest intact', async () => {
-    const cleared = await clearPdfFields(await formPdf(), ['person.name', 'person.active'])
-    const result = await readPdfFields(cleared)
-    const byName = new Map(result.fields.map(f => [f.name, f]))
-
-    assert.equal(byName.get('person.name')?.value, '')
-    assert.equal(byName.get('person.name')?.hasValue, false)
-    assert.equal(byName.get('person.active')?.hasValue, false)
-
-    // Untouched fields keep their values.
-    assert.equal(byName.get('person.role')?.value, 'admin')
-  })
-
-  it('clears dropdowns and keeps the document readable', async () => {
-    const cleared = await clearPdfFields(await formPdf(), ['person.role'])
-    const result = await readPdfFields(cleared)
-    assert.equal(result.fields.find(f => f.name === 'person.role')?.hasValue, false)
-    assert.equal(result.fields.find(f => f.name === 'person.name')?.value, 'Ada Lovelace')
-  })
-
-  it('is a no-op when no field names match', async () => {
-    const cleared = await clearPdfFields(await formPdf(), ['does.not.exist'])
-    const result = await readPdfFields(cleared)
-    assert.equal(result.fields.find(f => f.name === 'person.name')?.value, 'Ada Lovelace')
-  })
-
-  it('sets NeedAppearances so the viewer keeps the field styling', async () => {
-    const cleared = await clearPdfFields(await formPdf(), ['person.name'])
-    const doc = await PDFDocument.load(cleared)
-    const needAppearances = doc.getForm().acroForm.dict.get(PDFName.of('NeedAppearances'))
-    assert.ok(needAppearances, 'NeedAppearances flag should be present after clearing')
   })
 })
 
