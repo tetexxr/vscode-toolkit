@@ -4,7 +4,7 @@
  */
 
 import { cssColor } from '../../../utils/palette'
-import { BUTTON_CSS } from '../../../utils/webview-ui'
+import { BUTTON_CSS, BADGE_CSS } from '../../../utils/webview-ui'
 
 export function generateOverviewHtml(nonce: string): string {
   return `<!DOCTYPE html>
@@ -145,27 +145,7 @@ ${BUTTON_CSS}
 
 /* ── Status badges ────────────────────────────── */
 
-.badge {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 0.85em;
-  font-weight: 600;
-  border-radius: 10px;
-}
-
-.badge-yes {
-  background: ${cssColor.success};
-  color: #fff;
-}
-.badge-no {
-  background: ${cssColor.warning};
-  color: #000;
-}
-.badge-unknown {
-  background: var(--vscode-badge-background);
-  color: var(--vscode-badge-foreground);
-  opacity: 0.6;
-}
+${BADGE_CSS}
 
 /* ── Loading / Empty ──────────────────────────── */
 
@@ -357,11 +337,11 @@ const JS = /*js*/ `
         const hasLatest = pkg.latestVersion !== '';
         let statusBadge;
         if (!hasLatest) {
-          statusBadge = '<span class="badge badge-unknown">-</span>';
+          statusBadge = '<span class="badge badge-neutral">-</span>';
         } else if (pkg.isOutdated) {
-          statusBadge = '<span class="badge badge-no">No</span>';
+          statusBadge = '<span class="badge badge-warning">No</span>';
         } else {
-          statusBadge = '<span class="badge badge-yes">Yes</span>';
+          statusBadge = '<span class="badge badge-success">Yes</span>';
         }
 
         html += '<tr>';

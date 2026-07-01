@@ -62,6 +62,7 @@ All-in-one VS Code utility extension.
     - [Bookmarks](#bookmarks)
     - [.env Checker](#env-checker)
     - [Resource Translations](#resource-translations)
+    - [Word Bookmarks](#word-bookmarks)
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
@@ -1476,6 +1477,29 @@ Manages .NET `.resx` localization groups — a **neutral** file (`Strings.resx`)
 |---|---|---|
 | `toolkit.resx.enabled` | `true` | Toggle the .resx diagnostics |
 | `toolkit.resx.severity` | `warning` | Severity of the missing-keys and key-order diagnostics (orphan keys and not-yet-translated hints are always hints) |
+
+#### Word Bookmarks
+
+Checks `.docx` templates whose bookmarks are filled in programmatically at export time. A Word bookmark is a `<w:bookmarkStart>`…`<w:bookmarkEnd>` pair wrapping some text; exporters that populate a bookmark typically replace its **first run** only. That works when the whole placeholder sits in a single run — but Word readily splits a word across several runs (different save revisions, autocorrect, edits between saves), which leaves the tail untouched at export: `TrainersFullName` written in one go can end up as `Trainer` + `s` + `FullName`, and only the first piece gets replaced.
+
+This feature reads the `.docx` (a ZIP), inspects the bookmark XML in `document.xml`, headers and footers, and reports:
+
+- **Split across runs** — the placeholder spans more than one run; the export would replace only the first. *Fixable.*
+- **Duplicate name** — the same bookmark name declared more than once (only one location is populated).
+- **Orphaned start/end** — a `bookmarkStart` with no matching `bookmarkEnd` or vice versa.
+- **Name too long** — over Word's 40-character limit, which exporters truncate.
+
+Word's own structural bookmarks (`_GoBack`, `_Toc…`, …) are ignored. Findings open in the **Word Bookmarks** panel: a filterable table with one row per bookmark (File · Bookmark · Location · Status · Runs · Action), colored status badges, a search box, an *Issues / Fixable / All* filter, and sortable columns. Click a file name to reveal it in the Explorer.
+
+**Fixing** consolidates each split bookmark back into a single run, keeping the first run's formatting (`<w:rPr>`) and concatenating the text. It only merges runs that are plain text — a bookmark containing a line break, tab, field or image is reported but never rewritten. Click **Fix** on a row to consolidate that one bookmark (the row updates live), or **Fix all** to do every fixable one at once after a confirmation; both rewrite the `.docx` in place.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Toolkit: Check Word Bookmarks | Open the panel scanning every `.docx` in the workspace |
+| Word Document ▸ Check Bookmarks | Explorer right-click on one or more `.docx` files — open the panel scoped to those |
+| Word Document ▸ Fix Split Bookmarks | Explorer right-click — open the panel on the selection and immediately offer to consolidate the split bookmarks |
 
 #### TODO Tree
 
