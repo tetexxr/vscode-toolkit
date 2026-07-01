@@ -61,6 +61,7 @@ import { registerPasswordGeneratorCommands } from './features/editing/generate/p
 import { registerKillPortCommands } from './features/workspace/kill-port'
 import { registerTocCommands } from './features/editing/convert/toc'
 import { registerJsonPlaygroundCommands } from './features/workspace/json-playground'
+import { registerDocxBookmarkCommands } from './features/workspace/docx-bookmarks'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -125,6 +126,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerKillPortCommands(context)
   registerTocCommands(context)
   registerJsonPlaygroundCommands(context)
+  registerDocxBookmarkCommands(context)
 }
 
 export function deactivate() {}

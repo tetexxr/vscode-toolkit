@@ -1282,6 +1282,21 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.docx.checkWorkspace",
+        "title": "Check Word Bookmarks",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.docx.checkFile",
+        "title": "Check Bookmarks",
+        "category": "Word Document"
+      },
+      {
+        "command": "toolkit.docx.fixFile",
+        "title": "Fix Split Bookmarks",
+        "category": "Word Document"
+      },
+      {
         "command": "toolkit.resx.syncGroup",
         "title": "Sync Missing Keys to All Languages",
         "category": "Resources"
@@ -1576,6 +1591,10 @@
       {
         "id": "toolkit.menu.resources",
         "label": "Resources"
+      },
+      {
+        "id": "toolkit.menu.docx",
+        "label": "Word Document"
       },
       {
         "id": "toolkit.menu.markdown",
@@ -2108,9 +2127,22 @@
           "command": "toolkit.todoTree.excludeFolder",
           "when": "explorerResourceIsFolder",
           "group": "0_toolkit@12"
+        },
+        {
+          "submenu": "toolkit.menu.docx",
+          "when": "resourceExtname == .docx",
+          "group": "0_toolkit@13"
         }
       ],
       "commandPalette": [
+        {
+          "command": "toolkit.docx.checkFile",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.docx.fixFile",
+          "when": "false"
+        },
         {
           "command": "toolkit.git.syncAllRepos",
           "when": "gitOpenRepositoryCount != 0"
@@ -2663,6 +2695,16 @@
         {
           "command": "toolkit.resx.normalizeGroup",
           "group": "2_ops@2"
+        }
+      ],
+      "toolkit.menu.docx": [
+        {
+          "command": "toolkit.docx.checkFile",
+          "group": "1_check@1"
+        },
+        {
+          "command": "toolkit.docx.fixFile",
+          "group": "2_fix@1"
         }
       ],
       "toolkit.menu.markdown": [
