@@ -291,7 +291,12 @@ function strFromU8Safe(escaped: string): string {
   return escaped.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
 }
 
-export function fixXmlPart(xml: string): { xml: string; fixed: string[] } {
+/**
+ * Consolidate split-run bookmarks in one XML part. When `shouldFix` is given,
+ * only bookmarks whose name it accepts are consolidated — lets the UI fix a
+ * single row instead of every split bookmark in the file.
+ */
+export function fixXmlPart(xml: string, shouldFix?: (name: string) => boolean): { xml: string; fixed: string[] } {
   const { pairs } = pairStarts(parseStarts(xml), parseEnds(xml))
   const fixed: string[] = []
 
@@ -299,7 +304,7 @@ export function fixXmlPart(xml: string): { xml: string; fixed: string[] } {
   const ordered = [...pairs].sort((a, b) => b.start.contentStart - a.start.contentStart)
   let out = xml
   for (const { start, end } of ordered) {
-    if (isInternalBookmark(start.name)) {
+    if (isInternalBookmark(start.name) || (shouldFix && !shouldFix(start.name))) {
       continue
     }
     const region = out.slice(start.contentStart, end.index)
@@ -330,21 +335,38 @@ export function analyzeDocx(buffer: Uint8Array): DocxAnalysis {
   return { bookmarks, issues }
 }
 
+export interface BookmarkTarget {
+  part: string
+  name: string
+}
+
 export interface DocxFixResult {
   buffer: Uint8Array
   /** Fixed bookmarks as `{ part, name }`. */
-  fixed: { part: string; name: string }[]
+  fixed: BookmarkTarget[]
 }
 
-/** Consolidate split-run bookmarks across a .docx buffer, returning a new ZIP. */
-export function fixDocx(buffer: Uint8Array): DocxFixResult {
+/**
+ * Consolidate split-run bookmarks across a .docx buffer, returning a new ZIP.
+ * When `targets` is given, only those `{ part, name }` bookmarks are fixed;
+ * otherwise every fixable bookmark in the document is consolidated.
+ */
+export function fixDocx(buffer: Uint8Array, targets?: BookmarkTarget[]): DocxFixResult {
   const entries = unzipSync(buffer)
-  const fixed: { part: string; name: string }[] = []
+  const fixed: BookmarkTarget[] = []
+  const namesByPart = targets
+    ? targets.reduce((map, target) => map.set(target.part, (map.get(target.part) ?? new Set<string>()).add(target.name)), new Map<string, Set<string>>())
+    : null
+
   for (const name of Object.keys(entries)) {
     if (!isWordXmlPart(name)) {
       continue
     }
-    const result = fixXmlPart(strFromU8(entries[name]))
+    if (namesByPart && !namesByPart.has(name)) {
+      continue
+    }
+    const wanted = namesByPart?.get(name)
+    const result = fixXmlPart(strFromU8(entries[name]), wanted ? bookmarkName => wanted.has(bookmarkName) : undefined)
     if (result.fixed.length > 0) {
       entries[name] = strToU8(result.xml)
       for (const bookmarkName of result.fixed) {

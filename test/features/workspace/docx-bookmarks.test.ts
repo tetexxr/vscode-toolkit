@@ -173,6 +173,17 @@ describe('fixXmlPart', () => {
     const out = fixXmlPart(xml).xml
     assert.equal(analyzeXmlPart(out, 'word/document.xml').issues.length, 0)
   })
+
+  it('fixes only the bookmarks accepted by shouldFix', () => {
+    const xml = docXml(
+      paragraph(bookmark('1', 'First', run('Fir') + run('st'))) +
+        paragraph(bookmark('2', 'Second', run('Sec') + run('ond')))
+    )
+    const { xml: out, fixed } = fixXmlPart(xml, name => name === 'Second')
+    assert.deepEqual(fixed, ['Second'])
+    const issues = analyzeXmlPart(out, 'word/document.xml').issues
+    assert.deepEqual(issues.map(i => i.name), ['First'])
+  })
 })
 
 describe('analyzeDocx / fixDocx', () => {
@@ -207,5 +218,19 @@ describe('analyzeDocx / fixDocx', () => {
     const buffer = docxBuffer(docXml(paragraph(bookmark('1', 'ServiceName', run('ServiceName')))))
     const { fixed } = fixDocx(buffer)
     assert.equal(fixed.length, 0)
+  })
+
+  it('fixes only the targeted bookmark when targets are given', () => {
+    const buffer = docxBuffer(
+      docXml(
+        paragraph(bookmark('1', 'First', run('Fir') + run('st'))) +
+          paragraph(bookmark('2', 'Second', run('Sec') + run('ond')))
+      )
+    )
+    const { buffer: out, fixed } = fixDocx(buffer, [{ part: 'word/document.xml', name: 'Second' }])
+    assert.deepEqual(fixed, [{ part: 'word/document.xml', name: 'Second' }])
+
+    const remaining = analyzeDocx(out).issues
+    assert.deepEqual(remaining.map(i => i.name), ['First'])
   })
 })
