@@ -94,6 +94,19 @@ describe('readPdfFields metadata', () => {
     assert.equal(langs?.multi, true)
     assert.deepEqual(langs?.options, ['es', 'en', 'ca'])
   })
+
+  it('keeps a read-only field editable (template editor overrides the flag)', async () => {
+    const doc = await PDFDocument.create()
+    const page = doc.addPage([200, 100])
+    const field = doc.getForm().createTextField('locked')
+    field.setText('do not touch')
+    field.enableReadOnly()
+    field.addToPage(page, { x: 10, y: 50, width: 120, height: 20 })
+
+    const info = (await readPdfFields(await doc.save())).fields.find(f => f.name === 'locked')
+    assert.equal(info?.readOnly, true)
+    assert.equal(info?.editable, true)
+  })
 })
 
 describe('setPdfFields', () => {

@@ -107,7 +107,6 @@ select[multiple].field-select { min-height: 3.6em; }
 .field-dirty { border-color: ${cssColor.warning}; }
 
 .readonly-value { color: var(--vscode-descriptionForeground); font-family: var(--vscode-editor-font-family, monospace); }
-.lock { opacity: 0.6; margin-left: 6px; }
 .dirty-dot { color: ${cssColor.warning}; margin-left: 6px; }
 
 .empty-message {
@@ -241,8 +240,7 @@ const JS = /*js*/ `
   function controlHtml(f) {
     if (!f.editable) {
       const v = f.hasValue ? esc(f.value) : '—';
-      return '<span class="readonly-value">' + v + '</span>' +
-        (f.readOnly ? '<span class="lock" title="Read-only field">🔒</span>' : '');
+      return '<span class="readonly-value" title="' + esc(f.type) + ' fields have no editable value">' + v + '</span>';
     }
     const val = currentValue(f);
     if (f.type === 'CheckBox') {

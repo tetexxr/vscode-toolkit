@@ -100,13 +100,16 @@ export async function readPdfFields(bytes: Uint8Array): Promise<PdfFieldsResult>
   const fields = form.getFields()
   const infos: PdfFieldInfo[] = fields.map(field => {
     const reading = readField(field)
+    // Editability is decided by type only. A field marked read-only in the PDF
+    // just can't be changed by an end-user in a viewer — this is a template
+    // editor, so we can still rewrite its value programmatically.
     const readOnly = field.isReadOnly()
     return {
       name: field.getName(),
       type: reading.type,
       value: reading.value,
       hasValue: reading.value !== '',
-      editable: reading.editable && !readOnly,
+      editable: reading.editable,
       readOnly,
       options: reading.options,
       selected: reading.selected,
