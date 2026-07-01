@@ -6,7 +6,7 @@
  */
 
 import { cssColor } from '../../utils/palette'
-import { BUTTON_CSS } from '../../utils/webview-ui'
+import { BUTTON_CSS, BADGE_CSS } from '../../utils/webview-ui'
 
 export function generateBookmarksHtml(nonce: string): string {
   return `<!DOCTYPE html>
@@ -114,18 +114,7 @@ tbody tr:hover { background: ${cssColor.surface}; }
 .cell-detail { color: var(--vscode-descriptionForeground); font-size: 0.85rem; }
 .truncate { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  color: #fff;
-}
-.badge-ok       { background: ${cssColor.success}; color: #fff; }
-.badge-error    { background: ${cssColor.error};   color: #fff; }
-.badge-warning  { background: ${cssColor.warning}; color: #000; }
+${BADGE_CSS}
 
 .btn-fix { font-size: 0.8rem; padding: 2px 10px; }
 
@@ -176,7 +165,7 @@ const JS = /*js*/ `
   function shortPart(p) { return String(p).replace(/^word\\//, ''); }
 
   const STATUS = {
-    'ok':            { label: 'ok',          cls: 'badge-ok' },
+    'ok':            { label: 'ok',          cls: 'badge-success' },
     'split-runs':    { label: 'split',       cls: 'badge-error' },
     'duplicate-name':{ label: 'duplicate',   cls: 'badge-warning' },
     'orphan-start':  { label: 'orphan start',cls: 'badge-warning' },

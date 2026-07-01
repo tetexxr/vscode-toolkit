@@ -1,6 +1,6 @@
 import { formatRelative } from '../editing/convert/timestamp-utils'
 import { cssColor } from '../../utils/palette'
-import { BUTTON_CSS } from '../../utils/webview-ui'
+import { BUTTON_CSS, BADGE_CSS } from '../../utils/webview-ui'
 
 export interface HttpHeader {
   name: string
@@ -1078,6 +1078,15 @@ export function groupHistoryByRequest(history: ResponseHistoryEntry[]): RequestG
 /** Coarse status bucket used to pick an icon and color for a history entry. */
 export type HistoryStatusKind = 'success' | 'redirect' | 'clientError' | 'serverError' | 'failed'
 
+/** Map a status bucket to a shared badge variant class. */
+const BADGE_ROLE_BY_KIND: Record<HistoryStatusKind, string> = {
+  success: 'badge-success',
+  redirect: 'badge-accent',
+  clientError: 'badge-warning',
+  serverError: 'badge-error',
+  failed: 'badge-error'
+}
+
 export function historyStatusKind(entry: ResponseHistoryEntry): HistoryStatusKind {
   if (entry.error || entry.status === 0) {
     return 'failed'
@@ -1244,12 +1253,7 @@ const DETAIL_STYLES = `
   .method-DELETE { background: ${cssColor.error}; }
   .method-OPTIONS { background: ${cssColor.accent}; }
   .method-HEAD { background: ${cssColor.accent}; }
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 12px; color: #fff; }
-  .badge.success { background: ${cssColor.success}; color: #fff; }
-  .badge.redirect { background: ${cssColor.accent}; }
-  .badge.clientError { background: ${cssColor.warning}; color: #000; }
-  .badge.serverError, .badge.failed { background: ${cssColor.error}; }
-  .badge.pending { background: ${cssColor.accent}; }
+${BADGE_CSS}
   .dot { animation: pulse 1s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
   .meta { color: var(--vscode-descriptionForeground); font-size: 12px; margin: 6px 0 10px; }
@@ -1329,7 +1333,7 @@ export function buildResponseDetailHtml(entry: ResponseHistoryEntry, opts: Detai
 
   const bodyHtml = `  <div class="topbar">
     <div class="reqline"><span class="method method-${escapeHtml(entry.method)}">${escapeHtml(entry.method)}</span>${escapeHtml(entry.url)}</div>
-    <span class="badge ${kind}">${escapeHtml(statusText)}</span>
+    <span class="badge ${BADGE_ROLE_BY_KIND[kind]}">${escapeHtml(statusText)}</span>
     <div class="meta">${escapeHtml(meta)}</div>
     <div class="actions">
       <button id="resend">▶ Re-send</button>
@@ -1391,8 +1395,8 @@ export function buildPendingDetailHtml(request: PendingRequest, opts: DetailHtml
   // The elapsed time lives outside the badge so the badge keeps a fixed width as
   // the counter ticks (otherwise the number changing would resize the badge).
   const badge = cancelled
-    ? `<span class="badge failed">Cancelled</span>`
-    : `<span class="badge pending"><span class="dot">●</span> Sending…</span><span class="elapsed" id="elapsed">0.0s</span>`
+    ? `<span class="badge badge-error">Cancelled</span>`
+    : `<span class="badge badge-accent"><span class="dot">●</span> Sending…</span><span class="elapsed" id="elapsed">0.0s</span>`
   const actions = cancelled ? '' : `<div class="actions pending"><button id="cancel">Cancel</button></div>`
 
   const bodyHtml = `  <div class="topbar">
