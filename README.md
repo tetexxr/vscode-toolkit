@@ -63,6 +63,7 @@ All-in-one VS Code utility extension.
     - [.env Checker](#env-checker)
     - [Resource Translations](#resource-translations)
     - [Word Bookmarks](#word-bookmarks)
+    - [PDF Fields](#pdf-fields)
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
@@ -1500,6 +1501,21 @@ Word's own structural bookmarks (`_GoBack`, `_Toc…`, …) are ignored. Finding
 | Toolkit: Check Word Bookmarks | Open the panel scanning every `.docx` in the workspace |
 | Word Document ▸ Check Bookmarks | Explorer right-click on one or more `.docx` files — open the panel scoped to those |
 | Word Document ▸ Fix Split Bookmarks | Explorer right-click — open the panel on the selection and immediately offer to consolidate the split bookmarks |
+
+#### PDF Fields
+
+Inspects the AcroForm fields of a PDF and lets you blank selected values — handy for turning a filled form back into a clean template. Open it from the command palette (**Inspect PDF Fields**, which prompts for a PDF) or by right-clicking a `.pdf` in the Explorer.
+
+The panel lists every field in a table with its **name**, **type** (Text, CheckBox, RadioGroup, Dropdown, OptionList, Button, Signature) and **current value**, with a search box to filter large forms. Fields that hold a value get a checkbox; tick the ones you want to reset (or the header checkbox to select them all), then **Clear** — after a confirmation, the selected fields are blanked (text emptied, checkboxes unchecked, choices deselected) and the PDF is **overwritten in place**. Field appearances are regenerated on save, so the cleared fields render blank.
+
+XFA (dynamic LiveCycle) forms are not supported — only standard AcroForm fields.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Toolkit: Inspect PDF Fields | Pick a PDF (or use the active one) and open the fields panel |
+| Inspect PDF Fields | Explorer right-click on a `.pdf` — open the panel for that file |
 
 #### TODO Tree
 
