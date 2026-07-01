@@ -63,6 +63,7 @@ All-in-one VS Code utility extension.
     - [.env Checker](#env-checker)
     - [Resource Translations](#resource-translations)
     - [Word Bookmarks](#word-bookmarks)
+    - [PDF Fields](#pdf-fields)
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
     - [Regex Playground](#regex-playground)
@@ -1500,6 +1501,23 @@ Word's own structural bookmarks (`_GoBack`, `_Toc…`, …) are ignored. Finding
 | Toolkit: Check Word Bookmarks | Open the panel scanning every `.docx` in the workspace |
 | Word Document ▸ Check Bookmarks | Explorer right-click on one or more `.docx` files — open the panel scoped to those |
 | Word Document ▸ Fix Split Bookmarks | Explorer right-click — open the panel on the selection and immediately offer to consolidate the split bookmarks |
+
+#### PDF Fields
+
+Inspects and edits the AcroForm fields of a PDF — set values, or blank them to turn a filled form back into a clean template. Open it from the command palette (**Inspect PDF Fields**, which prompts for a PDF) or by right-clicking a `.pdf` in the Explorer.
+
+The panel lists every field in a table with its **name**, **type** (Text, CheckBox, RadioGroup, Dropdown, OptionList, Button, Signature) and an **inline editor** for its value — a text box, checkbox, dropdown or multi-select depending on the type (buttons, signatures and read-only fields show their value but aren't editable). A search box filters large forms. Edited fields are flagged with a ● dot; **Clear all** stages an empty value for every editable field, and **Reset** discards pending edits. **Save changes** — after a confirmation — writes all edits at once and **overwrites the PDF in place**.
+
+To keep each field looking the same after an edit, cleared/updated fields have their stale appearance dropped and the form's `NeedAppearances` flag set, so the viewer redraws them from the field's own font/border/background rather than a generic style (checkbox and radio states are left intact, since their value lives in those appearance states).
+
+XFA (dynamic LiveCycle) forms are not supported — only standard AcroForm fields.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Toolkit: Inspect PDF Fields | Pick a PDF (or use the active one) and open the fields panel |
+| Inspect PDF Fields | Explorer right-click on a `.pdf` — open the panel for that file |
 
 #### TODO Tree
 

@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "publisher": "tete",
   "repository": {
     "type": "git",
@@ -1287,6 +1287,11 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.pdf.inspectFields",
+        "title": "Inspect PDF Fields",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.docx.checkFile",
         "title": "Check Bookmarks",
         "category": "Word Document"
@@ -2132,6 +2137,11 @@
           "submenu": "toolkit.menu.docx",
           "when": "resourceExtname == .docx",
           "group": "0_toolkit@13"
+        },
+        {
+          "command": "toolkit.pdf.inspectFields",
+          "when": "resourceExtname == .pdf",
+          "group": "0_toolkit@14"
         }
       ],
       "commandPalette": [
@@ -4007,6 +4017,7 @@
   },
   "dependencies": {
     "fflate": "^0.8.3",
+    "pdf-lib": "^1.17.1",
     "typescript": "^6.0.3"
   },
   "devDependencies": {
