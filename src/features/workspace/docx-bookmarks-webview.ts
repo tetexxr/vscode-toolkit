@@ -111,6 +111,7 @@ tbody tr:hover { background: ${cssColor.surface}; }
 .cell-name { font-family: var(--vscode-editor-font-family, monospace); }
 .cell-part { color: var(--vscode-descriptionForeground); white-space: nowrap; }
 .cell-runs { text-align: center; color: var(--vscode-descriptionForeground); }
+.col-status { text-align: center; }
 .cell-detail { color: var(--vscode-descriptionForeground); font-size: 0.85rem; }
 .truncate { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -287,7 +288,7 @@ const JS = /*js*/ `
       '<th data-sort="file">File' + arrow('file') + '</th>' +
       '<th data-sort="name">Bookmark' + arrow('name') + '</th>' +
       '<th>Location</th>' +
-      '<th data-sort="status">Status' + arrow('status') + '</th>' +
+      '<th data-sort="status" class="col-status">Status' + arrow('status') + '</th>' +
       '<th data-sort="runs">Runs' + arrow('runs') + '</th>' +
       '<th>Action</th>' +
       '</tr></thead><tbody>';
@@ -300,7 +301,7 @@ const JS = /*js*/ `
         '<td><span class="cell-file truncate" data-file="' + esc(r.file) + '" title="' + esc(r.relPath) + '">' + esc(basename(r.relPath)) + '</span></td>' +
         '<td class="cell-name truncate" title="' + esc(r.name) + '">' + esc(r.name) + '</td>' +
         '<td class="cell-part">' + esc(shortPart(r.part)) + '</td>' +
-        '<td><span class="badge ' + s.cls + '" title="' + esc(r.detail) + '">' + esc(label) + '</span></td>' +
+        '<td class="col-status"><span class="badge ' + s.cls + '" title="' + esc(r.detail) + '">' + esc(label) + '</span></td>' +
         '<td class="cell-runs">' + (r.runCount || '') + '</td>' +
         '<td>' + (r.fixable
           ? '<button class="btn btn-fix" data-fix="1" data-file="' + esc(r.file) + '" data-part="' + esc(r.part) + '" data-name="' + esc(r.name) + '">Fix</button>'
