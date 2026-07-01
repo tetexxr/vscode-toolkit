@@ -1504,9 +1504,11 @@ Word's own structural bookmarks (`_GoBack`, `_Toc…`, …) are ignored. Finding
 
 #### PDF Fields
 
-Inspects the AcroForm fields of a PDF and lets you blank selected values — handy for turning a filled form back into a clean template. Open it from the command palette (**Inspect PDF Fields**, which prompts for a PDF) or by right-clicking a `.pdf` in the Explorer.
+Inspects and edits the AcroForm fields of a PDF — set values, or blank them to turn a filled form back into a clean template. Open it from the command palette (**Inspect PDF Fields**, which prompts for a PDF) or by right-clicking a `.pdf` in the Explorer.
 
-The panel lists every field in a table with its **name**, **type** (Text, CheckBox, RadioGroup, Dropdown, OptionList, Button, Signature) and **current value**, with a search box to filter large forms. Fields that hold a value get a checkbox; tick the ones you want to reset (or the header checkbox to select them all), then **Clear** — after a confirmation, the selected fields are blanked (text emptied, checkboxes unchecked, choices deselected) and the PDF is **overwritten in place**. Field appearances are regenerated on save, so the cleared fields render blank.
+The panel lists every field in a table with its **name**, **type** (Text, CheckBox, RadioGroup, Dropdown, OptionList, Button, Signature) and an **inline editor** for its value — a text box, checkbox, dropdown or multi-select depending on the type (buttons, signatures and read-only fields show their value but aren't editable). A search box filters large forms. Edited fields are flagged with a ● dot; **Clear all** stages an empty value for every editable field, and **Reset** discards pending edits. **Save changes** — after a confirmation — writes all edits at once and **overwrites the PDF in place**.
+
+To keep each field looking the same after an edit, cleared/updated fields have their stale appearance dropped and the form's `NeedAppearances` flag set, so the viewer redraws them from the field's own font/border/background rather than a generic style (checkbox and radio states are left intact, since their value lives in those appearance states).
 
 XFA (dynamic LiveCycle) forms are not supported — only standard AcroForm fields.
 
