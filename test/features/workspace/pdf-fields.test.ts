@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, PDFName } from 'pdf-lib'
 import { readPdfFields, clearPdfFields } from '../../../src/features/workspace/pdf-fields-utils'
 
 /** Build an in-memory PDF with a filled AcroForm to exercise the utils. */
@@ -90,5 +90,12 @@ describe('clearPdfFields', () => {
     const cleared = await clearPdfFields(await formPdf(), ['does.not.exist'])
     const result = await readPdfFields(cleared)
     assert.equal(result.fields.find(f => f.name === 'person.name')?.value, 'Ada Lovelace')
+  })
+
+  it('sets NeedAppearances so the viewer keeps the field styling', async () => {
+    const cleared = await clearPdfFields(await formPdf(), ['person.name'])
+    const doc = await PDFDocument.load(cleared)
+    const needAppearances = doc.getForm().acroForm.dict.get(PDFName.of('NeedAppearances'))
+    assert.ok(needAppearances, 'NeedAppearances flag should be present after clearing')
   })
 })

@@ -1,5 +1,7 @@
 import {
   PDFDocument,
+  PDFName,
+  PDFBool,
   PDFTextField,
   PDFCheckBox,
   PDFRadioGroup,
@@ -85,8 +87,14 @@ export async function readPdfFields(bytes: Uint8Array): Promise<PdfFieldsResult>
 /**
  * Blank out the named fields and return the re-saved PDF bytes. Text fields are
  * emptied; checkboxes unchecked; radio groups, dropdowns and option lists
- * deselected. pdf-lib regenerates field appearances on save, so cleared fields
- * render blank without the NeedAppearances workaround PdfSharpCore needs.
+ * deselected.
+ *
+ * To keep the field's original look (font, size, color, border, background),
+ * we drop each cleared widget's stale appearance stream (`/AP`) and set the
+ * form's `/NeedAppearances` flag, then save WITHOUT letting pdf-lib regenerate
+ * appearances. The viewer then rebuilds the appearance from the field's own
+ * `/DA` and `/MK` styling — pdf-lib's generic generator would otherwise flatten
+ * those details. This mirrors what PdfSharpCore does on the talento page.
  */
 export async function clearPdfFields(bytes: Uint8Array, fieldsToClear: string[]): Promise<Uint8Array> {
   const document = await PDFDocument.load(bytes)
@@ -107,8 +115,18 @@ export async function clearPdfFields(bytes: Uint8Array, fieldsToClear: string[])
       field.clear()
     } else if (field instanceof PDFOptionList) {
       field.clear()
+    } else {
+      continue
+    }
+
+    // Remove the stale appearance so the old value doesn't linger and the
+    // viewer regenerates a fresh one from the field's own styling.
+    for (const widget of field.acroField.getWidgets()) {
+      widget.dict.delete(PDFName.of('AP'))
     }
   }
 
-  return document.save()
+  form.acroForm.dict.set(PDFName.of('NeedAppearances'), PDFBool.True)
+
+  return document.save({ updateFieldAppearances: false })
 }
