@@ -8,23 +8,9 @@
  */
 
 import * as vscode from 'vscode'
-import { analyzeDocx, fixDocx, type BookmarkIssue, type BookmarkIssueKind } from './docx-bookmarks-utils'
+import { analyzeDocx, analysisToRows, fixDocx, type BookmarkRow } from './docx-bookmarks-utils'
 
 const EXCLUDE = '**/{node_modules,bin,obj,.git,.vs}/**'
-
-export interface BookmarkRow {
-  /** Absolute path — used to message the extension back. */
-  file: string
-  /** Workspace-relative path — shown in the table. */
-  relPath: string
-  /** XML part, e.g. `word/document.xml`. */
-  part: string
-  name: string
-  kind: BookmarkIssueKind | 'ok'
-  detail: string
-  runCount: number
-  fixable: boolean
-}
 
 type WebviewMessage =
   | { command: 'ready' }
@@ -110,34 +96,11 @@ export class DocxBookmarksHandler implements vscode.Disposable {
       return [{ file: uri.fsPath, relPath, part: '', name: '(unreadable)', kind: 'orphan-start', detail: 'Could not read the file.', runCount: 0, fixable: false }]
     }
 
-    let analysis: ReturnType<typeof analyzeDocx>
     try {
-      analysis = analyzeDocx(bytes)
+      return analysisToRows(uri.fsPath, relPath, analyzeDocx(bytes))
     } catch {
       return [{ file: uri.fsPath, relPath, part: '', name: '(invalid)', kind: 'orphan-start', detail: 'Not a valid .docx document.', runCount: 0, fixable: false }]
     }
-
-    const rows: BookmarkRow[] = []
-    for (const bookmark of analysis.bookmarks) {
-      const related = analysis.issues.filter(
-        i => i.part === bookmark.part && i.name === bookmark.name && !isOrphan(i)
-      )
-      const primary = related.find(i => i.kind === 'split-runs') ?? related[0]
-      rows.push({
-        file: uri.fsPath,
-        relPath,
-        part: bookmark.part,
-        name: bookmark.name,
-        kind: primary ? primary.kind : 'ok',
-        detail: primary ? primary.detail : '',
-        runCount: bookmark.runCount,
-        fixable: primary ? primary.fixable : false
-      })
-    }
-    for (const issue of analysis.issues.filter(isOrphan)) {
-      rows.push({ file: uri.fsPath, relPath, part: issue.part, name: issue.name, kind: issue.kind, detail: issue.detail, runCount: 0, fixable: false })
-    }
-    return rows
   }
 
   private allRows(): BookmarkRow[] {
@@ -214,8 +177,4 @@ export class DocxBookmarksHandler implements vscode.Disposable {
     }
     this.disposables = []
   }
-}
-
-function isOrphan(issue: BookmarkIssue): boolean {
-  return issue.kind === 'orphan-start' || issue.kind === 'orphan-end'
 }

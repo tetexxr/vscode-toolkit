@@ -2,6 +2,7 @@ import { strict as assert } from 'assert'
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate'
 import {
   analyzeXmlPart,
+  analysisToRows,
   fixXmlPart,
   analyzeDocx,
   fixDocx,
@@ -183,6 +184,53 @@ describe('fixXmlPart', () => {
     assert.deepEqual(fixed, ['Second'])
     const issues = analyzeXmlPart(out, 'word/document.xml').issues
     assert.deepEqual(issues.map(i => i.name), ['First'])
+  })
+})
+
+describe('analysisToRows', () => {
+  const analyze = (xml: string) => analysisToRows('/abs/Doc.docx', 'Doc.docx', analyzeDocx(docxBuffer(xml)))
+
+  it('emits one ok row per clean bookmark', () => {
+    const rows = analyze(docXml(paragraph(bookmark('1', 'ServiceName', run('ServiceName')))))
+    assert.equal(rows.length, 1)
+    assert.equal(rows[0].kind, 'ok')
+    assert.equal(rows[0].fixable, false)
+    assert.equal(rows[0].file, '/abs/Doc.docx')
+    assert.equal(rows[0].relPath, 'Doc.docx')
+  })
+
+  it('marks a split bookmark row fixable with its run count', () => {
+    const rows = analyze(docXml(paragraph(bookmark('7', 'TrainersFullName', run('T') + run('rainer') + run('s')))))
+    assert.equal(rows.length, 1)
+    assert.equal(rows[0].kind, 'split-runs')
+    assert.equal(rows[0].fixable, true)
+    assert.equal(rows[0].runCount, 3)
+  })
+
+  it('prefers split-runs over other issues on the same bookmark', () => {
+    const longSplit = 'A'.repeat(41)
+    const rows = analyze(docXml(paragraph(bookmark('1', longSplit, run('A'.repeat(20)) + run('A'.repeat(21))))))
+    assert.equal(rows.length, 1)
+    assert.equal(rows[0].kind, 'split-runs')
+    assert.equal(rows[0].fixable, true)
+  })
+
+  it('flags both rows of a duplicated bookmark name', () => {
+    const rows = analyze(
+      docXml(paragraph(bookmark('1', 'Dup', run('x'))) + paragraph(bookmark('2', 'Dup', run('y'))))
+    )
+    assert.equal(rows.length, 2)
+    assert.ok(rows.every(r => r.kind === 'duplicate-name'))
+  })
+
+  it('adds a non-fixable row for an orphan marker', () => {
+    const rows = analyze(
+      docXml(paragraph('<w:bookmarkStart w:id="9" w:name="Lonely"/>' + run('x')))
+    )
+    const orphan = rows.find(r => r.kind === 'orphan-start')
+    assert.ok(orphan)
+    assert.equal(orphan?.fixable, false)
+    assert.equal(orphan?.name, 'Lonely')
   })
 })
 

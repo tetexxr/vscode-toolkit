@@ -335,6 +335,52 @@ export function analyzeDocx(buffer: Uint8Array): DocxAnalysis {
   return { bookmarks, issues }
 }
 
+export interface BookmarkRow {
+  /** Absolute path — used to message the extension back. */
+  file: string
+  /** Workspace-relative path — shown in the table. */
+  relPath: string
+  /** XML part, e.g. `word/document.xml`. */
+  part: string
+  name: string
+  kind: BookmarkIssueKind | 'ok'
+  detail: string
+  runCount: number
+  fixable: boolean
+}
+
+function isOrphan(issue: BookmarkIssue): boolean {
+  return issue.kind === 'orphan-start' || issue.kind === 'orphan-end'
+}
+
+/**
+ * Flatten a document analysis into table rows: one row per bookmark (carrying
+ * its most relevant issue, or `ok`), plus a row per orphan marker. `split-runs`
+ * takes precedence when a bookmark has several issues, since it's the fixable
+ * one the UI acts on.
+ */
+export function analysisToRows(file: string, relPath: string, analysis: DocxAnalysis): BookmarkRow[] {
+  const rows: BookmarkRow[] = []
+  for (const bookmark of analysis.bookmarks) {
+    const related = analysis.issues.filter(i => i.part === bookmark.part && i.name === bookmark.name && !isOrphan(i))
+    const primary = related.find(i => i.kind === 'split-runs') ?? related[0]
+    rows.push({
+      file,
+      relPath,
+      part: bookmark.part,
+      name: bookmark.name,
+      kind: primary ? primary.kind : 'ok',
+      detail: primary ? primary.detail : '',
+      runCount: bookmark.runCount,
+      fixable: primary ? primary.fixable : false
+    })
+  }
+  for (const issue of analysis.issues.filter(isOrphan)) {
+    rows.push({ file, relPath, part: issue.part, name: issue.name, kind: issue.kind, detail: issue.detail, runCount: 0, fixable: false })
+  }
+  return rows
+}
+
 export interface BookmarkTarget {
   part: string
   name: string
