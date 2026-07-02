@@ -191,8 +191,8 @@
       },
       {
         "command": "toolkit.markdown.toggleEnhancedPreview",
-        "title": "Toggle Enhanced Preview",
-        "category": "Markdown"
+        "title": "Toggle Enhanced Markdown Preview",
+        "category": "Toolkit"
       },
       {
         "command": "toolkit.changeCase",
@@ -2741,6 +2741,11 @@
           "command": "toolkit.markdown.generateToc",
           "when": "editorLangId == markdown",
           "group": "1_items@3"
+        },
+        {
+          "command": "toolkit.markdown.toggleEnhancedPreview",
+          "when": "editorLangId == markdown",
+          "group": "2_view@1"
         }
       ],
       "toolkit.menu.compareExplorer": [
