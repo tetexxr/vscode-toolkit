@@ -31,7 +31,9 @@ export const color = {
   /** orange — categorical, e.g. PUT method, mid strength (severe.fg) */
   orange: '#db6d28',
   /** cyan — categorical, e.g. diagnostic hints. Primer has no functional cyan; closest scale hue. */
-  cyan: '#39c5cf'
+  cyan: '#39c5cf',
+  /** gray — neutral / unknown / n/a / loading placeholder (fg.muted) */
+  neutral: '#8b949e'
 } as const
 
 /**
