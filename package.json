@@ -179,11 +179,22 @@
         "priority": "option"
       }
     ],
+    "markdown": {
+      "previewStyles": [
+        "./media/markdown-enhanced.css"
+      ],
+      "markdownItPlugins": true
+    },
     "commands": [
       {
         "command": "toolkit.showAllFeatures",
         "title": "All Features…",
         "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.markdown.toggleEnhancedPreview",
+        "title": "Toggle Enhanced Preview",
+        "category": "Markdown"
       },
       {
         "command": "toolkit.changeCase",
@@ -3035,6 +3046,11 @@
     "configuration": {
       "title": "Toolkit",
       "properties": {
+        "toolkit.markdownPreview.enhanced": {
+          "type": "boolean",
+          "default": true,
+          "description": "Apply the Toolkit's enhanced styling to the built-in Markdown preview (cleaner typography, well-defined tables, nicer code blocks). Turn off to fall back to the stock VS Code preview style."
+        },
         "toolkit.colorPicker.insertFormat": {
           "type": "string",
           "default": "hex",
