@@ -1,29 +1,33 @@
 /*
  * Enhanced Markdown preview styling for the Toolkit extension.
  *
- * Contributed via `contributes.markdown.previewStyles`, so it is always loaded
- * by the built-in preview. Every rule is scoped under `.toolkit-md-enhanced`,
- * a wrapper the extension only injects when `toolkit.markdownPreview.enhanced`
- * is on (see extendMarkdownIt in markdown-preview-style.ts). When the setting
- * is off there is no wrapper, so nothing here matches and the preview keeps its
- * stock VS Code look.
+ * Contributed via `contributes["markdown.previewStyles"]`, so it is always
+ * loaded by the built-in preview. Every rule is scoped under
+ * `.toolkit-md-enhanced`, a wrapper the extension only injects when
+ * `toolkit.markdownPreview.enhanced` is on (see extendMarkdownIt in
+ * markdown-preview-style.ts). When the setting is off there is no wrapper, so
+ * nothing here matches and the preview keeps its stock VS Code look.
  *
- * Colors come from VS Code theme variables so the preview adapts to the active
- * light/dark/high-contrast theme; only typography, spacing and structure are
- * opinionated — the "JetBrains-clean" part.
+ * Design goal: the clean, readable look of GitHub / JetBrains previews, but
+ * theme-adaptive. Text, links and quotes borrow the active VS Code theme
+ * colors; structural tints (table fills, code backgrounds) use neutral
+ * translucent grays that read well on any light/dark/high-contrast theme
+ * instead of theme widget colors, which come out tinted and inconsistent.
  */
 
 .toolkit-md-enhanced {
-  --toolkit-md-border: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
-  --toolkit-md-muted: var(--vscode-descriptionForeground, rgba(128, 128, 128, 0.9));
+  --toolkit-md-border: var(--vscode-panel-border, rgba(140, 140, 140, 0.35));
+  --toolkit-md-muted: var(--vscode-descriptionForeground, rgba(140, 140, 140, 0.95));
+  --toolkit-md-fill: rgba(140, 140, 140, 0.09);
+  --toolkit-md-fill-soft: rgba(140, 140, 140, 0.045);
 
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial,
     sans-serif;
-  font-size: 15px;
-  line-height: 1.7;
-  max-width: 900px;
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 860px;
   margin: 0 auto;
-  padding: 8px 4px 64px;
+  padding: 12px 8px 64px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   word-wrap: break-word;
@@ -38,8 +42,8 @@
 .toolkit-md-enhanced h5,
 .toolkit-md-enhanced h6 {
   font-weight: 600;
-  line-height: 1.3;
-  margin: 1.8em 0 0.6em;
+  line-height: 1.25;
+  margin: 24px 0 16px;
 }
 
 .toolkit-md-enhanced h1 {
@@ -50,7 +54,7 @@
 
 .toolkit-md-enhanced h2 {
   font-size: 1.5em;
-  padding-bottom: 0.25em;
+  padding-bottom: 0.3em;
   border-bottom: 1px solid var(--toolkit-md-border);
 }
 
@@ -59,15 +63,15 @@
 }
 
 .toolkit-md-enhanced h4 {
-  font-size: 1.05em;
+  font-size: 1em;
 }
 
-.toolkit-md-enhanced h5,
-.toolkit-md-enhanced h6 {
-  font-size: 0.95em;
+.toolkit-md-enhanced h5 {
+  font-size: 0.875em;
 }
 
 .toolkit-md-enhanced h6 {
+  font-size: 0.85em;
   color: var(--toolkit-md-muted);
 }
 
@@ -78,9 +82,17 @@
 /* Paragraphs, lists, misc ------------------------------------------------- */
 
 .toolkit-md-enhanced p,
+.toolkit-md-enhanced blockquote,
+.toolkit-md-enhanced ul,
+.toolkit-md-enhanced ol,
+.toolkit-md-enhanced pre,
+.toolkit-md-enhanced table {
+  margin: 0 0 16px;
+}
+
 .toolkit-md-enhanced ul,
 .toolkit-md-enhanced ol {
-  margin: 0 0 1em;
+  padding-left: 2em;
 }
 
 .toolkit-md-enhanced li + li {
@@ -89,13 +101,13 @@
 
 .toolkit-md-enhanced li > ul,
 .toolkit-md-enhanced li > ol {
-  margin: 0.25em 0 0.5em;
+  margin: 0.25em 0 0;
 }
 
 .toolkit-md-enhanced hr {
-  height: 1px;
+  height: 0.25em;
   border: 0;
-  margin: 2em 0;
+  margin: 24px 0;
   background: var(--toolkit-md-border);
 }
 
@@ -108,15 +120,12 @@
   text-decoration: underline;
 }
 
-/* Blockquotes ------------------------------------------------------------- */
+/* Blockquotes — GitHub-style: muted text, left rule, no fill -------------- */
 
 .toolkit-md-enhanced blockquote {
-  margin: 0 0 1em;
-  padding: 0.2em 1.1em;
+  padding: 0 1em;
   color: var(--toolkit-md-muted);
-  border-left: 4px solid var(--vscode-textBlockQuote-border, var(--toolkit-md-border));
-  background: var(--vscode-textBlockQuote-background, transparent);
-  border-radius: 0 4px 4px 0;
+  border-left: 0.25em solid var(--vscode-textBlockQuote-border, var(--toolkit-md-border));
 }
 
 .toolkit-md-enhanced blockquote > :last-child {
@@ -128,49 +137,47 @@
 .toolkit-md-enhanced code,
 .toolkit-md-enhanced pre {
   font-family: var(--vscode-editor-font-family, 'SF Mono', 'Cascadia Code', Consolas, 'Courier New', monospace);
-  font-size: 0.88em;
 }
 
 .toolkit-md-enhanced :not(pre) > code {
-  padding: 0.15em 0.4em;
-  border-radius: 4px;
-  background: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.17));
-  border: 1px solid var(--toolkit-md-border);
+  padding: 0.2em 0.4em;
+  font-size: 85%;
+  border-radius: 6px;
+  background: var(--vscode-textCodeBlock-background, var(--toolkit-md-fill));
 }
 
 .toolkit-md-enhanced pre {
-  margin: 0 0 1em;
-  padding: 14px 16px;
+  padding: 16px;
   overflow: auto;
-  line-height: 1.5;
-  border-radius: 8px;
-  border: 1px solid var(--toolkit-md-border);
-  background: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.1));
+  font-size: 85%;
+  line-height: 1.45;
+  border-radius: 6px;
+  background: var(--vscode-textCodeBlock-background, var(--toolkit-md-fill));
 }
 
 .toolkit-md-enhanced pre > code {
   padding: 0;
-  border: 0;
+  font-size: inherit;
   background: transparent;
+  border: 0;
+  white-space: pre;
 }
 
-/* Tables ------------------------------------------------------------------ */
+/* Tables — GitHub-style: square, thin borders, subtle header + zebra ------ */
 
 .toolkit-md-enhanced table {
-  display: table;
-  width: auto;
+  display: block;
+  width: max-content;
   max-width: 100%;
-  margin: 0 0 1.2em;
+  overflow: auto;
   border-collapse: collapse;
-  border: 1px solid var(--toolkit-md-border);
-  border-radius: 8px;
-  overflow: hidden;
+  border-spacing: 0;
   font-size: 0.95em;
 }
 
 .toolkit-md-enhanced th,
 .toolkit-md-enhanced td {
-  padding: 8px 14px;
+  padding: 6px 13px;
   border: 1px solid var(--toolkit-md-border);
   text-align: left;
   vertical-align: top;
@@ -178,17 +185,15 @@
 
 .toolkit-md-enhanced thead th {
   font-weight: 600;
-  background: var(--vscode-editorWidget-background, rgba(128, 128, 128, 0.12));
-  border-bottom-width: 2px;
+  background: var(--toolkit-md-fill);
 }
 
 .toolkit-md-enhanced tbody tr:nth-child(2n) {
-  background: var(--vscode-editor-inactiveSelectionBackground, rgba(128, 128, 128, 0.07));
+  background: var(--toolkit-md-fill-soft);
 }
 
 /* Images ------------------------------------------------------------------ */
 
 .toolkit-md-enhanced img {
   max-width: 100%;
-  border-radius: 6px;
 }
