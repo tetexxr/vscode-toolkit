@@ -274,8 +274,6 @@
     "diffEditor.removedLineBackground": "#442A2A",
     "diffEditor.removedTextBackground": "#6E4444",
     "diffEditor.diagonalFill": "#252729",
-    "diffEditorGutter.insertedLineBackground": "#294436",
-    "diffEditorGutter.removedLineBackground": "#442A2A",
 
     "merge.currentHeaderBackground": "#447152",
     "merge.currentContentBackground": "#29443680",
