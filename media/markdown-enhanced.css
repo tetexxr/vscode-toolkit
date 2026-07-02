@@ -67,7 +67,7 @@ color-scheme: dark;
     --color-prettylights-syntax-variable: #ffa657;
     --fgColor-attention: #d29922;
     --fgColor-danger: #f85149;
-    --fgColor-default: #f0f6fc;
+    --fgColor-default: #dbe1e8; /* GitHub original: #f0f6fc */
     --fgColor-done: #ab7df8;
     --fgColor-muted: #9198a1;
     --fgColor-success: #3fb950;
@@ -179,7 +179,7 @@ color-scheme: dark;
     --color-prettylights-syntax-variable: #ffa657;
     --fgColor-attention: #d29922;
     --fgColor-danger: #f85149;
-    --fgColor-default: #f0f6fc;
+    --fgColor-default: #dbe1e8; /* GitHub original: #f0f6fc */
     --fgColor-done: #ab7df8;
     --fgColor-muted: #9198a1;
     --fgColor-success: #3fb950;
