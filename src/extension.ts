@@ -63,6 +63,7 @@ import { registerTocCommands } from './features/editing/convert/toc'
 import { registerJsonPlaygroundCommands } from './features/workspace/json-playground'
 import { registerDocxBookmarkCommands } from './features/workspace/docx-bookmarks'
 import { registerPdfFieldCommands } from './features/workspace/pdf-fields'
+import { registerMarkdownPreviewStyle, extendMarkdownIt } from './features/viewers/markdown-preview-style'
 
 export function activate(context: vscode.ExtensionContext) {
   registerFeatureLauncherCommands(context)
@@ -129,6 +130,11 @@ export function activate(context: vscode.ExtensionContext) {
   registerJsonPlaygroundCommands(context)
   registerDocxBookmarkCommands(context)
   registerPdfFieldCommands(context)
+  registerMarkdownPreviewStyle(context)
+
+  // Exposed to VS Code's built-in Markdown preview (see the
+  // `markdown.markdownItPlugins` contribution) to gate the enhanced styling.
+  return { extendMarkdownIt }
 }
 
 export function deactivate() {}
