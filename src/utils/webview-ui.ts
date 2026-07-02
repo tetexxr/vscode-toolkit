@@ -72,7 +72,7 @@ export const BUTTON_CSS = /*css*/ `
  *   .badge-error    red     — broken / failed / 5xx
  *   .badge-warning  amber   — caution / no / 4xx / outdated
  *   .badge-accent   blue    — informational / redirect / pending
- *   .badge-neutral  theme   — unknown / n/a (native VS Code badge tokens)
+ *   .badge-neutral  gray    — unknown / n/a / loading (deterministic gray, not the accent badge token)
  */
 export const BADGE_CSS = /*css*/ `
   .badge {
@@ -91,5 +91,5 @@ export const BADGE_CSS = /*css*/ `
   .badge-error   { --badge-fg: ${color.error};   --badge-bg: ${withAlpha(color.error, 0.18)};   --badge-bd: ${withAlpha(color.error, 0.55)}; }
   .badge-warning { --badge-fg: ${color.warning}; --badge-bg: ${withAlpha(color.warning, 0.18)}; --badge-bd: ${withAlpha(color.warning, 0.55)}; }
   .badge-accent  { --badge-fg: ${color.info};    --badge-bg: ${withAlpha(color.accent, 0.18)};  --badge-bd: ${withAlpha(color.accent, 0.55)}; }
-  .badge-neutral { --badge-fg: var(--vscode-badge-foreground); --badge-bg: var(--vscode-badge-background); --badge-bd: transparent; }
+  .badge-neutral { --badge-fg: ${color.neutral}; --badge-bg: ${withAlpha(color.neutral, 0.18)}; --badge-bd: ${withAlpha(color.neutral, 0.55)}; }
 `
