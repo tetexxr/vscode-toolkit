@@ -276,10 +276,10 @@
     "gitDecoration.stageDeletedResourceForeground": "#E5686A",
     "gitDecoration.submoduleResourceForeground": "#6BAFE8",
 
-    "diffEditor.insertedLineBackground": "#294436",
-    "diffEditor.insertedTextBackground": "#447152",
-    "diffEditor.removedLineBackground": "#442A2A",
-    "diffEditor.removedTextBackground": "#6E4444",
+    "diffEditor.insertedLineBackground": "#57C26626",
+    "diffEditor.insertedTextBackground": "#57C2664D",
+    "diffEditor.removedLineBackground": "#F26D6D26",
+    "diffEditor.removedTextBackground": "#F26D6D4D",
     "diffEditor.diagonalFill": "#252729",
 
     "merge.currentHeaderBackground": "#447152",
