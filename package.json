@@ -179,12 +179,10 @@
         "priority": "option"
       }
     ],
-    "markdown": {
-      "previewStyles": [
-        "./media/markdown-enhanced.css"
-      ],
-      "markdownItPlugins": true
-    },
+    "markdown.previewStyles": [
+      "./media/markdown-enhanced.css"
+    ],
+    "markdown.markdownItPlugins": true,
     "commands": [
       {
         "command": "toolkit.showAllFeatures",
