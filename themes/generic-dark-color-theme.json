@@ -83,7 +83,7 @@
     "editor.rangeHighlightBackground": "#5B5F5C30",
     "editor.hoverHighlightBackground": "#3474F033",
     "editorCursor.foreground": "#BDBDBD",
-    "editorLineNumber.foreground": "#4B4D51",
+    "editorLineNumber.foreground": "#5A5C61",
     "editorLineNumber.activeForeground": "#A1A3A7",
     "editorIndentGuide.background1": "#303236",
     "editorIndentGuide.activeBackground1": "#4B4D51",
