@@ -117,6 +117,10 @@
     "editorGutter.deletedBackground": "#D95B5B",
     "editorGutter.commentRangeForeground": "#6F737A",
 
+    "editorStickyScroll.background": "#1E1F22",
+    "editorStickyScroll.shadow": "#00000075",
+    "editorStickyScrollHover.background": "#26272B",
+
     "editorWidget.background": "#2B2D30",
     "editorWidget.foreground": "#BDBDBD",
     "editorWidget.border": "#393B41",
