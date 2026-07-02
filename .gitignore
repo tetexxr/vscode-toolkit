@@ -9,3 +9,6 @@ node_modules/
 .vscode-test/
 lib/pdf-viewer/pdf.min.mjs
 lib/pdf-viewer/pdf.worker.min.mjs
+
+# OS generated files
+.DS_Store
