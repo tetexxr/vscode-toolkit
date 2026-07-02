@@ -1,0 +1,194 @@
+/*
+ * Enhanced Markdown preview styling for the Toolkit extension.
+ *
+ * Contributed via `contributes.markdown.previewStyles`, so it is always loaded
+ * by the built-in preview. Every rule is scoped under `.toolkit-md-enhanced`,
+ * a wrapper the extension only injects when `toolkit.markdownPreview.enhanced`
+ * is on (see extendMarkdownIt in markdown-preview-style.ts). When the setting
+ * is off there is no wrapper, so nothing here matches and the preview keeps its
+ * stock VS Code look.
+ *
+ * Colors come from VS Code theme variables so the preview adapts to the active
+ * light/dark/high-contrast theme; only typography, spacing and structure are
+ * opinionated — the "JetBrains-clean" part.
+ */
+
+.toolkit-md-enhanced {
+  --toolkit-md-border: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  --toolkit-md-muted: var(--vscode-descriptionForeground, rgba(128, 128, 128, 0.9));
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial,
+    sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 8px 4px 64px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  word-wrap: break-word;
+}
+
+/* Headings ---------------------------------------------------------------- */
+
+.toolkit-md-enhanced h1,
+.toolkit-md-enhanced h2,
+.toolkit-md-enhanced h3,
+.toolkit-md-enhanced h4,
+.toolkit-md-enhanced h5,
+.toolkit-md-enhanced h6 {
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 1.8em 0 0.6em;
+}
+
+.toolkit-md-enhanced h1 {
+  font-size: 2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--toolkit-md-border);
+}
+
+.toolkit-md-enhanced h2 {
+  font-size: 1.5em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--toolkit-md-border);
+}
+
+.toolkit-md-enhanced h3 {
+  font-size: 1.25em;
+}
+
+.toolkit-md-enhanced h4 {
+  font-size: 1.05em;
+}
+
+.toolkit-md-enhanced h5,
+.toolkit-md-enhanced h6 {
+  font-size: 0.95em;
+}
+
+.toolkit-md-enhanced h6 {
+  color: var(--toolkit-md-muted);
+}
+
+.toolkit-md-enhanced > :first-child {
+  margin-top: 0;
+}
+
+/* Paragraphs, lists, misc ------------------------------------------------- */
+
+.toolkit-md-enhanced p,
+.toolkit-md-enhanced ul,
+.toolkit-md-enhanced ol {
+  margin: 0 0 1em;
+}
+
+.toolkit-md-enhanced li + li {
+  margin-top: 0.25em;
+}
+
+.toolkit-md-enhanced li > ul,
+.toolkit-md-enhanced li > ol {
+  margin: 0.25em 0 0.5em;
+}
+
+.toolkit-md-enhanced hr {
+  height: 1px;
+  border: 0;
+  margin: 2em 0;
+  background: var(--toolkit-md-border);
+}
+
+.toolkit-md-enhanced a {
+  color: var(--vscode-textLink-foreground);
+  text-decoration: none;
+}
+
+.toolkit-md-enhanced a:hover {
+  text-decoration: underline;
+}
+
+/* Blockquotes ------------------------------------------------------------- */
+
+.toolkit-md-enhanced blockquote {
+  margin: 0 0 1em;
+  padding: 0.2em 1.1em;
+  color: var(--toolkit-md-muted);
+  border-left: 4px solid var(--vscode-textBlockQuote-border, var(--toolkit-md-border));
+  background: var(--vscode-textBlockQuote-background, transparent);
+  border-radius: 0 4px 4px 0;
+}
+
+.toolkit-md-enhanced blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* Code -------------------------------------------------------------------- */
+
+.toolkit-md-enhanced code,
+.toolkit-md-enhanced pre {
+  font-family: var(--vscode-editor-font-family, 'SF Mono', 'Cascadia Code', Consolas, 'Courier New', monospace);
+  font-size: 0.88em;
+}
+
+.toolkit-md-enhanced :not(pre) > code {
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  background: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.17));
+  border: 1px solid var(--toolkit-md-border);
+}
+
+.toolkit-md-enhanced pre {
+  margin: 0 0 1em;
+  padding: 14px 16px;
+  overflow: auto;
+  line-height: 1.5;
+  border-radius: 8px;
+  border: 1px solid var(--toolkit-md-border);
+  background: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.1));
+}
+
+.toolkit-md-enhanced pre > code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+/* Tables ------------------------------------------------------------------ */
+
+.toolkit-md-enhanced table {
+  display: table;
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1.2em;
+  border-collapse: collapse;
+  border: 1px solid var(--toolkit-md-border);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 0.95em;
+}
+
+.toolkit-md-enhanced th,
+.toolkit-md-enhanced td {
+  padding: 8px 14px;
+  border: 1px solid var(--toolkit-md-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.toolkit-md-enhanced thead th {
+  font-weight: 600;
+  background: var(--vscode-editorWidget-background, rgba(128, 128, 128, 0.12));
+  border-bottom-width: 2px;
+}
+
+.toolkit-md-enhanced tbody tr:nth-child(2n) {
+  background: var(--vscode-editor-inactiveSelectionBackground, rgba(128, 128, 128, 0.07));
+}
+
+/* Images ------------------------------------------------------------------ */
+
+.toolkit-md-enhanced img {
+  max-width: 100%;
+  border-radius: 6px;
+}
