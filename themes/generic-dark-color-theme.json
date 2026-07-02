@@ -38,7 +38,7 @@
     "badge.foreground": "#FFFFFF",
     "progressBar.background": "#3474F0",
 
-    "tab.activeBackground": "#28324B",
+    "tab.activeBackground": "#2B2D30",
     "tab.activeForeground": "#C8CAD0",
     "tab.activeBorder": "#3474F0",
     "tab.activeBorderTop": "#00000000",
