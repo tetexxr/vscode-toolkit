@@ -234,8 +234,8 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--vscode-badge-background, #333);
-  color: var(--vscode-badge-foreground, #ccc);
+  background: ${cssColor.neutralSurface};
+  color: var(--vscode-foreground);
   font-size: 0.7rem;
   font-weight: bold;
   letter-spacing: -0.5px;
@@ -359,7 +359,7 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   margin-left: 0.5rem;
   padding: 0.15rem 0.55rem;
   border-radius: 0.5rem;
-  background-color: var(--vscode-badge-background);
+  background-color: ${cssColor.neutralSurface};
   color: var(--vscode-descriptionForeground);
   font-size: 0.78rem;
   opacity: 0.85;
@@ -396,8 +396,8 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--vscode-badge-background, #333);
-  color: var(--vscode-badge-foreground, #ccc);
+  background: ${cssColor.neutralSurface};
+  color: var(--vscode-foreground);
   font-size: 0.95rem;
   font-weight: bold;
 }
@@ -458,8 +458,8 @@ select:focus { outline: 1px solid var(--vscode-focusBorder); }
 .detail-keywords { margin-top: 0.5rem; }
 .keyword-tag {
   display: inline-block;
-  background: var(--vscode-badge-background, #333);
-  color: var(--vscode-badge-foreground, #ccc);
+  background: ${cssColor.neutralSurface};
+  color: var(--vscode-foreground);
   padding: 2px 6px;
   margin: 2px;
   border-radius: 3px;

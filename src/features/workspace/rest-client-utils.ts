@@ -1246,7 +1246,7 @@ const DETAIL_STYLES = `
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 16px 24px; }
   .topbar { position: sticky; top: 0; background: var(--vscode-editor-background); padding: 14px 0 10px; z-index: 1; }
   .reqline { font-family: var(--vscode-editor-font-family); font-size: 13px; word-break: break-all; margin-bottom: 8px; }
-  .method { display: inline-block; font-weight: 600; font-size: 11px; margin-right: 8px; padding: 3px 8px; border-radius: 4px; color: #fff; background: var(--vscode-badge-background, #4d4d4d); vertical-align: middle; }
+  .method { display: inline-block; font-weight: 600; font-size: 11px; margin-right: 8px; padding: 3px 8px; border-radius: 4px; color: #fff; background: #4d4d4d; vertical-align: middle; }
   .method-POST { background: ${cssColor.success}; color: #fff; }
   .method-PUT { background: ${cssColor.orange}; color: #000; }
   .method-PATCH { background: ${cssColor.warning}; color: #000; }

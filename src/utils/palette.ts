@@ -54,6 +54,8 @@ export const cssColor = {
   border: 'rgba(140, 140, 140, 0.35)',
   /** Subtle tint to lift header bands off the editor background. */
   surface: 'rgba(140, 140, 140, 0.12)',
+  /** Neutral gray fill for icon placeholders, keyword chips and loading pills — replaces the misused (now-accent) badge token. */
+  neutralSurface: 'rgba(139, 148, 158, 0.2)',
   // Git resource decorations — match the user's SCM colors when available.
   gitAdded: `var(--vscode-gitDecoration-addedResourceForeground, ${color.success})`,
   gitDeleted: `var(--vscode-gitDecoration-deletedResourceForeground, ${color.error})`,
