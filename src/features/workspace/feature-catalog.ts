@@ -104,7 +104,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Viewers & Appearance', name: 'Pick Color from Screen', command: 'toolkit.colorPicker.pickFromScreen', description: 'Eyedropper: pick any pixel on screen and insert it as hex/rgb/hsl at the cursor' },
   { category: 'Viewers & Appearance', name: 'PDF Viewer', description: 'Open PDFs in a tab: search, outline, thumbnails, zoom, text selection (automatic)' },
   { category: 'Viewers & Appearance', name: 'SVG Preview', command: 'toolkit.svgPreview.open', description: 'Live side-panel preview with zoom and background toggle' },
-  { category: 'Viewers & Appearance', name: 'Enhanced Markdown Preview', command: 'toolkit.markdown.toggleEnhancedPreview', description: 'Cleaner typography, well-defined tables and code blocks in the built-in preview; toggle from the status bar' },
+  { category: 'Viewers & Appearance', name: 'Enhanced Markdown Preview', command: 'toolkit.markdown.toggleEnhancedPreview', description: "Render the built-in preview with GitHub's own styling (github-markdown-css); toggle from the status bar or context menu" },
   { category: 'Viewers & Appearance', name: 'Generic Dark Theme', description: 'Dark+ base with JetBrains-style syntax colors per language (pick it in Color Theme)' },
   { category: 'Viewers & Appearance', name: 'JetBrains Dark Icons', description: 'File/folder icon theme inspired by the JetBrains New UI (pick it in File Icon Theme)' }
 ]

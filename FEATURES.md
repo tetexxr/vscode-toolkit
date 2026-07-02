@@ -107,7 +107,7 @@ One line per feature. Every shortcut listed is a Toolkit keybinding (VS Code's o
 | Pick Color from Screen | — | Eyedropper: pick any pixel on screen and insert it as hex/rgb/hsl at the cursor |
 | PDF Viewer | — | Open PDFs in a tab: search, outline, thumbnails, zoom, text selection |
 | SVG Preview | — | Live side-panel preview with zoom and background toggle |
-| Enhanced Markdown Preview | — | Cleaner typography, well-defined tables and code blocks in the built-in preview; toggle from the status bar |
+| Enhanced Markdown Preview | — | Render the built-in preview with GitHub's own styling (github-markdown-css); toggle from the status bar or context menu |
 | Generic Dark Theme | — | Dark+ base with JetBrains-style syntax colors per language |
 | JetBrains Dark Icons | — | File/folder icon theme inspired by the JetBrains New UI |
 
