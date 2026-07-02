@@ -47,6 +47,7 @@ All-in-one VS Code utility extension.
     - [UUID / ULID Hover](#uuid--ulid-hover)
     - [Format Markdown Table](#format-markdown-table)
     - [Generate Table of Contents](#generate-table-of-contents)
+    - [Enhanced Markdown Preview](#enhanced-markdown-preview)
     - [JSON to TypeScript / C# Types](#json-to-typescript--c-types)
   - [Code Generation & Refactoring](#code-generation--refactoring)
     - [New C# File](#new-c-file)
@@ -1090,6 +1091,17 @@ The TOC is wrapped in `<!-- toc -->` … `<!-- /toc -->` markers. Run the comman
 **Limitations:**
 
 - Only ATX headings (`#`-prefixed) are recognized, not the Setext (`===` / `---`) underline style.
+
+#### Enhanced Markdown Preview
+
+Gives VS Code's built-in Markdown preview a cleaner, more legible look — the kind of polish you get out of the box in JetBrains IDEs: readable typography with a comfortable line height and reading width, well-defined tables (full borders, shaded header, zebra striping), rounded code blocks, and accented blockquotes. Colors come from your active theme, so it adapts to light, dark and high-contrast.
+
+It layers **on top of** the default preview rather than replacing it, so nothing is lost: a status bar item (shown while editing a `.md` file) reads **MD: Enhanced** / **MD: Default** and toggles the styling with one click. The day VS Code's own preview improves, switch back to the stock look and keep it.
+
+**Behavior:**
+
+- Toggle from the status bar, or run **Markdown: Toggle Enhanced Preview** from the Command Palette. The setting `toolkit.markdownPreview.enhanced` (default on) persists the choice, and open previews update immediately — no window reload.
+- The enhanced styling is scoped so that when it is off the preview renders exactly as stock VS Code.
 
 #### JSON to TypeScript / C# Types
 
