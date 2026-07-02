@@ -1096,11 +1096,17 @@ The TOC is wrapped in `<!-- toc -->` … `<!-- /toc -->` markers. Run the comman
 
 Renders VS Code's built-in Markdown preview with GitHub's own styling — it bundles the official [`github-markdown-css`](https://github.com/sindresorhus/github-markdown-css), so previews look exactly like a rendered README on GitHub: the same typography, spacing, well-defined tables, code blocks and alerts. GitHub's light and dark palettes follow your VS Code theme (light editor → GitHub light, dark/high-contrast editor → GitHub dark).
 
-It layers **on top of** the default preview rather than replacing it, so nothing is lost: a status bar item (shown while editing a `.md` file) reads **MD: Enhanced** / **MD: Default** and toggles the styling with one click. The day VS Code's own preview improves, switch back to the stock look and keep it.
+It layers **on top of** the default preview rather than replacing it, so nothing is lost: a status bar item (shown while a `.md` file is open in a visible editor — so it stays put with the preview open beside the source) reads **MD: Enhanced** / **MD: Default** and toggles the styling with one click. The day VS Code's own preview improves, switch back to the stock look and keep it.
+
+**Available from:**
+
+- **Status bar** — click the **MD: Enhanced / MD: Default** item.
+- **Editor context menu** — right-click inside a Markdown file → **Markdown** → **Toggle Enhanced Markdown Preview**.
+- **Command Palette** — **Toolkit: Toggle Enhanced Markdown Preview**.
 
 **Behavior:**
 
-- Toggle from the status bar, or run **Markdown: Toggle Enhanced Preview** from the Command Palette. The setting `toolkit.markdownPreview.enhanced` (default on) persists the choice, and open previews update immediately — no window reload.
+- The setting `toolkit.markdownPreview.enhanced` (default on) persists the choice, and open previews update immediately — no window reload.
 - The enhanced styling is scoped so that when it is off the preview renders exactly as stock VS Code.
 
 #### JSON to TypeScript / C# Types

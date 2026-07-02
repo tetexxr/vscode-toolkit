@@ -1,12 +1,19 @@
 import * as vscode from 'vscode'
+import {
+  shouldShowStatusBar,
+  statusBarText,
+  statusBarTooltip,
+  toggleMessage,
+  wrapEnhancedHtml
+} from './markdown-preview-style-utils'
 
 /**
  * Enhanced Markdown preview styling.
  *
- * The extension ships a polished stylesheet (media/markdown-enhanced.css)
- * contributed through `contributes.markdown.previewStyles`, so the built-in
- * preview always loads it. Every rule in that file is scoped under
- * `.toolkit-md-enhanced`; we only add that wrapper (via extendMarkdownIt) when
+ * The extension ships GitHub's official stylesheet (media/markdown-enhanced.css)
+ * contributed through `contributes["markdown.previewStyles"]`, so the built-in
+ * preview always loads it. Every rule is scoped under `.toolkit-md-enhanced`;
+ * we only add that wrapper (via extendMarkdownIt) when
  * `toolkit.markdownPreview.enhanced` is on. When it is off there is no wrapper,
  * nothing matches, and the preview falls back to the stock VS Code look — so
  * the day the built-in styling improves you can just switch back to it.
@@ -15,7 +22,6 @@ import * as vscode from 'vscode'
 const SETTING_SECTION = 'toolkit.markdownPreview'
 const ENHANCED_KEY = 'enhanced'
 const TOGGLE_COMMAND = 'toolkit.markdown.toggleEnhancedPreview'
-const WRAPPER_CLASS = 'toolkit-md-enhanced'
 
 function isEnhanced(): boolean {
   return vscode.workspace.getConfiguration(SETTING_SECTION).get<boolean>(ENHANCED_KEY, true)
@@ -36,10 +42,7 @@ interface MarkdownItLike {
  */
 export function extendMarkdownIt(md: MarkdownItLike): MarkdownItLike {
   const originalRender = md.renderer.render.bind(md.renderer)
-  md.renderer.render = (tokens, options, env) => {
-    const html = originalRender(tokens, options, env)
-    return isEnhanced() ? `<div class="${WRAPPER_CLASS}">\n${html}\n</div>` : html
-  }
+  md.renderer.render = (tokens, options, env) => wrapEnhancedHtml(originalRender(tokens, options, env), isEnhanced())
   return md
 }
 
@@ -49,15 +52,14 @@ function updateStatusBar(): void {
   if (!statusBar) {
     return
   }
-  if (vscode.window.activeTextEditor?.document.languageId !== 'markdown') {
+  const visibleLanguageIds = vscode.window.visibleTextEditors.map(editor => editor.document.languageId)
+  if (!shouldShowStatusBar(visibleLanguageIds)) {
     statusBar.hide()
     return
   }
   const on = isEnhanced()
-  statusBar.text = on ? '$(markdown) MD: Enhanced' : '$(markdown) MD: Default'
-  statusBar.tooltip = on
-    ? 'Markdown preview: enhanced styling is ON — click to use the default VS Code style'
-    : 'Markdown preview: using the default VS Code style — click to enable enhanced styling'
+  statusBar.text = statusBarText(on)
+  statusBar.tooltip = statusBarTooltip(on)
   statusBar.show()
 }
 
@@ -75,7 +77,7 @@ async function toggleEnhanced(): Promise<void> {
   const next = !isEnhanced()
   await vscode.workspace.getConfiguration(SETTING_SECTION).update(ENHANCED_KEY, next, vscode.ConfigurationTarget.Global)
   // The configuration listener re-renders previews and refreshes the status bar.
-  vscode.window.showInformationMessage(`Markdown preview: ${next ? 'enhanced styling' : 'default VS Code style'}`)
+  vscode.window.showInformationMessage(toggleMessage(next))
 }
 
 export function registerMarkdownPreviewStyle(context: vscode.ExtensionContext): void {
@@ -86,6 +88,7 @@ export function registerMarkdownPreviewStyle(context: vscode.ExtensionContext): 
     statusBar,
     vscode.commands.registerCommand(TOGGLE_COMMAND, () => toggleEnhanced()),
     vscode.window.onDidChangeActiveTextEditor(() => updateStatusBar()),
+    vscode.window.onDidChangeVisibleTextEditors(() => updateStatusBar()),
     vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration(`${SETTING_SECTION}.${ENHANCED_KEY}`)) {
         updateStatusBar()
