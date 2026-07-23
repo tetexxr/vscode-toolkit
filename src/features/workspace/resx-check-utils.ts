@@ -72,22 +72,18 @@ export function parseResx(text: string): ResxEntry[] {
   return entries
 }
 
-/** Translatable string entries only — the ones drift checks care about. */
 export function stringEntries(entries: ResxEntry[]): ResxEntry[] {
   return entries.filter(e => !e.designer)
 }
 
-/** Escape text destined for an XML text node (resx <value> content). */
 export function escapeXmlText(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-/** Escape text destined for an XML attribute value (e.g. a `name="…"`). */
 export function escapeXmlAttr(text: string): string {
   return escapeXmlText(text).replace(/"/g, '&quot;')
 }
 
-/** Decode the XML entities that appear in resx values, for display/editing. */
 export function unescapeXml(text: string): string {
   return text
     .replace(/&lt;/g, '<')
@@ -255,7 +251,6 @@ export function detectFormat(text: string): ResxFormat {
   return { indent: '  ', oneLine: true }
 }
 
-/** Render a new, empty string entry for `key` in the given style. */
 export function renderEmptyEntry(key: string, format: ResxFormat): string {
   const escaped = escapeXmlAttr(key)
   if (format.oneLine) {

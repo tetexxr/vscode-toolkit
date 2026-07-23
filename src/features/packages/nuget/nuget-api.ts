@@ -37,12 +37,10 @@ interface ResolvedEndpoints {
 /** Cache of resolved endpoints per source URL. */
 const endpointCache = new Map<string, ResolvedEndpoints>()
 
-/** Clear the endpoint cache (e.g. when configuration changes). */
 export function clearEndpointCache(): void {
   endpointCache.clear()
 }
 
-/** Resolve SearchQueryService and RegistrationsBaseUrl from a source's index.json. */
 async function resolveEndpoints(source: PackageSource, timeout: number): Promise<ResolvedEndpoints> {
   const cached = endpointCache.get(source.url)
   if (cached) {
@@ -76,7 +74,6 @@ function findEndpoint(resources: ApiResource[], preferred: string[]): string | u
 
 // ── Search (Browse mode) ───────────────────────────────────
 
-/** Search for packages using the SearchQueryService endpoint. */
 export async function searchPackages(
   query: string,
   prerelease: boolean,
@@ -144,7 +141,6 @@ export async function fetchInstalledPackagesMetadata(
   return filterAndSortResults(packages, query)
 }
 
-/** Fetch all version metadata for a single package (for the details panel). */
 export async function fetchPackageVersions(
   packageId: string,
   prerelease: boolean,
@@ -162,7 +158,6 @@ export async function fetchPackageVersions(
 
 // ── Internal helpers ───────────────────────────────────────
 
-/** Fetch metadata for a single package from its registration index. */
 async function fetchSinglePackageMetadata(
   packageId: string,
   registrationBase: string,
@@ -222,7 +217,6 @@ async function fetchAllLeafs(index: RegistrationIndex, source: PackageSource, ti
   return leafs
 }
 
-/** Filter out prerelease/unlisted, sort descending by version. */
 function filterAndSortEntries(leafs: RegistrationLeaf[], includePrerelease: boolean): CatalogEntry[] {
   let filtered = leafs
 

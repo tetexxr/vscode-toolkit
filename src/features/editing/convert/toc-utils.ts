@@ -115,7 +115,6 @@ export function buildTocBlock(toc: string): string {
   return `${TOC_START}\n\n${toc}\n\n${TOC_END}`
 }
 
-/** Locates an existing marker-delimited TOC block, if the document has one. */
 export function findTocBlock(lines: string[]): { start: number; end: number } | null {
   let start = -1
   for (let i = 0; i < lines.length; i++) {

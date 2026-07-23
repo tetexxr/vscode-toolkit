@@ -102,7 +102,6 @@ function textRuns(region: string): string[] {
   return runs.filter(run => /<w:t[\s>]/.test(run))
 }
 
-/** Concatenated (still XML-escaped) text of every `<w:t>` in a region. */
 function regionText(region: string): string {
   let text = ''
   const re = /<w:t\b[^>]*>([\s\S]*?)<\/w:t>/g
@@ -319,7 +318,6 @@ export function fixXmlPart(xml: string, shouldFix?: (name: string) => boolean): 
   return { xml: out, fixed }
 }
 
-/** Analyze every bookmark-bearing XML part of a .docx buffer. */
 export function analyzeDocx(buffer: Uint8Array): DocxAnalysis {
   const entries = unzipSync(buffer)
   const bookmarks: BookmarkInfo[] = []

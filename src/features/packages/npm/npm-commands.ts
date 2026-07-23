@@ -41,7 +41,6 @@ export function detectPackageManager(directoryPath: string): PackageManager {
   return 'npm'
 }
 
-/** Read the "packageManager" field from a package.json file. */
 export function readPackageManagerField(packageJsonPath: string): PackageManager | null {
   try {
     const content = readFileSync(packageJsonPath, 'utf-8')

@@ -253,7 +253,6 @@ async function diffFileAgainstRef(
 
 type CompareKind = 'branch' | 'commit'
 
-/** First step of every comparison: choose whether to compare against a branch or a commit. */
 async function pickCompareKind(): Promise<CompareKind | null> {
   // `kind` is taken by QuickPickItem (separators), so the choice travels as `value`.
   type Item = vscode.QuickPickItem & { value: CompareKind }
@@ -312,7 +311,6 @@ async function getMergeBase(repoRoot: string, branch: string): Promise<string | 
   return trimmed.length > 0 ? trimmed : null
 }
 
-/** Lists files that differ between `base` and the working tree, optionally scoped to `relFolder`. */
 async function listChangedFiles(repoRoot: string, base: string, relFolder?: string): Promise<FileChange[]> {
   const args = ['diff', '--name-status', '-z', base]
   if (relFolder && relFolder.length > 0) {
@@ -325,7 +323,6 @@ async function listChangedFiles(repoRoot: string, base: string, relFolder?: stri
   return parseNameStatusZ(stdout)
 }
 
-/** Lets the user pick a branch to compare against (excludes the current branch). */
 async function pickBranch(repoRoot: string, placeHolder: string): Promise<string | null> {
   const [currentBranch, branches] = await Promise.all([getCurrentBranch(repoRoot), listBranches(repoRoot)])
   const candidates = branches.filter(b => b !== currentBranch)

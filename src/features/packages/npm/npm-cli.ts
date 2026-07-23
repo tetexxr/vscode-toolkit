@@ -35,7 +35,6 @@ export interface NpmOutdatedEntry {
   location?: string
 }
 
-/** Run the outdated command appropriate for the given package manager. */
 export function runOutdated(
   cwd: string,
   packageManager: PackageManager,

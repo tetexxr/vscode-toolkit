@@ -211,7 +211,6 @@ export class NpmMessageHandler implements vscode.Disposable {
     this.post({ type: 'metadata-loading', loading: false })
   }
 
-  /** Hit the Search API once per package name whose metadata we haven't cached yet. */
   private async fetchMetadataViaSearch(
     viewModels: NpmPackageViewModel[],
     source: NpmPackageSource | undefined
@@ -250,7 +249,6 @@ export class NpmMessageHandler implements vscode.Disposable {
     )
   }
 
-  /** Paint cached metadata onto fresh view models. */
   private applyCachedMetadata(viewModels: NpmPackageViewModel[]): void {
     for (const vm of viewModels) {
       const meta = this.metadataCache.get(vm.name)

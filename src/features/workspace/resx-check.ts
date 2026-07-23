@@ -149,7 +149,6 @@ async function analyzeDocument(document: vscode.TextDocument, diagnostics: vscod
   }
 }
 
-/** Diagnostics for a locale file, compared against its neutral source. */
 function analyzeLocale(
   document: vscode.TextDocument,
   group: ResxGroup,
@@ -439,7 +438,6 @@ async function syncActiveGroup(diagnostics: vscode.DiagnosticCollection): Promis
   vscode.window.showInformationMessage(`Toolkit: added ${added} empty key(s) across the language files.`)
 }
 
-/** Rewrite every file in the active group to the canonical compact format. */
 async function normalizeActiveGroup(): Promise<void> {
   const uri = activeResxUri()
   if (!uri) {

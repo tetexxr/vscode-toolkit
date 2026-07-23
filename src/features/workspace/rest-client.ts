@@ -336,7 +336,6 @@ async function recordFailure(
   return entry
 }
 
-/** Maps a content-type to a file extension so the diff editor highlights the body. */
 function historyExtension(entry: ResponseHistoryEntry): string {
   const lang = inferLanguageFromContentType(findHeader(entry.headers, 'content-type'))
   switch (lang) {
@@ -478,7 +477,6 @@ function historyFilter(): string {
   return extensionContext?.workspaceState.get<string>(HISTORY_FILTER_KEY, '') ?? ''
 }
 
-/** Stores the active filter, reflects it in a context key + a banner, and refreshes the tree. */
 async function setHistoryFilter(value: string): Promise<void> {
   const filter = value.trim()
   await extensionContext?.workspaceState.update(HISTORY_FILTER_KEY, filter)
@@ -586,7 +584,6 @@ function entryById(id: string): ResponseHistoryEntry | undefined {
   return getHistory().find(e => e.id === id)
 }
 
-/** The entry behind a tree node (commands invoked from the tree receive the node). */
 function nodeEntry(node: HistoryNode | undefined): ResponseHistoryEntry | undefined {
   return node && node.kind === 'entry' ? node.entry : undefined
 }
@@ -625,7 +622,6 @@ async function openHistoryEntry(id: string): Promise<void> {
 
 /* ---- Re-send -------------------------------------------------------------- */
 
-/** Rebuilds the resolved request stored alongside an entry, if any. */
 function resolvedFromEntry(entry: ResponseHistoryEntry): ResolvedRequest | undefined {
   if (entry.requestHeaders === undefined && entry.requestBody === undefined) {
     return undefined
@@ -733,7 +729,6 @@ function detailHtmlOptions(panel: vscode.WebviewPanel): { cspSource: string; non
   return { cspSource: panel.webview.cspSource, nonce: randomUUID().replace(/-/g, '') }
 }
 
-/** Creates the detail panel (with its message handler) on first use, then reuses it. */
 function ensureDetailPanel(): vscode.WebviewPanel {
   if (detailPanel) {
     return detailPanel
@@ -783,7 +778,6 @@ function ensureDetailPanel(): vscode.WebviewPanel {
   return panel
 }
 
-/** Opens (or reuses) the response detail webview for a completed entry. */
 function showDetailPanel(entry: ResponseHistoryEntry): void {
   const panel = ensureDetailPanel()
   detailEntryId = entry.id
@@ -802,7 +796,6 @@ function showPendingPanel(request: ResolvedRequest): void {
   panel.reveal(vscode.ViewColumn.Beside, true)
 }
 
-/** Renders a terminal "Cancelled" state in the panel (after an aborted send). */
 function showCancelledPanel(request: ResolvedRequest): void {
   if (!detailPanel) {
     return
@@ -819,7 +812,6 @@ function syncDetailPanel(): void {
   }
 }
 
-/** Deletes one entry from the history (invoked from the tree's inline trash icon). */
 async function deleteHistoryEntry(node: HistoryNode | undefined): Promise<void> {
   const entry = nodeEntry(node)
   if (!entry) {
@@ -990,7 +982,6 @@ async function scanRestFiles(): Promise<void> {
   filesProvider?.setFiles(found)
 }
 
-/** Runs every request in a file (used by the file node's "Send All" action). */
 async function sendAllInFile(uri: vscode.Uri): Promise<void> {
   const document = await vscode.workspace.openTextDocument(uri)
   const parsed = parseHttpFile(document.getText())
@@ -1307,7 +1298,6 @@ async function loadDotenv(documentUri: vscode.Uri): Promise<Record<string, strin
   }
 }
 
-/** Builds the interpolation options shared by execution and curl export. */
 async function buildInterpolateOptions(documentUri: vscode.Uri): Promise<InterpolateOptions> {
   return {
     nextUuid: () => randomUUID(),

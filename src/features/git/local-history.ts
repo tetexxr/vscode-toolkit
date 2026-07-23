@@ -106,12 +106,10 @@ class LocalHistoryStore {
     )
   }
 
-  /** Returns the revisions for a file, newest first. */
   async list(uriString: string): Promise<RevisionMeta[]> {
     return (await this.load(uriString)).revisions
   }
 
-  /** Reads back the content of a single revision. */
   async read(uriString: string, id: string): Promise<string> {
     const key = historyKey(uriString)
     const bytes = await vscode.workspace.fs.readFile(this.contentUri(key, id))
@@ -148,7 +146,6 @@ class LocalHistoryStore {
     return true
   }
 
-  /** Removes a single revision and its content file. */
   async deleteRevision(uriString: string, id: string): Promise<void> {
     const key = historyKey(uriString)
     const history = await this.load(uriString)
@@ -159,7 +156,6 @@ class LocalHistoryStore {
     await this.deleteContents(key, removed)
   }
 
-  /** Removes every revision for a file. */
   async clear(uriString: string): Promise<void> {
     const key = historyKey(uriString)
     this.cache.set(key, { uri: uriString, revisions: [] })
@@ -237,7 +233,6 @@ class LocalHistoryProvider implements vscode.TreeDataProvider<RevisionNode> {
     return this.revisions.length > 0
   }
 
-  /** Points the view at a file and reloads its revisions. */
   async setActive(uri: vscode.Uri | undefined): Promise<void> {
     // Ignore editors that aren't real files (the virtual revision side of a diff,
     // output panes, etc.) and no-op when the file hasn't actually changed. This
@@ -250,7 +245,6 @@ class LocalHistoryProvider implements vscode.TreeDataProvider<RevisionNode> {
     await this.reload()
   }
 
-  /** Re-reads the current file's revisions from the store. */
   async reload(): Promise<void> {
     this.revisions = this.currentUri ? await this.store.list(this.currentUri.toString()) : []
     this.emitter.fire()

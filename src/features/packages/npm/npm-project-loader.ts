@@ -17,7 +17,6 @@ export async function discoverPackageJsonFiles(): Promise<vscode.Uri[]> {
   return vscode.workspace.findFiles(PROJECT_GLOB, EXCLUDE_GLOB, 64)
 }
 
-/** Show a QuickPick to let the user select a package.json file. */
 export async function pickPackageJsonFile(): Promise<vscode.Uri | undefined> {
   const files = await discoverPackageJsonFiles()
 
@@ -39,7 +38,6 @@ export async function pickPackageJsonFile(): Promise<vscode.Uri | undefined> {
   return picked?.uri
 }
 
-/** Load a project: read package.json and extract dependency entries. */
 export async function loadNpmProject(packageJsonUri: vscode.Uri): Promise<NpmProject> {
   const content = await vscode.workspace.fs.readFile(packageJsonUri)
   const json = Buffer.from(content).toString('utf-8')
@@ -56,7 +54,6 @@ export async function loadNpmProject(packageJsonUri: vscode.Uri): Promise<NpmPro
   }
 }
 
-/** Re-read a project by its filesystem path. */
 export async function reloadNpmProject(fsPath: string): Promise<NpmProject> {
   return loadNpmProject(vscode.Uri.file(fsPath))
 }

@@ -63,7 +63,6 @@ class ScratchStore {
     return vscode.Uri.joinPath(this.dir, name)
   }
 
-  /** Lists scratch file names, newest first. */
   async list(): Promise<string[]> {
     try {
       const entries = await vscode.workspace.fs.readDirectory(this.dir)
@@ -74,7 +73,6 @@ class ScratchStore {
     }
   }
 
-  /** Creates a new scratch with the given content and language, returning its uri. */
   async create(languageId: string, content: string): Promise<vscode.Uri> {
     await vscode.workspace.fs.createDirectory(this.dir)
     const existing = await this.list()

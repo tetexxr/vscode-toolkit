@@ -17,7 +17,6 @@ export const PARENT_AUX_FILES = [
   'nuget.config'
 ]
 
-/** Walk every parent directory of `projectFsPath` collecting candidate aux-file paths. */
 export function findAuxiliaryFiles(projectFsPath: string): string[] {
   const found: string[] = []
   let dir = path.dirname(projectFsPath)

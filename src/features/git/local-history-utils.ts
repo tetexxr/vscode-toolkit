@@ -29,7 +29,6 @@ export function historyKey(uriString: string): string {
   return createHash('sha1').update(uriString).digest('hex')
 }
 
-/** Content fingerprint used for de-duplication. */
 export function contentHash(text: string): string {
   return createHash('sha1').update(text).digest('hex')
 }
@@ -39,7 +38,6 @@ export function makeRevisionId(timestamp: number, counter: number): string {
   return `${timestamp}-${counter.toString(36)}`
 }
 
-/** True when `hash` matches the most recent revision, so a new snapshot would be redundant. */
 export function isDuplicateOfLatest(revisions: RevisionMeta[], hash: string): boolean {
   return revisions.length > 0 && revisions[0].hash === hash
 }

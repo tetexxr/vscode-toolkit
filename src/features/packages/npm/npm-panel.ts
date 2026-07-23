@@ -17,7 +17,6 @@ export class NpmPanel implements vscode.Disposable {
   private messageHandler: NpmMessageHandler
   private disposables: vscode.Disposable[] = []
 
-  /** Create a new panel or reveal an existing one for the given package.json. */
   static createOrShow(context: vscode.ExtensionContext, packageJsonUri: vscode.Uri): void {
     const key = packageJsonUri.fsPath
     const existing = NpmPanel.instances.get(key)

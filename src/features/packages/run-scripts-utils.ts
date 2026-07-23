@@ -112,7 +112,6 @@ export function quoteScriptName(name: string): string {
   return /^[\w.:@/-]+$/.test(name) ? name : JSON.stringify(name)
 }
 
-/** Builds the command line that runs `scriptName` with the given package manager. */
 export function buildRunCommand(pm: PackageManager, scriptName: string): string {
   const arg = quoteScriptName(scriptName)
   switch (pm) {

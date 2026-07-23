@@ -78,7 +78,6 @@ export class NugetTaskManager implements vscode.Disposable {
 
   // ── Task factory methods ───────────────────────────────
 
-  /** Build a `dotnet add <project> package <id> -v <version> -s <source>` task. */
   static buildAddTask(projectPath: string, packageId: string, version: string, sourceUrl: string): vscode.Task {
     const cwd = path.dirname(projectPath)
     const args: (string | vscode.ShellQuotedString)[] = [
@@ -101,7 +100,6 @@ export class NugetTaskManager implements vscode.Disposable {
     )
   }
 
-  /** Build a `dotnet remove <project> package <id>` task. */
   static buildRemoveTask(projectPath: string, packageId: string): vscode.Task {
     const cwd = path.dirname(projectPath)
     const args: (string | vscode.ShellQuotedString)[] = [

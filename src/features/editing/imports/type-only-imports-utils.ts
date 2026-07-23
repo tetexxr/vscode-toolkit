@@ -50,7 +50,6 @@ export interface TypeOnlyImportFinding {
   bindingName?: string
 }
 
-/** Public entry point. */
 export function findTypeOnlyImports(sourceText: string, fileName: string): TypeOnlyImportFinding[] {
   const sourceFile = ts.createSourceFile(
     fileName,

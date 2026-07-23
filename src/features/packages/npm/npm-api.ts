@@ -20,7 +20,6 @@ import type {
 
 // ── Search (Browse mode) ───────────────────────────────────
 
-/** Search for packages using the npm registry search endpoint. */
 export async function searchNpmPackages(
   query: string,
   prerelease: boolean,
@@ -43,7 +42,6 @@ export async function searchNpmPackages(
   return { packages, totalHits: results.total }
 }
 
-/** Map a search result object to a view model. Exported for testing. */
 export function searchResultToViewModel(obj: NpmSearchObject, sourceUrl: string): NpmPackageViewModel {
   const pkg = obj.package
   return {
@@ -95,7 +93,6 @@ export async function fetchInstalledNpmPackagesMetadata(
   return filterAndSortResults(packages, query)
 }
 
-/** Fetch all version details for a single package (for the details panel). */
 export async function fetchNpmPackageVersions(
   packageName: string,
   prerelease: boolean,
@@ -106,7 +103,6 @@ export async function fetchNpmPackageVersions(
   return result.versions
 }
 
-/** Fetch full package metadata + version list (for the details panel). */
 export async function fetchNpmPackageFullDetails(
   packageName: string,
   prerelease: boolean,
@@ -187,7 +183,6 @@ export function resolveAuthor(author: { name: string; email?: string; url?: stri
 
 // ── Internal helpers ───────────────────────────────────────
 
-/** Fetch metadata for a single package from the registry. */
 async function fetchSinglePackageMetadata(
   packageName: string,
   baseUrl: string,
@@ -232,7 +227,6 @@ async function fetchSinglePackageMetadata(
   }
 }
 
-/** Extract and sort version details from full package metadata. Exported for testing. */
 export function extractVersionDetails(metadata: NpmPackageMetadata, prerelease: boolean): NpmVersionDetail[] {
   const versions = Object.keys(metadata.versions || {})
   const timeMap = metadata.time || {}
@@ -257,7 +251,6 @@ export function extractVersionDetails(metadata: NpmPackageMetadata, prerelease: 
   })
 }
 
-/** Filter by query and sort alphabetically. Exported for testing. */
 export function filterAndSortResults(results: NpmPackageViewModel[], query: string): NpmPackageViewModel[] {
   const trimmed = query.trim().toLowerCase()
 

@@ -57,7 +57,6 @@ export function extForLanguage(languageId: string): string {
   return EXT_BY_LANGUAGE[languageId] ?? 'txt'
 }
 
-/** Extracts the numeric suffix of an auto-generated `scratch-N.ext` name. */
 export function parseScratchIndex(name: string): number | null {
   const match = /^scratch-(\d+)\./.exec(name)
   return match ? parseInt(match[1], 10) : null

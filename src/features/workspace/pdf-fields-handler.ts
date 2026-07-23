@@ -30,7 +30,6 @@ export class PdfFieldsHandler implements vscode.Disposable {
     this.disposables.push(this.webview.onDidReceiveMessage((msg: WebviewMessage) => this.handleMessage(msg)))
   }
 
-  /** Point the panel at a different PDF. */
   public async retarget(target: vscode.Uri): Promise<void> {
     this.target = target
     await this.load()

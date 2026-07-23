@@ -17,7 +17,6 @@ export class NugetPanel implements vscode.Disposable {
   private messageHandler: NugetMessageHandler
   private disposables: vscode.Disposable[] = []
 
-  /** Create a new panel or reveal an existing one for the given project file. */
   static createOrShow(context: vscode.ExtensionContext, projectFileUri: vscode.Uri): void {
     const key = projectFileUri.fsPath
     const existing = NugetPanel.instances.get(key)

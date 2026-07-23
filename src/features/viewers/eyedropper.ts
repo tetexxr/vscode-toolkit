@@ -10,7 +10,6 @@ function insertFormat(): ColorFormat {
   return value === 'rgb' || value === 'hsl' ? value : 'hex'
 }
 
-/** Converts the eyedropper's sRGB hex into the configured output format. */
 function toOutput(hex: string): string {
   const rgba = parseColor(hex)
   return rgba ? formatColor(rgba, insertFormat()) : hex

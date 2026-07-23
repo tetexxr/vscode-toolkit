@@ -93,7 +93,6 @@ async function analyzeDocument(document: vscode.TextDocument, diagnostics: vscod
   }
 }
 
-/** Diagnostics for a real .env file, compared against its sibling example. */
 async function analyzeEnv(
   document: vscode.TextDocument,
   diagnostics: vscode.DiagnosticCollection,

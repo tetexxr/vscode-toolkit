@@ -75,7 +75,6 @@ export function compareSemVer(a: string, b: string): number {
   return comparePrerelease(pa.prerelease, pb.prerelease)
 }
 
-/** Compares prerelease strings segment by segment. */
 function comparePrerelease(a: string, b: string): number {
   // No prerelease on either — equal
   if (!a && !b) {

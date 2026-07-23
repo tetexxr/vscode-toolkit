@@ -205,7 +205,6 @@ export class NugetMessageHandler implements vscode.Disposable {
     this.post({ type: 'metadata-loading', loading: false })
   }
 
-  /** Paint cached metadata onto fresh view models without hitting the network. */
   private applyCachedMetadata(viewModels: PackageViewModel[]): void {
     for (const vm of viewModels) {
       const meta = this.metadataCache.get(vm.id)

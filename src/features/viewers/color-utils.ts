@@ -91,7 +91,6 @@ export interface FoundColor {
   color: Rgba
 }
 
-/** Scans text for color literals, returning each with its source offsets. */
 export function findColors(text: string): FoundColor[] {
   const regex = new RegExp(`${HEX}|${RGB}|${HSL}`, 'gi')
   const found: FoundColor[] = []
@@ -185,7 +184,6 @@ function hue2rgb(p: number, q: number, t: number): number {
 
 export type ColorFormat = 'hex' | 'rgb' | 'hsl'
 
-/** Formats a color in the chosen notation. */
 export function formatColor(rgba: Rgba, format: ColorFormat): string {
   switch (format) {
     case 'rgb':

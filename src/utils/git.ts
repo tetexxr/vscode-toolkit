@@ -401,7 +401,6 @@ export async function stageFile(cwd: string, ...filePaths: string[]): Promise<vo
   await gitExec(cwd, ['add', ...filePaths])
 }
 
-/** Stages every change in the working tree (modifications, additions and deletions). */
 export async function stageAll(cwd: string): Promise<void> {
   await gitExec(cwd, ['add', '-A'])
 }

@@ -93,7 +93,6 @@ function readField(field: PDFField): FieldReading {
   return { type: 'Unknown', value: '', editable: false }
 }
 
-/** Read every AcroForm field's name, type, current value and editing metadata. */
 export async function readPdfFields(bytes: Uint8Array): Promise<PdfFieldsResult> {
   const document = await PDFDocument.load(bytes, { updateMetadata: false })
   const form = document.getForm()

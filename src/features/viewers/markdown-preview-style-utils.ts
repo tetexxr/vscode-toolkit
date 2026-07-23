@@ -27,19 +27,16 @@ export function shouldShowStatusBar(visibleLanguageIds: readonly string[]): bool
   return visibleLanguageIds.includes(MARKDOWN_LANGUAGE_ID)
 }
 
-/** Status bar label reflecting the current state. */
 export function statusBarText(enabled: boolean): string {
   return enabled ? '$(markdown) MD: Enhanced' : '$(markdown) MD: Default'
 }
 
-/** Status bar tooltip explaining what a click does. */
 export function statusBarTooltip(enabled: boolean): string {
   return enabled
     ? 'Markdown preview: enhanced styling is ON — click to use the default VS Code style'
     : 'Markdown preview: using the default VS Code style — click to enable enhanced styling'
 }
 
-/** Notification shown after toggling. */
 export function toggleMessage(enabled: boolean): string {
   return `Markdown preview: ${enabled ? 'enhanced styling' : 'default VS Code style'}`
 }

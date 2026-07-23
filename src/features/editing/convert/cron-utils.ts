@@ -152,7 +152,6 @@ function stepOf(raw: string): number | null {
   return match ? parseInt(match[1], 10) : null
 }
 
-/** Builds a human-readable description of a parsed cron expression. */
 export function describeCron(cron: ParsedCron): string {
   const { second, minute, hour, dom, month, dow, hasSeconds } = cron
   const restWild = hour.isWildcard && dom.isWildcard && month.isWildcard && dow.isWildcard

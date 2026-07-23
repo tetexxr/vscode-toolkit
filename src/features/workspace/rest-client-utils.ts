@@ -541,7 +541,6 @@ function evaluateOne(expr: string, response: ResponseLike): AssertResult {
   return fail(`${expr} — unrecognized assertion`)
 }
 
-/** Evaluates each `@assert` expression against a response. */
 export function evaluateAssertions(asserts: string[], response: ResponseLike): AssertResult[] {
   return asserts.map(expr => evaluateOne(expr, response))
 }
@@ -904,7 +903,6 @@ export function parseCurl(input: string): ParsedCurlRequest | null {
   return bodyFile ? { method, url, headers, body, bodyFile } : { method, url, headers, body }
 }
 
-/** Pretty-prints a JSON body when the headers declare a JSON content type. */
 function formatImportedBody(body: string, headers: HttpHeader[]): string {
   if (/json/i.test(findHeader(headers, 'content-type') ?? '')) {
     try {
@@ -916,7 +914,6 @@ function formatImportedBody(body: string, headers: HttpHeader[]): string {
   return body
 }
 
-/** Renders a parsed request as an `.http` block. */
 export function renderHttpRequest(req: ParsedCurlRequest, name = 'Imported from curl'): string {
   const lines = [`### ${name}`, `${req.method} ${req.url}`]
   for (const header of req.headers) {
@@ -1175,7 +1172,6 @@ export function directoryChildren(relPaths: string[], prefix: string): { dirs: s
   return { dirs: [...dirs].sort(), files: files.sort() }
 }
 
-/** Tree label + description for a request node in the Requests view. */
 export function describeRequestNode(request: HttpRequest): { label: string; description: string } {
   // The parser names unnamed blocks "Request N"; for those, lead with method+URL.
   if (/^Request \d+$/.test(request.name)) {

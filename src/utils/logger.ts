@@ -36,7 +36,6 @@ export function logError(scope: string, err: unknown): void {
   getChannel().appendLine(`[${new Date().toISOString()}] [error] [${scope}] ${format(err)}`)
 }
 
-/** Log a warning (e.g. unexpected but recoverable state). */
 export function logWarn(scope: string, message: string): void {
   getChannel().appendLine(`[${new Date().toISOString()}] [warn]  [${scope}] ${message}`)
 }

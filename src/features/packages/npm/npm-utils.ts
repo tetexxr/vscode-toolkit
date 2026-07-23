@@ -101,7 +101,6 @@ export function buildInstalledViewModels(
   })
 }
 
-/** Apply the user's text filter and the active tab (installed vs updates) to a view-model list. */
 export function filterPackages(all: NpmPackageViewModel[], query: string, category: NpmCategory): NpmPackageViewModel[] {
   let packages = all
   const trimmed = query.trim().toLowerCase()

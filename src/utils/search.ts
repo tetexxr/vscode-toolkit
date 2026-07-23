@@ -23,7 +23,6 @@ export function scoreItem(segments: string[], terms: string[]): number {
   return score
 }
 
-/** Check if an item's path matches all include terms and none of the exclude terms. */
 export function matchesFilter(description: string, include: string[], exclude: string[]): boolean {
   const text = description.toLowerCase().split('/').join(' ')
   return include.every(t => text.includes(t)) && !exclude.some(t => text.includes(t))

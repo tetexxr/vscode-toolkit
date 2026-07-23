@@ -198,7 +198,6 @@ export function formatMarkdownTables(text: string, mode: TableFormatMode = 'alig
   return lines.join(eol)
 }
 
-/** The table block containing `line`, or null. */
 export function tableBlockAtLine(lines: string[], line: number): TableBlock | null {
   return findTableBlocks(lines).find(b => line >= b.start && line <= b.end) ?? null
 }

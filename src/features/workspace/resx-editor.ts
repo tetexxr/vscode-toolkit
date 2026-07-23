@@ -93,7 +93,6 @@ class GridSession {
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables)
   }
 
-  /** Build the ordered list of columns by listing the document's folder. */
   private async resolveColumns(): Promise<void> {
     const parsed = parseResxName(path.basename(this.document.uri.fsPath))
     const dir = vscode.Uri.joinPath(this.document.uri, '..')
@@ -151,7 +150,6 @@ class GridSession {
     return this.columns.find(c => c.id === id)
   }
 
-  /** Compute the full grid payload from the current document contents. */
   private buildGrid(): GridPayload {
     const neutral = this.columns.find(c => c.locale === null)
     const neutralText = neutral?.document.getText() ?? ''
@@ -258,7 +256,6 @@ class GridSession {
     }
   }
 
-  /** Write a value into one column's file, replacing or inserting the entry. */
   private async setValue(colId: string, key: string, value: string): Promise<void> {
     const col = this.columnById(colId)
     if (!col) {
@@ -288,7 +285,6 @@ class GridSession {
     // onDidChangeTextDocument will refresh the grid (present flags, etc.).
   }
 
-  /** Prompt for a new key and add it (empty) to every language. */
   private async addKey(): Promise<void> {
     const key = await vscode.window.showInputBox({
       title: 'Add resource key',
@@ -319,7 +315,6 @@ class GridSession {
     await vscode.workspace.applyEdit(edit)
   }
 
-  /** Rename a key across every language file. */
   private async renameKey(oldKey: string): Promise<void> {
     const newKey = await vscode.window.showInputBox({
       title: 'Rename resource key',
@@ -356,7 +351,6 @@ class GridSession {
     }
   }
 
-  /** Delete a key from every language file (with confirmation). */
   private async deleteKey(key: string): Promise<void> {
     const present = this.columns.filter(c => findEntryLineRange(c.document.getText(), key))
     if (present.length === 0) {
@@ -382,7 +376,6 @@ class GridSession {
     await vscode.workspace.applyEdit(edit)
   }
 
-  /** Rewrite every file in the group to the canonical compact format. */
   private async normalize(): Promise<void> {
     const edit = new vscode.WorkspaceEdit()
     for (const col of this.columns) {
@@ -399,7 +392,6 @@ class GridSession {
     await vscode.workspace.applyEdit(edit)
   }
 
-  /** Reorder every locale file to match the neutral key order. */
   private async sortToNeutral(): Promise<void> {
     if (this.neutralKeys.length === 0) {
       vscode.window.showInformationMessage('Toolkit: no neutral file to sort against.')

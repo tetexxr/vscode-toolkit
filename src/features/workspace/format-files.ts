@@ -76,7 +76,6 @@ async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Prom
   )
 }
 
-/** Runs the organize-imports code action on a document without focusing it. */
 async function organizeImports(doc: vscode.TextDocument): Promise<void> {
   const fullRange = new vscode.Range(0, 0, doc.lineCount, 0)
   const actions = await vscode.commands.executeCommand<(vscode.CodeAction | vscode.Command)[] | undefined>(

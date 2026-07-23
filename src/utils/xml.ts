@@ -61,7 +61,6 @@ export function parsePackageReferences(xml: string): PackageReference[] {
   return results
 }
 
-/** Extracts the value of a named attribute from an XML attribute string. */
 function extractAttribute(attrs: string, name: string): string | undefined {
   const re = new RegExp(`${name}\\s*=\\s*"([^"]*)"`, 'i')
   const match = attrs.match(re)

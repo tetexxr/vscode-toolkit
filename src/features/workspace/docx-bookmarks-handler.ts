@@ -35,7 +35,6 @@ export class DocxBookmarksHandler implements vscode.Disposable {
     this.disposables.push(this.webview.onDidReceiveMessage((msg: WebviewMessage) => this.handleMessage(msg)))
   }
 
-  /** Re-point the panel at a new selection (or the workspace when empty). */
   public async retarget(targets: vscode.Uri[], autoFix: boolean): Promise<void> {
     this.targets = targets
     this.autoFix = autoFix

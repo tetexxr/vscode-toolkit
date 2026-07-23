@@ -10,12 +10,10 @@ import type { Project } from './nuget-types'
 
 const PROJECT_GLOB = '**/*.{csproj,fsproj,vbproj}'
 
-/** Find all .NET project files in the workspace. */
 export async function discoverProjectFiles(): Promise<vscode.Uri[]> {
   return vscode.workspace.findFiles(PROJECT_GLOB, undefined, 64)
 }
 
-/** Show a QuickPick to let the user select a project file. */
 export async function pickProjectFile(): Promise<vscode.Uri | undefined> {
   const files = await discoverProjectFiles()
 
@@ -37,7 +35,6 @@ export async function pickProjectFile(): Promise<vscode.Uri | undefined> {
   return picked?.uri
 }
 
-/** Load a project file: read XML and extract PackageReference entries. */
 export async function loadProject(projectFileUri: vscode.Uri): Promise<Project> {
   const content = await vscode.workspace.fs.readFile(projectFileUri)
   const xml = Buffer.from(content).toString('utf-8')
@@ -50,7 +47,6 @@ export async function loadProject(projectFileUri: vscode.Uri): Promise<Project> 
   }
 }
 
-/** Re-read a project file by its filesystem path. */
 export async function reloadProject(fsPath: string): Promise<Project> {
   return loadProject(vscode.Uri.file(fsPath))
 }

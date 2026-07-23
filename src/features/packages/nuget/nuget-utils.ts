@@ -97,7 +97,6 @@ export function normalizePath(p: string): string {
 
 // ── Per-project filtering ──────────────────────────────────
 
-/** Apply the user's text filter and the active tab (installed vs updates) to a view-model list. */
 export function filterPackages(all: PackageViewModel[], query: string, category: Category): PackageViewModel[] {
   let packages = all
   const trimmed = query.trim().toLowerCase()
