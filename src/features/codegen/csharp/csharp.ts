@@ -58,7 +58,6 @@ export function registerCSharpCommands(context: vscode.ExtensionContext) {
 }
 
 async function createCSharpFile(extensionPath: string, templateKey: string, uri?: vscode.Uri): Promise<void> {
-  // Determine target directory
   const targetDir = resolveTargetDir(uri)
   if (!targetDir) {
     vscode.window.showErrorMessage('No folder selected.')
@@ -80,11 +79,9 @@ async function createCSharpFile(extensionPath: string, templateKey: string, uri?
 
   const className = input.trim()
 
-  // Get project info and namespace
   const projectInfo = getProjectInfo(targetDir)
   const namespace = calculateNamespace(targetDir, projectInfo)
 
-  // Read settings
   const config = vscode.workspace.getConfiguration('toolkit.csharp')
   const fileConfig = vscode.workspace.getConfiguration('files')
   const editorConfig = vscode.workspace.getConfiguration('editor')
@@ -97,7 +94,6 @@ async function createCSharpFile(extensionPath: string, templateKey: string, uri?
   const includeUsings = config.get<boolean>('includeUsings', true)
   const filterImplicitUsings = config.get<boolean>('filterImplicitUsings', true)
 
-  // Get template definitions
   const templates = TEMPLATE_MAP[templateKey]
   if (!templates) return
 

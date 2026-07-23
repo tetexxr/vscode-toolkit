@@ -92,7 +92,6 @@ async function applyTransformation(fn: (input: string) => string): Promise<void>
 
   const document = editor.document
 
-  // Build the list of edits: { range, original, replacement }
   const edits: { range: vscode.Range; replacement: string }[] = []
 
   for (const selection of editor.selections) {

@@ -167,7 +167,6 @@ export function toSlug(input: string, options: SlugOptions = {}): string {
     result = result.replace(/([a-z\d])([A-Z])/g, '$1 $2').replace(/([A-Z]+)([A-Z][a-z\d]+)/g, '$1 $2')
   }
 
-  // Lowercase
   if (lowercase) {
     result = result.toLowerCase()
   }

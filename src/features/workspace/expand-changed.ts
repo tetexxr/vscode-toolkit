@@ -61,7 +61,6 @@ export function registerExpandChangedFilesCommands(context: vscode.ExtensionCont
 
           const directories = getChangedFileDirectories(filePaths)
 
-          // Focus explorer
           await vscode.commands.executeCommand('workbench.files.action.focusFilesExplorer')
           await delay(100)
 

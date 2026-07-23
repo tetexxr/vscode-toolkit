@@ -9,7 +9,6 @@ export function buildTemplate(options: BuildTemplateOptions): BuildTemplateResul
   // Normalize to \n for processing
   content = content.replace(/\r\n/g, '\n')
 
-  // Build using statements
   const usingsBlock = buildUsings(options)
 
   // Apply substitutions
@@ -22,10 +21,8 @@ export function buildTemplate(options: BuildTemplateOptions): BuildTemplateResul
     content = toFileScopedNamespace(content, options.tabSize)
   }
 
-  // Find cursor position (before removing placeholder)
+  // Find cursor position before removing the placeholder it marks.
   const cursorPosition = findCursorPosition(content)
-
-  // Remove cursor placeholder
   content = content.replace('${cursor}', '')
 
   // Apply target EOL

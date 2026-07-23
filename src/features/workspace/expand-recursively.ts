@@ -123,7 +123,6 @@ export function registerExpandRecursivelyCommands(context: vscode.ExtensionConte
       async (uri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
         const excludePatterns = getExcludePatterns()
 
-        // Determine target folders
         let targets: vscode.Uri[]
         if (selectedUris && selectedUris.length > 0) {
           targets = selectedUris

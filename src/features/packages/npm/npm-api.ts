@@ -232,7 +232,6 @@ async function fetchSinglePackageMetadata(
   }
 }
 
-/** Extract version details from full package metadata. */
 /** Extract and sort version details from full package metadata. Exported for testing. */
 export function extractVersionDetails(metadata: NpmPackageMetadata, prerelease: boolean): NpmVersionDetail[] {
   const versions = Object.keys(metadata.versions || {})

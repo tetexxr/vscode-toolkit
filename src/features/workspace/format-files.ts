@@ -53,7 +53,6 @@ async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Prom
     return
   }
 
-  // Confirm with user
   const confirm = await vscode.window.showInformationMessage(`Format ${files.length} file(s)?`, { modal: true }, 'Yes')
   if (confirm !== 'Yes') {
     return
@@ -68,7 +67,6 @@ async function findAndFormat(includeGlob: string, baseFolder?: vscode.Uri): Prom
     async (progress, token) => {
       const increment = (1 / files.length) * 100
 
-      // Report initial
       progress.report({ increment: 0 })
 
       const processed = await formatWithProgress(files, token, progress, increment)
