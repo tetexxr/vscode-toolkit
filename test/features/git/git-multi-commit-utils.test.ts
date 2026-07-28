@@ -3,7 +3,7 @@ import {
   autoSelectedTargets,
   computePrechecked,
   partitionTargets,
-  SelectableRepo,
+  type SelectableRepo,
   selectedRootsFromArgs
 } from '../../../src/features/git/git-multi-commit-utils'
 
