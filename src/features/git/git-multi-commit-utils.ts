@@ -1,6 +1,30 @@
-/** A repository that has staged changes and may be selected in the SCM view. */
-export interface StagedRepo {
+/** A repository a multi-repo action can target, and whether it is selected in the SCM view. */
+export interface SelectableRepo {
   selectedInScm: boolean
+}
+
+export interface PartitionedTargets<T> {
+  /** Repositories the action can run on. */
+  candidates: T[]
+  /** Repositories selected in the SCM view that the action cannot run on. */
+  ignored: T[]
+}
+
+/**
+ * Splits repositories into the ones an action can run on and the ones the user
+ * selected in the SCM view but that have nothing to do (nothing staged, no
+ * upstream to pull from...). The latter are surfaced in the picker as
+ * non-runnable rows so a selected repository is never silently dropped;
+ * unselected repositories with nothing to do are simply left out.
+ */
+export function partitionTargets<T extends SelectableRepo>(
+  repos: readonly T[],
+  canRun: (repo: T) => boolean
+): PartitionedTargets<T> {
+  return {
+    candidates: repos.filter(r => canRun(r)),
+    ignored: repos.filter(r => r.selectedInScm && !canRun(r))
+  }
 }
 
 /**
@@ -8,7 +32,7 @@ export interface StagedRepo {
  * When the user has explicitly selected repos in the SCM "Repositories" view,
  * those drive the pre-selection; otherwise every candidate is pre-checked.
  */
-export function computePrechecked(candidates: readonly StagedRepo[]): boolean[] {
+export function computePrechecked(candidates: readonly SelectableRepo[]): boolean[] {
   const anySelected = candidates.some(c => c.selectedInScm)
   return candidates.map(c => (anySelected ? c.selectedInScm : true))
 }
@@ -19,7 +43,7 @@ export function computePrechecked(candidates: readonly StagedRepo[]): boolean[] 
  * returns those selected candidates. With 0 or 1 selected it returns null, meaning
  * the picker should be shown instead.
  */
-export function autoSelectedTargets<T extends StagedRepo>(candidates: readonly T[]): T[] | null {
+export function autoSelectedTargets<T extends SelectableRepo>(candidates: readonly T[]): T[] | null {
   const selected = candidates.filter(c => c.selectedInScm)
   return selected.length >= 2 ? selected : null
 }
