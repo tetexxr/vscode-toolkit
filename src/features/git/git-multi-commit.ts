@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
-import { commit, getChangedFiles, getCurrentBranch, getStagedFiles, getUpstream, push, stageAll, sync } from '../../utils/git'
+import { commit, getChangedFiles, getCurrentBranch, getStagedFiles, getUpstream, pull, push, stageAll, sync } from '../../utils/git'
 import { logError } from '../../utils/logger'
-import { autoSelectedTargets, computePrechecked, selectedRootsFromArgs } from './git-multi-commit-utils'
+import { autoSelectedTargets, computePrechecked, partitionTargets, selectedRootsFromArgs } from './git-multi-commit-utils'
 
 /** Minimal shape of a vscode.git repository we need here. */
 interface GitRepository {
@@ -223,7 +223,7 @@ async function commitAcrossRepos(action: CommitAction, scmArgs: unknown[] = []):
 
   const repos = await gatherRepos(api)
   applyScmSelection(repos, scmArgs)
-  const candidates = repos.filter(r => filesOf(r).length > 0)
+  const { candidates, ignored } = partitionTargets(repos, r => filesOf(r).length > 0)
   if (candidates.length === 0) {
     const hint = action.stageAll
       ? 'No changes in any repository.'
@@ -232,11 +232,7 @@ async function commitAcrossRepos(action: CommitAction, scmArgs: unknown[] = []):
     return
   }
 
-  // SCM-selected repos with nothing to do → shown as info rows only.
-  const candidateRoots = new Set(candidates.map(c => c.root))
-  const infoRows = repos
-    .filter(r => r.selectedInScm && !candidateRoots.has(r.root))
-    .map(r => ({ label: r.name, description: `nothing ${noun} — ignored` }))
+  const infoRows = ignored.map(r => ({ label: r.name, description: `nothing ${noun} — ignored` }))
 
   const targets = await pickTargets(
     candidates,
@@ -277,38 +273,69 @@ async function commitAcrossRepos(action: CommitAction, scmArgs: unknown[] = []):
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Synchronize (pull + push)                                                 */
+/*  Pull / Synchronize (pull + push)                                          */
 /* -------------------------------------------------------------------------- */
 
-async function syncAcrossRepos(scmArgs: unknown[] = []): Promise<void> {
+interface RemoteAction {
+  readonly title: string
+  readonly doneVerb: string
+  readonly placeHolder: string
+  /** A pull has nothing to pull without a tracking branch; a sync pushes those repositories with `-u` instead. */
+  readonly requiresUpstream: boolean
+  readonly run: (root: string) => Promise<void>
+}
+
+const PULL: RemoteAction = {
+  title: 'Pull',
+  doneVerb: 'Pulled',
+  placeHolder: 'Each repository pulls from its upstream',
+  requiresUpstream: true,
+  run: pull
+}
+
+const SYNC: RemoteAction = {
+  title: 'Synchronize',
+  doneVerb: 'Synchronized',
+  placeHolder: 'Each repository pulls, then pushes',
+  requiresUpstream: false,
+  run: sync
+}
+
+async function runRemoteActionAcrossRepos(action: RemoteAction, scmArgs: unknown[] = []): Promise<void> {
   const api = await getGitApi()
   if (!api || api.repositories.length === 0) {
     vscode.window.showInformationMessage('No git repositories are open.')
     return
   }
 
-  // Sync doesn't depend on staged changes — every open repository is a candidate.
-  const candidates = await gatherRepos(api)
-  applyScmSelection(candidates, scmArgs)
+  // These actions don't depend on staged changes — every open repository takes part.
+  const repos = await gatherRepos(api)
+  applyScmSelection(repos, scmArgs)
+  const { candidates, ignored } = partitionTargets(repos, r => !action.requiresUpstream || Boolean(r.upstream))
+  if (candidates.length === 0) {
+    vscode.window.showInformationMessage('No repository tracks an upstream branch, so there is nothing to pull.')
+    return
+  }
 
   const targets = await pickTargets(
     candidates,
     c => ({ description: c.upstream ? `${c.branch} → ${c.upstream}` : `${c.branch} (no upstream)` }),
-    [],
-    'Synchronize — select repositories',
-    'Each repository pulls, then pushes'
+    ignored.map(r => ({ label: r.name, description: 'no upstream — ignored' })),
+    `${action.title} — select repositories`,
+    action.placeHolder
   )
   if (!targets || targets.length === 0) {
     return
   }
 
-  const results = await runPerRepo(targets, 'Synchronize', repo => sync(repo.root))
-  reportResults(results, 'Synchronized')
+  const results = await runPerRepo(targets, action.title, repo => action.run(repo.root))
+  reportResults(results, action.doneVerb)
 }
 
 export function registerGitMultiCommitCommands(context: vscode.ExtensionContext) {
   context.subscriptions.push(
-    vscode.commands.registerCommand('toolkit.git.syncAllRepos', (...args) => syncAcrossRepos(args)),
+    vscode.commands.registerCommand('toolkit.git.pullAllRepos', (...args) => runRemoteActionAcrossRepos(PULL, args)),
+    vscode.commands.registerCommand('toolkit.git.syncAllRepos', (...args) => runRemoteActionAcrossRepos(SYNC, args)),
     vscode.commands.registerCommand('toolkit.git.commitAllRepos', (...args) => commitAcrossRepos(COMMIT_ONLY, args)),
     vscode.commands.registerCommand('toolkit.git.commitPushAllRepos', (...args) => commitAcrossRepos(COMMIT_PUSH, args)),
     vscode.commands.registerCommand('toolkit.git.stageCommitAllRepos', (...args) => commitAcrossRepos(STAGE_COMMIT, args)),

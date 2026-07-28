@@ -2,17 +2,61 @@ import { strict as assert } from 'assert'
 import {
   autoSelectedTargets,
   computePrechecked,
-  selectedRootsFromArgs,
-  StagedRepo
+  partitionTargets,
+  type SelectableRepo,
+  selectedRootsFromArgs
 } from '../../../src/features/git/git-multi-commit-utils'
 
 function sourceControl(fsPath: string): unknown {
   return { rootUri: { fsPath } }
 }
 
-function repo(selectedInScm: boolean): StagedRepo {
+function repo(selectedInScm: boolean): SelectableRepo {
   return { selectedInScm }
 }
+
+interface TrackedRepo extends SelectableRepo {
+  upstream?: string
+}
+
+function tracked(selectedInScm: boolean, upstream?: string): TrackedRepo {
+  return { selectedInScm, upstream }
+}
+
+const hasUpstream = (r: TrackedRepo) => Boolean(r.upstream)
+
+describe('partitionTargets', () => {
+  it('should keep every runnable repository as a candidate, selected or not', () => {
+    const repos = [tracked(true, 'origin/main'), tracked(false, 'origin/main')]
+    assert.deepEqual(partitionTargets(repos, hasUpstream).candidates, repos)
+  })
+
+  it('should ignore the SCM-selected repositories it cannot run on', () => {
+    const repos = [tracked(true, 'origin/main'), tracked(true)]
+    const { candidates, ignored } = partitionTargets(repos, hasUpstream)
+    assert.deepEqual(candidates, [repos[0]])
+    assert.deepEqual(ignored, [repos[1]])
+  })
+
+  it('should leave unselected repositories it cannot run on out of both lists', () => {
+    const { candidates, ignored } = partitionTargets([tracked(false)], hasUpstream)
+    assert.deepEqual(candidates, [])
+    assert.deepEqual(ignored, [])
+  })
+
+  it('should keep every repository as a candidate when the action always runs', () => {
+    const repos = [tracked(true), tracked(false, 'origin/main')]
+    const { candidates, ignored } = partitionTargets(repos, () => true)
+    assert.deepEqual(candidates, repos)
+    assert.deepEqual(ignored, [])
+  })
+
+  it('should return empty lists when there are no repositories', () => {
+    const { candidates, ignored } = partitionTargets([], hasUpstream)
+    assert.deepEqual(candidates, [])
+    assert.deepEqual(ignored, [])
+  })
+})
 
 describe('computePrechecked', () => {
   it('should pre-check every candidate when none is selected in SCM', () => {
