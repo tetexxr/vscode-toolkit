@@ -28,6 +28,7 @@ export const FEATURE_CATALOG: FeatureEntry[] = [
   { category: 'Git', name: 'Expand Changed Files', command: 'toolkit.expandChangedFiles', description: 'Expand only the explorer folders containing git changes' },
   { category: 'Git', name: 'Stage Changes', description: 'Stage files/folders from the explorer context menu (multi-select, multi-repo)' },
   { category: 'Git', name: 'Commit & Push — Selected Repositories', command: 'toolkit.git.commitPushAllRepos', description: "One commit message + push across every selected repository's staged changes; from the Source Control context menu. Commit-only, stage-all + commit, and stage-all + commit + push variants available" },
+  { category: 'Git', name: 'Pull — Selected Repositories', command: 'toolkit.git.pullAllRepos', description: 'Pull every selected repository at once, skipping any without an upstream; from the Source Control context menu' },
   { category: 'Git', name: 'Synchronize — Selected Repositories', command: 'toolkit.git.syncAllRepos', description: 'Pull then push every selected repository at once (honours your pull.rebase config); from the Source Control context menu' },
   { category: 'Git', name: 'Peek Last Commit', command: 'toolkit.peekCommit.showLast', description: 'Hover any line to see the commit that last touched it' },
 
