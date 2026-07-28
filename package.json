@@ -541,6 +541,12 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.git.pullAllRepos",
+        "title": "Pull — Selected Repositories…",
+        "category": "Toolkit",
+        "icon": "$(repo-pull)"
+      },
+      {
         "command": "toolkit.git.syncAllRepos",
         "title": "Synchronize — Selected Repositories…",
         "category": "Toolkit",
@@ -1650,29 +1656,34 @@
     "menus": {
       "scm/sourceControl": [
         {
-          "command": "toolkit.git.syncAllRepos",
+          "command": "toolkit.git.pullAllRepos",
           "when": "scmProvider == git",
           "group": "1_toolkit@1"
         },
         {
-          "command": "toolkit.git.commitAllRepos",
+          "command": "toolkit.git.syncAllRepos",
           "when": "scmProvider == git",
           "group": "1_toolkit@2"
         },
         {
-          "command": "toolkit.git.commitPushAllRepos",
+          "command": "toolkit.git.commitAllRepos",
           "when": "scmProvider == git",
           "group": "1_toolkit@3"
         },
         {
-          "command": "toolkit.git.stageCommitAllRepos",
+          "command": "toolkit.git.commitPushAllRepos",
           "when": "scmProvider == git",
           "group": "1_toolkit@4"
         },
         {
-          "command": "toolkit.git.stageCommitPushAllRepos",
+          "command": "toolkit.git.stageCommitAllRepos",
           "when": "scmProvider == git",
           "group": "1_toolkit@5"
+        },
+        {
+          "command": "toolkit.git.stageCommitPushAllRepos",
+          "when": "scmProvider == git",
+          "group": "1_toolkit@6"
         }
       ],
       "view/title": [
@@ -2161,6 +2172,10 @@
         {
           "command": "toolkit.docx.fixFile",
           "when": "false"
+        },
+        {
+          "command": "toolkit.git.pullAllRepos",
+          "when": "gitOpenRepositoryCount != 0"
         },
         {
           "command": "toolkit.git.syncAllRepos",
