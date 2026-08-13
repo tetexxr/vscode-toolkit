@@ -2,8 +2,6 @@
   "name": "Generic Dark Theme",
   "type": "dark",
   "colors": {
-    // Colores de ENTORNO comentados temporalmente para ver el Modern UI
-    // con sus valores por defecto. Descomentar para restaurar el tema completo.
     // "foreground": "#BDBDBD",
     // "focusBorder": "#3474F0",
     // "descriptionForeground": "#8A8C90",
@@ -14,13 +12,13 @@
     // "sash.hoverBorder": "#3474F0",
     // "selection.background": "#3474F066",
 
-    // "titleBar.activeBackground": "#282A2D",
+    "titleBar.activeBackground": "#3C3C3C",
     // "titleBar.inactiveBackground": "#282A2D",
     // "titleBar.activeForeground": "#BDBDBD",
     // "titleBar.inactiveForeground": "#8A8C90",
     // "titleBar.border": "#282A2D",
 
-    // "activityBar.background": "#282A2D",
+    "activityBar.background": "#3C3C3C",
     // "activityBar.foreground": "#BDBDBD",
     // "activityBar.inactiveForeground": "#8A8C90",
     // "activityBar.border": "#282A2D",
@@ -238,7 +236,7 @@
     // "panelTitle.inactiveForeground": "#9FA1A5",
     // "panelInput.border": "#393B41",
 
-    // "statusBar.background": "#282A2D",
+    "statusBar.background": "#3C3C3C",
     // "statusBar.foreground": "#BDBDBD",
     // "statusBar.border": "#282A2D",
     // "statusBar.debuggingBackground": "#3474F0",
