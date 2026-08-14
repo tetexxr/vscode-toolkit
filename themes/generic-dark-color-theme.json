@@ -18,7 +18,9 @@
     // "titleBar.inactiveForeground": "#8A8C90",
     // "titleBar.border": "#282A2D",
 
-    "activityBar.background": "#3C3C3C",
+    // "activityBar.background": "#3C3C3C",
+    "activityBar.background": "#00000000",
+    "activityBar.activeBackground": "#00000000",
     // "activityBar.foreground": "#BDBDBD",
     // "activityBar.inactiveForeground": "#8A8C90",
     // "activityBar.border": "#282A2D",
@@ -242,6 +244,7 @@
     // "statusBar.debuggingBackground": "#3474F0",
     // "statusBar.debuggingForeground": "#FFFFFF",
     // "statusBar.noFolderBackground": "#1E1F22",
+    "statusBar.noFolderBackground": "#3C3C3C",
     // "statusBar.noFolderForeground": "#BDBDBD",
     // "statusBarItem.remoteBackground": "#3474F0",
     // "statusBarItem.remoteForeground": "#FFFFFF",
