@@ -2,7 +2,7 @@
   "name": "vscode-toolkit",
   "displayName": "Toolkit",
   "description": "All-in-one VS Code utility extension.",
-  "version": "1.20.4",
+  "version": "1.21.0",
   "publisher": "tete",
   "repository": {
     "type": "git",
@@ -1302,6 +1302,11 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.pptx.checkWorkspace",
+        "title": "Check PowerPoint Placeholders",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.pdf.inspectFields",
         "title": "Inspect PDF Fields",
         "category": "Toolkit"
@@ -1315,6 +1320,16 @@
         "command": "toolkit.docx.fixFile",
         "title": "Fix Split Bookmarks",
         "category": "Word Document"
+      },
+      {
+        "command": "toolkit.pptx.checkFile",
+        "title": "Check Placeholders",
+        "category": "PowerPoint"
+      },
+      {
+        "command": "toolkit.pptx.fixFile",
+        "title": "Fix Split Placeholders",
+        "category": "PowerPoint"
       },
       {
         "command": "toolkit.resx.syncGroup",
@@ -1615,6 +1630,10 @@
       {
         "id": "toolkit.menu.docx",
         "label": "Word Document"
+      },
+      {
+        "id": "toolkit.menu.pptx",
+        "label": "PowerPoint"
       },
       {
         "id": "toolkit.menu.markdown",
@@ -2162,6 +2181,11 @@
           "command": "toolkit.pdf.inspectFields",
           "when": "resourceExtname == .pdf",
           "group": "0_toolkit@14"
+        },
+        {
+          "submenu": "toolkit.menu.pptx",
+          "when": "resourceExtname == .pptx",
+          "group": "0_toolkit@15"
         }
       ],
       "commandPalette": [
@@ -2171,6 +2195,14 @@
         },
         {
           "command": "toolkit.docx.fixFile",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.pptx.checkFile",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.pptx.fixFile",
           "when": "false"
         },
         {
@@ -2738,6 +2770,16 @@
         },
         {
           "command": "toolkit.docx.fixFile",
+          "group": "2_fix@1"
+        }
+      ],
+      "toolkit.menu.pptx": [
+        {
+          "command": "toolkit.pptx.checkFile",
+          "group": "1_check@1"
+        },
+        {
+          "command": "toolkit.pptx.fixFile",
           "group": "2_fix@1"
         }
       ],
@@ -4056,17 +4098,17 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^26.0.1",
+    "@types/node": "^26.2.0",
     "@types/vscode": "^1.125.0",
     "@vscode/vsce": "^3.9.2",
-    "esbuild": "^0.28.1",
-    "eslint": "^10.6.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
-    "mocha": "^11.7.6",
-    "pdfjs-dist": "^6.1.200",
-    "prettier": "^3.9.3",
-    "tsx": "^4.22.4",
-    "typescript-eslint": "^8.62.0"
+    "mocha": "^11.8.0",
+    "pdfjs-dist": "^6.2.108",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.12",
+    "typescript-eslint": "^8.68.0"
   },
   "overrides": {
     "diff": "^9.0.0",
