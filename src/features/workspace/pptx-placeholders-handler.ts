@@ -15,7 +15,7 @@ const EXCLUDE = '**/{node_modules,bin,obj,.git,.vs}/**'
 type WebviewMessage =
   | { command: 'ready' }
   | { command: 'scanWorkspace' }
-  | { command: 'fix'; file: string; part: string; name: string }
+  | { command: 'fix'; file: string; part: string; target: string }
   | { command: 'fixAll' }
   | { command: 'revealFile'; file: string }
 
@@ -53,7 +53,7 @@ export class PptxPlaceholdersHandler implements vscode.Disposable {
         this.targets = []
         return this.scanAndSend()
       case 'fix':
-        return this.fixOne(msg.file, msg.part, msg.name)
+        return this.fixOne(msg.file, msg.part, msg.target)
       case 'fixAll':
         return this.fixAll()
       case 'revealFile':
@@ -89,7 +89,7 @@ export class PptxPlaceholdersHandler implements vscode.Disposable {
   private async analyzeFile(uri: vscode.Uri): Promise<PlaceholderRow[]> {
     const relPath = vscode.workspace.asRelativePath(uri)
     const failed = (name: string, detail: string): PlaceholderRow[] => [
-      { file: uri.fsPath, relPath, part: '', location: '', name, kind: 'malformed', detail, runCount: 0, uses: 1, fixable: false }
+      { file: uri.fsPath, relPath, part: '', location: '', name, target: name, kind: 'malformed', detail, runCount: 0, uses: 1, fixable: false }
     ]
 
     let bytes: Uint8Array
@@ -114,11 +114,11 @@ export class PptxPlaceholdersHandler implements vscode.Disposable {
     return all
   }
 
-  private async fixOne(file: string, part: string, name: string): Promise<void> {
+  private async fixOne(file: string, part: string, target: string): Promise<void> {
     const uri = vscode.Uri.file(file)
     try {
       const bytes = await vscode.workspace.fs.readFile(uri)
-      const result = fixPptx(bytes, [{ part, name }])
+      const result = fixPptx(bytes, [{ part, name: target }])
       if (result.fixed.length > 0) {
         await vscode.workspace.fs.writeFile(uri, result.buffer)
       }
@@ -134,14 +134,18 @@ export class PptxPlaceholdersHandler implements vscode.Disposable {
     const fixableFiles = [...this.rowsByFile.entries()].filter(([, rows]) => rows.some(r => r.fixable))
     const fixableCount = this.allRows().filter(r => r.fixable).length
     if (fixableCount === 0) {
-      vscode.window.showInformationMessage('Toolkit: no fixable (split-run) placeholders in the current scope.')
+      vscode.window.showInformationMessage('Toolkit: no fixable placeholders in the current scope.')
       return
     }
     const filePlural = fixableFiles.length === 1 ? 'file' : 'files'
     const placeholderPlural = fixableCount === 1 ? 'placeholder' : 'placeholders'
     const choice = await vscode.window.showWarningMessage(
-      `Consolidate ${fixableCount} split ${placeholderPlural} in ${fixableFiles.length} ${filePlural}? This rewrites the .pptx in place.`,
-      { modal: true, detail: 'Each placeholder is merged into a single run; the text around it keeps its own formatting.' },
+      `Fix ${fixableCount} ${placeholderPlural} in ${fixableFiles.length} ${filePlural}? This rewrites the .pptx in place.`,
+      {
+        modal: true,
+        detail:
+          'Split placeholders are merged into a single run, and loosely written names are canonicalised ({{ work centers }} → {{WorkCenters}}). The text around them keeps its own formatting.',
+      },
       'Fix'
     )
     if (choice !== 'Fix') {
@@ -163,7 +167,7 @@ export class PptxPlaceholdersHandler implements vscode.Disposable {
       }
     }
     this.sendState()
-    vscode.window.showInformationMessage(`Toolkit: consolidated ${fixed} placeholder(s) across ${fixableFiles.length} ${filePlural}.`)
+    vscode.window.showInformationMessage(`Toolkit: fixed ${fixed} placeholder(s) across ${fixableFiles.length} ${filePlural}.`)
   }
 
   private sendState(): void {

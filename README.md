@@ -1542,13 +1542,26 @@ PowerPoint splits text across runs (`<a:r><a:t>`) as freely as Word does — aut
 This feature reads the `.pptx` (a ZIP), inspects the DrawingML text in the slides — plus layouts, masters and notes — and reports:
 
 - **Split across runs** — the placeholder is stored in more than one run. *Fixable.*
-- **Crosses a break** — the braces have a line break or a field (slide number, automatic date) between them; merging would swallow it, so it is reported for manual review.
-- **Malformed** — a `{{…}}` pair that is not a single word (`{{ Company }}`, `{{Company Name}}`); the exporter will not recognise it and it would be printed as is on the slide.
+- **Malformed** — a `{{…}}` pair that is not the single word the convention asks for (`{{ address 2 }}`, `{{ work centers }}`, `{{send_date}}`); the exporter would not recognise it and the braces would be printed as is on the slide the customer reads. *Fixable* — the fix renames it. A pair with no letter or digit inside (`{{   }}`) has no name to build from, so it is only reported.
+- **Crosses a break** — the braces have a line break or a field (slide number, automatic date) between them; rewriting would swallow it, so it is reported for manual review.
 - **Unclosed** — braces with no counterpart in the same paragraph.
 
 Findings open in the **PowerPoint Placeholders** panel: a filterable table with one row per placeholder and location (File · Placeholder · Location · Status · Runs · Action), colored status badges, a search box, an *Issues / Fixable / All* filter, and sortable columns. *Location* is the slide the placeholder lives on, so a `{{Company}}` used on slides 1 and 9 is one row each; used twice on the same slide it is a single row marked `×2`. With the *All* filter the table doubles as the template's placeholder inventory. Click a file name to reveal it in the Explorer.
 
-**Fixing** rewrites the runs a placeholder is spread over as up to three: the text before `{{`, the placeholder itself, and the text after `}}`. Unlike a Word bookmark — a range whose useful text is unknown, so the whole region has to be flattened — the token delimits itself, so only the placeholder is merged and the text around it keeps its own runs and formatting. Click **Fix** on a row to consolidate that one (the row updates live), or **Fix all** to do every fixable one at once after a confirmation; both rewrite the `.pptx` in place.
+**Fixing** rewrites the runs a placeholder is spread over as up to three: the text before `{{`, the placeholder itself, and the text after `}}`. Unlike a Word bookmark — a range whose useful text is unknown, so the whole region has to be flattened — the token delimits itself, so only the placeholder is rewritten and the text around it keeps its own runs and formatting.
+
+The same rewrite canonicalises the name, so a loosely written placeholder and a split one are settled in one pass:
+
+| Written | Fixed to | Rule |
+|---|---|---|
+| `{{ Address2 }}` | `{{Address2}}` | Padding dropped |
+| `{{ address 2 }}` | `{{Address2}}` | Words folded together |
+| `{{ work centers }}` | `{{WorkCenters}}` | Each word capitalised |
+| `{{send_date}}`, `{{send-date}}`, `{{send.date}}` | `{{SendDate}}` | Any separator is a word boundary |
+| `{{ Résumé Date }}` | `{{ResumeDate}}` | Accents folded onto their base letter |
+| `{{ VAT included }}` | `{{VATIncluded}}` | Only the first letter of a word is touched, so acronyms survive |
+
+The table shows the rename before you apply it (`{{ address 2 }} → {{Address2}}`), and the exporter's token names have to match the canonical one — a placeholder that had to be renamed never worked in the first place, so this can only bring it closer to working. Click **Fix** on a row to settle that one (the row updates live), or **Fix all** to do every fixable one at once after a confirmation; both rewrite the `.pptx` in place.
 
 **Commands:**
 

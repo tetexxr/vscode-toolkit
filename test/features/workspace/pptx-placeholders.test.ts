@@ -7,7 +7,8 @@ import {
   analyzePptx,
   fixPptx,
   isPptxXmlPart,
-  partLabel
+  partLabel,
+  canonicalName
 } from '../../../src/features/workspace/pptx-placeholders-utils'
 
 const RPR = '<a:rPr lang="es-ES" sz="850" dirty="0"/>'
@@ -70,11 +71,51 @@ describe('partLabel', () => {
   })
 })
 
+describe('canonicalName', () => {
+  it('folds the words of a loose name into one', () => {
+    assert.equal(canonicalName(' address 2 '), 'Address2')
+    assert.equal(canonicalName(' Address2 '), 'Address2')
+    assert.equal(canonicalName(' work centers '), 'WorkCenters')
+  })
+
+  it('treats every separator as a word boundary', () => {
+    assert.equal(canonicalName('send_date'), 'SendDate')
+    assert.equal(canonicalName('send-date'), 'SendDate')
+    assert.equal(canonicalName('send.date'), 'SendDate')
+    assert.equal(canonicalName('Price €'), 'Price')
+  })
+
+  it('folds accents onto their base letter', () => {
+    assert.equal(canonicalName('Résumé Date'), 'ResumeDate')
+    assert.equal(canonicalName('Zürich'), 'Zurich')
+  })
+
+  it('capitalises the first letter only, so acronyms survive', () => {
+    assert.equal(canonicalName('VAT included'), 'VATIncluded')
+    assert.equal(canonicalName('ID service'), 'IDService')
+  })
+
+  it('reads the stored text through its XML escaping', () => {
+    assert.equal(canonicalName('Sales &amp; Marketing'), 'SalesMarketing')
+    assert.equal(canonicalName('Z&#252;rich Office'), 'ZurichOffice')
+  })
+
+  it('leaves a name that is already canonical alone', () => {
+    assert.equal(canonicalName('Company'), 'Company')
+    assert.equal(canonicalName('WorkCenterCount'), 'WorkCenterCount')
+  })
+
+  it('has no name to offer when there is no letter or digit', () => {
+    assert.equal(canonicalName('   '), '')
+    assert.equal(canonicalName('—'), '')
+  })
+})
+
 describe('analyzeXmlPart', () => {
   const part = 'ppt/slides/slide1.xml'
 
   it('reports a placeholder held in a single run as clean', () => {
-    const xml = slideXml(paragraph(run('Fecha envío, ') + run('{{SendDate}}')))
+    const xml = slideXml(paragraph(run('Sent on ') + run('{{SendDate}}')))
     const analysis = analyzeXmlPart(xml, part)
     assert.deepEqual(
       analysis.placeholders.map(p => ({ name: p.name, runCount: p.runCount })),
@@ -84,7 +125,7 @@ describe('analyzeXmlPart', () => {
   })
 
   it('flags a placeholder stored across runs as fixable', () => {
-    const xml = slideXml(paragraph(run('Fecha envío, {{Send') + run('Date') + run('}}')))
+    const xml = slideXml(paragraph(run('Sent on {{Send') + run('Date') + run('}}')))
     const analysis = analyzeXmlPart(xml, part)
     assert.deepEqual(analysis.placeholders.map(p => p.runCount), [3])
     assert.equal(analysis.issues.length, 1)
@@ -108,21 +149,43 @@ describe('analyzeXmlPart', () => {
     assert.ok(!analysis.issues[0].fixable)
   })
 
-  it('reports braces that are not a single word', () => {
+  it('offers to canonicalise braces that are not a single word', () => {
     const xml = slideXml(paragraph(run('{{ Company }} y {{Company Name}}')))
     const analysis = analyzeXmlPart(xml, part)
-    assert.deepEqual(analysis.placeholders, [])
     assert.deepEqual(
-      analysis.issues.map(i => ({ kind: i.kind, name: i.name })),
+      analysis.placeholders.map(p => ({ raw: p.raw, name: p.name })),
       [
-        { kind: 'malformed', name: '{{ Company }}' },
-        { kind: 'malformed', name: '{{Company Name}}' }
+        { raw: ' Company ', name: 'Company' },
+        { raw: 'Company Name', name: 'CompanyName' }
       ]
     )
+    assert.deepEqual(
+      analysis.issues.map(i => ({ kind: i.kind, name: i.name, fixable: i.fixable })),
+      [
+        { kind: 'malformed', name: ' Company ', fixable: true },
+        { kind: 'malformed', name: 'Company Name', fixable: true }
+      ]
+    )
+    assert.ok(analysis.issues[0].detail.includes('{{Company}}'))
+  })
+
+  it('has nothing to offer for braces with no name inside', () => {
+    const xml = slideXml(paragraph(run('{{   }}')))
+    const analysis = analyzeXmlPart(xml, part)
+    assert.equal(analysis.issues.length, 1)
+    assert.equal(analysis.issues[0].kind, 'malformed')
+    assert.ok(!analysis.issues[0].fixable)
+  })
+
+  it('reports a loose name that crosses a break as manual work', () => {
+    const xml = slideXml(paragraph(run('{{ send') + '<a:br/>' + run(' date }}')))
+    const analysis = analyzeXmlPart(xml, part)
+    assert.equal(analysis.issues[0].kind, 'crosses-break')
+    assert.ok(!analysis.issues[0].fixable)
   })
 
   it('reports braces with no counterpart in the paragraph', () => {
-    const xml = slideXml(paragraph(run('Importe {{Price')) + paragraph(run('cerrado}} aparte')))
+    const xml = slideXml(paragraph(run('Amount {{Price')) + paragraph(run('closed}} elsewhere')))
     const analysis = analyzeXmlPart(xml, part)
     assert.deepEqual(analysis.issues.map(i => i.kind), ['unclosed', 'unclosed'])
     assert.deepEqual(analysis.placeholders, [])
@@ -137,11 +200,11 @@ describe('analyzeXmlPart', () => {
 
 describe('fixXmlPart', () => {
   it('merges the placeholder without disturbing the text around it', () => {
-    const xml = slideXml(paragraph(run('Fecha envío, {{Send', RPR) + run('Date', BOLD) + run('}} — final', BOLD)))
+    const xml = slideXml(paragraph(run('Sent on {{Send', RPR) + run('Date', BOLD) + run('}}, draft', BOLD)))
     const result = fixXmlPart(xml)
 
     assert.deepEqual(result.fixed, ['SendDate'])
-    assert.deepEqual(texts(result.xml), ['Fecha envío, ', '{{SendDate}}', ' — final'])
+    assert.deepEqual(texts(result.xml), ['Sent on ', '{{SendDate}}', ', draft'])
     // The placeholder takes the formatting of the run it starts in; the tail keeps its own.
     assert.deepEqual(runProperties(result.xml), [RPR, RPR, BOLD])
   })
@@ -153,10 +216,31 @@ describe('fixXmlPart', () => {
   })
 
   it('merges every split placeholder in the same paragraph', () => {
-    const xml = slideXml(paragraph(run('{{Work') + run('Centers}} centros y {{Collective') + run('Agreements}} convenios')))
+    const xml = slideXml(paragraph(run('{{Work') + run('Centers}} sites and {{Collective') + run('Agreements}} agreements')))
     const result = fixXmlPart(xml)
     assert.deepEqual(result.fixed.sort(), ['CollectiveAgreements', 'WorkCenters'])
-    assert.deepEqual(texts(result.xml), ['{{WorkCenters}}', ' centros y ', '{{CollectiveAgreements}}', ' convenios'])
+    assert.deepEqual(texts(result.xml), ['{{WorkCenters}}', ' sites and ', '{{CollectiveAgreements}}', ' agreements'])
+  })
+
+  it('canonicalises a loose name inside a single run', () => {
+    const xml = slideXml(paragraph(run('Proposal for {{ work centers }} sites')))
+    const result = fixXmlPart(xml)
+    assert.deepEqual(result.fixed, [' work centers '])
+    assert.deepEqual(texts(result.xml), ['Proposal for ', '{{WorkCenters}}', ' sites'])
+  })
+
+  it('canonicalises and merges in the same pass', () => {
+    const xml = slideXml(paragraph(run('{{ Send', RPR) + run('Date }}', BOLD)))
+    const result = fixXmlPart(xml)
+    assert.deepEqual(texts(result.xml), ['{{SendDate}}'])
+    assert.deepEqual(runProperties(result.xml), [RPR])
+  })
+
+  it('leaves braces with no name inside untouched', () => {
+    const xml = slideXml(paragraph(run('{{   }}')))
+    const result = fixXmlPart(xml)
+    assert.deepEqual(result.fixed, [])
+    assert.equal(result.xml, xml)
   })
 
   it('leaves a placeholder that crosses a break untouched', () => {
@@ -166,15 +250,15 @@ describe('fixXmlPart', () => {
     assert.equal(result.xml, xml)
   })
 
-  it('only merges the placeholders the caller asks for', () => {
-    const xml = slideXml(paragraph(run('{{Com') + run('pany}} ') + run('{{Pri') + run('ce}}')))
-    const result = fixXmlPart(xml, name => name === 'Price')
-    assert.deepEqual(result.fixed, ['Price'])
-    assert.deepEqual(texts(result.xml), ['{{Com', 'pany}} ', '{{Price}}'])
+  it('only fixes the placeholders the caller asks for, addressed as stored', () => {
+    const xml = slideXml(paragraph(run('{{Com') + run('pany}} ') + run('{{ address 2 }}')))
+    const result = fixXmlPart(xml, raw => raw === ' address 2 ')
+    assert.deepEqual(result.fixed, [' address 2 '])
+    assert.deepEqual(texts(result.xml), ['{{Com', 'pany}} ', '{{Address2}}'])
   })
 
   it('leaves a presentation with nothing to merge byte for byte', () => {
-    const xml = slideXml(paragraph(run('{{Company}}')) + paragraph(run('Sin marcadores')))
+    const xml = slideXml(paragraph(run('{{Company}}')) + paragraph(run('No placeholders here')))
     assert.equal(fixXmlPart(xml).xml, xml)
   })
 })
@@ -247,11 +331,19 @@ describe('analysisToRows', () => {
     assert.ok(row.fixable)
   })
 
-  it('gives malformed braces a row of their own', () => {
-    const buffer = pptxBuffer({ 'ppt/slides/slide1.xml': slideXml(paragraph(run('{{ Company }}'))) })
+  it('shows the rename a loose name would get, and addresses the fix as stored', () => {
+    const buffer = pptxBuffer({ 'ppt/slides/slide1.xml': slideXml(paragraph(run('{{ address 2 }}'))) })
+    const rows = analysisToRows('/tmp/deck.pptx', 'deck.pptx', analyzePptx(buffer))
+    assert.deepEqual(rows.map(r => ({ name: r.name, target: r.target, kind: r.kind, fixable: r.fixable })), [
+      { name: '{{ address 2 }} → {{Address2}}', target: ' address 2 ', kind: 'malformed', fixable: true }
+    ])
+  })
+
+  it('shows unmatched braces as themselves', () => {
+    const buffer = pptxBuffer({ 'ppt/slides/slide1.xml': slideXml(paragraph(run('Amount {{Price'))) })
     const rows = analysisToRows('/tmp/deck.pptx', 'deck.pptx', analyzePptx(buffer))
     assert.deepEqual(rows.map(r => ({ name: r.name, kind: r.kind, fixable: r.fixable })), [
-      { name: '{{ Company }}', kind: 'malformed', fixable: false }
+      { name: '{{Price', kind: 'unclosed', fixable: false }
     ])
   })
 })

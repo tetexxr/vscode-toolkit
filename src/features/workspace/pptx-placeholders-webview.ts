@@ -304,7 +304,7 @@ const JS = /*js*/ `
         '<td class="col-status"><span class="badge ' + s.cls + '" title="' + esc(r.detail) + '">' + esc(label) + '</span></td>' +
         '<td class="cell-runs">' + (r.runCount || '') + '</td>' +
         '<td>' + (r.fixable
-          ? '<button class="btn btn-fix" data-fix="1" data-file="' + esc(r.file) + '" data-part="' + esc(r.part) + '" data-name="' + esc(r.name) + '">Fix</button>'
+          ? '<button class="btn btn-fix" data-fix="1" data-file="' + esc(r.file) + '" data-part="' + esc(r.part) + '" data-target="' + esc(r.target) + '">Fix</button>'
           : '<span class="cell-detail">—</span>') +
         '</td>' +
       '</tr>';
@@ -323,7 +323,7 @@ const JS = /*js*/ `
       fixBtns[i].addEventListener('click', function () {
         this.disabled = true;
         this.innerHTML = '<span class="spinner"></span>';
-        post({ command: 'fix', file: this.getAttribute('data-file'), part: this.getAttribute('data-part'), name: this.getAttribute('data-name') });
+        post({ command: 'fix', file: this.getAttribute('data-file'), part: this.getAttribute('data-part'), target: this.getAttribute('data-target') });
       });
     }
     const headers = $content.querySelectorAll('th[data-sort]');

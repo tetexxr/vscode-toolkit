@@ -19,8 +19,14 @@ import { unzipSync, zipSync, strToU8, strFromU8 } from 'fflate'
  *
  * Unlike a Word bookmark — a *range* whose useful text is unknown, so the whole
  * region has to be flattened onto the first run's formatting — the token
- * delimits itself. Only `{{Token}}` is merged; the text around it keeps its own
- * runs and formatting untouched.
+ * delimits itself. Only `{{Token}}` is rewritten; the text around it keeps its
+ * own runs and formatting untouched.
+ *
+ * The same rewrite canonicalises the name: a template author writes
+ * `{{ address 2 }}` or `{{ work centers }}` as readily as `{{Address2}}`, and those are
+ * silent failures — the exporter doesn't recognise them and the braces end up
+ * printed on the slide the customer reads. Fixing one folds its words into the
+ * single word the convention asks for.
  *
  * Everything here is pure (no vscode); the ZIP layer uses fflate and the XML is
  * handled with regex, matching the rest of the toolkit's XML handling.
@@ -37,11 +43,11 @@ const PART_KINDS = [
 const PPTX_XML_PART =
   /^ppt\/(slides\/slide|slideLayouts\/slideLayout|slideMasters\/slideMaster|notesSlides\/notesSlide)(\d+)\.xml$/
 
-/** A well-formed placeholder: `{{`, one word, `}}`. */
-const TOKEN = /\{\{[A-Za-z0-9]+\}\}/g
-
-/** Any `{{…}}` pair — used to report the ones that don't qualify as a token. */
+/** Every `{{…}}` pair: the ones that are already a placeholder, and the ones to be made into one. */
 const BRACED = /\{\{([^{}]*)\}\}/g
+
+/** What a placeholder name must look like: one word, nothing else. */
+const CANONICAL_NAME = /^[A-Za-z0-9]+$/
 
 /** The paragraph: the unit a placeholder can never span. */
 const PARAGRAPH = /<a:p(?:\s[^>]*)?>[\s\S]*?<\/a:p>/g
@@ -60,7 +66,7 @@ export type PlaceholderIssueKind = 'split-runs' | 'crosses-break' | 'malformed' 
 
 export interface PlaceholderIssue {
   kind: PlaceholderIssueKind
-  /** Placeholder name, or the offending excerpt for `malformed` / `unclosed`. */
+  /** The text between the braces exactly as stored, or the excerpt for `unclosed`. */
   name: string
   /** The XML part the issue was found in, e.g. `ppt/slides/slide9.xml`. */
   part: string
@@ -70,6 +76,9 @@ export interface PlaceholderIssue {
 }
 
 export interface PlaceholderInfo {
+  /** The text between the braces exactly as stored — ` address 2 ` before a fix. */
+  raw: string
+  /** The name that text canonicalises to — `Address2`. Equal to `raw` when it already is one. */
   name: string
   part: string
   /** Runs the placeholder is spread over; 1 once it is consolidated. */
@@ -101,6 +110,8 @@ interface Inline {
 }
 
 interface Span {
+  raw: string
+  /** The canonical name the span will carry once rewritten; `''` when there is no name to build. */
   name: string
   /** Index of the first/last inline the placeholder touches. */
   first: number
@@ -109,6 +120,48 @@ interface Span {
   startOffset: number
   /** Offset just past `}}` within the last inline's text. */
   endOffset: number
+}
+
+/** Highest code point a numeric character reference can name. */
+const MAX_CODE_POINT = 0x10ffff
+
+/**
+ * Undo the XML escaping of the stored text before reading words out of it, so
+ * `&amp;` contributes an ampersand rather than the word `amp`.
+ */
+function decodeXmlText(text: string): string {
+  return text
+    .replace(/&#(\d{1,7});/g, (entity: string, code: string) => codePoint(Number(code), entity))
+    .replace(/&#x([0-9a-fA-F]{1,6});/g, (entity: string, code: string) => codePoint(parseInt(code, 16), entity))
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+}
+
+function codePoint(code: number, entity: string): string {
+  return code > 0 && code <= MAX_CODE_POINT ? String.fromCodePoint(code) : entity
+}
+
+/**
+ * The single word a `{{…}}` pair should hold: accents folded onto their base
+ * letter, every other separator (spaces, `_`, `-`, `.`, punctuation) treated as
+ * a word boundary, and each word capitalised — `{{ work centers }}` → `WorkCenters`,
+ * `{{ address 2 }}` → `Address2`, `{{send_date}}` → `SendDate`.
+ *
+ * Only the *first* letter of a word is touched, so a deliberate acronym keeps
+ * its shape (`{{ VAT included }}` → `VATIncluded`, never `VatIncluded`).
+ * Returns `''` when there is no letter or digit to build a name from.
+ */
+export function canonicalName(raw: string): string {
+  return decodeXmlText(raw)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^A-Za-z0-9]+/)
+    .filter(Boolean)
+    .map(word => word[0].toUpperCase() + word.slice(1))
+    .join('')
 }
 
 export function isPptxXmlPart(name: string): boolean {
@@ -181,13 +234,14 @@ function locate(inlines: Inline[], position: number): { index: number; offset: n
 function findSpans(inlines: Inline[]): Span[] {
   const joined = paragraphText(inlines)
   const spans: Span[] = []
-  TOKEN.lastIndex = 0
+  BRACED.lastIndex = 0
   let match: RegExpExecArray | null
-  while ((match = TOKEN.exec(joined)) !== null) {
+  while ((match = BRACED.exec(joined)) !== null) {
     const start = locate(inlines, match.index)
     const end = locate(inlines, match.index + match[0].length - 1)
     spans.push({
-      name: match[0].slice(2, -2),
+      raw: match[1],
+      name: CANONICAL_NAME.test(match[1]) ? match[1] : canonicalName(match[1]),
       first: start.index,
       last: end.index,
       startOffset: start.offset,
@@ -197,18 +251,36 @@ function findSpans(inlines: Inline[]): Span[] {
   return spans
 }
 
+function isSpreadOverRuns(span: Span): boolean {
+  return span.last > span.first
+}
+
+/** Whether the span already holds exactly the name it should. */
+function isCanonical(span: Span): boolean {
+  return span.raw === span.name
+}
+
 /** Inlines the placeholder is spread over — breaks and fields included. */
 function spannedInlines(inlines: Inline[], span: Span): Inline[] {
   return inlines.slice(span.first, span.last + 1)
 }
 
 /**
- * A span can be merged when it is spread over plain runs only. A line break or
- * a field (slide number, automatic date) between the braces is reported but
- * never rewritten — merging would swallow it.
+ * A span is worth rewriting when it is spread over several runs, or when its
+ * name is not the single word the convention asks for. A span with no name to
+ * build is left alone — there is nothing to rewrite it to.
  */
-function isMergeable(inlines: Inline[], span: Span): boolean {
-  return span.last > span.first && spannedInlines(inlines, span).every(inline => inline.kind === 'run')
+function needsRewrite(span: Span): boolean {
+  return span.name !== '' && (isSpreadOverRuns(span) || !isCanonical(span))
+}
+
+/**
+ * A span can only be rewritten when it is made of plain runs. A line break or a
+ * field (slide number, automatic date) between the braces is reported but never
+ * rewritten — the rewrite would swallow it.
+ */
+function canRewrite(inlines: Inline[], span: Span): boolean {
+  return spannedInlines(inlines, span).every(inline => inline.kind === 'run')
 }
 
 function excerpt(text: string, index: number): string {
@@ -216,27 +288,18 @@ function excerpt(text: string, index: number): string {
   return slice.length < text.length - index ? `${slice}…` : slice
 }
 
-/** `{{…}}` pairs that aren't a single word, and braces with no counterpart. */
-function braceIssues(joined: string): { malformed: string[]; unclosed: string[] } {
-  const malformed: string[] = []
-  BRACED.lastIndex = 0
-  let match: RegExpExecArray | null
-  while ((match = BRACED.exec(joined)) !== null) {
-    if (!/^[A-Za-z0-9]+$/.test(match[1])) {
-      malformed.push(match[0])
-    }
-  }
-
+/** Braces left over once every `{{…}}` pair is accounted for. */
+function unmatchedBraces(joined: string): string[] {
   const rest = joined.replace(BRACED, '')
-  const unclosed: string[] = []
+  const unmatched: string[] = []
   for (const marker of ['{{', '}}']) {
     let index = rest.indexOf(marker)
     while (index !== -1) {
-      unclosed.push(excerpt(rest, index))
+      unmatched.push(excerpt(rest, index))
       index = rest.indexOf(marker, index + marker.length)
     }
   }
-  return { malformed, unclosed }
+  return unmatched
 }
 
 export function analyzeXmlPart(xml: string, part: string): PartAnalysis {
@@ -253,34 +316,15 @@ export function analyzeXmlPart(xml: string, part: string): PartAnalysis {
     for (const span of findSpans(inlines)) {
       const spanned = spannedInlines(inlines, span)
       const runCount = spanned.filter(inline => inline.kind !== 'break').length
-      placeholders.push({ name: span.name, part, runCount })
+      placeholders.push({ raw: span.raw, name: span.name, part, runCount })
 
-      if (span.last === span.first) {
-        continue
+      const issue = describeSpan(inlines, span, runCount)
+      if (issue) {
+        issues.push({ ...issue, name: span.raw, part })
       }
-      const mergeable = isMergeable(inlines, span)
-      issues.push({
-        kind: mergeable ? 'split-runs' : 'crosses-break',
-        name: span.name,
-        part,
-        detail: mergeable
-          ? `Stored across ${runCount} runs; an exporter that replaces run by run would only fill the first.`
-          : `Stored across ${runCount} runs with a line break or field in between — needs manual review.`,
-        fixable: mergeable
-      })
     }
 
-    const braces = braceIssues(joined)
-    for (const name of braces.malformed) {
-      issues.push({
-        kind: 'malformed',
-        name,
-        part,
-        detail: 'Not a single-word placeholder; the exporter will not recognise it and it would be printed as is.',
-        fixable: false
-      })
-    }
-    for (const name of braces.unclosed) {
+    for (const name of unmatchedBraces(joined)) {
       issues.push({
         kind: 'unclosed',
         name,
@@ -292,6 +336,43 @@ export function analyzeXmlPart(xml: string, part: string): PartAnalysis {
   }
 
   return { placeholders, issues }
+}
+
+/** What is wrong with a `{{…}}` pair, if anything, and whether Fix can settle it. */
+function describeSpan(
+  inlines: Inline[],
+  span: Span,
+  runCount: number
+): Pick<PlaceholderIssue, 'kind' | 'detail' | 'fixable'> | null {
+  if (span.name === '') {
+    return {
+      kind: 'malformed',
+      detail: 'No letter or digit between the braces, so there is no name to build a placeholder from.',
+      fixable: false
+    }
+  }
+  if (isSpreadOverRuns(span) && !canRewrite(inlines, span)) {
+    return {
+      kind: 'crosses-break',
+      detail: `Stored across ${runCount} runs with a line break or field in between — needs manual review.`,
+      fixable: false
+    }
+  }
+  if (!isCanonical(span)) {
+    return {
+      kind: 'malformed',
+      detail: `Not a single-word placeholder; the exporter would print it as is. Fix renames it to {{${span.name}}}.`,
+      fixable: true
+    }
+  }
+  if (isSpreadOverRuns(span)) {
+    return {
+      kind: 'split-runs',
+      detail: `Stored across ${runCount} runs; an exporter that replaces run by run would only fill the first.`,
+      fixable: true
+    }
+  }
+  return null
 }
 
 export function analyzePptx(buffer: Uint8Array): PptxAnalysis {
@@ -315,7 +396,10 @@ export interface PlaceholderRow {
   part: string
   /** The part rendered for humans, e.g. `slide 9`. */
   location: string
+  /** What the table shows: the name, or the rename a fix would apply. */
   name: string
+  /** The text between the braces exactly as stored — what a fix is addressed to. */
+  target: string
   kind: PlaceholderIssueKind | 'ok'
   detail: string
   runCount: number
@@ -324,19 +408,36 @@ export interface PlaceholderRow {
   fixable: boolean
 }
 
+/** Worst first: what a row shows when its placeholder has more than one defect. */
+const KIND_SEVERITY: PlaceholderIssueKind[] = ['crosses-break', 'malformed', 'split-runs']
+
+function isWorse(kind: PlaceholderIssueKind, than: PlaceholderIssueKind | 'ok'): boolean {
+  return than === 'ok' || KIND_SEVERITY.indexOf(kind) < KIND_SEVERITY.indexOf(than)
+}
+
+/** `Company`, or `{{ address 2 }} → {{Address2}}` when a fix would rename it. */
+function displayName(placeholder: PlaceholderInfo): string {
+  if (placeholder.raw === placeholder.name) {
+    return placeholder.name
+  }
+  return placeholder.name === ''
+    ? `{{${placeholder.raw}}}`
+    : `{{${placeholder.raw}}} → {{${placeholder.name}}}`
+}
+
 /**
  * Flatten an analysis into table rows: one row per placeholder *per part*, so
  * a `{{Company}}` used on slides 1 and 9 is two rows and can be reviewed where
  * it lives. Repeats within the same part collapse into one row — the same Fix
- * consolidates them all — keeping the worst status and run count. Malformed
- * and unclosed braces get a row of their own, keyed by their excerpt.
+ * settles them all — keeping the worst status and run count. Unmatched braces
+ * get a row of their own, keyed by their excerpt.
  */
 export function analysisToRows(file: string, relPath: string, analysis: PptxAnalysis): PlaceholderRow[] {
   const rows: PlaceholderRow[] = []
   const byPartAndName = new Map<string, PlaceholderRow>()
 
   for (const placeholder of analysis.placeholders) {
-    const key = `${placeholder.part}|${placeholder.name}`
+    const key = `${placeholder.part}|${placeholder.raw}`
     const existing = byPartAndName.get(key)
     if (existing) {
       existing.uses++
@@ -348,7 +449,8 @@ export function analysisToRows(file: string, relPath: string, analysis: PptxAnal
       relPath,
       part: placeholder.part,
       location: partLabel(placeholder.part),
-      name: placeholder.name,
+      name: displayName(placeholder),
+      target: placeholder.raw,
       kind: 'ok',
       detail: '',
       runCount: placeholder.runCount,
@@ -368,6 +470,7 @@ export function analysisToRows(file: string, relPath: string, analysis: PptxAnal
         part: issue.part,
         location: partLabel(issue.part),
         name: issue.name,
+        target: issue.name,
         kind: issue.kind,
         detail: issue.detail,
         runCount: 0,
@@ -376,8 +479,7 @@ export function analysisToRows(file: string, relPath: string, analysis: PptxAnal
       })
       continue
     }
-    // 'split-runs' wins over 'crosses-break': it is the one the Fix action acts on.
-    if (row.kind === 'ok' || issue.kind === 'split-runs') {
+    if (isWorse(issue.kind, row.kind)) {
       row.kind = issue.kind
       row.detail = issue.detail
       row.fixable = issue.fixable
@@ -397,10 +499,11 @@ function makeRun(properties: string, text: string): string {
 
 /**
  * Rewrite the runs a placeholder is spread over as up to three: the text before
- * `{{`, the placeholder itself, and the text after `}}`. The placeholder takes
- * the formatting of the run it starts in; the text around it keeps its own.
+ * `{{`, the placeholder itself under its canonical name, and the text after
+ * `}}`. The placeholder takes the formatting of the run it starts in; the text
+ * around it keeps its own.
  */
-function mergeSpan(paragraph: string, inlines: Inline[], span: Span): string {
+function rewriteSpan(paragraph: string, inlines: Inline[], span: Span): string {
   const first = inlines[span.first]
   const last = inlines[span.last]
   const prefix = first.text.slice(0, span.startOffset)
@@ -418,25 +521,27 @@ function consolidateParagraph(
 ): { paragraph: string; fixed: string[] } {
   const fixed: string[] = []
   let out = paragraph
-  // Each merge leaves its placeholder in a single run, so the candidate list
-  // shrinks by one every pass and the loop always terminates.
+  // Each rewrite leaves its placeholder canonical and in a single run, so the
+  // candidate list shrinks by one every pass and the loop always terminates.
   for (;;) {
     const inlines = parseInlines(out)
     const span = findSpans(inlines).find(
-      candidate => isMergeable(inlines, candidate) && (!shouldFix || shouldFix(candidate.name))
+      candidate =>
+        needsRewrite(candidate) && canRewrite(inlines, candidate) && (!shouldFix || shouldFix(candidate.raw))
     )
     if (!span) {
       return { paragraph: out, fixed }
     }
-    out = mergeSpan(out, inlines, span)
-    fixed.push(span.name)
+    out = rewriteSpan(out, inlines, span)
+    fixed.push(span.raw)
   }
 }
 
 /**
- * Consolidate split placeholders in one XML part. When `shouldFix` is given,
- * only placeholders whose name it accepts are merged — lets the UI fix a single
- * row instead of every split placeholder in the file.
+ * Rewrite the defective placeholders of one XML part. When `shouldFix` is
+ * given, only the ones whose stored text it accepts are touched — lets the UI
+ * fix a single row instead of every placeholder in the file. The returned names
+ * are the stored ones, so they still address the rows that were fixed.
  */
 export function fixXmlPart(xml: string, shouldFix?: (name: string) => boolean): { xml: string; fixed: string[] } {
   const fixed: string[] = []
@@ -455,6 +560,7 @@ export function fixXmlPart(xml: string, shouldFix?: (name: string) => boolean): 
 
 export interface PlaceholderTarget {
   part: string
+  /** The text between the braces exactly as stored, e.g. `Company` or ` address 2 `. */
   name: string
 }
 
@@ -465,9 +571,10 @@ export interface PptxFixResult {
 }
 
 /**
- * Consolidate split placeholders across a .pptx buffer, returning a new ZIP.
- * When `targets` is given, only those `{ part, name }` placeholders are merged;
- * otherwise every fixable placeholder in the presentation is.
+ * Rewrite the defective placeholders across a .pptx buffer — split ones merged
+ * into a single run, loosely written ones renamed to their canonical name —
+ * returning a new ZIP. When `targets` is given, only those `{ part, name }`
+ * placeholders are touched; otherwise every fixable one in the presentation is.
  */
 export function fixPptx(buffer: Uint8Array, targets?: PlaceholderTarget[]): PptxFixResult {
   const entries = unzipSync(buffer)
