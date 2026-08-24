@@ -65,6 +65,7 @@ All-in-one VS Code utility extension.
     - [.env Checker](#env-checker)
     - [Resource Translations](#resource-translations)
     - [Word Bookmarks](#word-bookmarks)
+    - [PowerPoint Placeholders](#powerpoint-placeholders)
     - [PDF Fields](#pdf-fields)
     - [TODO Tree](#todo-tree)
     - [REST Client](#rest-client)
@@ -1531,6 +1532,31 @@ Word's own structural bookmarks (`_GoBack`, `_Toc…`, …) are ignored. Finding
 | Toolkit: Check Word Bookmarks | Open the panel scanning every `.docx` in the workspace |
 | Word Document ▸ Check Bookmarks | Explorer right-click on one or more `.docx` files — open the panel scoped to those |
 | Word Document ▸ Fix Split Bookmarks | Explorer right-click — open the panel on the selection and immediately offer to consolidate the split bookmarks |
+
+#### PowerPoint Placeholders
+
+Checks `.pptx` templates whose holes are filled in programmatically at export time. PowerPoint has no equivalent of a Word bookmark, so a template marks its holes with a literal `{{Placeholder}}` in the text — deliberately a single word (`{{Company}}`, `{{SendDate}}`), which keeps both the exporter and this check trivial.
+
+PowerPoint splits text across runs (`<a:r><a:t>`) as freely as Word does — autocorrect, a language change, a spell-check pass — so `{{SendDate}}` typed in one go can end up stored as `{{Send` + `Date` + `}}`. An exporter that joins the paragraph before substituting copes with that; one that replaces run by run does not. Consolidating every placeholder into a single run puts the guarantee in the template instead of the exporter, so it keeps working with either.
+
+This feature reads the `.pptx` (a ZIP), inspects the DrawingML text in the slides — plus layouts, masters and notes — and reports:
+
+- **Split across runs** — the placeholder is stored in more than one run. *Fixable.*
+- **Crosses a break** — the braces have a line break or a field (slide number, automatic date) between them; merging would swallow it, so it is reported for manual review.
+- **Malformed** — a `{{…}}` pair that is not a single word (`{{ Company }}`, `{{Company Name}}`); the exporter will not recognise it and it would be printed as is on the slide.
+- **Unclosed** — braces with no counterpart in the same paragraph.
+
+Findings open in the **PowerPoint Placeholders** panel: a filterable table with one row per placeholder and location (File · Placeholder · Location · Status · Runs · Action), colored status badges, a search box, an *Issues / Fixable / All* filter, and sortable columns. *Location* is the slide the placeholder lives on, so a `{{Company}}` used on slides 1 and 9 is one row each; used twice on the same slide it is a single row marked `×2`. With the *All* filter the table doubles as the template's placeholder inventory. Click a file name to reveal it in the Explorer.
+
+**Fixing** rewrites the runs a placeholder is spread over as up to three: the text before `{{`, the placeholder itself, and the text after `}}`. Unlike a Word bookmark — a range whose useful text is unknown, so the whole region has to be flattened — the token delimits itself, so only the placeholder is merged and the text around it keeps its own runs and formatting. Click **Fix** on a row to consolidate that one (the row updates live), or **Fix all** to do every fixable one at once after a confirmation; both rewrite the `.pptx` in place.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| Toolkit: Check PowerPoint Placeholders | Open the panel scanning every `.pptx` in the workspace |
+| PowerPoint ▸ Check Placeholders | Explorer right-click on one or more `.pptx` files — open the panel scoped to those |
+| PowerPoint ▸ Fix Split Placeholders | Explorer right-click — open the panel on the selection and immediately offer to consolidate the split placeholders |
 
 #### PDF Fields
 

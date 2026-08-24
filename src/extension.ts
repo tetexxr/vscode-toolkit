@@ -62,6 +62,7 @@ import { registerKillPortCommands } from './features/workspace/kill-port'
 import { registerTocCommands } from './features/editing/convert/toc'
 import { registerJsonPlaygroundCommands } from './features/workspace/json-playground'
 import { registerDocxBookmarkCommands } from './features/workspace/docx-bookmarks'
+import { registerPptxPlaceholderCommands } from './features/workspace/pptx-placeholders'
 import { registerPdfFieldCommands } from './features/workspace/pdf-fields'
 import { registerMarkdownPreviewStyle, extendMarkdownIt } from './features/viewers/markdown-preview-style'
 
@@ -129,6 +130,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerTocCommands(context)
   registerJsonPlaygroundCommands(context)
   registerDocxBookmarkCommands(context)
+  registerPptxPlaceholderCommands(context)
   registerPdfFieldCommands(context)
   registerMarkdownPreviewStyle(context)
 
