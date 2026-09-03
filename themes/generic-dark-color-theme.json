@@ -31,7 +31,7 @@
     // "activityBarBadge.foreground": "#FFFFFF",
     "modernActivityBar.border": "#00000000",
     "modernActivityBarItem.activeBackground": "#1E1E1E",
-    // "modernActivityBarItem.activeForeground": "#FFFFFF",
+    "modernActivityBarItem.activeForeground": "#FFFFFF",
     "modernActivityBarItem.hoverBackground": "#1E1E1E66",
 
     // "sideBar.background": "#161719",
